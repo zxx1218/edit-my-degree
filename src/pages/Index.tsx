@@ -203,6 +203,7 @@ const Index = () => {
 
       {selectedRecord && (
         <EditEducationDialog
+          key={selectedRecord.id}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
           record={selectedRecord}
