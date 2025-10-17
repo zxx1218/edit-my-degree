@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface StudentData {
   name: string;
+  personalInfo: string;
   gender: string;
   birthDate: string;
   school: string;
@@ -38,6 +39,7 @@ const StudentStatusDetail = () => {
 
   const initialData: StudentData = location.state?.record || {
     name: "朱晓煌",
+    personalInfo: "男 1999年12月18日",
     gender: "男",
     birthDate: "1999年12月18日",
     school: "湖州师范学院",
@@ -123,7 +125,7 @@ const StudentStatusDetail = () => {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
         <div className="bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] rounded-2xl p-6 text-white mb-6 relative">
           <div className="flex items-start gap-4 mb-6">
@@ -171,7 +173,7 @@ const StudentStatusDetail = () => {
               </div>
             </div>
 
-            {/* Basic Info */}
+            {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               {editingField === "name" ? (
                 <Input
@@ -193,48 +195,26 @@ const StudentStatusDetail = () => {
                   {data.name}
                 </h2>
               )}
-              <div className="flex gap-2">
-                {editingField === "gender" ? (
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    onBlur={() => handleFieldSave("gender")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleFieldSave("gender");
-                      if (e.key === "Escape") handleFieldCancel();
-                    }}
-                    className="text-base bg-white text-black w-16"
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => handleFieldClick("gender", data.gender)}
-                  >
-                    {data.gender}
-                  </span>
-                )}
-                {editingField === "birthDate" ? (
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    onBlur={() => handleFieldSave("birthDate")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleFieldSave("birthDate");
-                      if (e.key === "Escape") handleFieldCancel();
-                    }}
-                    className="text-base bg-white text-black flex-1"
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => handleFieldClick("birthDate", data.birthDate)}
-                  >
-                    {data.birthDate}
-                  </span>
-                )}
-              </div>
+              {editingField === "personalInfo" ? (
+                <Input
+                  value={tempValue}
+                  onChange={(e) => setTempValue(e.target.value)}
+                  onBlur={() => handleFieldSave("personalInfo")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleFieldSave("personalInfo");
+                    if (e.key === "Escape") handleFieldCancel();
+                  }}
+                  className="text-base bg-white text-black"
+                  autoFocus
+                />
+              ) : (
+                <div
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={() => handleFieldClick("personalInfo", data.personalInfo)}
+                >
+                  {data.personalInfo}
+                </div>
+              )}
             </div>
           </div>
 
@@ -330,7 +310,7 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Detail Info */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {[
             { field: "nationality", label: "民族", value: data.nationality },
             { field: "idNumber", label: "证件号码", value: data.idNumber },
@@ -344,8 +324,8 @@ const StudentStatusDetail = () => {
             { field: "status", label: "学籍状态", value: data.status },
             { field: "graduationDate", label: "离校日期", value: data.graduationDate },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-between py-3 border-b">
-              <span className="text-muted-foreground">{label}</span>
+            <div key={field} className="flex items-center justify-center gap-8 py-2">
+              <span className="text-muted-foreground text-right w-24">{label}</span>
               {editingField === field ? (
                 <Input
                   value={tempValue}
@@ -355,12 +335,12 @@ const StudentStatusDetail = () => {
                     if (e.key === "Enter") handleFieldSave(field as keyof StudentData);
                     if (e.key === "Escape") handleFieldCancel();
                   }}
-                  className="font-medium w-1/2 text-right"
+                  className="font-medium flex-1 max-w-xs"
                   autoFocus
                 />
               ) : (
                 <span
-                  className="font-medium cursor-pointer hover:text-primary"
+                  className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
                   onClick={() => handleFieldClick(field as keyof StudentData, value)}
                 >
                   {value || "-"}
