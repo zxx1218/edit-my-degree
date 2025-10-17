@@ -101,6 +101,8 @@ const Index = () => {
       navigate(`/education/${record.id}`, { state: { record } });
     } else if (record.type === "degree") {
       navigate(`/degree/${record.id}`, { state: { record } });
+    } else if (record.type === "exam") {
+      navigate(`/exam/${record.id}`, { state: { record } });
     }
   };
 
@@ -210,6 +212,7 @@ const Index = () => {
                 degreeLevel={record.degreeLevel}
                 variant="exam"
                 onEdit={() => handleEdit(record)}
+                onClick={() => handleCardClick(record)}
               />
             ))}
           </div>
