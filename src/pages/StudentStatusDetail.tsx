@@ -310,7 +310,7 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Detail Info */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {[
             { field: "nationality", label: "民族", value: data.nationality },
             { field: "idNumber", label: "证件号码", value: data.idNumber },
@@ -324,8 +324,8 @@ const StudentStatusDetail = () => {
             { field: "status", label: "学籍状态", value: data.status },
             { field: "graduationDate", label: "离校日期", value: data.graduationDate },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-center gap-8 py-2">
-              <span className="text-muted-foreground text-right w-24">{label}</span>
+            <div key={field} className="flex items-center justify-center gap-12 py-1">
+              <span className="text-muted-foreground text-right w-20 text-sm">{label}</span>
               {editingField === field ? (
                 <Input
                   value={tempValue}
@@ -335,12 +335,12 @@ const StudentStatusDetail = () => {
                     if (e.key === "Enter") handleFieldSave(field as keyof StudentData);
                     if (e.key === "Escape") handleFieldCancel();
                   }}
-                  className="font-medium flex-1 max-w-xs"
+                  className="font-medium flex-1 max-w-xs text-sm"
                   autoFocus
                 />
               ) : (
                 <span
-                  className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
+                  className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs text-sm"
                   onClick={() => handleFieldClick(field as keyof StudentData, value)}
                 >
                   {value || "-"}
