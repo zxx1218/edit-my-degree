@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ChevronLeft, Camera, X } from "lucide-react";
+import { ChevronLeft, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -130,31 +130,24 @@ const ExamDetail = () => {
         <div className="bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-2xl p-6 shadow-lg">
           <div className="flex items-start gap-4 mb-6">
             {/* Photo */}
-            <div className="relative">
-              <div className="w-24 h-32 bg-white rounded-lg overflow-hidden flex items-center justify-center">
-                {data.photo ? (
-                  <img
-                    src={data.photo}
-                    alt="证件照"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Camera className="w-8 h-8 text-muted-foreground" />
-                )}
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-md hover:bg-gray-50"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
+            <div className="text-center">
               <input
-                ref={fileInputRef}
                 type="file"
+                ref={fileInputRef}
+                className="hidden"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="hidden"
               />
+              <div
+                className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {data.photo ? (
+                  <img src={data.photo} alt="照片" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-6 h-6 text-white/60" />
+                )}
+              </div>
             </div>
 
             {/* Name */}
