@@ -82,7 +82,7 @@ const EducationCard = ({
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-lg p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

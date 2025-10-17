@@ -5,72 +5,59 @@ import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
-interface StudentData {
+interface EducationData {
   name: string;
-  personalInfo: string;
   gender: string;
   birthDate: string;
   school: string;
   major: string;
   studyType: string;
   degreeLevel: string;
-  nationality: string;
-  idNumber: string;
-  duration: string;
-  educationType: string;
-  branch: string;
-  department: string;
-  class: string;
-  studentId: string;
   enrollmentDate: string;
-  status: string;
   graduationDate: string;
-  admissionPhoto: string;
-  degreePhoto: string;
+  educationType: string;
+  duration: string;
+  graduationStatus: string;
+  principalName: string;
+  certificateNumber: string;
+  photo: string;
 }
 
-const StudentStatusDetail = () => {
+const EducationDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
-  const admissionPhotoRef = useRef<HTMLInputElement>(null);
-  const degreePhotoRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
-  const initialData: StudentData = location.state?.record || {
+  const initialData: EducationData = location.state?.record || {
     name: "朱晓煌",
-    personalInfo: "男 1999年12月18日",
     gender: "男",
     birthDate: "1999年12月18日",
     school: "湖州师范学院",
     major: "计算机技术",
     studyType: "全日制",
     degreeLevel: "硕士研究生",
-    nationality: "汉族",
-    idNumber: "140105199912180817",
-    duration: "3年",
-    educationType: "普通高等教育",
-    branch: "",
-    department: "",
-    class: "",
-    studentId: "2022388441",
     enrollmentDate: "2022年09月03日",
-    status: "不在籍（毕业）",
     graduationDate: "2025年06月13日",
-    admissionPhoto: "",
-    degreePhoto: "",
+    educationType: "普通高等教育",
+    duration: "3 年",
+    graduationStatus: "毕业",
+    principalName: "盛况",
+    certificateNumber: "1034 7120 2502 5201 62",
+    photo: "",
   };
 
-  const [data, setData] = useState<StudentData>(initialData);
+  const [data, setData] = useState<EducationData>(initialData);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState<string>("");
 
-  const handleFieldClick = (field: keyof StudentData, value: string) => {
+  const handleFieldClick = (field: keyof EducationData, value: string) => {
     setEditingField(field);
     setTempValue(value);
   };
 
-  const handleFieldSave = (field: keyof StudentData) => {
+  const handleFieldSave = (field: keyof EducationData) => {
     setData({ ...data, [field]: tempValue });
     setEditingField(null);
     toast({
@@ -84,12 +71,12 @@ const StudentStatusDetail = () => {
     setTempValue("");
   };
 
-  const handleImageUpload = (type: "admissionPhoto" | "degreePhoto", e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setData({ ...data, [type]: reader.result as string });
+        setData({ ...data, photo: reader.result as string });
         toast({
           title: "上传成功",
           description: "照片已更新",
@@ -113,61 +100,37 @@ const StudentStatusDetail = () => {
         </div>
       </div>
 
-
       {/* Header */}
       <div className="text-center py-6 border-b">
         <button onClick={() => navigate(-1)} className="absolute left-4 top-20">
           <ChevronLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-xl font-bold">高等学籍</h1>
+        <h1 className="text-xl font-bold">高等学历</h1>
       </div>
 
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] rounded-2xl p-6 text-white mb-6 relative">
+        <div className="bg-gradient-to-br from-[#5DADE2] to-[#3498DB] rounded-2xl p-6 text-white mb-6 relative">
           <div className="flex items-start gap-4 mb-6">
-            {/* Photos */}
-            <div className="flex gap-3">
-              <div className="text-center">
-                <input
-                  type="file"
-                  ref={admissionPhotoRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload("admissionPhoto", e)}
-                />
-                <div
-                  className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
-                  onClick={() => admissionPhotoRef.current?.click()}
-                >
-                  {data.admissionPhoto ? (
-                    <img src={data.admissionPhoto} alt="录取照片" className="w-full h-full object-cover" />
-                  ) : (
-                    <Upload className="w-6 h-6 text-white/60" />
-                  )}
-                </div>
-                <span className="text-xs">录取照片</span>
-              </div>
-              <div className="text-center">
-                <input
-                  type="file"
-                  ref={degreePhotoRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload("degreePhoto", e)}
-                />
-                <div
-                  className="w-20 h-24 bg-blue-400 rounded-lg mb-2 cursor-pointer hover:bg-blue-500 transition-colors flex items-center justify-center overflow-hidden"
-                  onClick={() => degreePhotoRef.current?.click()}
-                >
-                  {data.degreePhoto ? (
-                    <img src={data.degreePhoto} alt="学历照片" className="w-full h-full object-cover" />
-                  ) : (
-                    <Upload className="w-6 h-6 text-white/80" />
-                  )}
-                </div>
-                <span className="text-xs">学历照片</span>
+            {/* Photo */}
+            <div className="text-center">
+              <input
+                type="file"
+                ref={photoRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+              <div
+                className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                onClick={() => photoRef.current?.click()}
+              >
+                {data.photo ? (
+                  <img src={data.photo} alt="照片" className="w-full h-full object-cover" />
+                ) : (
+                  <Upload className="w-6 h-6 text-white/60" />
+                )}
               </div>
             </div>
 
@@ -193,26 +156,48 @@ const StudentStatusDetail = () => {
                   {data.name}
                 </h2>
               )}
-              {editingField === "personalInfo" ? (
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  onBlur={() => handleFieldSave("personalInfo")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleFieldSave("personalInfo");
-                    if (e.key === "Escape") handleFieldCancel();
-                  }}
-                  className="text-base bg-white text-black"
-                  autoFocus
-                />
-              ) : (
-                <div
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("personalInfo", data.personalInfo)}
-                >
-                  {data.personalInfo}
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                {editingField === "gender" ? (
+                  <Input
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    onBlur={() => handleFieldSave("gender")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleFieldSave("gender");
+                      if (e.key === "Escape") handleFieldCancel();
+                    }}
+                    className="text-base bg-white text-black w-16"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="cursor-pointer hover:opacity-80"
+                    onClick={() => handleFieldClick("gender", data.gender)}
+                  >
+                    {data.gender}
+                  </span>
+                )}
+                {editingField === "birthDate" ? (
+                  <Input
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    onBlur={() => handleFieldSave("birthDate")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleFieldSave("birthDate");
+                      if (e.key === "Escape") handleFieldCancel();
+                    }}
+                    className="text-base bg-white text-black"
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    className="cursor-pointer hover:opacity-80"
+                    onClick={() => handleFieldClick("birthDate", data.birthDate)}
+                  >
+                    {data.birthDate}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -308,29 +293,25 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Detail Info */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {[
-            { field: "nationality", label: "民族", value: data.nationality },
-            { field: "idNumber", label: "证件号码", value: data.idNumber },
-            { field: "duration", label: "学制", value: data.duration },
-            { field: "educationType", label: "学历类别", value: data.educationType },
-            { field: "branch", label: "分院", value: data.branch },
-            { field: "department", label: "系所", value: data.department },
-            { field: "class", label: "班级", value: data.class },
-            { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
-            { field: "status", label: "学籍状态", value: data.status },
-            { field: "graduationDate", label: "离校日期", value: data.graduationDate },
+            { field: "graduationDate", label: "毕（结）业日期", value: data.graduationDate },
+            { field: "educationType", label: "学历类别", value: data.educationType },
+            { field: "duration", label: "学制", value: data.duration },
+            { field: "graduationStatus", label: "毕（结）业", value: data.graduationStatus },
+            { field: "principalName", label: "校（院）长姓名", value: data.principalName },
+            { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-center gap-8 py-2">
-              <span className="text-muted-foreground text-right w-24">{label}</span>
+            <div key={field} className="flex items-center justify-center gap-12 py-1">
+              <span className="text-muted-foreground text-right w-32">{label}</span>
               {editingField === field ? (
                 <Input
                   value={tempValue}
                   onChange={(e) => setTempValue(e.target.value)}
-                  onBlur={() => handleFieldSave(field as keyof StudentData)}
+                  onBlur={() => handleFieldSave(field as keyof EducationData)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") handleFieldSave(field as keyof StudentData);
+                    if (e.key === "Enter") handleFieldSave(field as keyof EducationData);
                     if (e.key === "Escape") handleFieldCancel();
                   }}
                   className="font-medium flex-1 max-w-xs"
@@ -339,7 +320,7 @@ const StudentStatusDetail = () => {
               ) : (
                 <span
                   className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
-                  onClick={() => handleFieldClick(field as keyof StudentData, value)}
+                  onClick={() => handleFieldClick(field as keyof EducationData, value)}
                 >
                   {value || "-"}
                 </span>
@@ -357,4 +338,4 @@ const StudentStatusDetail = () => {
   );
 };
 
-export default StudentStatusDetail;
+export default EducationDetail;

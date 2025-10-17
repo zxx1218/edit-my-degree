@@ -97,6 +97,8 @@ const Index = () => {
   const handleCardClick = (record: EducationRecord) => {
     if (record.type === "student-status") {
       navigate(`/student-status/${record.id}`, { state: { record } });
+    } else if (record.type === "education") {
+      navigate(`/education/${record.id}`, { state: { record } });
     }
   };
 
@@ -166,6 +168,7 @@ const Index = () => {
                 degreeLevel={record.degreeLevel}
                 variant="education"
                 onEdit={() => handleEdit(record)}
+                onClick={() => handleCardClick(record)}
               />
             ))}
           </div>
