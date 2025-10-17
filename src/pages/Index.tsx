@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import EducationHeader from "@/components/EducationHeader";
 import ExamBanner from "@/components/ExamBanner";
 import SectionHeader from "@/components/SectionHeader";
@@ -16,6 +17,7 @@ interface EducationRecord {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [selectedRecord, setSelectedRecord] = useState<EducationRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
@@ -92,6 +94,12 @@ const Index = () => {
     setIsEditDialogOpen(true);
   };
 
+  const handleCardClick = (record: EducationRecord) => {
+    if (record.type === "student-status") {
+      navigate(`/student-status/${record.id}`);
+    }
+  };
+
   const handleSave = (updatedRecord: EducationRecord) => {
     const updateList = (list: EducationRecord[]) =>
       list.map((r) => (r.id === updatedRecord.id ? updatedRecord : r));
@@ -136,6 +144,7 @@ const Index = () => {
                 degreeLevel={record.degreeLevel}
                 variant="student-status"
                 onEdit={() => handleEdit(record)}
+                onClick={() => handleCardClick(record)}
               />
             ))}
           </div>

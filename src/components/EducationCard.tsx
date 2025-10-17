@@ -1,4 +1,5 @@
 import { Edit2 } from "lucide-react";
+import { useState, useRef } from "react";
 
 interface EducationCardProps {
   school: string;
@@ -7,6 +8,7 @@ interface EducationCardProps {
   degreeLevel: string;
   variant: "student-status" | "education" | "degree" | "exam";
   onEdit?: () => void;
+  onClick?: () => void;
 }
 
 const EducationCard = ({ 
@@ -15,8 +17,39 @@ const EducationCard = ({
   studyType, 
   degreeLevel, 
   variant,
-  onEdit 
+  onEdit,
+  onClick
 }: EducationCardProps) => {
+  const [showEditIcon, setShowEditIcon] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
+
+  const handleTouchStart = () => {
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      setShowEditIcon(true);
+      if (onEdit) {
+        onEdit();
+      }
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+    if (!isLongPress.current && onClick) {
+      onClick();
+    }
+    setTimeout(() => setShowEditIcon(false), 100);
+  };
+
+  const handleClick = () => {
+    if (onClick && !isLongPress.current) {
+      onClick();
+    }
+  };
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
@@ -50,7 +83,17 @@ const EducationCard = ({
   return (
     <div 
       className={`${getVariantClasses()} rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative group`}
-      onClick={onEdit}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleTouchStart}
+      onMouseUp={handleTouchEnd}
+      onMouseLeave={() => {
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+        }
+        setShowEditIcon(false);
+      }}
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-lg font-bold">{school}</h3>
@@ -67,9 +110,11 @@ const EducationCard = ({
           </>
         )}
       </div>
-      <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Edit2 className="w-4 h-4 text-white/80" />
-      </div>
+      {showEditIcon && (
+        <div className="absolute top-5 right-5 transition-opacity">
+          <Edit2 className="w-4 h-4 text-white/80" />
+        </div>
+      )}
     </div>
   );
 };
