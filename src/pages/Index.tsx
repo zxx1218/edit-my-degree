@@ -5,6 +5,7 @@ import ExamBanner from "@/components/ExamBanner";
 import SectionHeader from "@/components/SectionHeader";
 import EducationCard from "@/components/EducationCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
+import ActionMenuDialog from "@/components/ActionMenuDialog";
 import { toast } from "sonner";
 
 interface EducationRecord {
@@ -20,6 +21,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [selectedRecord, setSelectedRecord] = useState<EducationRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([
     {
@@ -89,9 +91,67 @@ const Index = () => {
     },
   ]);
 
-  const handleEdit = (record: EducationRecord) => {
+  const handleLongPress = (record: EducationRecord) => {
     setSelectedRecord(record);
+    setIsActionMenuOpen(true);
+  };
+
+  const handleEdit = () => {
     setIsEditDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    if (!selectedRecord) return;
+
+    const newRecord: EducationRecord = {
+      id: `${selectedRecord.type}-${Date.now()}`,
+      school: "新学校",
+      major: "新专业",
+      studyType: selectedRecord.type === "degree" ? "" : "全日制",
+      degreeLevel: selectedRecord.type === "degree" ? "学士" : "本科",
+      type: selectedRecord.type,
+    };
+
+    switch (selectedRecord.type) {
+      case "student-status":
+        setStudentStatus([...studentStatus, newRecord]);
+        break;
+      case "education":
+        setEducationRecords([...educationRecords, newRecord]);
+        break;
+      case "degree":
+        setDegreeRecords([...degreeRecords, newRecord]);
+        break;
+      case "exam":
+        setExamRecords([...examRecords, newRecord]);
+        break;
+    }
+
+    toast.success("已添加新记录");
+  };
+
+  const handleDelete = () => {
+    if (!selectedRecord) return;
+
+    const deleteFromList = (list: EducationRecord[]) =>
+      list.filter((r) => r.id !== selectedRecord.id);
+
+    switch (selectedRecord.type) {
+      case "student-status":
+        setStudentStatus(deleteFromList(studentStatus));
+        break;
+      case "education":
+        setEducationRecords(deleteFromList(educationRecords));
+        break;
+      case "degree":
+        setDegreeRecords(deleteFromList(degreeRecords));
+        break;
+      case "exam":
+        setExamRecords(deleteFromList(examRecords));
+        break;
+    }
+
+    toast.success("已删除记录");
   };
 
   const handleCardClick = (record: EducationRecord) => {
@@ -149,7 +209,7 @@ const Index = () => {
                 studyType={record.studyType}
                 degreeLevel={record.degreeLevel}
                 variant="student-status"
-                onEdit={() => handleEdit(record)}
+                onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}
               />
             ))}
@@ -171,7 +231,7 @@ const Index = () => {
                 studyType={record.studyType}
                 degreeLevel={record.degreeLevel}
                 variant="education"
-                onEdit={() => handleEdit(record)}
+                onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}
               />
             ))}
@@ -193,7 +253,7 @@ const Index = () => {
                 studyType={record.studyType}
                 degreeLevel={record.degreeLevel}
                 variant="degree"
-                onEdit={() => handleEdit(record)}
+                onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}
               />
             ))}
@@ -211,7 +271,7 @@ const Index = () => {
                 studyType={record.studyType}
                 degreeLevel={record.degreeLevel}
                 variant="exam"
-                onEdit={() => handleEdit(record)}
+                onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}
               />
             ))}
@@ -220,13 +280,23 @@ const Index = () => {
       </div>
 
       {selectedRecord && (
-        <EditEducationDialog
-          key={selectedRecord.id}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          record={selectedRecord}
-          onSave={handleSave}
-        />
+        <>
+          <ActionMenuDialog
+            open={isActionMenuOpen}
+            onOpenChange={setIsActionMenuOpen}
+            onEdit={handleEdit}
+            onAdd={handleAdd}
+            onDelete={handleDelete}
+            recordType={selectedRecord.type}
+          />
+          <EditEducationDialog
+            key={selectedRecord.id}
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            record={selectedRecord}
+            onSave={handleSave}
+          />
+        </>
       )}
     </div>
   );
