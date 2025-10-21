@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EducationHeader from "@/components/EducationHeader";
-import ExamBanner from "@/components/ExamBanner";
 import SectionHeader from "@/components/SectionHeader";
 import EducationCard from "@/components/EducationCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
@@ -191,9 +190,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background pb-8">
       <EducationHeader />
-      <ExamBanner />
 
-      <div className="space-y-6">
+      <div className="space-y-6 mt-4">
         <section>
           <SectionHeader
             title="学籍信息"
