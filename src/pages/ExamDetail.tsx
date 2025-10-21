@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { ChevronLeft, X, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useEducation } from "@/contexts/EducationContext";
 
 interface ExamData {
   name: string;
@@ -37,6 +38,7 @@ const ExamDetail = () => {
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
+  const { examRecords, updateRecord } = useEducation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialData: ExamData = location.state?.record || {
@@ -67,6 +69,14 @@ const ExamDetail = () => {
   };
 
   const [data, setData] = useState<ExamData>(initialData);
+
+  // 从context同步数据
+  useEffect(() => {
+    const record = examRecords.find(r => r.id === id);
+    if (record) {
+      setData(prev => ({ ...prev, ...record }));
+    }
+  }, [id, examRecords]);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
 
@@ -76,8 +86,12 @@ const ExamDetail = () => {
   };
 
   const handleFieldSave = (field: keyof ExamData) => {
-    setData({ ...data, [field]: tempValue });
+    const updatedData = { ...data, [field]: tempValue };
+    setData(updatedData);
     setEditingField(null);
+    if (id) {
+      updateRecord(id, "exam", updatedData);
+    }
     toast({
       title: "保存成功",
       description: "信息已更新",
@@ -94,7 +108,11 @@ const ExamDetail = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setData({ ...data, photo: reader.result as string });
+        const updatedData = { ...data, photo: reader.result as string };
+        setData(updatedData);
+        if (id) {
+          updateRecord(id, "exam", updatedData);
+        }
         toast({
           title: "上传成功",
           description: "照片已更新",
