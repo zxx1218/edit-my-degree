@@ -1,5 +1,5 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ChevronLeft, X, Upload } from "lucide-react";
+import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
@@ -88,24 +88,15 @@ const EducationDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Navigation */}
-      <div className="bg-background border-b sticky top-0 z-10">
-        <div className="flex items-center justify-between p-4">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background border-b">
+        <div className="flex items-center justify-between px-4 py-3">
           <button onClick={() => navigate(-1)} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <button onClick={() => navigate("/")} className="p-2">
-            <X className="w-6 h-6" />
-          </button>
+          <h1 className="text-lg font-medium">高等学历</h1>
+          <div className="w-10"></div>
         </div>
-      </div>
-
-      {/* Header */}
-      <div className="text-center py-6 border-b">
-        <button onClick={() => navigate(-1)} className="absolute left-4 top-20">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-xl font-bold">高等学历</h1>
       </div>
 
       {/* Content */}

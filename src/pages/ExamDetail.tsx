@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -109,18 +109,11 @@ const ExamDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="h-9 w-9"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
+          <button onClick={() => navigate(-1)} className="p-2">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
           <h1 className="text-lg font-medium">考研信息</h1>
-          <Button variant="ghost" size="icon" className="h-9 w-9 invisible">
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="w-10"></div>
         </div>
       </div>
 
