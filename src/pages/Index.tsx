@@ -1,19 +1,95 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EducationHeader from "@/components/EducationHeader";
+import ExamBanner from "@/components/ExamBanner";
 import SectionHeader from "@/components/SectionHeader";
 import EducationCard from "@/components/EducationCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
 import ActionMenuDialog from "@/components/ActionMenuDialog";
 import { toast } from "sonner";
-import { useEducation, EducationRecord } from "@/contexts/EducationContext";
+
+interface EducationRecord {
+  id: string;
+  school: string;
+  major: string;
+  studyType: string;
+  degreeLevel: string;
+  type: "student-status" | "education" | "degree" | "exam";
+}
 
 const Index = () => {
   const navigate = useNavigate();
-  const { studentStatus, educationRecords, degreeRecords, examRecords, updateRecord, addRecord, deleteRecord } = useEducation();
   const [selectedRecord, setSelectedRecord] = useState<EducationRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  
+  const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([
+    {
+      id: "ss1",
+      school: "湖州师范学院",
+      major: "计算机技术",
+      studyType: "全日制",
+      degreeLevel: "硕士研究生",
+      type: "student-status",
+    },
+    {
+      id: "ss2",
+      school: "浙江工业大学之江学院",
+      major: "计算机科学与技术",
+      studyType: "普通全日制",
+      degreeLevel: "本科",
+      type: "student-status",
+    },
+  ]);
+
+  const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([
+    {
+      id: "ed1",
+      school: "湖州师范学院",
+      major: "计算机技术",
+      studyType: "全日制",
+      degreeLevel: "硕士研究生",
+      type: "education",
+    },
+    {
+      id: "ed2",
+      school: "浙江工业大学之江学院",
+      major: "计算机科学与技术",
+      studyType: "普通全日制",
+      degreeLevel: "本科",
+      type: "education",
+    },
+  ]);
+
+  const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([
+    {
+      id: "dg1",
+      school: "湖州师范学院",
+      major: "电子信息硕士专业学位",
+      studyType: "",
+      degreeLevel: "硕士",
+      type: "degree",
+    },
+    {
+      id: "dg2",
+      school: "浙江工业大学之江学院",
+      major: "工学学士学位",
+      studyType: "",
+      degreeLevel: "学士",
+      type: "degree",
+    },
+  ]);
+
+  const [examRecords, setExamRecords] = useState<EducationRecord[]>([
+    {
+      id: "ex1",
+      school: "湖州师范学院",
+      major: "2022年",
+      studyType: "",
+      degreeLevel: "",
+      type: "exam",
+    },
+  ]);
 
   const handleLongPress = (record: EducationRecord) => {
     setSelectedRecord(record);
@@ -36,13 +112,45 @@ const Index = () => {
       type: selectedRecord.type,
     };
 
-    addRecord(selectedRecord.type, newRecord);
+    switch (selectedRecord.type) {
+      case "student-status":
+        setStudentStatus([...studentStatus, newRecord]);
+        break;
+      case "education":
+        setEducationRecords([...educationRecords, newRecord]);
+        break;
+      case "degree":
+        setDegreeRecords([...degreeRecords, newRecord]);
+        break;
+      case "exam":
+        setExamRecords([...examRecords, newRecord]);
+        break;
+    }
+
     toast.success("已添加新记录");
   };
 
   const handleDelete = () => {
     if (!selectedRecord) return;
-    deleteRecord(selectedRecord.id, selectedRecord.type);
+
+    const deleteFromList = (list: EducationRecord[]) =>
+      list.filter((r) => r.id !== selectedRecord.id);
+
+    switch (selectedRecord.type) {
+      case "student-status":
+        setStudentStatus(deleteFromList(studentStatus));
+        break;
+      case "education":
+        setEducationRecords(deleteFromList(educationRecords));
+        break;
+      case "degree":
+        setDegreeRecords(deleteFromList(degreeRecords));
+        break;
+      case "exam":
+        setExamRecords(deleteFromList(examRecords));
+        break;
+    }
+
     toast.success("已删除记录");
   };
 
@@ -59,13 +167,31 @@ const Index = () => {
   };
 
   const handleSave = (updatedRecord: EducationRecord) => {
-    updateRecord(updatedRecord.id, updatedRecord.type, updatedRecord);
+    const updateList = (list: EducationRecord[]) =>
+      list.map((r) => (r.id === updatedRecord.id ? updatedRecord : r));
+
+    switch (updatedRecord.type) {
+      case "student-status":
+        setStudentStatus(updateList(studentStatus));
+        break;
+      case "education":
+        setEducationRecords(updateList(educationRecords));
+        break;
+      case "degree":
+        setDegreeRecords(updateList(degreeRecords));
+        break;
+      case "exam":
+        setExamRecords(updateList(examRecords));
+        break;
+    }
+
     toast.success("信息已更新");
   };
 
   return (
     <div className="min-h-screen bg-background pb-8">
       <EducationHeader />
+      <ExamBanner />
 
       <div className="space-y-6">
         <section>
