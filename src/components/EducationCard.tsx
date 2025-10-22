@@ -97,9 +97,11 @@ const EducationCard = ({
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-lg font-bold">{school}</h3>
-        <div className={`${getBadgeClasses()} px-4 py-1 rounded-full text-sm font-medium flex items-center gap-2`}>
-          {degreeLevel}
-        </div>
+        {variant !== "exam" && (
+          <div className={`${getBadgeClasses()} px-4 py-1 rounded-full text-sm font-medium flex items-center gap-2`}>
+            {degreeLevel}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2 text-white/95">
         <span className="text-base">{major}</span>
