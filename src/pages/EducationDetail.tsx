@@ -34,7 +34,7 @@ const EducationDetail = () => {
     name: "朱晓煌",
     gender: "男",
     birthDate: "1999年12月18日",
-    school: "湖州师范学院",
+    school: "浙江大学",
     major: "计算机技术",
     studyType: "全日制",
     degreeLevel: "硕士研究生",

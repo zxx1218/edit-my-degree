@@ -29,7 +29,7 @@ const DegreeDetail = () => {
     name: "朱晓煌",
     gender: "男",
     birthDate: "1999年12月18日",
-    school: "湖州师范学院",
+    school: "浙江大学",
     degreeType: "电子信息硕士专业学位",
     degreeLevel: "硕士",
     degreeDate: "2025年06月13日",
