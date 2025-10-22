@@ -196,7 +196,8 @@ const Index = () => {
           <SectionHeader
             title="学籍信息"
             count={studentStatus.length}
-            actionText="还有学籍没有显示出来？尝试绑定"
+            promptText="还有学籍没有显示出来？"
+            actionText="尝试绑定"
           />
           <div className="px-4 space-y-3">
             {studentStatus.map((record) => (
@@ -218,7 +219,8 @@ const Index = () => {
           <SectionHeader
             title="学历信息"
             count={educationRecords.length}
-            actionText="还有学历没有显示出来？尝试绑定"
+            promptText="还有学历没有显示出来？"
+            actionText="尝试绑定"
           />
           <div className="px-4 space-y-3">
             {educationRecords.map((record) => (
@@ -240,7 +242,8 @@ const Index = () => {
           <SectionHeader
             title="学位信息"
             count={degreeRecords.length}
-            actionText="还有学位没有显示出来？尝试绑定"
+            promptText="还有学位没有显示出来？"
+            actionText="尝试绑定"
           />
           <div className="px-4 space-y-3">
             {degreeRecords.map((record) => (
