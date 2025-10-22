@@ -79,13 +79,33 @@ const Index = () => {
     },
   ]);
 
-  const [examRecords, setExamRecords] = useState<EducationRecord[]>([
+  const [examRecords, setExamRecords] = useState<any[]>([
     {
       id: "ex1",
+      name: "朱晓煌",
       school: "湖州师范学院",
-      major: "2022年",
-      studyType: "",
-      degreeLevel: "",
+      year: "2022",
+      photo: "",
+      examLocation: "3306",
+      registrationNumber: "330695769",
+      examUnit: "10337",
+      department: "无",
+      major: "085400",
+      researchDirection: "无",
+      examType: "全国统考",
+      specialProgram: "非专项计划",
+      politicsName: "思想政治理论",
+      foreignLanguageName: "英语（二）",
+      businessCourse1Name: "数学（二）",
+      businessCourse2Name: "数据结构与计算机网络",
+      politicsScore: "78",
+      foreignLanguageScore: "60",
+      businessCourse1Score: "57",
+      businessCourse2Score: "109",
+      totalScore: "304.0",
+      admissionUnit: "湖州师范学院",
+      admissionMajor: "电子信息",
+      note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
       type: "exam",
     },
   ]);
@@ -268,9 +288,9 @@ const Index = () => {
               <EducationCard
                 key={record.id}
                 school={record.school}
-                major={record.major}
-                studyType={record.studyType}
-                degreeLevel={record.degreeLevel}
+                major={record.year}
+                studyType=""
+                degreeLevel=""
                 variant="exam"
                 onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}
