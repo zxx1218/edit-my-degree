@@ -25,7 +25,7 @@ const Index = () => {
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([
     {
       id: "ss1",
-      school: "湖州师范学院",
+      school: "浙江大学",
       major: "计算机技术",
       studyType: "全日制",
       degreeLevel: "硕士研究生",
@@ -33,7 +33,7 @@ const Index = () => {
     },
     {
       id: "ss2",
-      school: "浙江工业大学之江学院",
+      school: "浙江大学",
       major: "计算机科学与技术",
       studyType: "普通全日制",
       degreeLevel: "本科",
@@ -44,7 +44,7 @@ const Index = () => {
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([
     {
       id: "ed1",
-      school: "湖州师范学院",
+      school: "浙江大学",
       major: "计算机技术",
       studyType: "全日制",
       degreeLevel: "硕士研究生",
@@ -52,7 +52,7 @@ const Index = () => {
     },
     {
       id: "ed2",
-      school: "浙江工业大学之江学院",
+      school: "浙江大学",
       major: "计算机科学与技术",
       studyType: "普通全日制",
       degreeLevel: "本科",
@@ -63,7 +63,7 @@ const Index = () => {
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([
     {
       id: "dg1",
-      school: "湖州师范学院",
+      school: "浙江大学",
       major: "电子信息硕士专业学位",
       studyType: "",
       degreeLevel: "硕士",
@@ -71,7 +71,7 @@ const Index = () => {
     },
     {
       id: "dg2",
-      school: "浙江工业大学之江学院",
+      school: "浙江大学",
       major: "工学学士学位",
       studyType: "",
       degreeLevel: "学士",
@@ -82,8 +82,8 @@ const Index = () => {
   const [examRecords, setExamRecords] = useState<any[]>([
     {
       id: "ex1",
-      name: "朱晓煌",
-      school: "湖州师范学院",
+      name: "浆果儿",
+      school: "浙江大学",
       year: "2022",
       photo: "",
       examLocation: "3306",

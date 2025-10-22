@@ -40,8 +40,8 @@ const ExamDetail = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialData: ExamData = location.state?.record || {
-    name: "朱晓煌",
-    school: "湖州师范学院",
+    name: "浆果儿",
+    school: "浙江大学",
     year: "2022",
     photo: "",
     examLocation: "3306",
