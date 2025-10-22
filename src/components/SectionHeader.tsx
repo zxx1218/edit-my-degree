@@ -14,7 +14,7 @@ const SectionHeader = ({ title, count, actionText, onAction }: SectionHeaderProp
       {actionText && (
         <button 
           onClick={onAction}
-          className="text-sm text-muted-foreground hover:opacity-80 transition-opacity"
+          className="text-sm text-[hsl(var(--primary))] hover:opacity-80 transition-opacity"
         >
           {actionText}
         </button>
