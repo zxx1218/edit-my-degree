@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { loginUser } from "@/lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -19,42 +20,24 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // 读取用户配置文件
-      const response = await fetch("/users.json");
-      const data = await response.json();
+      const result = await loginUser(username, password);
       
-      // 查找用户
-      const user = data.users.find(
-        (u: any) => u.username === username && u.password === password
-      );
-
-      if (!user) {
-        toast.error("用户名或密码错误");
+      if (result.error) {
+        toast.error(result.error);
         setIsLoading(false);
         return;
       }
 
-      // 检查剩余登录次数
-      if (user.remainingLogins <= 0) {
-        toast.error("使用次数为0，请购买次数后继续使用！");
-        setIsLoading(false);
-        return;
+      if (result.success && result.user) {
+        // 将用户信息存储到localStorage
+        localStorage.setItem("currentUser", JSON.stringify(result.user));
+        toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`);
+        login();
+        navigate("/");
       }
-
-      // 更新剩余次数
-      user.remainingLogins -= 1;
-      
-      // 这里需要将更新后的数据保存回json文件
-      // 注意：在纯前端应用中，无法直接修改public目录下的文件
-      // 实际应用中需要后端API来处理
-      // 这里我们使用localStorage临时存储更新后的数据
-      localStorage.setItem("usersData", JSON.stringify(data));
-      
-      toast.success(`登录成功！剩余登录次数：${user.remainingLogins}`);
-      login();
-      navigate("/");
     } catch (error) {
       toast.error("登录失败，请重试");
+      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }

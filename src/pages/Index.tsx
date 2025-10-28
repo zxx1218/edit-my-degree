@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import EducationHeader from "@/components/EducationHeader";
 import SectionHeader from "@/components/SectionHeader";
@@ -6,6 +6,7 @@ import EducationCard from "@/components/EducationCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
 import ActionMenuDialog from "@/components/ActionMenuDialog";
 import { toast } from "sonner";
+import { getUserData, updateData } from "@/lib/api";
 
 interface EducationRecord {
   id: string;
@@ -21,94 +22,53 @@ const Index = () => {
   const [selectedRecord, setSelectedRecord] = useState<EducationRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   
-  const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([
-    {
-      id: "ss1",
-      school: "浙江大学",
-      major: "计算机技术",
-      studyType: "全日制",
-      degreeLevel: "硕士研究生",
-      type: "student-status",
-    },
-    {
-      id: "ss2",
-      school: "浙江大学",
-      major: "计算机科学与技术",
-      studyType: "普通全日制",
-      degreeLevel: "本科",
-      type: "student-status",
-    },
-  ]);
+  const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([]);
+  const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
+  const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
+  const [examRecords, setExamRecords] = useState<any[]>([]);
 
-  const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([
-    {
-      id: "ed1",
-      school: "浙江大学",
-      major: "计算机技术",
-      studyType: "全日制",
-      degreeLevel: "硕士研究生",
-      type: "education",
-    },
-    {
-      id: "ed2",
-      school: "浙江大学",
-      major: "计算机科学与技术",
-      studyType: "普通全日制",
-      degreeLevel: "本科",
-      type: "education",
-    },
-  ]);
+  // 从数据库加载用户数据
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userStr = localStorage.getItem("currentUser");
+        if (!userStr) {
+          navigate("/login");
+          return;
+        }
 
-  const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([
-    {
-      id: "dg1",
-      school: "浙江大学",
-      major: "电子信息硕士专业学位",
-      studyType: "",
-      degreeLevel: "硕士",
-      type: "degree",
-    },
-    {
-      id: "dg2",
-      school: "浙江大学",
-      major: "工学学士学位",
-      studyType: "",
-      degreeLevel: "学士",
-      type: "degree",
-    },
-  ]);
+        const user = JSON.parse(userStr);
+        setCurrentUserId(user.id);
 
-  const [examRecords, setExamRecords] = useState<any[]>([
-    {
-      id: "ex1",
-      name: "浆果儿",
-      school: "浙江大学",
-      year: "2022",
-      photo: "",
-      examLocation: "3306",
-      registrationNumber: "330695769",
-      examUnit: "10335",
-      department: "无",
-      major: "085400",
-      researchDirection: "无",
-      examType: "全国统考",
-      specialProgram: "非专项计划",
-      politicsName: "思想政治理论",
-      foreignLanguageName: "英语（一）",
-      businessCourse1Name: "数学（一）",
-      businessCourse2Name: "数据结构与计算机网络",
-      politicsScore: "78",
-      foreignLanguageScore: "60",
-      businessCourse1Score: "139",
-      businessCourse2Score: "129",
-      totalScore: "406.0",
-      admissionUnit: "浙江大学",
-      admissionMajor: "电子信息",
-      note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
-      type: "exam",
-    },
-  ]);
+        const data = await getUserData(user.id);
+        
+        // 转换数据格式以匹配前端接口
+        const convertToEducationRecord = (item: any, type: string): EducationRecord => ({
+          id: item.id,
+          school: item.school,
+          major: type === "exam" ? item.year : item.major,
+          studyType: item.study_type || "",
+          degreeLevel: item.degree_level || "",
+          type: type as any,
+        });
+
+        setStudentStatus(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status")));
+        setEducationRecords(data.education.map((item: any) => convertToEducationRecord(item, "education")));
+        setDegreeRecords(data.degree.map((item: any) => convertToEducationRecord(item, "degree")));
+        setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
+      } catch (error) {
+        console.error("Error loading user data:", error);
+        toast.error("加载数据失败");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [navigate]);
 
   const handleLongPress = (record: EducationRecord) => {
     setSelectedRecord(record);
@@ -119,58 +79,98 @@ const Index = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!selectedRecord) return;
 
-    const newRecord: EducationRecord = {
-      id: `${selectedRecord.type}-${Date.now()}`,
-      school: "新学校",
-      major: "新专业",
-      studyType: selectedRecord.type === "degree" ? "" : "全日制",
-      degreeLevel: selectedRecord.type === "degree" ? "学士" : "本科",
-      type: selectedRecord.type,
-    };
+    try {
+      const tableMap: Record<string, string> = {
+        "student-status": "student_status",
+        "education": "education",
+        "degree": "degree",
+        "exam": "exam",
+      };
 
-    switch (selectedRecord.type) {
-      case "student-status":
-        setStudentStatus([...studentStatus, newRecord]);
-        break;
-      case "education":
-        setEducationRecords([...educationRecords, newRecord]);
-        break;
-      case "degree":
-        setDegreeRecords([...degreeRecords, newRecord]);
-        break;
-      case "exam":
-        setExamRecords([...examRecords, newRecord]);
-        break;
+      const table = tableMap[selectedRecord.type];
+      const newData = {
+        name: "新用户",
+        school: "新学校",
+        major: "新专业",
+        study_type: selectedRecord.type === "degree" ? "" : "全日制",
+        degree_level: selectedRecord.type === "degree" ? "学士" : "本科",
+      };
+
+      const result = await updateData(table, "insert", currentUserId, newData);
+      
+      if (result.success && result.data) {
+        const newRecord: EducationRecord = {
+          id: result.data[0].id,
+          school: result.data[0].school,
+          major: selectedRecord.type === "exam" ? "" : result.data[0].major,
+          studyType: result.data[0].study_type || "",
+          degreeLevel: result.data[0].degree_level || "",
+          type: selectedRecord.type,
+        };
+
+        switch (selectedRecord.type) {
+          case "student-status":
+            setStudentStatus([...studentStatus, newRecord]);
+            break;
+          case "education":
+            setEducationRecords([...educationRecords, newRecord]);
+            break;
+          case "degree":
+            setDegreeRecords([...degreeRecords, newRecord]);
+            break;
+          case "exam":
+            setExamRecords([...examRecords, { ...result.data[0], type: "exam" }]);
+            break;
+        }
+
+        toast.success("已添加新记录");
+      }
+    } catch (error) {
+      console.error("Error adding record:", error);
+      toast.error("添加记录失败");
     }
-
-    toast.success("已添加新记录");
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!selectedRecord) return;
 
-    const deleteFromList = (list: EducationRecord[]) =>
-      list.filter((r) => r.id !== selectedRecord.id);
+    try {
+      const tableMap: Record<string, string> = {
+        "student-status": "student_status",
+        "education": "education",
+        "degree": "degree",
+        "exam": "exam",
+      };
 
-    switch (selectedRecord.type) {
-      case "student-status":
-        setStudentStatus(deleteFromList(studentStatus));
-        break;
-      case "education":
-        setEducationRecords(deleteFromList(educationRecords));
-        break;
-      case "degree":
-        setDegreeRecords(deleteFromList(degreeRecords));
-        break;
-      case "exam":
-        setExamRecords(deleteFromList(examRecords));
-        break;
+      const table = tableMap[selectedRecord.type];
+      await updateData(table, "delete", currentUserId, undefined, selectedRecord.id);
+
+      const deleteFromList = (list: EducationRecord[]) =>
+        list.filter((r) => r.id !== selectedRecord.id);
+
+      switch (selectedRecord.type) {
+        case "student-status":
+          setStudentStatus(deleteFromList(studentStatus));
+          break;
+        case "education":
+          setEducationRecords(deleteFromList(educationRecords));
+          break;
+        case "degree":
+          setDegreeRecords(deleteFromList(degreeRecords));
+          break;
+        case "exam":
+          setExamRecords(deleteFromList(examRecords));
+          break;
+      }
+
+      toast.success("已删除记录");
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      toast.error("删除记录失败");
     }
-
-    toast.success("已删除记录");
   };
 
   const handleCardClick = (record: EducationRecord) => {
@@ -206,6 +206,14 @@ const Index = () => {
 
     toast.success("信息已更新");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-lg">加载中...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-8">
