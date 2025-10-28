@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
+import { updateData } from "@/lib/api";
 
 interface StudentData {
   name: string;
@@ -68,24 +69,56 @@ const StudentStatusDetail = () => {
     setEditingField({ field, label });
   };
 
-  const handleFieldSave = (field: keyof StudentData, newValue: string) => {
+  const handleFieldSave = async (field: keyof StudentData, newValue: string) => {
     setData({ ...data, [field]: newValue });
-    toast({
-      title: "修改成功",
-      description: "信息已更新",
-    });
+    
+    const userId = localStorage.getItem('userId');
+    if (!userId || !id) return;
+    
+    try {
+      // Convert camelCase to snake_case for database
+      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+      await updateData('student_status', 'update', userId, { [dbField]: newValue }, id);
+      
+      toast({
+        title: "修改成功",
+        description: "信息已更新并同步到数据库",
+      });
+    } catch (error) {
+      toast({
+        title: "保存失败",
+        description: "请稍后重试",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleImageUpload = (type: "admissionPhoto" | "degreePhoto", e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (type: "admissionPhoto" | "degreePhoto", e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setData({ ...data, [type]: reader.result as string });
-        toast({
-          title: "上传成功",
-          description: "照片已更新",
-        });
+      reader.onloadend = async () => {
+        const photoData = reader.result as string;
+        setData({ ...data, [type]: photoData });
+        
+        const userId = localStorage.getItem('userId');
+        if (!userId || !id) return;
+        
+        try {
+          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase();
+          await updateData('student_status', 'update', userId, { [dbField]: photoData }, id);
+          
+          toast({
+            title: "上传成功",
+            description: "照片已更新并同步到数据库",
+          });
+        } catch (error) {
+          toast({
+            title: "上传失败",
+            description: "请稍后重试",
+            variant: "destructive",
+          });
+        }
       };
       reader.readAsDataURL(file);
     }
