@@ -103,13 +103,13 @@ const EducationCard = ({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-2 text-white/95">
-        <span className="text-base">{major}</span>
-        {studyType && (
-          <>
+       <div className="flex items-center gap-2 text-white/95">
+          {major && <span className="text-base">{major}</span>}
+          {major && studyType && (
             <span className="text-white/60">|</span>
-            <span className="text-base">{studyType}</span>
-          </>
+          )}
+        {studyType && (
+          <span className="text-base">{studyType}</span>
         )}
       </div>
       {showEditIcon && (

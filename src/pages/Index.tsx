@@ -296,7 +296,7 @@ const Index = () => {
               <EducationCard
                 key={record.id}
                 school={record.school}
-                major={record.admission_major || record.major || ""}
+                major=""
                 studyType={record.year || ""}
                 degreeLevel=""
                 variant="exam"
