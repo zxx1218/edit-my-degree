@@ -14,7 +14,359 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      degree: {
+        Row: {
+          birth_date: string | null
+          certificate_number: string | null
+          created_at: string | null
+          degree_date: string | null
+          degree_level: string | null
+          degree_type: string
+          gender: string | null
+          id: string
+          major: string | null
+          name: string
+          photo: string | null
+          school: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          birth_date?: string | null
+          certificate_number?: string | null
+          created_at?: string | null
+          degree_date?: string | null
+          degree_level?: string | null
+          degree_type: string
+          gender?: string | null
+          id?: string
+          major?: string | null
+          name: string
+          photo?: string | null
+          school: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          birth_date?: string | null
+          certificate_number?: string | null
+          created_at?: string | null
+          degree_date?: string | null
+          degree_level?: string | null
+          degree_type?: string
+          gender?: string | null
+          id?: string
+          major?: string | null
+          name?: string
+          photo?: string | null
+          school?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "degree_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      education: {
+        Row: {
+          birth_date: string | null
+          certificate_number: string | null
+          created_at: string | null
+          degree_level: string | null
+          duration: string | null
+          education_type: string | null
+          enrollment_date: string | null
+          gender: string | null
+          graduation_date: string | null
+          graduation_status: string | null
+          id: string
+          major: string
+          name: string
+          photo: string | null
+          principal_name: string | null
+          school: string
+          study_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          birth_date?: string | null
+          certificate_number?: string | null
+          created_at?: string | null
+          degree_level?: string | null
+          duration?: string | null
+          education_type?: string | null
+          enrollment_date?: string | null
+          gender?: string | null
+          graduation_date?: string | null
+          graduation_status?: string | null
+          id?: string
+          major: string
+          name: string
+          photo?: string | null
+          principal_name?: string | null
+          school: string
+          study_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          birth_date?: string | null
+          certificate_number?: string | null
+          created_at?: string | null
+          degree_level?: string | null
+          duration?: string | null
+          education_type?: string | null
+          enrollment_date?: string | null
+          gender?: string | null
+          graduation_date?: string | null
+          graduation_status?: string | null
+          id?: string
+          major?: string
+          name?: string
+          photo?: string | null
+          principal_name?: string | null
+          school?: string
+          study_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam: {
+        Row: {
+          admission_major: string | null
+          admission_unit: string | null
+          business_course1_name: string | null
+          business_course1_score: string | null
+          business_course2_name: string | null
+          business_course2_score: string | null
+          created_at: string | null
+          department: string | null
+          exam_location: string | null
+          exam_type: string | null
+          exam_unit: string | null
+          foreign_language_name: string | null
+          foreign_language_score: string | null
+          id: string
+          major: string | null
+          name: string
+          note: string | null
+          photo: string | null
+          politics_name: string | null
+          politics_score: string | null
+          registration_number: string | null
+          research_direction: string | null
+          school: string
+          special_program: string | null
+          total_score: string | null
+          updated_at: string | null
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          admission_major?: string | null
+          admission_unit?: string | null
+          business_course1_name?: string | null
+          business_course1_score?: string | null
+          business_course2_name?: string | null
+          business_course2_score?: string | null
+          created_at?: string | null
+          department?: string | null
+          exam_location?: string | null
+          exam_type?: string | null
+          exam_unit?: string | null
+          foreign_language_name?: string | null
+          foreign_language_score?: string | null
+          id?: string
+          major?: string | null
+          name: string
+          note?: string | null
+          photo?: string | null
+          politics_name?: string | null
+          politics_score?: string | null
+          registration_number?: string | null
+          research_direction?: string | null
+          school: string
+          special_program?: string | null
+          total_score?: string | null
+          updated_at?: string | null
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          admission_major?: string | null
+          admission_unit?: string | null
+          business_course1_name?: string | null
+          business_course1_score?: string | null
+          business_course2_name?: string | null
+          business_course2_score?: string | null
+          created_at?: string | null
+          department?: string | null
+          exam_location?: string | null
+          exam_type?: string | null
+          exam_unit?: string | null
+          foreign_language_name?: string | null
+          foreign_language_score?: string | null
+          id?: string
+          major?: string | null
+          name?: string
+          note?: string | null
+          photo?: string | null
+          politics_name?: string | null
+          politics_score?: string | null
+          registration_number?: string | null
+          research_direction?: string | null
+          school?: string
+          special_program?: string | null
+          total_score?: string | null
+          updated_at?: string | null
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_status: {
+        Row: {
+          admission_photo: string | null
+          birth_date: string | null
+          branch: string | null
+          class: string | null
+          created_at: string | null
+          degree_level: string | null
+          degree_photo: string | null
+          department: string | null
+          duration: string | null
+          education_type: string | null
+          enrollment_date: string | null
+          gender: string | null
+          graduation_date: string | null
+          id: string
+          id_number: string | null
+          major: string
+          name: string
+          nationality: string | null
+          personal_info: string | null
+          school: string
+          status: string | null
+          student_id: string | null
+          study_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          admission_photo?: string | null
+          birth_date?: string | null
+          branch?: string | null
+          class?: string | null
+          created_at?: string | null
+          degree_level?: string | null
+          degree_photo?: string | null
+          department?: string | null
+          duration?: string | null
+          education_type?: string | null
+          enrollment_date?: string | null
+          gender?: string | null
+          graduation_date?: string | null
+          id?: string
+          id_number?: string | null
+          major: string
+          name: string
+          nationality?: string | null
+          personal_info?: string | null
+          school: string
+          status?: string | null
+          student_id?: string | null
+          study_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          admission_photo?: string | null
+          birth_date?: string | null
+          branch?: string | null
+          class?: string | null
+          created_at?: string | null
+          degree_level?: string | null
+          degree_photo?: string | null
+          department?: string | null
+          duration?: string | null
+          education_type?: string | null
+          enrollment_date?: string | null
+          gender?: string | null
+          graduation_date?: string | null
+          id?: string
+          id_number?: string | null
+          major?: string
+          name?: string
+          nationality?: string | null
+          personal_info?: string | null
+          school?: string
+          status?: string | null
+          student_id?: string | null
+          study_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          id: string
+          password: string
+          remaining_logins: number
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          password: string
+          remaining_logins?: number
+          updated_at?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          password?: string
+          remaining_logins?: number
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
