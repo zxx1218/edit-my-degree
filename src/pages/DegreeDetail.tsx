@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData } from "@/lib/api";
@@ -26,20 +26,67 @@ const DegreeDetail = () => {
   const { toast } = useToast();
   const photoRef = useRef<HTMLInputElement>(null);
 
-  const initialData: DegreeData = location.state?.record || {
-    name: "朱晓煌",
-    gender: "男",
-    birthDate: "1999年12月18日",
-    school: "湖州师范学院",
-    degreeType: "电子信息硕士专业学位",
-    degreeLevel: "硕士",
-    degreeDate: "2025年06月13日",
-    major: "计算机技术",
-    certificateNumber: "10347320255201162",
+  const [data, setData] = useState<DegreeData>({
+    name: "",
+    gender: "",
+    birthDate: "",
+    school: "",
+    degreeType: "",
+    degreeLevel: "",
+    degreeDate: "",
+    major: "",
+    certificateNumber: "",
     photo: "",
-  };
+  });
 
-  const [data, setData] = useState<DegreeData>(initialData);
+  // 从数据库加载数据
+  useEffect(() => {
+    const loadData = async () => {
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser || !id) return;
+      const userId = JSON.parse(currentUser).id;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ userId }),
+          }
+        );
+
+        const result = await response.json();
+        const record = result.degree?.find((r: any) => r.id === id);
+        
+        if (record) {
+          setData({
+            name: record.name || "",
+            gender: record.gender || "",
+            birthDate: record.birth_date || "",
+            school: record.school || "",
+            degreeType: record.degree_type || "",
+            degreeLevel: record.degree_level || "",
+            degreeDate: record.degree_date || "",
+            major: record.major || "",
+            certificateNumber: record.certificate_number || "",
+            photo: record.photo || "",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "加载失败",
+          description: "无法加载数据",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadData();
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof DegreeData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof DegreeData, label: string) => {

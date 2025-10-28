@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,59 +40,95 @@ const ExamDetail = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const initialData: ExamData = location.state?.record ? {
-    name: location.state.record.name || "浆果儿",
-    school: location.state.record.school || "浙江大学",
-    year: location.state.record.year || "2022",
-    photo: location.state.record.photo || "",
-    examLocation: location.state.record.exam_location || "3306",
-    registrationNumber: location.state.record.registration_number || "330695769",
-    examUnit: location.state.record.exam_unit || "10337",
-    department: location.state.record.department || "无",
-    major: location.state.record.major || "085400",
-    researchDirection: location.state.record.research_direction || "无",
-    examType: location.state.record.exam_type || "全国统考",
-    specialProgram: location.state.record.special_program || "非专项计划",
-    politicsName: location.state.record.politics_name || "思想政治理论",
-    foreignLanguageName: location.state.record.foreign_language_name || "英语（二）",
-    businessCourse1Name: location.state.record.business_course1_name || "数学（二）",
-    businessCourse2Name: location.state.record.business_course2_name || "数据结构与计算机网络",
-    politicsScore: location.state.record.politics_score || "78",
-    foreignLanguageScore: location.state.record.foreign_language_score || "60",
-    businessCourse1Score: location.state.record.business_course1_score || "57",
-    businessCourse2Score: location.state.record.business_course2_score || "109",
-    totalScore: location.state.record.total_score || "304.0",
-    admissionUnit: location.state.record.admission_unit || "湖州师范学院",
-    admissionMajor: location.state.record.admission_major || "电子信息",
-    note: location.state.record.note || "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
-  } : {
-    name: "浆果儿",
-    school: "浙江大学",
-    year: "2022",
+  const [data, setData] = useState<ExamData>({
+    name: "",
+    school: "",
+    year: "",
     photo: "",
-    examLocation: "3306",
-    registrationNumber: "330695769",
-    examUnit: "10337",
-    department: "无",
-    major: "085400",
-    researchDirection: "无",
-    examType: "全国统考",
-    specialProgram: "非专项计划",
-    politicsName: "思想政治理论",
-    foreignLanguageName: "英语（二）",
-    businessCourse1Name: "数学（二）",
-    businessCourse2Name: "数据结构与计算机网络",
-    politicsScore: "78",
-    foreignLanguageScore: "60",
-    businessCourse1Score: "57",
-    businessCourse2Score: "109",
-    totalScore: "304.0",
-    admissionUnit: "湖州师范学院",
-    admissionMajor: "电子信息",
-    note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
-  };
+    examLocation: "",
+    registrationNumber: "",
+    examUnit: "",
+    department: "",
+    major: "",
+    researchDirection: "",
+    examType: "",
+    specialProgram: "",
+    politicsName: "",
+    politicsScore: "",
+    foreignLanguageName: "",
+    foreignLanguageScore: "",
+    businessCourse1Name: "",
+    businessCourse1Score: "",
+    businessCourse2Name: "",
+    businessCourse2Score: "",
+    totalScore: "",
+    admissionUnit: "",
+    admissionMajor: "",
+    note: "",
+  });
 
-  const [data, setData] = useState<ExamData>(initialData);
+  // 从数据库加载数据
+  useEffect(() => {
+    const loadData = async () => {
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser || !id) return;
+      const userId = JSON.parse(currentUser).id;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ userId }),
+          }
+        );
+
+        const result = await response.json();
+        const record = result.exam?.find((r: any) => r.id === id);
+        
+        if (record) {
+          setData({
+            name: record.name || "",
+            school: record.school || "",
+            year: record.year || "",
+            photo: record.photo || "",
+            examLocation: record.exam_location || "",
+            registrationNumber: record.registration_number || "",
+            examUnit: record.exam_unit || "",
+            department: record.department || "",
+            major: record.major || "",
+            researchDirection: record.research_direction || "",
+            examType: record.exam_type || "",
+            specialProgram: record.special_program || "",
+            politicsName: record.politics_name || "",
+            politicsScore: record.politics_score || "",
+            foreignLanguageName: record.foreign_language_name || "",
+            foreignLanguageScore: record.foreign_language_score || "",
+            businessCourse1Name: record.business_course1_name || "",
+            businessCourse1Score: record.business_course1_score || "",
+            businessCourse2Name: record.business_course2_name || "",
+            businessCourse2Score: record.business_course2_score || "",
+            totalScore: record.total_score || "",
+            admissionUnit: record.admission_unit || "",
+            admissionMajor: record.admission_major || "",
+            note: record.note || "",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "加载失败",
+          description: "无法加载数据",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadData();
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof ExamData, label: string) => {

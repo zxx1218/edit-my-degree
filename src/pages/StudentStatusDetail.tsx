@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData } from "@/lib/api";
@@ -38,31 +38,89 @@ const StudentStatusDetail = () => {
   const admissionPhotoRef = useRef<HTMLInputElement>(null);
   const degreePhotoRef = useRef<HTMLInputElement>(null);
 
-  const initialData: StudentData = location.state?.record || {
-    name: "朱晓煌",
-    personalInfo: "男 1999年12月18日",
-    gender: "男",
-    birthDate: "1999年12月18日",
-    school: "湖州师范学院",
-    major: "计算机技术",
-    studyType: "全日制",
-    degreeLevel: "硕士研究生",
-    nationality: "汉族",
-    idNumber: "140105199912180817",
-    duration: "3年",
-    educationType: "普通高等教育",
+  const [data, setData] = useState<StudentData>({
+    name: "",
+    personalInfo: "",
+    gender: "",
+    birthDate: "",
+    school: "",
+    major: "",
+    studyType: "",
+    degreeLevel: "",
+    status: "",
+    nationality: "",
+    idNumber: "",
+    enrollmentDate: "",
+    graduationDate: "",
+    duration: "",
+    educationType: "",
     branch: "",
     department: "",
     class: "",
-    studentId: "2022388441",
-    enrollmentDate: "2022年09月03日",
-    status: "不在籍（毕业）",
-    graduationDate: "2025年06月13日",
+    studentId: "",
     admissionPhoto: "",
     degreePhoto: "",
-  };
+  });
 
-  const [data, setData] = useState<StudentData>(initialData);
+  // 从数据库加载数据
+  useEffect(() => {
+    const loadData = async () => {
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser || !id) return;
+      const userId = JSON.parse(currentUser).id;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ userId }),
+          }
+        );
+
+        const result = await response.json();
+        const record = result.studentStatus?.find((r: any) => r.id === id);
+        
+        if (record) {
+          setData({
+            name: record.name || "",
+            personalInfo: record.personal_info || "",
+            gender: record.gender || "",
+            birthDate: record.birth_date || "",
+            school: record.school || "",
+            major: record.major || "",
+            studyType: record.study_type || "",
+            degreeLevel: record.degree_level || "",
+            status: record.status || "",
+            nationality: record.nationality || "",
+            idNumber: record.id_number || "",
+            enrollmentDate: record.enrollment_date || "",
+            graduationDate: record.graduation_date || "",
+            duration: record.duration || "",
+            educationType: record.education_type || "",
+            branch: record.branch || "",
+            department: record.department || "",
+            class: record.class || "",
+            studentId: record.student_id || "",
+            admissionPhoto: record.admission_photo || "",
+            degreePhoto: record.degree_photo || "",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "加载失败",
+          description: "无法加载数据",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadData();
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof StudentData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof StudentData, label: string) => {
