@@ -2,8 +2,8 @@ import { useState, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import FieldEditDialog from "@/components/FieldEditDialog";
 
 interface ExamData {
   name: string;
@@ -67,26 +67,18 @@ const ExamDetail = () => {
   };
 
   const [data, setData] = useState<ExamData>(initialData);
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [tempValue, setTempValue] = useState("");
+  const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
-  const handleFieldClick = (field: keyof ExamData) => {
-    setEditingField(field);
-    setTempValue(data[field]);
+  const handleFieldClick = (field: keyof ExamData, label: string) => {
+    setEditingField({ field, label });
   };
 
-  const handleFieldSave = (field: keyof ExamData) => {
-    setData({ ...data, [field]: tempValue });
-    setEditingField(null);
+  const handleFieldSave = (field: keyof ExamData, newValue: string) => {
+    setData({ ...data, [field]: newValue });
     toast({
       title: "保存成功",
       description: "信息已更新",
     });
-  };
-
-  const handleFieldCancel = () => {
-    setEditingField(null);
-    setTempValue("");
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,111 +137,33 @@ const ExamDetail = () => {
 
             {/* Name */}
             <div className="flex-1 pt-2">
-              {editingField === "name" ? (
-                <div className="flex gap-2">
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    className="bg-white/20 text-white border-white/30 placeholder:text-white/60"
-                    autoFocus
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => handleFieldSave("name")}
-                    className="bg-white text-cyan-500 hover:bg-white/90"
-                  >
-                    保存
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleFieldCancel}
-                    className="border-white text-white hover:bg-white/10"
-                  >
-                    取消
-                  </Button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => handleFieldClick("name")}
-                  className="text-white text-xl font-medium cursor-pointer hover:opacity-80"
-                >
-                  {data.name}
-                </div>
-              )}
+              <div
+                onClick={() => handleFieldClick("name", "姓名")}
+                className="text-white text-xl font-medium cursor-pointer hover:opacity-80"
+              >
+                {data.name}
+              </div>
             </div>
           </div>
 
           {/* School */}
           <div className="text-white">
-            {editingField === "school" ? (
-              <div className="flex gap-2">
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  className="bg-white/20 text-white border-white/30 placeholder:text-white/60"
-                  autoFocus
-                />
-                <Button
-                  size="sm"
-                  onClick={() => handleFieldSave("school")}
-                  className="bg-white text-cyan-500 hover:bg-white/90"
-                >
-                  保存
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleFieldCancel}
-                  className="border-white text-white hover:bg-white/10"
-                >
-                  取消
-                </Button>
-              </div>
-            ) : (
-              <div
-                onClick={() => handleFieldClick("school")}
-                className="text-2xl font-bold mb-3 cursor-pointer hover:opacity-80"
-              >
-                {data.school}
-              </div>
-            )}
+            <div
+              onClick={() => handleFieldClick("school", "学校名称")}
+              className="text-2xl font-bold mb-3 cursor-pointer hover:opacity-80"
+            >
+              {data.school}
+            </div>
           </div>
 
           {/* Year */}
           <div className="text-white">
-            {editingField === "year" ? (
-              <div className="flex gap-2">
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  className="bg-white/20 text-white border-white/30 placeholder:text-white/60"
-                  autoFocus
-                />
-                <Button
-                  size="sm"
-                  onClick={() => handleFieldSave("year")}
-                  className="bg-white text-cyan-500 hover:bg-white/90"
-                >
-                  保存
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleFieldCancel}
-                  className="border-white text-white hover:bg-white/10"
-                >
-                  取消
-                </Button>
-              </div>
-            ) : (
-              <div
-                onClick={() => handleFieldClick("year")}
-                className="text-xl cursor-pointer hover:opacity-80"
-              >
-                {data.year}
-              </div>
-            )}
+            <div
+              onClick={() => handleFieldClick("year", "年份")}
+              className="text-xl cursor-pointer hover:opacity-80"
+            >
+              {data.year}
+            </div>
           </div>
         </div>
 
@@ -273,32 +187,12 @@ const ExamDetail = () => {
               <span className="text-muted-foreground text-sm min-w-[120px] text-right">
                 {label}
               </span>
-              {editingField === field ? (
-                <div className="flex-1 flex gap-2 max-w-md">
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    autoFocus
-                  />
-                  <Button size="sm" onClick={() => handleFieldSave(field)}>
-                    保存
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleFieldCancel}
-                  >
-                    取消
-                  </Button>
-                </div>
-              ) : (
-                <span
-                  onClick={() => handleFieldClick(field)}
-                  className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
-                >
-                  {value}
-                </span>
-              )}
+              <span
+                onClick={() => handleFieldClick(field, label)}
+                className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
+              >
+                {value}
+              </span>
             </div>
           ))}
         </div>
@@ -318,32 +212,12 @@ const ExamDetail = () => {
                 <span className="text-muted-foreground text-sm min-w-[120px] text-right">
                   {label}
                 </span>
-                {editingField === field ? (
-                  <div className="flex-1 flex gap-2 max-w-md">
-                    <Input
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      autoFocus
-                    />
-                    <Button size="sm" onClick={() => handleFieldSave(field)}>
-                      保存
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleFieldCancel}
-                    >
-                      取消
-                    </Button>
-                  </div>
-                ) : (
-                  <span
-                    onClick={() => handleFieldClick(field)}
-                    className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
-                  >
-                    {value}
-                  </span>
-                )}
+                <span
+                  onClick={() => handleFieldClick(field, label)}
+                  className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
+                >
+                  {value}
+                </span>
               </div>
             ))}
           </div>
@@ -361,32 +235,12 @@ const ExamDetail = () => {
                 <span className="text-muted-foreground text-sm min-w-[120px] text-right">
                   {label}
                 </span>
-                {editingField === field ? (
-                  <div className="flex-1 flex gap-2 max-w-md">
-                    <Input
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      autoFocus
-                    />
-                    <Button size="sm" onClick={() => handleFieldSave(field)}>
-                      保存
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleFieldCancel}
-                    >
-                      取消
-                    </Button>
-                  </div>
-                ) : (
-                  <span
-                    onClick={() => handleFieldClick(field)}
-                    className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
-                  >
-                    {value}
-                  </span>
-                )}
+                <span
+                  onClick={() => handleFieldClick(field, label)}
+                  className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
+                >
+                  {value}
+                </span>
               </div>
             ))}
           </div>
@@ -396,35 +250,26 @@ const ExamDetail = () => {
         <div className="pt-4 pb-8">
           <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
             <span className="font-medium">说明：</span>
-            {editingField === "note" ? (
-              <div className="flex gap-2 mt-2">
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  autoFocus
-                />
-                <Button size="sm" onClick={() => handleFieldSave("note")}>
-                  保存
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleFieldCancel}
-                >
-                  取消
-                </Button>
-              </div>
-            ) : (
-              <span
-                onClick={() => handleFieldClick("note")}
-                className="cursor-pointer hover:text-primary"
-              >
-                {data.note}
-              </span>
-            )}
+            <span
+              onClick={() => handleFieldClick("note", "说明")}
+              className="cursor-pointer hover:text-primary"
+            >
+              {data.note}
+            </span>
           </div>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      {editingField && (
+        <FieldEditDialog
+          open={true}
+          onOpenChange={(open) => !open && setEditingField(null)}
+          label={editingField.label}
+          value={data[editingField.field]}
+          onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
+        />
+      )}
     </div>
   );
 };

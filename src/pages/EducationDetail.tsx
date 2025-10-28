@@ -2,8 +2,8 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import FieldEditDialog from "@/components/FieldEditDialog";
 
 interface EducationData {
   name: string;
@@ -49,26 +49,18 @@ const EducationDetail = () => {
   };
 
   const [data, setData] = useState<EducationData>(initialData);
-  const [editingField, setEditingField] = useState<string | null>(null);
-  const [tempValue, setTempValue] = useState<string>("");
+  const [editingField, setEditingField] = useState<{ field: keyof EducationData; label: string } | null>(null);
 
-  const handleFieldClick = (field: keyof EducationData, value: string) => {
-    setEditingField(field);
-    setTempValue(value);
+  const handleFieldClick = (field: keyof EducationData, label: string) => {
+    setEditingField({ field, label });
   };
 
-  const handleFieldSave = (field: keyof EducationData) => {
-    setData({ ...data, [field]: tempValue });
-    setEditingField(null);
+  const handleFieldSave = (field: keyof EducationData, newValue: string) => {
+    setData({ ...data, [field]: newValue });
     toast({
       title: "修改成功",
       description: "信息已更新",
     });
-  };
-
-  const handleFieldCancel = () => {
-    setEditingField(null);
-    setTempValue("");
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,159 +119,61 @@ const EducationDetail = () => {
 
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
-              {editingField === "name" ? (
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  onBlur={() => handleFieldSave("name")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleFieldSave("name");
-                    if (e.key === "Escape") handleFieldCancel();
-                  }}
-                  className="text-2xl font-bold mb-2 bg-white text-black"
-                  autoFocus
-                />
-              ) : (
-                <h2
-                  className="text-2xl font-bold mb-2 cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("name", data.name)}
-                >
-                  {data.name}
-                </h2>
-              )}
+              <h2
+                className="text-2xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("name", "姓名")}
+              >
+                {data.name}
+              </h2>
               <div className="flex items-center gap-3">
-                {editingField === "gender" ? (
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    onBlur={() => handleFieldSave("gender")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleFieldSave("gender");
-                      if (e.key === "Escape") handleFieldCancel();
-                    }}
-                    className="text-base bg-white text-black w-16"
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => handleFieldClick("gender", data.gender)}
-                  >
-                    {data.gender}
-                  </span>
-                )}
-                {editingField === "birthDate" ? (
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    onBlur={() => handleFieldSave("birthDate")}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleFieldSave("birthDate");
-                      if (e.key === "Escape") handleFieldCancel();
-                    }}
-                    className="text-base bg-white text-black"
-                    autoFocus
-                  />
-                ) : (
-                  <span
-                    className="cursor-pointer hover:opacity-80"
-                    onClick={() => handleFieldClick("birthDate", data.birthDate)}
-                  >
-                    {data.birthDate}
-                  </span>
-                )}
+                <span
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={() => handleFieldClick("gender", "性别")}
+                >
+                  {data.gender}
+                </span>
+                <span
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={() => handleFieldClick("birthDate", "出生日期")}
+                >
+                  {data.birthDate}
+                </span>
               </div>
             </div>
           </div>
 
           {/* School Info */}
           <div className="space-y-2">
-            {editingField === "school" ? (
-              <Input
-                value={tempValue}
-                onChange={(e) => setTempValue(e.target.value)}
-                onBlur={() => handleFieldSave("school")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleFieldSave("school");
-                  if (e.key === "Escape") handleFieldCancel();
-                }}
-                className="text-2xl font-bold bg-white text-black"
-                autoFocus
-              />
-            ) : (
-              <h3
-                className="text-2xl font-bold cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("school", data.school)}
-              >
-                {data.school}
-              </h3>
-            )}
+            <h3
+              className="text-2xl font-bold cursor-pointer hover:opacity-80"
+              onClick={() => handleFieldClick("school", "学校名称")}
+            >
+              {data.school}
+            </h3>
             <div className="flex items-center gap-4 text-base">
-              {editingField === "major" ? (
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  onBlur={() => handleFieldSave("major")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleFieldSave("major");
-                    if (e.key === "Escape") handleFieldCancel();
-                  }}
-                  className="bg-white text-black"
-                  autoFocus
-                />
-              ) : (
-                <span
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("major", data.major)}
-                >
-                  {data.major}
-                </span>
-              )}
+              <span
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("major", "专业")}
+              >
+                {data.major}
+              </span>
               <span className="text-white/60">|</span>
-              {editingField === "studyType" ? (
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  onBlur={() => handleFieldSave("studyType")}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleFieldSave("studyType");
-                    if (e.key === "Escape") handleFieldCancel();
-                  }}
-                  className="bg-white text-black"
-                  autoFocus
-                />
-              ) : (
-                <span
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("studyType", data.studyType)}
-                >
-                  {data.studyType}
-                </span>
-              )}
+              <span
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("studyType", "学习形式")}
+              >
+                {data.studyType}
+              </span>
             </div>
           </div>
 
           <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full">
-            {editingField === "degreeLevel" ? (
-              <Input
-                value={tempValue}
-                onChange={(e) => setTempValue(e.target.value)}
-                onBlur={() => handleFieldSave("degreeLevel")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleFieldSave("degreeLevel");
-                  if (e.key === "Escape") handleFieldCancel();
-                }}
-                className="text-sm font-medium bg-white text-black h-7"
-                autoFocus
-              />
-            ) : (
-              <span
-                className="text-sm font-medium cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("degreeLevel", data.degreeLevel)}
-              >
-                {data.degreeLevel}
-              </span>
-            )}
+            <span
+              className="text-sm font-medium cursor-pointer hover:opacity-80"
+              onClick={() => handleFieldClick("degreeLevel", "学位层次")}
+            >
+              {data.degreeLevel}
+            </span>
           </div>
         </div>
 
@@ -296,26 +190,12 @@ const EducationDetail = () => {
           ].map(({ field, label, value }) => (
             <div key={field} className="flex items-center justify-center gap-12 py-1">
               <span className="text-muted-foreground text-right w-32">{label}</span>
-              {editingField === field ? (
-                <Input
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  onBlur={() => handleFieldSave(field as keyof EducationData)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleFieldSave(field as keyof EducationData);
-                    if (e.key === "Escape") handleFieldCancel();
-                  }}
-                  className="font-medium flex-1 max-w-xs"
-                  autoFocus
-                />
-              ) : (
-                <span
-                  className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
-                  onClick={() => handleFieldClick(field as keyof EducationData, value)}
-                >
-                  {value || "-"}
-                </span>
-              )}
+              <span
+                className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
+                onClick={() => handleFieldClick(field as keyof EducationData, label)}
+              >
+                {value || "-"}
+              </span>
             </div>
           ))}
         </div>
@@ -325,6 +205,17 @@ const EducationDetail = () => {
           查看验证报告
         </Button>
       </div>
+
+      {/* Edit Dialog */}
+      {editingField && (
+        <FieldEditDialog
+          open={true}
+          onOpenChange={(open) => !open && setEditingField(null)}
+          label={editingField.label}
+          value={data[editingField.field]}
+          onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
+        />
+      )}
     </div>
   );
 };
