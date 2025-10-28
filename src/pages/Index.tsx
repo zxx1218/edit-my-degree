@@ -292,18 +292,25 @@ const Index = () => {
         <section>
           <SectionHeader title="考研信息" count={examRecords.length} />
           <div className="px-4 space-y-3">
-            {examRecords.map((record) => (
-              <EducationCard
-                key={record.id}
-                school={record.school}
-                major={record.major || record.admission_major || ""}
-                studyType={`${record.year || ""} · ${record.admission_unit || ""}`}
-                degreeLevel=""
-                variant="exam"
-                onEdit={() => handleLongPress(record)}
-                onClick={() => handleCardClick(record)}
-              />
-            ))}
+            {examRecords.map((record) => {
+              const studyTypeElements = [];
+              if (record.year) studyTypeElements.push(record.year);
+              if (record.exam_unit) studyTypeElements.push(`报考单位: ${record.exam_unit}`);
+              if (record.admission_unit) studyTypeElements.push(`录取单位: ${record.admission_unit}`);
+              
+              return (
+                <EducationCard
+                  key={record.id}
+                  school={record.school}
+                  major={record.admission_major || record.major || ""}
+                  studyType={studyTypeElements.join(" · ")}
+                  degreeLevel=""
+                  variant="exam"
+                  onEdit={() => handleLongPress(record)}
+                  onClick={() => handleCardClick(record)}
+                />
+              );
+            })}
           </div>
         </section>
       </div>
