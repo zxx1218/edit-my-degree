@@ -59,8 +59,9 @@ const EducationDetail = () => {
   const handleFieldSave = async (field: keyof EducationData, newValue: string) => {
     setData({ ...data, [field]: newValue });
     
-    const userId = localStorage.getItem('userId');
-    if (!userId || !id) return;
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser || !id) return;
+    const userId = JSON.parse(currentUser).id;
     
     try {
       const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -87,8 +88,9 @@ const EducationDetail = () => {
         const photoData = reader.result as string;
         setData({ ...data, photo: photoData });
         
-        const userId = localStorage.getItem('userId');
-        if (!userId || !id) return;
+        const currentUser = localStorage.getItem('currentUser');
+        if (!currentUser || !id) return;
+        const userId = JSON.parse(currentUser).id;
         
         try {
           await updateData('education', 'update', userId, { photo: photoData }, id);

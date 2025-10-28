@@ -49,8 +49,9 @@ const DegreeDetail = () => {
   const handleFieldSave = async (field: keyof DegreeData, newValue: string) => {
     setData({ ...data, [field]: newValue });
     
-    const userId = localStorage.getItem('userId');
-    if (!userId || !id) return;
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser || !id) return;
+    const userId = JSON.parse(currentUser).id;
     
     try {
       const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -77,8 +78,9 @@ const DegreeDetail = () => {
         const photoData = reader.result as string;
         setData({ ...data, photo: photoData });
         
-        const userId = localStorage.getItem('userId');
-        if (!userId || !id) return;
+        const currentUser = localStorage.getItem('currentUser');
+        if (!currentUser || !id) return;
+        const userId = JSON.parse(currentUser).id;
         
         try {
           await updateData('degree', 'update', userId, { photo: photoData }, id);

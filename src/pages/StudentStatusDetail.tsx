@@ -72,8 +72,9 @@ const StudentStatusDetail = () => {
   const handleFieldSave = async (field: keyof StudentData, newValue: string) => {
     setData({ ...data, [field]: newValue });
     
-    const userId = localStorage.getItem('userId');
-    if (!userId || !id) return;
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser || !id) return;
+    const userId = JSON.parse(currentUser).id;
     
     try {
       // Convert camelCase to snake_case for database
@@ -101,8 +102,9 @@ const StudentStatusDetail = () => {
         const photoData = reader.result as string;
         setData({ ...data, [type]: photoData });
         
-        const userId = localStorage.getItem('userId');
-        if (!userId || !id) return;
+        const currentUser = localStorage.getItem('currentUser');
+        if (!currentUser || !id) return;
+        const userId = JSON.parse(currentUser).id;
         
         try {
           const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase();
