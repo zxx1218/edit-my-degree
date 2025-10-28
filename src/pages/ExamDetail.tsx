@@ -39,7 +39,32 @@ const ExamDetail = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const initialData: ExamData = location.state?.record || {
+  const initialData: ExamData = location.state?.record ? {
+    name: location.state.record.name || "浆果儿",
+    school: location.state.record.school || "浙江大学",
+    year: location.state.record.year || "2022",
+    photo: location.state.record.photo || "",
+    examLocation: location.state.record.exam_location || "3306",
+    registrationNumber: location.state.record.registration_number || "330695769",
+    examUnit: location.state.record.exam_unit || "10337",
+    department: location.state.record.department || "无",
+    major: location.state.record.major || "085400",
+    researchDirection: location.state.record.research_direction || "无",
+    examType: location.state.record.exam_type || "全国统考",
+    specialProgram: location.state.record.special_program || "非专项计划",
+    politicsName: location.state.record.politics_name || "思想政治理论",
+    foreignLanguageName: location.state.record.foreign_language_name || "英语（二）",
+    businessCourse1Name: location.state.record.business_course1_name || "数学（二）",
+    businessCourse2Name: location.state.record.business_course2_name || "数据结构与计算机网络",
+    politicsScore: location.state.record.politics_score || "78",
+    foreignLanguageScore: location.state.record.foreign_language_score || "60",
+    businessCourse1Score: location.state.record.business_course1_score || "57",
+    businessCourse2Score: location.state.record.business_course2_score || "109",
+    totalScore: location.state.record.total_score || "304.0",
+    admissionUnit: location.state.record.admission_unit || "湖州师范学院",
+    admissionMajor: location.state.record.admission_major || "电子信息",
+    note: location.state.record.note || "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
+  } : {
     name: "浆果儿",
     school: "浙江大学",
     year: "2022",
