@@ -1,0 +1,19 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "123456",
+      "remainingLogins": 10
+    },
+    {
+      "username": "user1",
+      "password": "password1",
+      "remainingLogins": 5
+    },
+    {
+      "username": "test",
+      "password": "test123",
+      "remainingLogins": 0
+    }
+  ]
+}
