@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DEGREE_LEVELS, DEGREE_TYPES } from "@/lib/educationSort";
 
 interface EducationRecord {
   id: string;
@@ -93,7 +94,9 @@ const EditEducationDialog = ({
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="degreeLevel">学位层次</Label>
+            <Label htmlFor="degreeLevel">
+              {record.type === "degree" ? "学位类型" : "学位层次"}
+            </Label>
             <Select
               value={formData.degreeLevel}
               onValueChange={(value) =>
@@ -104,11 +107,17 @@ const EditEducationDialog = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="硕士研究生">硕士研究生</SelectItem>
-                <SelectItem value="本科">本科</SelectItem>
-                <SelectItem value="硕士">硕士</SelectItem>
-                <SelectItem value="学士">学士</SelectItem>
-                <SelectItem value="博士">博士</SelectItem>
+                {record.type === "degree"
+                  ? DEGREE_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))
+                  : DEGREE_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
               </SelectContent>
             </Select>
           </div>
