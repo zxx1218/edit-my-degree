@@ -354,7 +354,17 @@ const Index = () => {
                 />
               ))
             ) : (
-              <EmptyStateCard variant="education" />
+              <EmptyStateCard 
+                variant="education" 
+                onEdit={() => handleLongPress({ 
+                  id: 'temp', 
+                  school: '', 
+                  major: '', 
+                  studyType: '', 
+                  degreeLevel: '', 
+                  type: 'education' 
+                })}
+              />
             )}
           </div>
         </section>
@@ -381,7 +391,17 @@ const Index = () => {
                 />
               ))
             ) : (
-              <EmptyStateCard variant="degree" />
+              <EmptyStateCard 
+                variant="degree" 
+                onEdit={() => handleLongPress({ 
+                  id: 'temp', 
+                  school: '', 
+                  major: '', 
+                  studyType: '', 
+                  degreeLevel: '', 
+                  type: 'degree' 
+                })}
+              />
             )}
           </div>
         </section>
@@ -403,7 +423,17 @@ const Index = () => {
                 />
               ))
             ) : (
-              <EmptyStateCard variant="exam" />
+              <EmptyStateCard 
+                variant="exam" 
+                onEdit={() => handleLongPress({ 
+                  id: 'temp', 
+                  school: '', 
+                  major: '', 
+                  studyType: '', 
+                  degreeLevel: '', 
+                  type: 'exam' 
+                })}
+              />
             )}
           </div>
         </section>

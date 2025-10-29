@@ -1,10 +1,44 @@
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Edit2 } from "lucide-react";
+import { useState, useRef } from "react";
 
 interface EmptyStateCardProps {
   variant: "education" | "degree" | "exam";
+  onEdit?: () => void;
+  onClick?: () => void;
 }
 
-const EmptyStateCard = ({ variant }: EmptyStateCardProps) => {
+const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
+  const [showEditIcon, setShowEditIcon] = useState(false);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isLongPress = useRef(false);
+
+  const handleTouchStart = () => {
+    isLongPress.current = false;
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      setShowEditIcon(true);
+      if (onEdit) {
+        onEdit();
+      }
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+    if (!isLongPress.current && onClick) {
+      onClick();
+    }
+    setTimeout(() => setShowEditIcon(false), 100);
+  };
+
+  const handleClick = () => {
+    if (onClick && !isLongPress.current) {
+      onClick();
+    }
+  };
+
   const getVariantClasses = () => {
     switch (variant) {
       case "education":
@@ -46,7 +80,20 @@ const EmptyStateCard = ({ variant }: EmptyStateCardProps) => {
   const content = getContent();
 
   return (
-    <div className={`${getVariantClasses()} rounded-sm p-6 shadow-sm`}>
+    <div 
+      className={`${getVariantClasses()} rounded-sm p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer relative group`}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleTouchStart}
+      onMouseUp={handleTouchEnd}
+      onMouseLeave={() => {
+        if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+        }
+        setShowEditIcon(false);
+      }}
+    >
       <div className="flex flex-col items-center justify-center text-center space-y-3">
         <HelpCircle className="w-6 h-6 text-gray-400" />
         <div>
@@ -65,6 +112,11 @@ const EmptyStateCard = ({ variant }: EmptyStateCardProps) => {
           </button>
         )}
       </div>
+      {showEditIcon && (
+        <div className="absolute top-6 right-6 transition-opacity">
+          <Edit2 className="w-4 h-4 text-gray-400" />
+        </div>
+      )}
     </div>
   );
 };
