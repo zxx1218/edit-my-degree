@@ -142,7 +142,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
       case "degree":
         return {
           title: "您还未绑定学位信息，可以使用\"尝试绑定学位\"功能绑定您的学位",
-          action: "提示信息",
+          action: "查看解决办法",
         };
       case "exam":
         return {
