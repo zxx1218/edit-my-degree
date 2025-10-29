@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import EducationHeader from "@/components/EducationHeader";
 import SectionHeader from "@/components/SectionHeader";
 import EducationCard from "@/components/EducationCard";
+import EmptyStateCard from "@/components/EmptyStateCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
 import ActionMenuDialog from "@/components/ActionMenuDialog";
 import AddRecordDialog from "@/components/AddRecordDialog";
@@ -67,6 +68,27 @@ const Index = () => {
           degreeType: item.degree_type || "",
           type: type as any,
         });
+
+        // 检查学籍信息是否为空，如果为空则创建默认记录
+        if (data.studentStatus.length === 0) {
+          try {
+            const defaultData = {
+              name: "新用户",
+              school: "清华大学",
+              major: "汉语言文学",
+              study_type: "全日制",
+              degree_level: "本科",
+            };
+            
+            const result = await updateData("student_status", "insert", user.id, defaultData);
+            
+            if (result.success && result.data) {
+              data.studentStatus = result.data;
+            }
+          } catch (error) {
+            console.error("Error creating default student status:", error);
+          }
+        }
 
         // 排序后设置数据
         setStudentStatus(sortByDegreeLevel(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
@@ -318,18 +340,22 @@ const Index = () => {
             actionText="尝试绑定"
           />
           <div className="px-4 space-y-3">
-            {educationRecords.map((record) => (
-              <EducationCard
-                key={record.id}
-                school={record.school}
-                major={record.major}
-                studyType={record.studyType}
-                degreeLevel={record.degreeLevel}
-                variant="education"
-                onEdit={() => handleLongPress(record)}
-                onClick={() => handleCardClick(record)}
-              />
-            ))}
+            {educationRecords.length > 0 ? (
+              educationRecords.map((record) => (
+                <EducationCard
+                  key={record.id}
+                  school={record.school}
+                  major={record.major}
+                  studyType={record.studyType}
+                  degreeLevel={record.degreeLevel}
+                  variant="education"
+                  onEdit={() => handleLongPress(record)}
+                  onClick={() => handleCardClick(record)}
+                />
+              ))
+            ) : (
+              <EmptyStateCard variant="education" />
+            )}
           </div>
         </section>
 
@@ -341,36 +367,44 @@ const Index = () => {
             actionText="尝试绑定"
           />
           <div className="px-4 space-y-3">
-            {degreeRecords.map((record) => (
-              <EducationCard
-                key={record.id}
-                school={record.school}
-                major={record.major}
-                studyType={record.studyType}
-                degreeLevel={extractDegreeType(record.degreeType || record.degreeLevel)}
-                variant="degree"
-                onEdit={() => handleLongPress(record)}
-                onClick={() => handleCardClick(record)}
-              />
-            ))}
+            {degreeRecords.length > 0 ? (
+              degreeRecords.map((record) => (
+                <EducationCard
+                  key={record.id}
+                  school={record.school}
+                  major={record.major}
+                  studyType={record.studyType}
+                  degreeLevel={extractDegreeType(record.degreeType || record.degreeLevel)}
+                  variant="degree"
+                  onEdit={() => handleLongPress(record)}
+                  onClick={() => handleCardClick(record)}
+                />
+              ))
+            ) : (
+              <EmptyStateCard variant="degree" />
+            )}
           </div>
         </section>
 
         <section>
           <SectionHeader title="考研信息" count={examRecords.length} />
           <div className="px-4 space-y-3">
-            {examRecords.map((record) => (
-              <EducationCard
-                key={record.id}
-                school={record.school}
-                major=""
-                studyType={record.year || ""}
-                degreeLevel=""
-                variant="exam"
-                onEdit={() => handleLongPress(record)}
-                onClick={() => handleCardClick(record)}
-              />
-            ))}
+            {examRecords.length > 0 ? (
+              examRecords.map((record) => (
+                <EducationCard
+                  key={record.id}
+                  school={record.school}
+                  major=""
+                  studyType={record.year || ""}
+                  degreeLevel=""
+                  variant="exam"
+                  onEdit={() => handleLongPress(record)}
+                  onClick={() => handleCardClick(record)}
+                />
+              ))
+            ) : (
+              <EmptyStateCard variant="exam" />
+            )}
           </div>
         </section>
       </div>
