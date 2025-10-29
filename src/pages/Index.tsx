@@ -222,26 +222,56 @@ const Index = () => {
     }
   };
 
-  const handleSave = (updatedRecord: EducationRecord) => {
-    const updateList = (list: EducationRecord[]) =>
-      list.map((r) => (r.id === updatedRecord.id ? updatedRecord : r));
+  const handleSave = async (updatedRecord: EducationRecord) => {
+    try {
+      const tableMap: Record<string, string> = {
+        "student-status": "student_status",
+        "education": "education",
+        "degree": "degree",
+        "exam": "exam",
+      };
 
-    switch (updatedRecord.type) {
-      case "student-status":
-        setStudentStatus(updateList(studentStatus));
-        break;
-      case "education":
-        setEducationRecords(updateList(educationRecords));
-        break;
-      case "degree":
-        setDegreeRecords(updateList(degreeRecords));
-        break;
-      case "exam":
-        setExamRecords(updateList(examRecords));
-        break;
+      const table = tableMap[updatedRecord.type];
+      
+      // 构建数据库更新数据，将前端字段名映射到数据库字段名
+      const updatePayload: any = {
+        school: updatedRecord.school,
+        major: updatedRecord.major,
+      };
+
+      // 根据类型添加不同的字段
+      if (updatedRecord.type === "degree") {
+        updatePayload.degree_type = updatedRecord.degreeType || updatedRecord.degreeLevel;
+      } else {
+        updatePayload.study_type = updatedRecord.studyType;
+        updatePayload.degree_level = updatedRecord.degreeLevel;
+      }
+
+      await updateData(table, "update", currentUserId, updatePayload, updatedRecord.id);
+
+      const updateList = (list: EducationRecord[]) =>
+        list.map((r) => (r.id === updatedRecord.id ? updatedRecord : r));
+
+      switch (updatedRecord.type) {
+        case "student-status":
+          setStudentStatus(updateList(studentStatus));
+          break;
+        case "education":
+          setEducationRecords(updateList(educationRecords));
+          break;
+        case "degree":
+          setDegreeRecords(updateList(degreeRecords));
+          break;
+        case "exam":
+          setExamRecords(updateList(examRecords));
+          break;
+      }
+
+      toast.success("信息已更新");
+    } catch (error) {
+      console.error("Error updating record:", error);
+      toast.error("更新失败");
     }
-
-    toast.success("信息已更新");
   };
 
   if (loading) {

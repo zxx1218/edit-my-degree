@@ -22,6 +22,8 @@ interface EducationRecord {
   major: string;
   studyType: string;
   degreeLevel: string;
+  degreeType?: string;
+  type: "student-status" | "education" | "degree" | "exam";
 }
 
 interface EditEducationDialogProps {
