@@ -16,9 +16,30 @@ export const DEGREE_LEVELS: DegreeLevel[] = [
   "专科",
 ];
 
+// 学位类型排序工具
+export const DEGREE_TYPE_ORDER = {
+  "博士": 1,
+  "硕士": 2,
+  "学士": 3,
+};
+
+export type DegreeType = keyof typeof DEGREE_TYPE_ORDER;
+
+export const DEGREE_TYPES: DegreeType[] = [
+  "博士",
+  "硕士",
+  "学士",
+];
+
 export interface SortableRecord {
   id: string;
   degreeLevel: string;
+  [key: string]: any;
+}
+
+export interface SortableDegreeRecord {
+  id: string;
+  degreeType?: string;
   [key: string]: any;
 }
 
@@ -34,7 +55,18 @@ export const sortByDegreeLevel = <T extends SortableRecord>(records: T[]): T[] =
 };
 
 /**
- * 在正确位置插入新记录
+ * 按照学位类型排序记录
+ */
+export const sortByDegreeType = <T extends SortableDegreeRecord>(records: T[]): T[] => {
+  return [...records].sort((a, b) => {
+    const orderA = DEGREE_TYPE_ORDER[(a.degreeType || "") as DegreeType] || 999;
+    const orderB = DEGREE_TYPE_ORDER[(b.degreeType || "") as DegreeType] || 999;
+    return orderA - orderB;
+  });
+};
+
+/**
+ * 在正确位置插入新记录（学历层次）
  */
 export const insertRecordAtCorrectPosition = <T extends SortableRecord>(
   records: T[],
@@ -49,6 +81,35 @@ export const insertRecordAtCorrectPosition = <T extends SortableRecord>(
   for (let i = 0; i < records.length; i++) {
     const currentLevel = records[i].degreeLevel as DegreeLevel;
     const currentOrder = DEGREE_LEVEL_ORDER[currentLevel] || 999;
+    
+    if (currentOrder > newOrder) {
+      insertIndex = i;
+      break;
+    }
+  }
+
+  // 在指定位置插入
+  const newRecords = [...records];
+  newRecords.splice(insertIndex, 0, newRecord);
+  return newRecords;
+};
+
+/**
+ * 在正确位置插入新记录（学位类型）
+ */
+export const insertDegreeRecordAtCorrectPosition = <T extends SortableDegreeRecord>(
+  records: T[],
+  newRecord: T
+): T[] => {
+  const newDegreeType = (newRecord.degreeType || "") as DegreeType;
+  const newOrder = DEGREE_TYPE_ORDER[newDegreeType] || 999;
+
+  // 找到应该插入的位置：同等级的最后一个位置
+  let insertIndex = records.length;
+  
+  for (let i = 0; i < records.length; i++) {
+    const currentType = (records[i].degreeType || "") as DegreeType;
+    const currentOrder = DEGREE_TYPE_ORDER[currentType] || 999;
     
     if (currentOrder > newOrder) {
       insertIndex = i;

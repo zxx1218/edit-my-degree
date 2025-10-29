@@ -8,7 +8,14 @@ import ActionMenuDialog from "@/components/ActionMenuDialog";
 import AddRecordDialog from "@/components/AddRecordDialog";
 import { toast } from "sonner";
 import { getUserData, updateData } from "@/lib/api";
-import { sortByDegreeLevel, insertRecordAtCorrectPosition, DegreeLevel } from "@/lib/educationSort";
+import { 
+  sortByDegreeLevel, 
+  sortByDegreeType, 
+  insertRecordAtCorrectPosition, 
+  insertDegreeRecordAtCorrectPosition,
+  DegreeLevel,
+  DegreeType 
+} from "@/lib/educationSort";
 
 interface EducationRecord {
   id: string;
@@ -16,6 +23,7 @@ interface EducationRecord {
   major: string;
   studyType: string;
   degreeLevel: string;
+  degreeType?: string;
   type: "student-status" | "education" | "degree" | "exam";
 }
 
@@ -55,13 +63,14 @@ const Index = () => {
           major: type === "exam" ? item.year : item.major,
           studyType: item.study_type || "",
           degreeLevel: item.degree_level || "",
+          degreeType: item.degree_type || "",
           type: type as any,
         });
 
         // 排序后设置数据
         setStudentStatus(sortByDegreeLevel(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
         setEducationRecords(sortByDegreeLevel(data.education.map((item: any) => convertToEducationRecord(item, "education"))));
-        setDegreeRecords(sortByDegreeLevel(data.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
+        setDegreeRecords(sortByDegreeType(data.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
         setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -94,7 +103,7 @@ const Index = () => {
     }
   };
 
-  const handleAddWithLevel = async (degreeLevel: DegreeLevel) => {
+  const handleAddWithLevel = async (level: DegreeLevel | DegreeType) => {
     if (!selectedRecord) return;
 
     try {
@@ -106,13 +115,23 @@ const Index = () => {
       };
 
       const table = tableMap[selectedRecord.type];
-      const newData = {
-        name: "新用户",
-        school: "新学校",
-        major: "新专业",
-        study_type: selectedRecord.type === "degree" ? "" : "全日制",
-        degree_level: degreeLevel,
-      };
+      
+      // 根据类型构建不同的数据
+      const newData = selectedRecord.type === "degree" 
+        ? {
+            name: "新用户",
+            school: "新学校",
+            degree_type: level, // 学位使用 degree_type
+            degree_level: "", // 学位的 degree_level 可以为空
+            major: "",
+          }
+        : {
+            name: "新用户",
+            school: "新学校",
+            major: "新专业",
+            study_type: "全日制",
+            degree_level: level, // 学历/学籍使用 degree_level
+          };
 
       const result = await updateData(table, "insert", currentUserId, newData);
       
@@ -120,9 +139,10 @@ const Index = () => {
         const newRecord: EducationRecord = {
           id: result.data[0].id,
           school: result.data[0].school,
-          major: selectedRecord.type === "exam" ? "" : result.data[0].major,
+          major: selectedRecord.type === "exam" ? "" : (result.data[0].major || ""),
           studyType: result.data[0].study_type || "",
           degreeLevel: result.data[0].degree_level || "",
+          degreeType: result.data[0].degree_type || "",
           type: selectedRecord.type,
         };
 
@@ -135,7 +155,7 @@ const Index = () => {
             setEducationRecords(insertRecordAtCorrectPosition(educationRecords, newRecord));
             break;
           case "degree":
-            setDegreeRecords(insertRecordAtCorrectPosition(degreeRecords, newRecord));
+            setDegreeRecords(insertDegreeRecordAtCorrectPosition(degreeRecords, newRecord));
             break;
           case "exam":
             setExamRecords([...examRecords, { ...result.data[0], type: "exam" }]);
@@ -296,7 +316,7 @@ const Index = () => {
                 school={record.school}
                 major={record.major}
                 studyType={record.studyType}
-                degreeLevel={record.degreeLevel}
+                degreeLevel={record.degreeType || record.degreeLevel}
                 variant="degree"
                 onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}

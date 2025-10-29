@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
-import { DEGREE_LEVELS, DegreeLevel } from "@/lib/educationSort";
+import { DEGREE_LEVELS, DegreeLevel, DEGREE_TYPES, DegreeType } from "@/lib/educationSort";
 
 interface AddRecordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (degreeLevel: DegreeLevel) => void;
+  onConfirm: (level: DegreeLevel | DegreeType) => void;
   recordType: "student-status" | "education" | "degree";
 }
 
@@ -44,12 +44,18 @@ const AddRecordDialog = ({
   onConfirm,
   recordType,
 }: AddRecordDialogProps) => {
-  const [selectedLevel, setSelectedLevel] = useState<DegreeLevel>("本科");
+  const isDegree = recordType === "degree";
+  const [selectedLevel, setSelectedLevel] = useState<DegreeLevel | DegreeType>(
+    isDegree ? "学士" : "本科"
+  );
 
   const handleConfirm = () => {
     onConfirm(selectedLevel);
     onOpenChange(false);
   };
+  
+  const options = isDegree ? DEGREE_TYPES : DEGREE_LEVELS;
+  const label = isDegree ? "学位类型" : "学历层次";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,22 +63,22 @@ const AddRecordDialog = ({
         <DialogHeader>
           <DialogTitle>添加新{getTypeName(recordType)}</DialogTitle>
           <DialogDescription>
-            请选择要添加的学历层次，系统将按照正确顺序插入记录
+            请选择要添加的{label}，系统将按照正确顺序插入记录
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="degree-level">学历层次</Label>
+            <Label htmlFor="degree-level">{label}</Label>
             <Select
               value={selectedLevel}
-              onValueChange={(value) => setSelectedLevel(value as DegreeLevel)}
+              onValueChange={(value) => setSelectedLevel(value as DegreeLevel | DegreeType)}
             >
               <SelectTrigger id="degree-level">
-                <SelectValue placeholder="请选择学历层次" />
+                <SelectValue placeholder={`请选择${label}`} />
               </SelectTrigger>
               <SelectContent>
-                {DEGREE_LEVELS.map((level) => (
+                {options.map((level) => (
                   <SelectItem key={level} value={level}>
                     {level}
                   </SelectItem>
