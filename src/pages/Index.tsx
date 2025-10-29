@@ -276,13 +276,13 @@ const Index = () => {
 
       switch (updatedRecord.type) {
         case "student-status":
-          setStudentStatus(updateList(studentStatus));
+          setStudentStatus(sortByDegreeLevel(updateList(studentStatus)));
           break;
         case "education":
-          setEducationRecords(updateList(educationRecords));
+          setEducationRecords(sortByDegreeLevel(updateList(educationRecords)));
           break;
         case "degree":
-          setDegreeRecords(updateList(degreeRecords));
+          setDegreeRecords(sortByDegreeType(updateList(degreeRecords)));
           break;
         case "exam":
           setExamRecords(updateList(examRecords));
