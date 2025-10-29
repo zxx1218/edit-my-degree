@@ -40,6 +40,22 @@ const EducationCard = ({
     }, 500);
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Cancel long press if user is scrolling
+    if (touchStartPos.current && longPressTimer.current) {
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const deltaX = Math.abs(touchX - touchStartPos.current.x);
+      const deltaY = Math.abs(touchY - touchStartPos.current.y);
+      
+      // If moved more than 10px, cancel long press
+      if (deltaX > 10 || deltaY > 10) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    }
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
@@ -149,6 +165,7 @@ const EducationCard = ({
       className={`${getVariantClasses()} rounded-sm p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
