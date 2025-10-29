@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
-import { updateData } from "@/lib/api";
+import { updateData, getUserData } from "@/lib/api";
 
 interface DegreeData {
   name: string;
@@ -26,18 +26,21 @@ const DegreeDetail = () => {
   const { toast } = useToast();
   const photoRef = useRef<HTMLInputElement>(null);
 
-  const [data, setData] = useState<DegreeData>({
-    name: "",
-    gender: "",
-    birthDate: "",
-    school: "",
-    degreeType: "",
-    degreeLevel: "",
-    degreeDate: "",
-    major: "",
-    certificateNumber: "",
+  // 默认值
+  const defaultData: DegreeData = {
+    name: "张三",
+    gender: "男",
+    birthDate: "1995-06-15",
+    school: "示例大学",
+    degreeType: "学术学位",
+    degreeLevel: "学士",
+    degreeDate: "2024-06-30",
+    major: "计算机科学与技术",
+    certificateNumber: "123456789012345678",
     photo: "",
-  });
+  };
+
+  const [data, setData] = useState<DegreeData>(defaultData);
 
   // 从数据库加载数据
   useEffect(() => {
@@ -47,39 +50,28 @@ const DegreeDetail = () => {
       const userId = JSON.parse(currentUser).id;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ userId }),
-          }
-        );
-
-        const result = await response.json();
+        const result = await getUserData(userId);
         const record = result.degree?.find((r: any) => r.id === id);
         
         if (record) {
           setData({
-            name: record.name || "",
-            gender: record.gender || "",
-            birthDate: record.birth_date || "",
-            school: record.school || "",
-            degreeType: record.degree_type || "",
-            degreeLevel: record.degree_level || "",
-            degreeDate: record.degree_date || "",
-            major: record.major || "",
-            certificateNumber: record.certificate_number || "",
-            photo: record.photo || "",
+            name: record.name || defaultData.name,
+            gender: record.gender || defaultData.gender,
+            birthDate: record.birth_date || defaultData.birthDate,
+            school: record.school || defaultData.school,
+            degreeType: record.degree_type || defaultData.degreeType,
+            degreeLevel: record.degree_level || defaultData.degreeLevel,
+            degreeDate: record.degree_date || defaultData.degreeDate,
+            major: record.major || defaultData.major,
+            certificateNumber: record.certificate_number || defaultData.certificateNumber,
+            photo: record.photo || defaultData.photo,
           });
         }
       } catch (error) {
+        console.error('Error loading data:', error);
         toast({
           title: "加载失败",
-          description: "无法加载数据",
+          description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
       }

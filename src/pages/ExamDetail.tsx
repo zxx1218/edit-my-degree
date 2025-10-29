@@ -4,7 +4,7 @@ import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
-import { updateData } from "@/lib/api";
+import { updateData, getUserData } from "@/lib/api";
 
 interface ExamData {
   name: string;
@@ -40,32 +40,35 @@ const ExamDetail = () => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [data, setData] = useState<ExamData>({
-    name: "",
-    school: "",
-    year: "",
+  // 默认值
+  const defaultData: ExamData = {
+    name: "张三",
+    school: "示例大学",
+    year: "2024年",
     photo: "",
-    examLocation: "",
-    registrationNumber: "",
-    examUnit: "",
-    department: "",
-    major: "",
-    researchDirection: "",
-    examType: "",
-    specialProgram: "",
-    politicsName: "",
-    politicsScore: "",
-    foreignLanguageName: "",
-    foreignLanguageScore: "",
-    businessCourse1Name: "",
-    businessCourse1Score: "",
-    businessCourse2Name: "",
-    businessCourse2Score: "",
-    totalScore: "",
-    admissionUnit: "",
-    admissionMajor: "",
-    note: "",
-  });
+    examLocation: "北京市考试中心",
+    registrationNumber: "110101202400001",
+    examUnit: "示例大学",
+    department: "计算机学院",
+    major: "计算机科学与技术",
+    researchDirection: "人工智能",
+    examType: "全国统考",
+    specialProgram: "无",
+    politicsName: "思想政治理论",
+    politicsScore: "75",
+    foreignLanguageName: "英语一",
+    foreignLanguageScore: "80",
+    businessCourse1Name: "数学一",
+    businessCourse1Score: "120",
+    businessCourse2Name: "计算机学科专业基础综合",
+    businessCourse2Score: "130",
+    totalScore: "405",
+    admissionUnit: "示例大学",
+    admissionMajor: "计算机科学与技术",
+    note: "此为示例数据",
+  };
+
+  const [data, setData] = useState<ExamData>(defaultData);
 
   // 从数据库加载数据
   useEffect(() => {
@@ -75,53 +78,42 @@ const ExamDetail = () => {
       const userId = JSON.parse(currentUser).id;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ userId }),
-          }
-        );
-
-        const result = await response.json();
+        const result = await getUserData(userId);
         const record = result.exam?.find((r: any) => r.id === id);
         
         if (record) {
           setData({
-            name: record.name || "",
-            school: record.school || "",
-            year: record.year || "",
-            photo: record.photo || "",
-            examLocation: record.exam_location || "",
-            registrationNumber: record.registration_number || "",
-            examUnit: record.exam_unit || "",
-            department: record.department || "",
-            major: record.major || "",
-            researchDirection: record.research_direction || "",
-            examType: record.exam_type || "",
-            specialProgram: record.special_program || "",
-            politicsName: record.politics_name || "",
-            politicsScore: record.politics_score || "",
-            foreignLanguageName: record.foreign_language_name || "",
-            foreignLanguageScore: record.foreign_language_score || "",
-            businessCourse1Name: record.business_course1_name || "",
-            businessCourse1Score: record.business_course1_score || "",
-            businessCourse2Name: record.business_course2_name || "",
-            businessCourse2Score: record.business_course2_score || "",
-            totalScore: record.total_score || "",
-            admissionUnit: record.admission_unit || "",
-            admissionMajor: record.admission_major || "",
-            note: record.note || "",
+            name: record.name || defaultData.name,
+            school: record.school || defaultData.school,
+            year: record.year || defaultData.year,
+            photo: record.photo || defaultData.photo,
+            examLocation: record.exam_location || defaultData.examLocation,
+            registrationNumber: record.registration_number || defaultData.registrationNumber,
+            examUnit: record.exam_unit || defaultData.examUnit,
+            department: record.department || defaultData.department,
+            major: record.major || defaultData.major,
+            researchDirection: record.research_direction || defaultData.researchDirection,
+            examType: record.exam_type || defaultData.examType,
+            specialProgram: record.special_program || defaultData.specialProgram,
+            politicsName: record.politics_name || defaultData.politicsName,
+            politicsScore: record.politics_score || defaultData.politicsScore,
+            foreignLanguageName: record.foreign_language_name || defaultData.foreignLanguageName,
+            foreignLanguageScore: record.foreign_language_score || defaultData.foreignLanguageScore,
+            businessCourse1Name: record.business_course1_name || defaultData.businessCourse1Name,
+            businessCourse1Score: record.business_course1_score || defaultData.businessCourse1Score,
+            businessCourse2Name: record.business_course2_name || defaultData.businessCourse2Name,
+            businessCourse2Score: record.business_course2_score || defaultData.businessCourse2Score,
+            totalScore: record.total_score || defaultData.totalScore,
+            admissionUnit: record.admission_unit || defaultData.admissionUnit,
+            admissionMajor: record.admission_major || defaultData.admissionMajor,
+            note: record.note || defaultData.note,
           });
         }
       } catch (error) {
+        console.error('Error loading data:', error);
         toast({
           title: "加载失败",
-          description: "无法加载数据",
+          description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
       }

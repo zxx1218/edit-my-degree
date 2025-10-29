@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
-import { updateData } from "@/lib/api";
+import { updateData, getUserData } from "@/lib/api";
 
 interface StudentData {
   name: string;
@@ -38,29 +38,32 @@ const StudentStatusDetail = () => {
   const admissionPhotoRef = useRef<HTMLInputElement>(null);
   const degreePhotoRef = useRef<HTMLInputElement>(null);
 
-  const [data, setData] = useState<StudentData>({
-    name: "",
-    personalInfo: "",
-    gender: "",
-    birthDate: "",
-    school: "",
-    major: "",
-    studyType: "",
-    degreeLevel: "",
-    status: "",
-    nationality: "",
-    idNumber: "",
-    enrollmentDate: "",
-    graduationDate: "",
-    duration: "",
-    educationType: "",
-    branch: "",
-    department: "",
-    class: "",
-    studentId: "",
+  // 默认值
+  const defaultData: StudentData = {
+    name: "张三",
+    personalInfo: "男 | 1995年6月",
+    gender: "男",
+    birthDate: "1995-06-15",
+    school: "示例大学",
+    major: "计算机科学与技术",
+    studyType: "普通全日制",
+    degreeLevel: "本科",
+    status: "在读",
+    nationality: "汉族",
+    idNumber: "110101199506150000",
+    enrollmentDate: "2020-09-01",
+    graduationDate: "2024-06-30",
+    duration: "4年",
+    educationType: "普通",
+    branch: "信息学院",
+    department: "计算机系",
+    class: "2020级1班",
+    studentId: "2020001001",
     admissionPhoto: "",
     degreePhoto: "",
-  });
+  };
+
+  const [data, setData] = useState<StudentData>(defaultData);
 
   // 从数据库加载数据
   useEffect(() => {
@@ -70,50 +73,39 @@ const StudentStatusDetail = () => {
       const userId = JSON.parse(currentUser).id;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ userId }),
-          }
-        );
-
-        const result = await response.json();
+        const result = await getUserData(userId);
         const record = result.studentStatus?.find((r: any) => r.id === id);
         
         if (record) {
           setData({
-            name: record.name || "",
-            personalInfo: record.personal_info || "",
-            gender: record.gender || "",
-            birthDate: record.birth_date || "",
-            school: record.school || "",
-            major: record.major || "",
-            studyType: record.study_type || "",
-            degreeLevel: record.degree_level || "",
-            status: record.status || "",
-            nationality: record.nationality || "",
-            idNumber: record.id_number || "",
-            enrollmentDate: record.enrollment_date || "",
-            graduationDate: record.graduation_date || "",
-            duration: record.duration || "",
-            educationType: record.education_type || "",
-            branch: record.branch || "",
-            department: record.department || "",
-            class: record.class || "",
-            studentId: record.student_id || "",
-            admissionPhoto: record.admission_photo || "",
-            degreePhoto: record.degree_photo || "",
+            name: record.name || defaultData.name,
+            personalInfo: record.personal_info || defaultData.personalInfo,
+            gender: record.gender || defaultData.gender,
+            birthDate: record.birth_date || defaultData.birthDate,
+            school: record.school || defaultData.school,
+            major: record.major || defaultData.major,
+            studyType: record.study_type || defaultData.studyType,
+            degreeLevel: record.degree_level || defaultData.degreeLevel,
+            status: record.status || defaultData.status,
+            nationality: record.nationality || defaultData.nationality,
+            idNumber: record.id_number || defaultData.idNumber,
+            enrollmentDate: record.enrollment_date || defaultData.enrollmentDate,
+            graduationDate: record.graduation_date || defaultData.graduationDate,
+            duration: record.duration || defaultData.duration,
+            educationType: record.education_type || defaultData.educationType,
+            branch: record.branch || defaultData.branch,
+            department: record.department || defaultData.department,
+            class: record.class || defaultData.class,
+            studentId: record.student_id || defaultData.studentId,
+            admissionPhoto: record.admission_photo || defaultData.admissionPhoto,
+            degreePhoto: record.degree_photo || defaultData.degreePhoto,
           });
         }
       } catch (error) {
+        console.error('Error loading data:', error);
         toast({
           title: "加载失败",
-          description: "无法加载数据",
+          description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
       }

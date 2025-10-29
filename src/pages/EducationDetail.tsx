@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
-import { updateData } from "@/lib/api";
+import { updateData, getUserData } from "@/lib/api";
 
 interface EducationData {
   name: string;
@@ -31,23 +31,26 @@ const EducationDetail = () => {
   const { toast } = useToast();
   const photoRef = useRef<HTMLInputElement>(null);
 
-  const [data, setData] = useState<EducationData>({
-    name: "",
-    gender: "",
-    birthDate: "",
-    school: "",
-    major: "",
-    studyType: "",
-    degreeLevel: "",
-    enrollmentDate: "",
-    graduationDate: "",
-    educationType: "",
-    duration: "",
-    graduationStatus: "",
-    principalName: "",
-    certificateNumber: "",
+  // 默认值
+  const defaultData: EducationData = {
+    name: "张三",
+    gender: "男",
+    birthDate: "1995-06-15",
+    school: "示例大学",
+    major: "计算机科学与技术",
+    studyType: "普通全日制",
+    degreeLevel: "本科",
+    enrollmentDate: "2020-09-01",
+    graduationDate: "2024-06-30",
+    educationType: "普通高等教育",
+    duration: "4年",
+    graduationStatus: "毕业",
+    principalName: "李校长",
+    certificateNumber: "123456789012345678",
     photo: "",
-  });
+  };
+
+  const [data, setData] = useState<EducationData>(defaultData);
 
   // 从数据库加载数据
   useEffect(() => {
@@ -57,44 +60,33 @@ const EducationDetail = () => {
       const userId = JSON.parse(currentUser).id;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-user-data`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ userId }),
-          }
-        );
-
-        const result = await response.json();
+        const result = await getUserData(userId);
         const record = result.education?.find((r: any) => r.id === id);
         
         if (record) {
           setData({
-            name: record.name || "",
-            gender: record.gender || "",
-            birthDate: record.birth_date || "",
-            school: record.school || "",
-            major: record.major || "",
-            studyType: record.study_type || "",
-            degreeLevel: record.degree_level || "",
-            enrollmentDate: record.enrollment_date || "",
-            graduationDate: record.graduation_date || "",
-            educationType: record.education_type || "",
-            duration: record.duration || "",
-            graduationStatus: record.graduation_status || "",
-            principalName: record.principal_name || "",
-            certificateNumber: record.certificate_number || "",
-            photo: record.photo || "",
+            name: record.name || defaultData.name,
+            gender: record.gender || defaultData.gender,
+            birthDate: record.birth_date || defaultData.birthDate,
+            school: record.school || defaultData.school,
+            major: record.major || defaultData.major,
+            studyType: record.study_type || defaultData.studyType,
+            degreeLevel: record.degree_level || defaultData.degreeLevel,
+            enrollmentDate: record.enrollment_date || defaultData.enrollmentDate,
+            graduationDate: record.graduation_date || defaultData.graduationDate,
+            educationType: record.education_type || defaultData.educationType,
+            duration: record.duration || defaultData.duration,
+            graduationStatus: record.graduation_status || defaultData.graduationStatus,
+            principalName: record.principal_name || defaultData.principalName,
+            certificateNumber: record.certificate_number || defaultData.certificateNumber,
+            photo: record.photo || defaultData.photo,
           });
         }
       } catch (error) {
+        console.error('Error loading data:', error);
         toast({
           title: "加载失败",
-          description: "无法加载数据",
+          description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
       }
