@@ -161,7 +161,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-sm p-6 shadow-sm hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-sm p-6 shadow-sm cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
