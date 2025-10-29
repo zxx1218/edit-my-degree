@@ -74,33 +74,39 @@ const EditEducationDialog = ({
               }
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="studyType">学习形式</Label>
-            <Select
-              value={formData.studyType}
-              onValueChange={(value) =>
-                setFormData({ ...formData, studyType: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="全日制">全日制</SelectItem>
-                <SelectItem value="普通全日制">普通全日制</SelectItem>
-                <SelectItem value="业余">业余</SelectItem>
-                <SelectItem value="函授">函授</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {record.type !== "degree" && (
+            <div className="grid gap-2">
+              <Label htmlFor="studyType">学习形式</Label>
+              <Select
+                value={formData.studyType}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, studyType: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="全日制">全日制</SelectItem>
+                  <SelectItem value="普通全日制">普通全日制</SelectItem>
+                  <SelectItem value="业余">业余</SelectItem>
+                  <SelectItem value="函授">函授</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid gap-2">
             <Label htmlFor="degreeLevel">
               {record.type === "degree" ? "学位类型" : "学位层次"}
             </Label>
             <Select
-              value={formData.degreeLevel}
+              value={record.type === "degree" ? formData.degreeType : formData.degreeLevel}
               onValueChange={(value) =>
-                setFormData({ ...formData, degreeLevel: value })
+                setFormData(
+                  record.type === "degree"
+                    ? { ...formData, degreeType: value }
+                    : { ...formData, degreeLevel: value }
+                )
               }
             >
               <SelectTrigger>

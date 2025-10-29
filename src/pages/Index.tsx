@@ -263,7 +263,9 @@ const Index = () => {
 
       // 根据类型添加不同的字段
       if (updatedRecord.type === "degree") {
-        updatePayload.degree_type = updatedRecord.degreeType || updatedRecord.degreeLevel;
+        updatePayload.degree_type = updatedRecord.degreeType;
+        // 确保前端记录也更新了degreeType字段
+        updatedRecord.degreeType = updatedRecord.degreeType;
       } else {
         updatePayload.study_type = updatedRecord.studyType;
         updatePayload.degree_level = updatedRecord.degreeLevel;
