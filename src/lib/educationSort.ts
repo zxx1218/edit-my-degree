@@ -31,6 +31,19 @@ export const DEGREE_TYPES: DegreeType[] = [
   "学士",
 ];
 
+/**
+ * 从学位信息文本中提取学位类型关键词
+ */
+export const extractDegreeType = (degreeText: string): string => {
+  if (!degreeText) return "";
+  
+  if (degreeText.includes("博士")) return "博士";
+  if (degreeText.includes("硕士")) return "硕士";
+  if (degreeText.includes("学士")) return "学士";
+  
+  return degreeText;
+};
+
 export interface SortableRecord {
   id: string;
   degreeLevel: string;

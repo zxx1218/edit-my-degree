@@ -13,6 +13,7 @@ import {
   sortByDegreeType, 
   insertRecordAtCorrectPosition, 
   insertDegreeRecordAtCorrectPosition,
+  extractDegreeType,
   DegreeLevel,
   DegreeType 
 } from "@/lib/educationSort";
@@ -316,7 +317,7 @@ const Index = () => {
                 school={record.school}
                 major={record.major}
                 studyType={record.studyType}
-                degreeLevel={record.degreeType || record.degreeLevel}
+                degreeLevel={extractDegreeType(record.degreeType || record.degreeLevel)}
                 variant="degree"
                 onEdit={() => handleLongPress(record)}
                 onClick={() => handleCardClick(record)}
