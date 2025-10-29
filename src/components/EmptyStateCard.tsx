@@ -11,9 +11,14 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
   const [showEditIcon, setShowEditIcon] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
-  const handleTouchStart = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     isLongPress.current = false;
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       setShowEditIcon(true);
@@ -23,13 +28,72 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
     }, 500);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
+    
+    // Check if this was a swipe/scroll gesture
+    if (touchStartPos.current) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = Math.abs(touchEndX - touchStartPos.current.x);
+      const deltaY = Math.abs(touchEndY - touchStartPos.current.y);
+      
+      // If moved more than 10px, consider it a swipe/scroll
+      if (deltaX > 10 || deltaY > 10) {
+        touchStartPos.current = null;
+        setTimeout(() => setShowEditIcon(false), 100);
+        return;
+      }
+    }
+    
     if (!isLongPress.current && onClick) {
       onClick();
     }
+    touchStartPos.current = null;
+    setTimeout(() => setShowEditIcon(false), 100);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isLongPress.current = false;
+    touchStartPos.current = {
+      x: e.clientX,
+      y: e.clientY
+    };
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      setShowEditIcon(true);
+      if (onEdit) {
+        onEdit();
+      }
+    }, 500);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+    
+    // Check if this was a drag gesture
+    if (touchStartPos.current) {
+      const mouseEndX = e.clientX;
+      const mouseEndY = e.clientY;
+      const deltaX = Math.abs(mouseEndX - touchStartPos.current.x);
+      const deltaY = Math.abs(mouseEndY - touchStartPos.current.y);
+      
+      // If moved more than 10px, consider it a drag
+      if (deltaX > 10 || deltaY > 10) {
+        touchStartPos.current = null;
+        setTimeout(() => setShowEditIcon(false), 100);
+        return;
+      }
+    }
+    
+    if (!isLongPress.current && onClick) {
+      onClick();
+    }
+    touchStartPos.current = null;
     setTimeout(() => setShowEditIcon(false), 100);
   };
 
@@ -85,8 +149,8 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      onMouseDown={handleTouchStart}
-      onMouseUp={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       onMouseLeave={() => {
         if (longPressTimer.current) {
           clearTimeout(longPressTimer.current);
