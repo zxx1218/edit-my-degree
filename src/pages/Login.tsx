@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { loginUser } from "@/lib/api";
 
@@ -78,6 +80,14 @@ const Login = () => {
               {isLoading ? "登录中..." : "登录"}
             </Button>
           </form>
+          
+          <Alert className="mt-6 border-primary/20 bg-primary/5">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertDescription className="ml-2 text-sm space-y-1">
+              <div className="font-medium">编辑或者添加学历：长按待编辑的学历卡</div>
+              <div className="text-muted-foreground">所有的个人信息包括您上传的照片都会加密后进行数据持久化，下次登录后依旧存在</div>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     </div>
