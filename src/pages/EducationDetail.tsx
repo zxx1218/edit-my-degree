@@ -221,12 +221,22 @@ const EducationDetail = () => {
 
           {/* School Info */}
           <div className="space-y-2">
-            <h3
-              className="text-2xl font-bold cursor-pointer hover:opacity-80"
-              onClick={() => handleFieldClick("school", "学校名称")}
-            >
-              {data.school}
-            </h3>
+            <div className="flex items-start justify-between gap-3">
+              <h3
+                className="text-2xl font-bold cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("school", "学校名称")}
+              >
+                {data.school}
+              </h3>
+              <div className="bg-white/25 backdrop-blur-sm px-4 py-1 rounded-full flex-shrink-0">
+                <span
+                  className="text-sm font-medium cursor-pointer hover:opacity-80"
+                  onClick={() => handleFieldClick("degreeLevel", "学位层次")}
+                >
+                  {data.degreeLevel}
+                </span>
+              </div>
+            </div>
             <div className="flex items-center gap-4 text-base">
               <span
                 className="cursor-pointer hover:opacity-80"
@@ -242,15 +252,6 @@ const EducationDetail = () => {
                 {data.studyType}
               </span>
             </div>
-          </div>
-
-          <div className="absolute top-6 right-6 bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full">
-            <span
-              className="text-sm font-medium cursor-pointer hover:opacity-80"
-              onClick={() => handleFieldClick("degreeLevel", "学位层次")}
-            >
-              {data.degreeLevel}
-            </span>
           </div>
         </div>
 
