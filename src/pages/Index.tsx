@@ -5,8 +5,10 @@ import SectionHeader from "@/components/SectionHeader";
 import EducationCard from "@/components/EducationCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
 import ActionMenuDialog from "@/components/ActionMenuDialog";
+import AddRecordDialog from "@/components/AddRecordDialog";
 import { toast } from "sonner";
 import { getUserData, updateData } from "@/lib/api";
+import { sortByDegreeLevel, insertRecordAtCorrectPosition, DegreeLevel } from "@/lib/educationSort";
 
 interface EducationRecord {
   id: string;
@@ -22,6 +24,7 @@ const Index = () => {
   const [selectedRecord, setSelectedRecord] = useState<EducationRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   
@@ -55,9 +58,10 @@ const Index = () => {
           type: type as any,
         });
 
-        setStudentStatus(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status")));
-        setEducationRecords(data.education.map((item: any) => convertToEducationRecord(item, "education")));
-        setDegreeRecords(data.degree.map((item: any) => convertToEducationRecord(item, "degree")));
+        // 排序后设置数据
+        setStudentStatus(sortByDegreeLevel(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
+        setEducationRecords(sortByDegreeLevel(data.education.map((item: any) => convertToEducationRecord(item, "education"))));
+        setDegreeRecords(sortByDegreeLevel(data.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
         setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -79,7 +83,18 @@ const Index = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleAdd = async () => {
+  const handleAdd = () => {
+    if (!selectedRecord) return;
+    
+    // 考研信息不需要选择学历层次
+    if (selectedRecord.type === "exam") {
+      handleAddWithLevel("本科"); // 考研默认使用本科
+    } else {
+      setIsAddDialogOpen(true);
+    }
+  };
+
+  const handleAddWithLevel = async (degreeLevel: DegreeLevel) => {
     if (!selectedRecord) return;
 
     try {
@@ -96,7 +111,7 @@ const Index = () => {
         school: "新学校",
         major: "新专业",
         study_type: selectedRecord.type === "degree" ? "" : "全日制",
-        degree_level: selectedRecord.type === "degree" ? "学士" : "本科",
+        degree_level: degreeLevel,
       };
 
       const result = await updateData(table, "insert", currentUserId, newData);
@@ -111,15 +126,16 @@ const Index = () => {
           type: selectedRecord.type,
         };
 
+        // 使用智能插入函数在正确位置插入
         switch (selectedRecord.type) {
           case "student-status":
-            setStudentStatus([...studentStatus, newRecord]);
+            setStudentStatus(insertRecordAtCorrectPosition(studentStatus, newRecord));
             break;
           case "education":
-            setEducationRecords([...educationRecords, newRecord]);
+            setEducationRecords(insertRecordAtCorrectPosition(educationRecords, newRecord));
             break;
           case "degree":
-            setDegreeRecords([...degreeRecords, newRecord]);
+            setDegreeRecords(insertRecordAtCorrectPosition(degreeRecords, newRecord));
             break;
           case "exam":
             setExamRecords([...examRecords, { ...result.data[0], type: "exam" }]);
@@ -325,6 +341,14 @@ const Index = () => {
             record={selectedRecord}
             onSave={handleSave}
           />
+          {selectedRecord.type !== "exam" && (
+            <AddRecordDialog
+              open={isAddDialogOpen}
+              onOpenChange={setIsAddDialogOpen}
+              onConfirm={handleAddWithLevel}
+              recordType={selectedRecord.type as "student-status" | "education" | "degree"}
+            />
+          )}
         </>
       )}
     </div>
