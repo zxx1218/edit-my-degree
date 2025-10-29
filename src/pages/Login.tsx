@@ -48,7 +48,7 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-3xl font-bold">学信档案</CardTitle>
-          <CardDescription>请登录以继续使用系统</CardDescription>
+          <CardDescription>请登录以继续使用学信网系统</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
