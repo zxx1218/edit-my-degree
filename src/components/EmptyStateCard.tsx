@@ -175,20 +175,18 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
         setShowEditIcon(false);
       }}
     >
-      <div className="flex flex-col items-center justify-center text-center space-y-3">
+      <div className="flex flex-col items-center justify-center text-center space-y-4">
         <HelpCircle className="w-6 h-6 text-gray-400" />
-        <div>
-          <p className="text-base text-gray-700 leading-relaxed">
-            {content.title}
+        <p className="text-base text-gray-700 leading-relaxed">
+          {content.title}
+        </p>
+        {content.subtitle && (
+          <p className="text-sm text-gray-500 leading-relaxed">
+            {content.subtitle}
           </p>
-          {content.subtitle && (
-            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-              {content.subtitle}
-            </p>
-          )}
-        </div>
+        )}
         {content.action && (
-          <button className="text-sm text-[#48C9B0] flex items-center gap-1">
+          <button className="text-sm text-[#48C9B0] flex items-center gap-1 border-none outline-none">
             {content.action} <span className="text-lg">▾</span>
           </button>
         )}
