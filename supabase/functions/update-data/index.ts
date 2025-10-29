@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
 
     console.log(`${action} operation on ${table} for user:`, userId);
 
+    // 使用 SERVICE_ROLE_KEY 可以绕过 RLS，直接操作数据库
     let result;
 
     switch (action) {

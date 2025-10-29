@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
 
     console.log('Fetching data for user:', userId);
 
+    // 使用 SERVICE_ROLE_KEY 可以绕过 RLS，直接查询
     // 获取所有数据
     const [studentStatus, education, degree, exam] = await Promise.all([
       supabase.from('student_status').select('*').eq('user_id', userId),
