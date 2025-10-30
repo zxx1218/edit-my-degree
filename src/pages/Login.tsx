@@ -76,9 +76,19 @@ const Login = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "登录中..." : "登录"}
-            </Button>
+            <div className="space-y-3">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "登录中..." : "登录"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/purchase")}
+              >
+                购买/续费
+              </Button>
+            </div>
           </form>
           
           <Alert className="mt-6 border-primary/20 bg-primary/5">
