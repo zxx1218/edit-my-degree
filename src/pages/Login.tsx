@@ -99,6 +99,17 @@ const Login = () => {
               <div className="text-muted-foreground">2. 所有的个人信息包括您上传的照片都会加密后进行数据持久化，退出后下次登录不会丢失</div>
             </AlertDescription>
           </Alert>
+
+          <div className="mt-4 text-center">
+            <a 
+              href="http://jk.fortunefreedom.top:9090/share/5_eKT01x"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+            >
+              📹 观看系统使用介绍视频
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>
