@@ -110,6 +110,11 @@ const Login = () => {
               📹 观看系统使用介绍视频
             </a>
           </div>
+
+          <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
+            <div>当前版本：V2.3.2</div>
+            <div>更新时间：2025.11</div>
+          </div>
         </CardContent>
       </Card>
     </div>

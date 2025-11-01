@@ -225,13 +225,17 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-20 h-24 bg-blue-400 rounded-lg mb-2 cursor-pointer hover:bg-blue-500 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-20 h-24 bg-gray-300 rounded-lg mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
                     <img src={data.degreePhoto} alt="学历照片" className="w-full h-full object-cover" />
                   ) : (
-                    <Upload className="w-6 h-6 text-white/80" />
+                    <>
+                      <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">?</span>
+                      </div>
+                    </>
                   )}
                 </div>
                 <span className="text-xs">学历照片</span>
