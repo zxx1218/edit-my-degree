@@ -91,7 +91,7 @@ const Login = () => {
             </div>
           </form>
           
-          <Alert className="mt-6 border-primary/20 bg-primary/5">
+          <Alert className="mt-4 border-primary/20 bg-primary/5">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="ml-2 text-sm space-y-1">
               <div className="font-medium">使用提示：</div>
@@ -100,7 +100,7 @@ const Login = () => {
             </AlertDescription>
           </Alert>
 
-          <div className="mt-4 text-center">
+          <div className="mt-3 text-center">
             <a 
               href="http://jk.fortunefreedom.top:9090/share/5_eKT01x"
               target="_blank"
@@ -111,9 +111,8 @@ const Login = () => {
             </a>
           </div>
 
-          <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
-            <div>当前版本：V2.3.2</div>
-            <div>更新时间：2025.11</div>
+          <div className="mt-3 text-center text-xs text-muted-foreground space-y-1">
+            <div>当前版本：V2.3.2 - 最后更新时间：2025.11</div>
           </div>
         </CardContent>
       </Card>
