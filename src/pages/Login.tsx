@@ -112,7 +112,7 @@ const Login = () => {
           </div>
 
           <div className="mt-3 text-center text-xs text-muted-foreground space-y-1">
-            <div>当前版本：V2.3.2 - 最后更新时间：2025.11</div>
+            <div>当前版本：V2.3.2 - 代码最后更新时间：2025.11</div>
           </div>
         </CardContent>
       </Card>
