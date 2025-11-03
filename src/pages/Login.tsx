@@ -101,14 +101,12 @@ const Login = () => {
           </Alert>
 
           <div className="mt-3 text-center">
-            <a 
-              href="http://jk.fortunefreedom.top:9090/share/5_eKT01x"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button 
+              onClick={() => navigate("/video")}
               className="text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
               📹 观看系统使用介绍视频
-            </a>
+            </button>
           </div>
 
           <div className="mt-3 text-center text-xs text-muted-foreground space-y-1">

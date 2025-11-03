@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Purchase from "./pages/Purchase";
+import VideoPlayer from "./pages/VideoPlayer";
 import StudentStatusDetail from "./pages/StudentStatusDetail";
 import EducationDetail from "./pages/EducationDetail";
 import DegreeDetail from "./pages/DegreeDetail";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/purchase" element={<Purchase />} />
+            <Route path="/video" element={<VideoPlayer />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/student-status/:id" element={<ProtectedRoute><StudentStatusDetail /></ProtectedRoute>} />
             <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
