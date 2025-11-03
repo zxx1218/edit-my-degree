@@ -22,7 +22,7 @@ const VideoPlayer = () => {
         <div className="bg-card rounded-lg shadow-lg overflow-hidden">
           <div className="aspect-video w-full">
             <iframe
-              src="http://jk.fortunefreedom.top:9090/share/5_eKT01x"
+              src="t.mp4"
               className="w-full h-full border-0"
               allowFullScreen
               title="系统使用介绍视频"
@@ -53,7 +53,7 @@ const VideoPlayer = () => {
               </div>
               <div className="flex gap-2">
                 <span className="text-destructive font-semibold">5.</span>
-                <p className="text-foreground/80"><span className="font-semibold text-destructive">特别注意：</span>在系统内修改的各项信息，不会同步到自己的真实学信网上</p>
+                <p className="text-foreground/80"><span className="font-semibold text-destructive">特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上</span></p>
               </div>
             </div>
           </div>
