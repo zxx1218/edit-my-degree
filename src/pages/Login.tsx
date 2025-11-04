@@ -25,7 +25,7 @@ const Login = () => {
       const result = await loginUser(username, password);
       
       if (result.error) {
-        toast.error(result.error);
+        toast.error(result.error, { duration: 1500 });
         setIsLoading(false);
         return;
       }
@@ -33,12 +33,12 @@ const Login = () => {
       if (result.success && result.user) {
         // 将用户信息存储到localStorage
         localStorage.setItem("currentUser", JSON.stringify(result.user));
-        toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`);
+        toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 1500 });
         login();
         navigate("/");
       }
     } catch (error) {
-      toast.error("登录失败，请重试");
+      toast.error("登录失败，请重试", { duration: 1500 });
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);

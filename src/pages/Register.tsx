@@ -28,12 +28,12 @@ const Register = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("两次输入的密码不一致");
+      toast.error("两次输入的密码不一致", { duration: 1500 });
       return;
     }
 
     if (password.length < 6) {
-      toast.error("密码长度至少为6位");
+      toast.error("密码长度至少为6位", { duration: 1500 });
       return;
     }
 
@@ -43,7 +43,7 @@ const Register = () => {
       const result = await registerUser(username, password);
       
       if (result.error) {
-        toast.error(result.error);
+        toast.error(result.error, { duration: 1500 });
         setIsLoading(false);
         return;
       }
@@ -53,7 +53,7 @@ const Register = () => {
         setShowRegisterSuccess(true);
       }
     } catch (error) {
-      toast.error("注册失败，请重试");
+      toast.error("注册失败，请重试", { duration: 1500 });
       console.error("Register error:", error);
     } finally {
       setIsLoading(false);

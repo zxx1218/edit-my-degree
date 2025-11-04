@@ -97,7 +97,7 @@ const Index = () => {
         setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
       } catch (error) {
         console.error("Error loading user data:", error);
-        toast.error("加载数据失败");
+        toast.error("加载数据失败", { duration: 1500 });
       } finally {
         setLoading(false);
       }
@@ -198,11 +198,11 @@ const Index = () => {
             break;
         }
 
-        toast.success("已添加新记录");
+        toast.success("已添加新记录", { duration: 1500 });
       }
     } catch (error) {
       console.error("Error adding record:", error);
-      toast.error("添加记录失败");
+      toast.error("添加记录失败", { duration: 1500 });
     }
   };
 
@@ -238,10 +238,10 @@ const Index = () => {
           break;
       }
 
-      toast.success("已删除记录");
+      toast.success("已删除记录", { duration: 1500 });
     } catch (error) {
       console.error("Error deleting record:", error);
-      toast.error("删除记录失败");
+      toast.error("删除记录失败", { duration: 1500 });
     }
   };
 
@@ -308,10 +308,10 @@ const Index = () => {
           break;
       }
 
-      toast.success("信息已更新");
+      toast.success("信息已更新", { duration: 1500 });
     } catch (error) {
       console.error("Error updating record:", error);
-      toast.error("更新失败");
+      toast.error("更新失败", { duration: 1500 });
     }
   };
 
