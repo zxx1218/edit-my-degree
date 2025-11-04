@@ -18,6 +18,8 @@ interface ActionMenuDialogProps {
   onAdd: () => void;
   onDelete: () => void;
   recordType: "student-status" | "education" | "degree" | "exam";
+  showEdit?: boolean;
+  showDelete?: boolean;
 }
 
 const getTypeName = (type: string) => {
@@ -42,6 +44,8 @@ const ActionMenuDialog = ({
   onAdd,
   onDelete,
   recordType,
+  showEdit = true,
+  showDelete = true,
 }: ActionMenuDialogProps) => {
   const typeName = getTypeName(recordType);
 
@@ -56,17 +60,19 @@ const ActionMenuDialog = ({
         </AlertDialogHeader>
         
         <div className="flex flex-col gap-3 py-4">
-          <Button
-            onClick={() => {
-              onEdit();
-              onOpenChange(false);
-            }}
-            variant="outline"
-            className="w-full justify-start gap-3 h-12"
-          >
-            <Edit2 className="w-5 h-5" />
-            <span>编辑信息</span>
-          </Button>
+          {showEdit && (
+            <Button
+              onClick={() => {
+                onEdit();
+                onOpenChange(false);
+              }}
+              variant="outline"
+              className="w-full justify-start gap-3 h-12"
+            >
+              <Edit2 className="w-5 h-5" />
+              <span>编辑信息</span>
+            </Button>
+          )}
           
           <Button
             onClick={() => {
@@ -80,17 +86,19 @@ const ActionMenuDialog = ({
             <span>添加新{typeName}</span>
           </Button>
           
-          <Button
-            onClick={() => {
-              onDelete();
-              onOpenChange(false);
-            }}
-            variant="outline"
-            className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive"
-          >
-            <Trash2 className="w-5 h-5" />
-            <span>删除此条</span>
-          </Button>
+          {showDelete && (
+            <Button
+              onClick={() => {
+                onDelete();
+                onOpenChange(false);
+              }}
+              variant="outline"
+              className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>删除此条</span>
+            </Button>
+          )}
         </div>
 
         <AlertDialogFooter>

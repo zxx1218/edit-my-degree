@@ -450,6 +450,11 @@ const Index = () => {
             onAdd={handleAdd}
             onDelete={handleDelete}
             recordType={selectedRecord.type}
+            showEdit={selectedRecord.id !== 'temp'}
+            showDelete={
+              selectedRecord.id !== 'temp' && 
+              !(selectedRecord.type === 'student-status' && studentStatus.length === 1)
+            }
           />
           <EditEducationDialog
             key={selectedRecord.id}
