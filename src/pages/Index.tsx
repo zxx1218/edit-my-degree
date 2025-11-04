@@ -428,8 +428,8 @@ const Index = () => {
                 <EducationCard
                   key={record.id}
                   school={record.school}
-                  major=""
-                  studyType={record.year || ""}
+                  major={record.year || ""}
+                  studyType=""
                   degreeLevel=""
                   variant="exam"
                   onEdit={() => handleLongPress(record)}
