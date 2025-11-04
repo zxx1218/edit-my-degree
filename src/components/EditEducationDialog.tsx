@@ -51,7 +51,9 @@ const EditEducationDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>编辑教育信息</DialogTitle>
+          <DialogTitle>
+            {record.type === "exam" ? "编辑考研信息" : "编辑教育信息"}
+          </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
@@ -64,69 +66,86 @@ const EditEducationDialog = ({
               }
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="major">专业</Label>
-            <Input
-              id="major"
-              value={formData.major}
-              onChange={(e) =>
-                setFormData({ ...formData, major: e.target.value })
-              }
-            />
-          </div>
-          {record.type !== "degree" && (
+          
+          {record.type === "exam" ? (
             <div className="grid gap-2">
-              <Label htmlFor="studyType">学习形式</Label>
-              <Select
-                value={formData.studyType}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, studyType: value })
+              <Label htmlFor="year">年份</Label>
+              <Input
+                id="year"
+                value={formData.major}
+                onChange={(e) =>
+                  setFormData({ ...formData, major: e.target.value })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="全日制">全日制</SelectItem>
-                  <SelectItem value="普通全日制">普通全日制</SelectItem>
-                  <SelectItem value="业余">业余</SelectItem>
-                  <SelectItem value="函授">函授</SelectItem>
-                </SelectContent>
-              </Select>
+                placeholder="例如：2024"
+              />
             </div>
+          ) : (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="major">专业</Label>
+                <Input
+                  id="major"
+                  value={formData.major}
+                  onChange={(e) =>
+                    setFormData({ ...formData, major: e.target.value })
+                  }
+                />
+              </div>
+              {record.type !== "degree" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="studyType">学习形式</Label>
+                  <Select
+                    value={formData.studyType}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, studyType: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="全日制">全日制</SelectItem>
+                      <SelectItem value="普通全日制">普通全日制</SelectItem>
+                      <SelectItem value="业余">业余</SelectItem>
+                      <SelectItem value="函授">函授</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="grid gap-2">
+                <Label htmlFor="degreeLevel">
+                  {record.type === "degree" ? "学位类型" : "学位层次"}
+                </Label>
+                <Select
+                  value={record.type === "degree" ? formData.degreeType : formData.degreeLevel}
+                  onValueChange={(value) =>
+                    setFormData(
+                      record.type === "degree"
+                        ? { ...formData, degreeType: value }
+                        : { ...formData, degreeLevel: value }
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {record.type === "degree"
+                      ? DEGREE_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))
+                      : DEGREE_LEVELS.map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {level}
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
           )}
-          <div className="grid gap-2">
-            <Label htmlFor="degreeLevel">
-              {record.type === "degree" ? "学位类型" : "学位层次"}
-            </Label>
-            <Select
-              value={record.type === "degree" ? formData.degreeType : formData.degreeLevel}
-              onValueChange={(value) =>
-                setFormData(
-                  record.type === "degree"
-                    ? { ...formData, degreeType: value }
-                    : { ...formData, degreeLevel: value }
-                )
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {record.type === "degree"
-                  ? DEGREE_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))
-                  : DEGREE_LEVELS.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {level}
-                      </SelectItem>
-                    ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
