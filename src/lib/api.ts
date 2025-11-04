@@ -32,6 +32,19 @@ export const loginUser = async (username: string, password: string): Promise<Log
   return data;
 };
 
+// 注册API
+export const registerUser = async (username: string, password: string): Promise<LoginResponse> => {
+  const { data, error } = await supabase.functions.invoke('register', {
+    body: { username, password },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
 // 获取用户数据API
 export const getUserData = async (userId: string): Promise<UserData> => {
   const { data, error } = await supabase.functions.invoke('get-user-data', {

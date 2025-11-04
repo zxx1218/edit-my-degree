@@ -6,14 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
-import { loginUser } from "@/lib/api";
+import { loginUser, registerUser } from "@/lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showRegisterSuccess, setShowRegisterSuccess] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -40,6 +49,33 @@ const Login = () => {
     } catch (error) {
       toast.error("登录失败，请重试");
       console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const result = await registerUser(username, password);
+      
+      if (result.error) {
+        toast.error(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (result.success && result.user) {
+        // 注册成功，显示提示对话框
+        setShowRegisterSuccess(true);
+        setUsername("");
+        setPassword("");
+      }
+    } catch (error) {
+      toast.error("注册失败，请重试");
+      console.error("Register error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +118,15 @@ const Login = () => {
               </Button>
               <Button
                 type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={handleRegister}
+                disabled={isLoading}
+              >
+                {isLoading ? "注册中..." : "注册"}
+              </Button>
+              <Button
+                type="button"
                 variant="outline"
                 className="w-full"
                 onClick={() => navigate("/purchase")}
@@ -114,6 +159,36 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showRegisterSuccess} onOpenChange={setShowRegisterSuccess}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>注册成功</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>您的账号已成功注册！</p>
+              <p className="text-destructive font-medium">当前允许登录次数为 0，请购买登录次数后使用系统。</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowRegisterSuccess(false)}
+              className="w-full sm:w-auto"
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                setShowRegisterSuccess(false);
+                navigate("/purchase");
+              }}
+              className="w-full sm:w-auto"
+            >
+              去购买
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
