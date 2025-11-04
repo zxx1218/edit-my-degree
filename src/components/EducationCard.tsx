@@ -184,15 +184,21 @@ const EducationCard = ({
           </div>
         )}
       </div>
-       <div className="flex items-center gap-2 text-white/95">
+      {variant === "exam" ? (
+        <div className="text-white/95">
+          <span className="text-base">{major}</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-white/95">
           {major && <span className="text-base">{major}</span>}
           {major && studyType && (
             <span className="text-white/60">|</span>
           )}
-        {studyType && (
-          <span className="text-base">{studyType}</span>
-        )}
-      </div>
+          {studyType && (
+            <span className="text-base">{studyType}</span>
+          )}
+        </div>
+      )}
       {showEditIcon && (
         <div className="absolute top-5 right-5 transition-opacity">
           <Edit2 className="w-4 h-4 text-white/80" />
