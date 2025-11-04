@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Purchase from "./pages/Purchase";
 import VideoPlayer from "./pages/VideoPlayer";
 import StudentStatusDetail from "./pages/StudentStatusDetail";
@@ -26,6 +27,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/purchase" element={<Purchase />} />
             <Route path="/video" element={<VideoPlayer />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
