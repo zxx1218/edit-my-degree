@@ -151,11 +151,12 @@ const Index = () => {
           major: "",
         };
       } else if (selectedRecord.type === "exam") {
-        // 考研信息不需要 degree_level 字段
+        // 考研信息不需要 degree_level 字段，使用当前年份作为默认值
+        const currentYear = new Date().getFullYear();
         newData = {
           name: "新用户",
           school: "新学校",
-          major: "新专业",
+          year: currentYear.toString(),
         };
       } else {
         // 学历/学籍使用 degree_level
@@ -270,15 +271,19 @@ const Index = () => {
       // 构建数据库更新数据，将前端字段名映射到数据库字段名
       const updatePayload: any = {
         school: updatedRecord.school,
-        major: updatedRecord.major,
       };
 
       // 根据类型添加不同的字段
       if (updatedRecord.type === "degree") {
         updatePayload.degree_type = updatedRecord.degreeType;
+        updatePayload.major = updatedRecord.major;
         // 确保前端记录也更新了degreeType字段
         updatedRecord.degreeType = updatedRecord.degreeType;
+      } else if (updatedRecord.type === "exam") {
+        // 考研信息将major字段映射到year字段
+        updatePayload.year = updatedRecord.major;
       } else {
+        updatePayload.major = updatedRecord.major;
         updatePayload.study_type = updatedRecord.studyType;
         updatePayload.degree_level = updatedRecord.degreeLevel;
       }
