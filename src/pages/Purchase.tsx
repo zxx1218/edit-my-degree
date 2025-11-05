@@ -132,11 +132,11 @@ const Purchase = () => {
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家，卖家会在1小时内帮您开通</span>
+                <span>支付成功后，将您注册的账号发给卖家</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">⑤</span>
-                <span>使用获得的账号密码登录系统即可使用</span>
+                <span>卖家点击发货即代表开通成功</span>
               </div>
             </div>
 
