@@ -120,18 +120,22 @@ const Purchase = () => {
             <div className="space-y-3 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">①</span>
-                <span>点击下方"前往购买"按钮跳转到闲鱼商品页面</span>
+                <span>在登录页注册一个个人账号</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">②</span>
-                <span>在闲鱼APP中选择您需要的套餐并完成支付</span>
+                <span>点击下方"前往购买"按钮跳转到闲鱼商品页面</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">③</span>
-                <span>支付成功后，卖家会提供账号信息给您</span>
+                <span>在闲鱼APP中选择您需要的套餐并完成支付</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">④</span>
+                <span>支付成功后，将您注册的账号发给卖家，卖家会在1小时内帮您开通</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-bold text-foreground">⑤</span>
                 <span>使用获得的账号密码登录系统即可使用</span>
               </div>
             </div>
