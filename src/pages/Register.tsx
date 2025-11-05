@@ -142,8 +142,7 @@ const Register = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>注册成功</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>您的账号已成功注册！</p>
-              <p className="text-destructive font-medium">当前允许登录次数为 0，请购买登录次数后使用系统。</p>
+              <p>注册成功！目前登陆次数余量为0，请在购买后将已注册账号发送给我们，即可开通登陆权限</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">

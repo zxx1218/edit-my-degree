@@ -47,33 +47,53 @@ export const extractDegreeType = (degreeText: string): string => {
 export interface SortableRecord {
   id: string;
   degreeLevel: string;
+  created_at?: string;
   [key: string]: any;
 }
 
 export interface SortableDegreeRecord {
   id: string;
   degreeType?: string;
+  created_at?: string;
   [key: string]: any;
 }
 
 /**
  * 按照学历层次排序记录
+ * 同等级按创建时间降序（最新的在前）
  */
 export const sortByDegreeLevel = <T extends SortableRecord>(records: T[]): T[] => {
   return [...records].sort((a, b) => {
     const orderA = DEGREE_LEVEL_ORDER[a.degreeLevel as DegreeLevel] || 999;
     const orderB = DEGREE_LEVEL_ORDER[b.degreeLevel as DegreeLevel] || 999;
+    
+    // 如果层次相同，按创建时间降序排列（最新的在前）
+    if (orderA === orderB) {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return timeB - timeA;
+    }
+    
     return orderA - orderB;
   });
 };
 
 /**
  * 按照学位类型排序记录
+ * 同等级按创建时间降序（最新的在前）
  */
 export const sortByDegreeType = <T extends SortableDegreeRecord>(records: T[]): T[] => {
   return [...records].sort((a, b) => {
     const orderA = DEGREE_TYPE_ORDER[(a.degreeType || "") as DegreeType] || 999;
     const orderB = DEGREE_TYPE_ORDER[(b.degreeType || "") as DegreeType] || 999;
+    
+    // 如果类型相同，按创建时间降序排列（最新的在前）
+    if (orderA === orderB) {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return timeB - timeA;
+    }
+    
     return orderA - orderB;
   });
 };
