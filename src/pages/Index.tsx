@@ -27,6 +27,7 @@ interface EducationRecord {
   degreeLevel: string;
   degreeType?: string;
   type: "student-status" | "education" | "degree" | "exam";
+  created_at?: string;
 }
 
 const Index = () => {
@@ -67,6 +68,7 @@ const Index = () => {
           degreeLevel: item.degree_level || "",
           degreeType: item.degree_type || "",
           type: type as any,
+          created_at: item.created_at,
         });
 
         // 检查学籍信息是否为空，如果为空则创建默认记录
@@ -180,18 +182,19 @@ const Index = () => {
           degreeLevel: result.data[0].degree_level || "",
           degreeType: result.data[0].degree_type || "",
           type: selectedRecord.type,
+          created_at: result.data[0].created_at,
         };
 
-        // 使用智能插入函数在正确位置插入
+        // 使用排序函数重新排序列表
         switch (selectedRecord.type) {
           case "student-status":
-            setStudentStatus(insertRecordAtCorrectPosition(studentStatus, newRecord));
+            setStudentStatus(sortByDegreeLevel([...studentStatus, newRecord]));
             break;
           case "education":
-            setEducationRecords(insertRecordAtCorrectPosition(educationRecords, newRecord));
+            setEducationRecords(sortByDegreeLevel([...educationRecords, newRecord]));
             break;
           case "degree":
-            setDegreeRecords(insertDegreeRecordAtCorrectPosition(degreeRecords, newRecord));
+            setDegreeRecords(sortByDegreeType([...degreeRecords, newRecord]));
             break;
           case "exam":
             setExamRecords([...examRecords, { ...result.data[0], type: "exam" }]);
