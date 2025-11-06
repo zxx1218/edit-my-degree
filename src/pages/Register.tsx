@@ -49,18 +49,20 @@ const Register = () => {
     try {
       const result = await registerUser(username, password);
       
+      // 如果有错误信息，显示具体的错误
       if (result.error) {
         toast.error(result.error, { duration: 1500 });
-        setIsLoading(false);
         return;
       }
 
+      // 注册成功，显示提示对话框
       if (result.success && result.user) {
-        // 注册成功，显示提示对话框
         setShowRegisterSuccess(true);
       }
     } catch (error) {
-      toast.error("注册失败，请重试", { duration: 1500 });
+      // 捕获网络错误或其他未预期的错误
+      const errorMessage = error instanceof Error ? error.message : "注册失败，请重试";
+      toast.error(errorMessage, { duration: 1500 });
       console.error("Register error:", error);
     } finally {
       setIsLoading(false);
