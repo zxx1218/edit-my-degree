@@ -27,6 +27,13 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 检查用户名是否包含中文
+    const chineseRegex = /[\u4e00-\u9fa5]/;
+    if (chineseRegex.test(username)) {
+      toast.error("用户名不能包含中文字符", { duration: 1500 });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error("两次输入的密码不一致", { duration: 1500 });
       return;
@@ -84,13 +91,13 @@ const Register = () => {
               <Input
                 id="username"
                 type="text"
-                placeholder="请输入用户名"
+                placeholder="请输入用户名（不能包含中文）"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 minLength={3}
               />
-              <p className="text-xs text-muted-foreground">用户名至少3个字符</p>
+              <p className="text-xs text-muted-foreground">用户名至少3个字符，不能包含中文</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">密码</Label>

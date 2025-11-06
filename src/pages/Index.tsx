@@ -150,7 +150,7 @@ const Index = () => {
           school: "新学校",
           degree_type: level, // 学位使用 degree_type
           degree_level: "", // 学位的 degree_level 可以为空
-          major: "",
+          major: "新专业",
         };
       } else if (selectedRecord.type === "exam") {
         // 考研信息不需要 degree_level 字段，使用当前年份作为默认值
