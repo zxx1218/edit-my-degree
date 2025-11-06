@@ -118,6 +118,7 @@ const EditEducationDialog = ({
                   <SelectContent>
                     <SelectItem value="全日制">全日制</SelectItem>
                     <SelectItem value="普通全日制">普通全日制</SelectItem>
+                    <SelectItem value="非全日制">非全日制</SelectItem>
                     <SelectItem value="业余">业余</SelectItem>
                     <SelectItem value="函授">函授</SelectItem>
                   </SelectContent>
