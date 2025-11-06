@@ -82,26 +82,6 @@ const EditEducationDialog = ({
           ) : record.type === "degree" ? (
             <>
               <div className="grid gap-2">
-                <Label htmlFor="degreeType">学位类型</Label>
-                <Select
-                  value={formData.degreeLevel}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, degreeLevel: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DEGREE_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
                 <Label htmlFor="degreeName">学位名称</Label>
                 <Input
                   id="degreeName"
