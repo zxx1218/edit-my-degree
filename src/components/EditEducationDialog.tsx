@@ -79,6 +79,27 @@ const EditEducationDialog = ({
                 placeholder="例如：2024"
               />
             </div>
+          ) : record.type === "degree" ? (
+            <div className="grid gap-2">
+              <Label htmlFor="degreeType">学位类型</Label>
+              <Select
+                value={formData.degreeType}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, degreeType: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEGREE_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           ) : (
             <>
               <div className="grid gap-2">
@@ -91,56 +112,42 @@ const EditEducationDialog = ({
                   }
                 />
               </div>
-              {record.type !== "degree" && (
-                <div className="grid gap-2">
-                  <Label htmlFor="studyType">学习形式</Label>
-                  <Select
-                    value={formData.studyType}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, studyType: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="全日制">全日制</SelectItem>
-                      <SelectItem value="普通全日制">普通全日制</SelectItem>
-                      <SelectItem value="业余">业余</SelectItem>
-                      <SelectItem value="函授">函授</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
               <div className="grid gap-2">
-                <Label htmlFor="degreeLevel">
-                  {record.type === "degree" ? "学位类型" : "学位层次"}
-                </Label>
+                <Label htmlFor="studyType">学习形式</Label>
                 <Select
-                  value={record.type === "degree" ? formData.degreeType : formData.degreeLevel}
+                  value={formData.studyType}
                   onValueChange={(value) =>
-                    setFormData(
-                      record.type === "degree"
-                        ? { ...formData, degreeType: value }
-                        : { ...formData, degreeLevel: value }
-                    )
+                    setFormData({ ...formData, studyType: value })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {record.type === "degree"
-                      ? DEGREE_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))
-                      : DEGREE_LEVELS.map((level) => (
-                          <SelectItem key={level} value={level}>
-                            {level}
-                          </SelectItem>
-                        ))}
+                    <SelectItem value="全日制">全日制</SelectItem>
+                    <SelectItem value="普通全日制">普通全日制</SelectItem>
+                    <SelectItem value="业余">业余</SelectItem>
+                    <SelectItem value="函授">函授</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="degreeLevel">学位层次</Label>
+                <Select
+                  value={formData.degreeLevel}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, degreeLevel: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEGREE_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
