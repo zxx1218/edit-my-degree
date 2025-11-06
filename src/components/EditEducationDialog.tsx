@@ -116,33 +116,25 @@ const EditEducationDialog = ({
                 <Label htmlFor="degreeLevel">
                   {record.type === "degree" ? "学位类型" : "学位层次"}
                 </Label>
-                <Select
-                  value={record.type === "degree" ? formData.degreeType : formData.degreeLevel}
-                  onValueChange={(value) =>
-                    setFormData(
-                      record.type === "degree"
-                        ? { ...formData, degreeType: value }
-                        : { ...formData, degreeLevel: value }
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {record.type === "degree"
-                      ? DEGREE_TYPES.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))
-                      : DEGREE_LEVELS.map((level) => (
-                          <SelectItem key={level} value={level}>
-                            {level}
-                          </SelectItem>
-                        ))}
-                  </SelectContent>
-                </Select>
+                {record.type === "degree" ? (
+                  <Input
+                    id="degreeLevel"
+                    value={formData.degreeType || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, degreeType: e.target.value })
+                    }
+                    placeholder="请输入学位类型"
+                  />
+                ) : (
+                  <Input
+                    id="degreeLevel"
+                    value={formData.degreeLevel}
+                    onChange={(e) =>
+                      setFormData({ ...formData, degreeLevel: e.target.value })
+                    }
+                    placeholder="请输入学位层次"
+                  />
+                )}
               </div>
             </>
           )}
