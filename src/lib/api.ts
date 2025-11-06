@@ -38,10 +38,12 @@ export const registerUser = async (username: string, password: string): Promise<
     body: { username, password },
   });
 
+  // 如果是网络错误或其他非预期错误
   if (error) {
-    throw new Error(error.message);
+    return { success: false, user: null as any, error: error.message };
   }
 
+  // 返回后端响应（可能包含业务逻辑错误，如用户名已存在）
   return data;
 };
 
