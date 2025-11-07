@@ -1,5 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
-
+// 删除所有原有代码并替换为以下内容
 export interface User {
   id: string;
   username: string;
@@ -10,6 +9,7 @@ export interface LoginResponse {
   success: boolean;
   user: User;
   error?: string;
+  token?: string;
 }
 
 export interface UserData {
@@ -19,14 +19,23 @@ export interface UserData {
   exam: any[];
 }
 
+// 设置API基础URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
 // 登录API
 export const loginUser = async (username: string, password: string): Promise<LoginResponse> => {
-  const { data, error } = await supabase.functions.invoke('auth', {
-    body: { username, password },
+  const response = await fetch(`${API_BASE_URL}/auth`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password }),
   });
 
-  if (error) {
-    throw new Error(error.message);
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || '登录失败');
   }
 
   return data;
@@ -34,30 +43,45 @@ export const loginUser = async (username: string, password: string): Promise<Log
 
 // 注册API
 export const registerUser = async (username: string, password: string): Promise<LoginResponse> => {
-  const { data, error } = await supabase.functions.invoke('register', {
-    body: { username, password },
+  const response = await fetch(`${API_BASE_URL}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, password }),
   });
 
-  // 如果是网络错误或其他非预期错误
-  if (error) {
-    return { success: false, user: null as any, error: error.message };
+  const data = await response.json();
+  
+  if (!response.ok && response.status !== 400) {
+    throw new Error('网络错误');
   }
 
-  // 返回后端响应（可能包含业务逻辑错误，如用户名已存在）
   return data;
 };
 
 // 获取用户数据API
 export const getUserData = async (userId: string): Promise<UserData> => {
-  const { data, error } = await supabase.functions.invoke('get-user-data', {
-    body: { userId },
+  const response = await fetch(`${API_BASE_URL}/get-user-data`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userId }),
   });
 
-  if (error) {
-    throw new Error(error.message);
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || '获取数据失败');
   }
 
-  return data;
+  return {
+    studentStatus: data.student_status || [],
+    education: data.education || [],
+    degree: data.degree || [],
+    exam: data.exam || []
+  };
 };
 
 // 更新数据API
@@ -68,12 +92,18 @@ export const updateData = async (
   data?: any,
   id?: string
 ) => {
-  const { data: result, error } = await supabase.functions.invoke('update-data', {
-    body: { table, action, data, id, userId },
+  const response = await fetch(`${API_BASE_URL}/update-data`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ table, action, data, id, userId }),
   });
 
-  if (error) {
-    throw new Error(error.message);
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.error || '操作失败');
   }
 
   return result;
