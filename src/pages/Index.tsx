@@ -117,25 +117,11 @@ const Index = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleAdd = (type?: "student-status" | "education" | "degree" | "exam") => {
-    // 确定要添加的类型：优先使用传入的type，否则使用selectedRecord的type
-    const recordType = type || selectedRecord?.type;
-    if (!recordType) return;
-    
-    // 临时设置selectedRecord以便其他函数使用
-    if (type && !selectedRecord) {
-      setSelectedRecord({ 
-        id: '', 
-        school: '', 
-        major: '', 
-        studyType: '', 
-        degreeLevel: '', 
-        type: type 
-      });
-    }
+  const handleAdd = () => {
+    if (!selectedRecord) return;
     
     // 考研信息不需要选择学历层次
-    if (recordType === "exam") {
+    if (selectedRecord.type === "exam") {
       handleAddWithLevel("本科"); // 考研默认使用本科
     } else {
       setIsAddDialogOpen(true);
@@ -351,7 +337,17 @@ const Index = () => {
             count={studentStatus.length}
             promptText="还有学籍没有显示出来？"
             actionText="尝试绑定"
-            onAction={() => handleAdd('student-status')}
+            onAction={() => {
+              setSelectedRecord({ 
+                id: '', 
+                school: '', 
+                major: '', 
+                studyType: '', 
+                degreeLevel: '', 
+                type: 'student-status' 
+              });
+              setIsAddDialogOpen(true);
+            }}
           />
           <div className="px-4 space-y-3">
             {studentStatus.map((record) => (
@@ -375,7 +371,17 @@ const Index = () => {
             count={educationRecords.length}
             promptText="还有学历没有显示出来？"
             actionText="尝试绑定"
-            onAction={() => handleAdd('education')}
+            onAction={() => {
+              setSelectedRecord({ 
+                id: '', 
+                school: '', 
+                major: '', 
+                studyType: '', 
+                degreeLevel: '', 
+                type: 'education' 
+              });
+              setIsAddDialogOpen(true);
+            }}
           />
           <div className="px-4 space-y-3">
             {educationRecords.length > 0 ? (
@@ -413,7 +419,17 @@ const Index = () => {
             count={degreeRecords.length}
             promptText="还有学位没有显示出来？"
             actionText="尝试绑定"
-            onAction={() => handleAdd('degree')}
+            onAction={() => {
+              setSelectedRecord({ 
+                id: '', 
+                school: '', 
+                major: '', 
+                studyType: '', 
+                degreeLevel: '', 
+                type: 'degree' 
+              });
+              setIsAddDialogOpen(true);
+            }}
           />
           <div className="px-4 space-y-3">
             {degreeRecords.length > 0 ? (
