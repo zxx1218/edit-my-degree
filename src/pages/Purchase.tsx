@@ -113,7 +113,7 @@ const Purchase = () => {
               <img
                 src={xianyuImage}
                 alt="闲鱼购买"
-                className="max-w-full h-auto rounded-lg shadow-md"
+                className="max-w-sm h-auto rounded-lg shadow-md"
               />
             </div>
             
