@@ -151,7 +151,7 @@ const Register = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>注册成功</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>注册成功！目前登陆次数余量为0，请在购买后将已注册账号发送给我们，即可开通登陆权限</p>
+              <p>新账号默认登陆次数余量为0，请在闲鱼购买次数后将该账号留言给客服，即可续费登录次数</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
