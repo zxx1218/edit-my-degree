@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 import xianyuImage from "@/assets/xianyu.png";
 
 const Purchase = () => {
   const navigate = useNavigate();
+  const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const plans = [
     {
@@ -31,6 +35,17 @@ const Purchase = () => {
       popular: false,
     },
   ];
+
+  const handlePlanClick = (plan: typeof plans[0]) => {
+    setSelectedPlan(plan);
+    setShowPaymentDialog(true);
+  };
+
+  const handlePayment = (method: "wechat" | "alipay") => {
+    // TODO: 实现实际的支付逻辑
+    console.log(`Selected payment method: ${method}`, selectedPlan);
+    // 这里可以调用支付接口
+  };
 
   const handlePurchase = () => {
     window.open("https://m.tb.cn/h.Sn7Xrtk?tk=jTiAffAGIsg", "_blank");
@@ -59,9 +74,10 @@ const Purchase = () => {
           {plans.map((plan, index) => (
             <Card
               key={index}
-              className={`relative transition-all hover:shadow-lg ${
+              className={`relative transition-all hover:shadow-lg cursor-pointer ${
                 plan.popular ? "border-primary shadow-lg scale-105" : ""
               }`}
+              onClick={() => handlePlanClick(plan)}
             >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
@@ -150,6 +166,57 @@ const Purchase = () => {
             </Button>
           </CardContent>
         </Card>
+
+        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>确认支付</DialogTitle>
+              <DialogDescription>
+                请选择支付方式完成购买
+              </DialogDescription>
+            </DialogHeader>
+            {selectedPlan && (
+              <div className="space-y-6">
+                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">套餐</span>
+                    <span className="font-semibold">{selectedPlan.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">登录次数</span>
+                    <span className="font-semibold">{selectedPlan.logins}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-sm text-muted-foreground">支付金额</span>
+                    <span className="text-2xl font-bold text-primary">{selectedPlan.price}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground text-center">选择支付方式</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-1"
+                      onClick={() => handlePayment("wechat")}
+                    >
+                      <span className="text-lg">💚</span>
+                      <span>微信支付</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-1"
+                      onClick={() => handlePayment("alipay")}
+                    >
+                      <span className="text-lg">💙</span>
+                      <span>支付宝支付</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
