@@ -132,7 +132,7 @@ const Purchase = () => {
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家(不需要提供密码)</span>
+                <span>支付成功后，将您注册的账号发给卖家(无需密码)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">⑤</span>
