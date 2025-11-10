@@ -14,7 +14,7 @@ const VideoPlayer = () => {
       description: "系统基础操作演示"
     },
     demo2: {
-      src: "t.mp4", // 替换为第二个视频的路径
+      src: "tt.mp4", // 替换为第二个视频的路径
       title: "演示二",
       description: "系统高级功能演示"
     }
