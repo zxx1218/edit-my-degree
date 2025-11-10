@@ -120,7 +120,7 @@ const Purchase = () => {
             <div className="space-y-3 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">①</span>
-                <span>在登录页注册一个个人账号</span>
+                <span>在系统注册页注册一个个人账号</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">②</span>
@@ -132,11 +132,11 @@ const Purchase = () => {
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家</span>
+                <span>支付成功后，将您注册的账号发给卖家(不需要提供密码)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">⑤</span>
-                <span>卖家点击发货即代表开通成功</span>
+                <span>稍等片刻，卖家点击发货即代表开通成功</span>
               </div>
             </div>
 
