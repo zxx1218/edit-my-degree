@@ -1,24 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus, Check, ChevronsUpDown } from "lucide-react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Shield, UserPlus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -34,19 +21,31 @@ const SuperAdd = () => {
   const [verifyPassword, setVerifyPassword] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [editedUsername, setEditedUsername] = useState("");
   const [editedPassword, setEditedPassword] = useState("");
   const [editedLogins, setEditedLogins] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isVerified) {
       fetchUsers();
     }
   }, [isVerified]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -88,7 +87,12 @@ const SuperAdd = () => {
     setEditedPassword(user.password);
     setEditedLogins(user.remaining_logins.toString());
     setSearchValue(user.username);
-    setSearchOpen(false);
+    setShowDropdown(false);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+    setShowDropdown(value.length > 0);
   };
 
   const handleUpdateUser = async () => {
@@ -227,52 +231,45 @@ const SuperAdd = () => {
             <CardDescription>查看和编辑用户信息</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label>搜索用户</Label>
-              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={searchOpen}
-                    className="w-full justify-between"
-                  >
-                    {searchValue || "输入用户名进行搜索..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      placeholder="搜索用户名..."
-                      value={searchValue}
-                      onValueChange={setSearchValue}
-                    />
-                    <CommandList>
-                      <CommandEmpty>未找到匹配的用户</CommandEmpty>
-                      <CommandGroup>
-                        {filteredUsers.map((user) => (
-                          <CommandItem
-                            key={user.id}
-                            value={user.username}
-                            onSelect={() => handleUserSelect(user)}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedUser?.id === user.id
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {user.username} (登录次数: {user.remaining_logins})
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+            <div className="space-y-2 relative" ref={dropdownRef}>
+              <Label htmlFor="search-user">搜索用户</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="search-user"
+                  type="text"
+                  placeholder="输入用户名进行搜索..."
+                  value={searchValue}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => searchValue && setShowDropdown(true)}
+                  className="pl-9"
+                />
+              </div>
+              {showDropdown && filteredUsers.length > 0 && (
+                <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                  {filteredUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => handleUserSelect(user)}
+                      className={cn(
+                        "w-full px-4 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                        selectedUser?.id === user.id && "bg-accent"
+                      )}
+                    >
+                      <div className="font-medium">{user.username}</div>
+                      <div className="text-xs text-muted-foreground">
+                        剩余登录次数: {user.remaining_logins}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showDropdown && filteredUsers.length === 0 && searchValue && (
+                <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-4 text-sm text-muted-foreground text-center">
+                  未找到匹配的用户
+                </div>
+              )}
             </div>
 
             {selectedUser && (
