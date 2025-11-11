@@ -9,7 +9,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // 初始化时检查 localStorage 中是否有用户信息
+    const currentUser = localStorage.getItem("currentUser");
+    return !!currentUser;
+  });
 
   const login = () => {
     setIsAuthenticated(true);
