@@ -242,7 +242,7 @@ const SuperAdd = () => {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
-                  <Command>
+                  <Command shouldFilter={false}>
                     <CommandInput
                       placeholder="搜索用户名..."
                       value={searchValue}
