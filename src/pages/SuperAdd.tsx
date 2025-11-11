@@ -3,14 +3,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus } from "lucide-react";
+import { Shield, UserPlus, Check, ChevronsUpDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface User {
   id: string;
   username: string;
+  password: string;
   remaining_logins: number;
 }
 
@@ -19,8 +33,12 @@ const SuperAdd = () => {
   const [verifyUsername, setVerifyUsername] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [addLogins, setAddLogins] = useState("");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [editedUsername, setEditedUsername] = useState("");
+  const [editedPassword, setEditedPassword] = useState("");
+  const [editedLogins, setEditedLogins] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -34,7 +52,7 @@ const SuperAdd = () => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, username, remaining_logins')
+        .select('id, username, password, remaining_logins')
         .order('username');
 
       if (error) throw error;
@@ -64,43 +82,83 @@ const SuperAdd = () => {
     }
   };
 
-  const handleAddLogins = async () => {
-    if (!selectedUserId || !addLogins) {
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    setEditedUsername(user.username);
+    setEditedPassword(user.password);
+    setEditedLogins(user.remaining_logins.toString());
+    setSearchValue(user.username);
+    setSearchOpen(false);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) {
       toast({
         variant: "destructive",
-        title: "请填写完整信息",
-        description: "请选择用户并输入要增加的次数",
+        title: "请选择用户",
       });
       return;
     }
 
-    const loginsToAdd = parseInt(addLogins);
-    if (isNaN(loginsToAdd) || loginsToAdd <= 0) {
+    if (!editedUsername.trim()) {
       toast({
         variant: "destructive",
-        title: "输入错误",
-        description: "请输入有效的正整数",
+        title: "用户名不能为空",
+      });
+      return;
+    }
+
+    if (!editedPassword.trim()) {
+      toast({
+        variant: "destructive",
+        title: "密码不能为空",
+      });
+      return;
+    }
+
+    const logins = parseInt(editedLogins);
+    if (isNaN(logins) || logins < 0) {
+      toast({
+        variant: "destructive",
+        title: "请输入有效的登录次数",
       });
       return;
     }
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('update-user-logins', {
-        body: { userId: selectedUserId, addLogins: loginsToAdd },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "update-user-info",
+        {
+          body: {
+            userId: selectedUser.id,
+            username: editedUsername,
+            password: editedPassword,
+            remaining_logins: logins,
+          },
+        }
+      );
 
       if (error) throw error;
 
-      toast({
-        title: "更新成功",
-        description: `已为用户增加 ${loginsToAdd} 次登录次数`,
-      });
-
-      // 刷新用户列表
-      await fetchUsers();
-      setSelectedUserId("");
-      setAddLogins("");
+      if (data.success) {
+        toast({
+          title: "更新成功",
+          description: "用户信息已成功更新",
+        });
+        fetchUsers();
+        setSelectedUser(null);
+        setSearchValue("");
+        setEditedUsername("");
+        setEditedPassword("");
+        setEditedLogins("");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "更新失败",
+          description: data.error || "未知错误",
+        });
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -111,6 +169,10 @@ const SuperAdd = () => {
       setIsLoading(false);
     }
   };
+
+  const filteredUsers = users.filter((user) =>
+    user.username.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   if (!isVerified) {
     return (
@@ -153,8 +215,6 @@ const SuperAdd = () => {
     );
   }
 
-  const selectedUser = users.find(u => u.id === selectedUserId);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
       <div className="container max-w-2xl mx-auto py-8">
@@ -162,62 +222,107 @@ const SuperAdd = () => {
           <CardHeader>
             <div className="flex items-center gap-2">
               <UserPlus className="h-6 w-6 text-primary" />
-              <CardTitle>用户登录次数管理</CardTitle>
+              <CardTitle>用户信息管理</CardTitle>
             </div>
-            <CardDescription>为用户增加登录次数</CardDescription>
+            <CardDescription>查看和编辑用户信息</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="user-select">选择用户</Label>
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger id="user-select">
-                  <SelectValue placeholder="请选择用户" />
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.username} (当前剩余: {user.remaining_logins})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>搜索用户</Label>
+              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={searchOpen}
+                    className="w-full justify-between"
+                  >
+                    {searchValue || "输入用户名进行搜索..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="搜索用户名..."
+                      value={searchValue}
+                      onValueChange={setSearchValue}
+                    />
+                    <CommandList>
+                      <CommandEmpty>未找到匹配的用户</CommandEmpty>
+                      <CommandGroup>
+                        {filteredUsers.map((user) => (
+                          <CommandItem
+                            key={user.id}
+                            value={user.username}
+                            onSelect={() => handleUserSelect(user)}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedUser?.id === user.id
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {user.username} (登录次数: {user.remaining_logins})
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {selectedUser && (
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-muted-foreground">用户名:</div>
-                  <div className="font-medium">{selectedUser.username}</div>
-                  <div className="text-muted-foreground">当前剩余次数:</div>
-                  <div className="font-medium">{selectedUser.remaining_logins}</div>
+              <>
+                <div className="space-y-4 p-4 bg-muted rounded-lg">
+                  <h3 className="font-semibold text-sm">用户信息</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-username">用户名</Label>
+                    <Input
+                      id="edit-username"
+                      value={editedUsername}
+                      onChange={(e) => setEditedUsername(e.target.value)}
+                      placeholder="用户名"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-password">密码</Label>
+                    <Input
+                      id="edit-password"
+                      type="text"
+                      value={editedPassword}
+                      onChange={(e) => setEditedPassword(e.target.value)}
+                      placeholder="密码"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-logins">剩余登录次数</Label>
+                    <Input
+                      id="edit-logins"
+                      type="number"
+                      min="0"
+                      value={editedLogins}
+                      onChange={(e) => setEditedLogins(e.target.value)}
+                      placeholder="剩余登录次数"
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <Button
+                  onClick={handleUpdateUser}
+                  disabled={isLoading}
+                  className="w-full"
+                >
+                  {isLoading ? "更新中..." : "确认更新"}
+                </Button>
+              </>
             )}
-
-            <div className="space-y-2">
-              <Label htmlFor="add-logins">增加次数</Label>
-              <Input
-                id="add-logins"
-                type="number"
-                min="1"
-                placeholder="输入要增加的登录次数"
-                value={addLogins}
-                onChange={(e) => setAddLogins(e.target.value)}
-              />
-              {selectedUser && addLogins && parseInt(addLogins) > 0 && (
-                <p className="text-sm text-muted-foreground">
-                  更新后将变为: {selectedUser.remaining_logins + parseInt(addLogins)}
-                </p>
-              )}
-            </div>
-
-            <Button 
-              onClick={handleAddLogins} 
-              disabled={isLoading || !selectedUserId || !addLogins}
-              className="w-full"
-            >
-              {isLoading ? "处理中..." : "确认增加"}
-            </Button>
           </CardContent>
         </Card>
       </div>
