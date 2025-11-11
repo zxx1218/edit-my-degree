@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus, List } from "lucide-react";
+import { Shield, UserPlus, List, Loader2 } from "lucide-react";
 
 interface User {
   id: string;
@@ -22,24 +22,41 @@ const SuperAdd = () => {
   const [targetUsername, setTargetUsername] = useState("");
   const [addLogins, setAddLogins] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingUsers, setIsFetchingUsers] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
+    setIsFetchingUsers(true);
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, username, remaining_logins')
-        .order('username');
+      console.log('Fetching users...');
+      const { data, error } = await supabase.functions.invoke('get-all-users');
 
-      if (error) throw error;
-      setUsers(data || []);
-      setShowUserList(true);
+      console.log('Response:', data);
+
+      if (error) {
+        console.error('Error:', error);
+        throw error;
+      }
+
+      if (data.success) {
+        setUsers(data.users || []);
+        setShowUserList(true);
+        toast({
+          title: "加载成功",
+          description: `共 ${data.users?.length || 0} 个用户`,
+        });
+      } else {
+        throw new Error(data.error || '获取用户列表失败');
+      }
     } catch (error: any) {
+      console.error('Fetch users error:', error);
       toast({
         variant: "destructive",
         title: "获取用户列表失败",
         description: error.message,
       });
+    } finally {
+      setIsFetchingUsers(false);
     }
   };
 
@@ -187,20 +204,44 @@ const SuperAdd = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex gap-4">
-              <Button onClick={fetchUsers} variant="outline" className="gap-2">
-                <List className="h-4 w-4" />
-                显示所有用户
+              <Button 
+                onClick={fetchUsers} 
+                variant="outline" 
+                className="gap-2"
+                disabled={isFetchingUsers}
+              >
+                {isFetchingUsers ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    加载中...
+                  </>
+                ) : (
+                  <>
+                    <List className="h-4 w-4" />
+                    显示所有用户
+                  </>
+                )}
               </Button>
             </div>
 
-            {showUserList && users.length > 0 && (
-              <div className="border rounded-lg p-4 max-h-60 overflow-auto bg-muted/50">
-                <h3 className="font-semibold mb-3 text-sm">用户列表</h3>
+            {isFetchingUsers && (
+              <div className="border rounded-lg p-8 bg-muted/50 animate-fade-in">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
+                </div>
+              </div>
+            )}
+
+            {showUserList && !isFetchingUsers && users.length > 0 && (
+              <div className="border rounded-lg p-4 max-h-60 overflow-auto bg-muted/50 animate-fade-in">
+                <h3 className="font-semibold mb-3 text-sm">用户列表 ({users.length})</h3>
                 <div className="space-y-2">
-                  {users.map((user) => (
+                  {users.map((user, index) => (
                     <div
                       key={user.id}
-                      className="flex justify-between items-center p-2 bg-background rounded hover:bg-accent transition-colors"
+                      className="flex justify-between items-center p-2 bg-background rounded hover:bg-accent transition-colors animate-scale-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
                     >
                       <span className="font-medium">{user.username}</span>
                       <span className="text-sm text-muted-foreground">
@@ -209,6 +250,12 @@ const SuperAdd = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {showUserList && !isFetchingUsers && users.length === 0 && (
+              <div className="border rounded-lg p-8 bg-muted/50 text-center animate-fade-in">
+                <p className="text-sm text-muted-foreground">暂无用户数据</p>
               </div>
             )}
 
