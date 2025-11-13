@@ -168,7 +168,7 @@ const EducationCard = ({
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-lg font-bold">{school}</h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-4 py-1 rounded-sm text-sm font-medium flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-4 py-1 rounded-full text-sm font-medium flex items-center gap-2`}>
             {degreeLevel}
           </div>
         )}
