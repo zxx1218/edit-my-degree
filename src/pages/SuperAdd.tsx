@@ -10,6 +10,7 @@ import { Shield, UserPlus, List, Loader2 } from "lucide-react";
 interface User {
   id: string;
   username: string;
+  password: string;
   remaining_logins: number;
 }
 
@@ -240,11 +241,14 @@ const SuperAdd = () => {
                   {users.map((user, index) => (
                     <div
                       key={user.id}
-                      className="flex justify-between items-center p-2 bg-background rounded hover:bg-accent transition-colors animate-scale-in"
+                      className="flex justify-between items-center p-3 bg-background rounded hover:bg-accent transition-colors animate-scale-in gap-4"
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
-                      <span className="font-medium">{user.username}</span>
-                      <span className="text-sm text-muted-foreground">
+                      <div className="flex-1">
+                        <span className="font-medium block">{user.username}</span>
+                        <span className="text-xs text-muted-foreground">密码: {user.password}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
                         剩余登录: {user.remaining_logins} 次
                       </span>
                     </div>
