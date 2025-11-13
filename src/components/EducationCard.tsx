@@ -133,7 +133,7 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] text-white";
+        return "bg-[#59b58a] text-white";
       case "education":
         return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
       case "degree":
@@ -162,7 +162,7 @@ const EducationCard = ({
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-[5px] p-5 shadow-lg cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-[5px] p-[5px] shadow-lg cursor-pointer relative group h-[78px]`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
