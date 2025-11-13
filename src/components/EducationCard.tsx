@@ -137,7 +137,7 @@ const EducationCard = ({
       case "education":
         return "bg-[#5d9df9] text-white";
       case "degree":
-        return "bg-gradient-to-br from-[#5B7CFF] to-[#4A69FF] text-white";
+        return "bg-[#475ed6] text-white";
       case "exam":
         return "bg-gradient-to-br from-[#48C9B0] to-[#16A085] text-white";
       default:
