@@ -215,7 +215,7 @@ const DegreeDetail = () => {
               </h3>
               <div className="bg-white/25 backdrop-blur-sm px-4 py-1 rounded-full flex-shrink-0">
                 <span
-                  className="text-sm font-medium cursor-pointer hover:opacity-80"
+                  className="text-xs font-medium cursor-pointer hover:opacity-80"
                   onClick={() => handleFieldClick("degreeLevel", "学位层次")}
                 >
                   {data.degreeLevel}
