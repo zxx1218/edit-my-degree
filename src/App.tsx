@@ -36,7 +36,7 @@ const App = () => (
             <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
             <Route path="/degree/:id" element={<ProtectedRoute><DegreeDetail /></ProtectedRoute>} />
             <Route path="/exam/:id" element={<ProtectedRoute><ExamDetail /></ProtectedRoute>} />
-            <Route path="/superadd" element={<ProtectedRoute><SuperAdd /></ProtectedRoute>} />
+            <Route path="/superadd" element={<SuperAdd />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
