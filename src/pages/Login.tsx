@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { loginUser, changePassword } from "@/lib/api";
@@ -15,6 +16,7 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberUsername, setRememberUsername] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [changePasswordData, setChangePasswordData] = useState({
     username: "",
@@ -25,6 +27,15 @@ const Login = () => {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    const savedUsername = localStorage.getItem("rememberedUsername");
+    const shouldRemember = localStorage.getItem("rememberUsername") === "true";
+    if (savedUsername && shouldRemember) {
+      setUsername(savedUsername);
+      setRememberUsername(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +53,16 @@ const Login = () => {
       if (result.success && result.user) {
         // 将用户信息存储到localStorage
         localStorage.setItem("currentUser", JSON.stringify(result.user));
+        
+        // 处理记住用户名
+        if (rememberUsername) {
+          localStorage.setItem("rememberedUsername", username);
+          localStorage.setItem("rememberUsername", "true");
+        } else {
+          localStorage.removeItem("rememberedUsername");
+          localStorage.removeItem("rememberUsername");
+        }
+        
         toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 1500 });
         login();
         navigate("/");
@@ -133,6 +154,19 @@ const Login = () => {
                 required
                 className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
+            </div>
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="remember" 
+                checked={rememberUsername}
+                onCheckedChange={(checked) => setRememberUsername(checked === true)}
+              />
+              <Label 
+                htmlFor="remember" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                记住用户名
+              </Label>
             </div>
             <div className="space-y-3 pt-2">
               <Button 
