@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     // 使用 service role key 查询所有用户
     const { data: users, error } = await supabase
       .from('users')
-      .select('id, username, remaining_logins')
+      .select('id, username, password, remaining_logins')
       .order('username', { ascending: true });
 
     if (error) {
