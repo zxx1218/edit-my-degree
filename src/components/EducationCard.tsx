@@ -135,13 +135,13 @@ const EducationCard = ({
       case "student-status":
         return "bg-[#59b58a] text-white";
       case "education":
-        return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
+        return "bg-[#5d9df9] text-white";
       case "degree":
         return "bg-gradient-to-br from-[#5B7CFF] to-[#4A69FF] text-white";
       case "exam":
         return "bg-gradient-to-br from-[#48C9B0] to-[#16A085] text-white";
       default:
-        return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
+        return "bg-[#5d9df9] text-white";
     }
   };
 
