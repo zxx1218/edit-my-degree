@@ -118,5 +118,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: SimSun, STSong, serif;
+    font-weight: normal;
   }
 }

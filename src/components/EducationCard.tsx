@@ -162,7 +162,7 @@ const EducationCard = ({
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-sm p-5 shadow-lg cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-[5px] p-5 shadow-lg cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -177,9 +177,9 @@ const EducationCard = ({
       }}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-lg font-songti font-normal">{school}</h3>
+        <h3 className="text-lg font-normal">{school}</h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-4 py-1 rounded-sm text-sm font-medium flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-4 py-1 rounded-[5px] text-sm font-medium flex items-center gap-2`}>
             {degreeLevel}
           </div>
         )}
