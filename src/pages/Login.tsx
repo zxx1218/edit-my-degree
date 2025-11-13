@@ -147,92 +147,93 @@ const Login = () => {
               >
                 购买/续费
               </Button>
-              <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full"
-                  >
-                    修改密码
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <form onSubmit={handleChangePassword}>
-                    <DialogHeader>
-                      <DialogTitle>修改密码</DialogTitle>
-                      <DialogDescription>
-                        请输入您的账号信息和新密码
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="change-username">用户名</Label>
-                        <Input
-                          id="change-username"
-                          type="text"
-                          placeholder="请输入用户名"
-                          value={changePasswordData.username}
-                          onChange={(e) => setChangePasswordData({
-                            ...changePasswordData,
-                            username: e.target.value
-                          })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="old-password">原密码</Label>
-                        <Input
-                          id="old-password"
-                          type="password"
-                          placeholder="请输入原密码"
-                          value={changePasswordData.oldPassword}
-                          onChange={(e) => setChangePasswordData({
-                            ...changePasswordData,
-                            oldPassword: e.target.value
-                          })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="new-password">新密码</Label>
-                        <Input
-                          id="new-password"
-                          type="password"
-                          placeholder="请输入新密码（至少6位）"
-                          value={changePasswordData.newPassword}
-                          onChange={(e) => setChangePasswordData({
-                            ...changePasswordData,
-                            newPassword: e.target.value
-                          })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-password">确认新密码</Label>
-                        <Input
-                          id="confirm-password"
-                          type="password"
-                          placeholder="请再次输入新密码"
-                          value={changePasswordData.confirmPassword}
-                          onChange={(e) => setChangePasswordData({
-                            ...changePasswordData,
-                            confirmPassword: e.target.value
-                          })}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={isChangingPassword}>
-                        {isChangingPassword ? "修改中..." : "确认修改"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
             </div>
           </form>
+          
+          <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+            <DialogContent>
+              <form onSubmit={handleChangePassword}>
+                <DialogHeader>
+                  <DialogTitle>修改密码</DialogTitle>
+                  <DialogDescription>
+                    请输入您的账号信息和新密码
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="change-username">用户名</Label>
+                    <Input
+                      id="change-username"
+                      type="text"
+                      placeholder="请输入用户名"
+                      value={changePasswordData.username}
+                      onChange={(e) => setChangePasswordData({
+                        ...changePasswordData,
+                        username: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="old-password">原密码</Label>
+                    <Input
+                      id="old-password"
+                      type="password"
+                      placeholder="请输入原密码"
+                      value={changePasswordData.oldPassword}
+                      onChange={(e) => setChangePasswordData({
+                        ...changePasswordData,
+                        oldPassword: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">新密码</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder="请输入新密码（至少6位）"
+                      value={changePasswordData.newPassword}
+                      onChange={(e) => setChangePasswordData({
+                        ...changePasswordData,
+                        newPassword: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">确认新密码</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder="请再次输入新密码"
+                      value={changePasswordData.confirmPassword}
+                      onChange={(e) => setChangePasswordData({
+                        ...changePasswordData,
+                        confirmPassword: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={isChangingPassword}>
+                    {isChangingPassword ? "修改中..." : "确认修改"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <div className="mt-3 text-center">
+            <button 
+              onClick={() => setIsChangePasswordOpen(true)}
+              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+            >
+              🔑 修改密码
+            </button>
+          </div>
           
           <Alert className="mt-4 border-primary/20 bg-primary/5">
             <Info className="h-4 w-4 text-primary" />
