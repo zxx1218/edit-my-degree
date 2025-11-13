@@ -61,8 +61,11 @@ const EducationDetail = () => {
 
       try {
         const result = await getUserData(userId);
-        const record = result.education?.find((r: any) => r.id === id);
+        const record = result.education?.find((r: any) => r.id.toString() === id);
         
+        console.log(result);
+        console.log('record:', record);
+
         if (record) {
           setData({
             name: record.name || defaultData.name,

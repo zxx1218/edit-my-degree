@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users } from "lucide-react";
 import xianyuImage from "@/assets/xianyu.png";
 
 const Purchase = () => {
@@ -13,14 +13,14 @@ const Purchase = () => {
       name: "体验版",
       logins: "5次",
       price: "¥9",
-      description: "获得一个可以登陆5次的个人账号",
+      description: "为您的个人账号充值5次登录次数",
       popular: false,
     },
     {
       name: "标准版",
       logins: "50次",
       price: "¥29",
-      description: "获得一个可以登陆50次的个人账号",
+      description: "为您的个人账号充值50次登录次数",
       popular: true,
     },
     {
@@ -113,14 +113,14 @@ const Purchase = () => {
               <img
                 src={xianyuImage}
                 alt="闲鱼购买"
-                className="max-w-full h-auto rounded-lg shadow-md"
+                className="max-w-sm h-auto rounded-lg shadow-md"
               />
             </div>
             
             <div className="space-y-3 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">①</span>
-                <span>在登录页注册一个个人账号</span>
+                <span>在系统注册页注册一个个人账号</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">②</span>
@@ -132,11 +132,11 @@ const Purchase = () => {
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家</span>
+                <span>支付成功后，将您注册的账号发给卖家(无需密码)</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">⑤</span>
-                <span>卖家点击发货即代表开通成功</span>
+                <span>稍等片刻，卖家点击发货即代表开通成功</span>
               </div>
             </div>
 
@@ -148,6 +148,34 @@ const Purchase = () => {
               前往购买
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="max-w-2xl mx-auto mt-6">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">客服联系方式</CardTitle>
+            <CardDescription>如遇问题或需要微信下单，请联系我们</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
+                <MessageCircle className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold text-lg mb-2">客服微信</h3>
+                <p className="text-2xl font-bold text-primary mb-2">Accddvva</p>
+                <p className="text-sm text-muted-foreground text-center">
+                  如果闲鱼不方便购买<br />联系客服微信同样可以下单
+                </p>
+              </div>
+              
+              <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
+                <Users className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold text-lg mb-2">售后QQ群</h3>
+                <p className="text-2xl font-bold text-primary mb-2">1034981273</p>
+                <p className="text-sm text-muted-foreground text-center">
+                  售后1群已满<br />二群建立于2025年11月
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

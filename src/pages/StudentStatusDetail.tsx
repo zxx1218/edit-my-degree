@@ -74,8 +74,8 @@ const StudentStatusDetail = () => {
 
       try {
         const result = await getUserData(userId);
-        const record = result.studentStatus?.find((r: any) => r.id === id);
-        
+        const record = result.studentStatus?.find((r: any) => r.id.toString() === id);
+
         if (record) {
           setData({
             name: record.name || defaultData.name,

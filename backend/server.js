@@ -10,7 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+// 增加请求体大小限制以支持图片上传
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 
 // 创建数据库连接池
 const dbConfig = {
@@ -62,6 +65,7 @@ async function initDB() {
 }
 
 // 创建表结构
+// 创建表结构
 async function createTables() {
   const tables = [
     `
@@ -97,8 +101,8 @@ async function createTables() {
       class TEXT,
       student_id TEXT,
       personal_info TEXT,
-      admission_photo TEXT,
-      degree_photo TEXT,
+      admission_photo LONGTEXT,
+      degree_photo LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -122,7 +126,7 @@ async function createTables() {
       graduation_status TEXT,
       principal_name TEXT,
       certificate_number TEXT,
-      photo TEXT,
+      photo LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -141,7 +145,7 @@ async function createTables() {
       degree_level TEXT,
       degree_date TEXT,
       certificate_number TEXT,
-      photo TEXT,
+      photo LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -174,7 +178,7 @@ async function createTables() {
       admission_unit TEXT,
       admission_major TEXT,
       note TEXT,
-      photo TEXT,
+      photo LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -360,12 +364,41 @@ app.post('/api/update-data', async (req, res) => {
       });
     }
     
+    // 验证必要参数
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户ID'
+      });
+    }
+    
+    if ((action === 'update' || action === 'delete') && !id) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少记录ID'
+      });
+    }
+    
     let result;
+    
+    // 处理数据中的undefined值，将其转换为null
+    const sanitizeData = (obj) => {
+      if (!obj || typeof obj !== 'object') return obj;
+      const sanitized = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          sanitized[key] = obj[key] === undefined ? null : obj[key];
+        }
+      }
+      return sanitized;
+    };
+    
+    const sanitizedData = sanitizeData(data);
     
     switch (action) {
       case 'insert':
         // 构造插入语句，排除id字段让数据库自动生成
-        const insertData = { ...data, user_id: userId }; // 添加 user_id 字段
+        const insertData = { ...sanitizedData, user_id: userId }; // 添加 user_id 字段
         delete insertData.id; // 删除id字段，让数据库自增生成
         
         const columns = Object.keys(insertData).join(', ');
@@ -377,13 +410,15 @@ app.post('/api/update-data', async (req, res) => {
           values
         );
         
-        result = { id: insertId };
-        break;
+        // 将id放在data对象的第一位并返回
+        const responseData = { id: insertId, ...sanitizedData };
+        res.json({ success: true, data: [responseData] }); // 包装成数组以匹配supabase格式
+        return;
         
       case 'update':
         // 构造更新语句
-        const updates = Object.keys(data).map(key => `${key} = ?`).join(', ');
-        const updateValues = Object.values(data);
+        const updates = Object.keys(sanitizedData).map(key => `${key} = ?`).join(', ');
+        const updateValues = Object.values(sanitizedData);
         updateValues.push(id, userId); // 添加 id 和 userId 用于 WHERE 条件
         
         await db.execute(
@@ -397,7 +432,7 @@ app.post('/api/update-data', async (req, res) => {
       case 'delete':
         await db.execute(
           `DELETE FROM ${table} WHERE id = ? AND user_id = ?`,
-          [id, userId]
+          [id, userId].map(value => value === undefined ? null : value)
         );
         
         result = { id };
@@ -411,6 +446,75 @@ app.post('/api/update-data', async (req, res) => {
     }
     
     res.json({ success: true, result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 获取所有用户接口
+app.post('/api/get-all-users', async (req, res) => {
+  try {
+    // 查询所有用户
+    const [users] = await db.execute(
+      'SELECT id, username, remaining_logins FROM users ORDER BY created_at DESC'
+    );
+    
+    res.json({
+      success: true,
+      users: users.map(user => ({
+        id: user.id.toString(),
+        username: user.username,
+        remaining_logins: user.remaining_logins
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 更新用户登录次数接口
+app.post('/api/update-user-logins', async (req, res) => {
+  try {
+    const { userId, addLogins } = req.body;
+    
+    if (!userId || addLogins === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少必要参数'
+      });
+    }
+    
+    // 更新用户登录次数
+    const [result] = await db.execute(
+      'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
+      [addLogins, userId]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+    
+    // 获取更新后的用户信息
+    const [users] = await db.execute(
+      'SELECT remaining_logins FROM users WHERE id = ?',
+      [userId]
+    );
+    
+    res.json({
+      success: true,
+      newLogins: users[0].remaining_logins
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({

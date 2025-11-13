@@ -65,7 +65,7 @@ const ExamDetail = () => {
     totalScore: "405",
     admissionUnit: "示例大学",
     admissionMajor: "计算机科学与技术",
-    note: "此为示例数据",
+    note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
   };
 
   const [data, setData] = useState<ExamData>(defaultData);
@@ -79,7 +79,7 @@ const ExamDetail = () => {
 
       try {
         const result = await getUserData(userId);
-        const record = result.exam?.find((r: any) => r.id === id);
+        const record = result.studentStatus?.find((r: any) => r.id.toString() === id);
         
         if (record) {
           setData({
