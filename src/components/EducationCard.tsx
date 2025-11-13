@@ -133,36 +133,25 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] text-white";
+        return "bg-[#59b58a] text-white";
       case "education":
-        return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
+        return "bg-[#5d9df9] text-white";
       case "degree":
-        return "bg-gradient-to-br from-[#5B7CFF] to-[#4A69FF] text-white";
+        return "bg-[#475ed6] text-white";
       case "exam":
-        return "bg-gradient-to-br from-[#48C9B0] to-[#16A085] text-white";
+        return "bg-[#62bfcf] text-white";
       default:
-        return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
+        return "bg-[#5d9df9] text-white";
     }
   };
 
   const getBadgeClasses = () => {
-    switch (variant) {
-      case "student-status":
-        return "bg-white/20 backdrop-blur-sm";
-      case "education":
-        return "bg-white/25 backdrop-blur-sm";
-      case "degree":
-        return "bg-white/25 backdrop-blur-sm";
-      case "exam":
-        return "bg-white/20 backdrop-blur-sm";
-      default:
-        return "bg-white/25 backdrop-blur-sm";
-    }
+    return "bg-black/20 backdrop-blur-sm";
   };
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-sm p-5 shadow-lg cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-sm p-5 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -179,7 +168,7 @@ const EducationCard = ({
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-lg font-bold">{school}</h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-4 py-1 rounded-sm text-sm font-medium flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-3 py-0.5 rounded-full text-sm font-medium flex items-center gap-2`}>
             {degreeLevel}
           </div>
         )}
