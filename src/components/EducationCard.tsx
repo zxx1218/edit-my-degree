@@ -186,16 +186,16 @@ const EducationCard = ({
       </div>
       {variant === "exam" ? (
         <div className="text-white/95">
-          <span className="text-[11px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{major}</span>
+          <span className="text-[14px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{major}</span>
         </div>
       ) : (
         <div className="flex items-center gap-2 text-white/95">
-          {major && <span className="text-[11px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{major}</span>}
+          {major && <span className="text-[14px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{major}</span>}
           {major && studyType && (
             <span className="text-white/60">|</span>
           )}
           {studyType && (
-            <span className="text-[11px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{studyType}</span>
+            <span className="text-[14px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{studyType}</span>
           )}
         </div>
       )}
