@@ -6,14 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
-import { loginUser } from "@/lib/api";
+import { loginUser, changePassword } from "@/lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [changePasswordData, setChangePasswordData] = useState({
+    username: "",
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -42,6 +51,48 @@ const Login = () => {
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
+      toast.error("两次输入的新密码不一致", { duration: 1500 });
+      return;
+    }
+
+    if (changePasswordData.newPassword.length < 6) {
+      toast.error("新密码长度至少为6位", { duration: 1500 });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const result = await changePassword(
+        changePasswordData.username,
+        changePasswordData.oldPassword,
+        changePasswordData.newPassword
+      );
+
+      if (result.error) {
+        toast.error(result.error, { duration: 1500 });
+      } else if (result.success) {
+        toast.success("密码修改成功", { duration: 1500 });
+        setIsChangePasswordOpen(false);
+        setChangePasswordData({
+          username: "",
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: ""
+        });
+      }
+    } catch (error) {
+      toast.error("密码修改失败，请重试", { duration: 1500 });
+      console.error("Change password error:", error);
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -96,6 +147,90 @@ const Login = () => {
               >
                 购买/续费
               </Button>
+              <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                  >
+                    修改密码
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <form onSubmit={handleChangePassword}>
+                    <DialogHeader>
+                      <DialogTitle>修改密码</DialogTitle>
+                      <DialogDescription>
+                        请输入您的账号信息和新密码
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="change-username">用户名</Label>
+                        <Input
+                          id="change-username"
+                          type="text"
+                          placeholder="请输入用户名"
+                          value={changePasswordData.username}
+                          onChange={(e) => setChangePasswordData({
+                            ...changePasswordData,
+                            username: e.target.value
+                          })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="old-password">原密码</Label>
+                        <Input
+                          id="old-password"
+                          type="password"
+                          placeholder="请输入原密码"
+                          value={changePasswordData.oldPassword}
+                          onChange={(e) => setChangePasswordData({
+                            ...changePasswordData,
+                            oldPassword: e.target.value
+                          })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password">新密码</Label>
+                        <Input
+                          id="new-password"
+                          type="password"
+                          placeholder="请输入新密码（至少6位）"
+                          value={changePasswordData.newPassword}
+                          onChange={(e) => setChangePasswordData({
+                            ...changePasswordData,
+                            newPassword: e.target.value
+                          })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password">确认新密码</Label>
+                        <Input
+                          id="confirm-password"
+                          type="password"
+                          placeholder="请再次输入新密码"
+                          value={changePasswordData.confirmPassword}
+                          onChange={(e) => setChangePasswordData({
+                            ...changePasswordData,
+                            confirmPassword: e.target.value
+                          })}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled={isChangingPassword}>
+                        {isChangingPassword ? "修改中..." : "确认修改"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </form>
           
