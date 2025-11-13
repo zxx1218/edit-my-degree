@@ -148,15 +148,15 @@ const EducationCard = ({
   const getBadgeClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-white/20 backdrop-blur-sm";
+        return "bg-black/20 backdrop-blur-sm";
       case "education":
-        return "bg-white/25 backdrop-blur-sm";
+        return "bg-black/20 backdrop-blur-sm";
       case "degree":
-        return "bg-white/25 backdrop-blur-sm";
+        return "bg-black/20 backdrop-blur-sm";
       case "exam":
-        return "bg-white/20 backdrop-blur-sm";
+        return "bg-black/20 backdrop-blur-sm";
       default:
-        return "bg-white/25 backdrop-blur-sm";
+        return "bg-black/20 backdrop-blur-sm";
     }
   };
 
@@ -179,7 +179,7 @@ const EducationCard = ({
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-lg font-normal">{school}</h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-4 py-1 rounded-sm text-sm font-medium flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-3 py-0.5 rounded-sm text-sm font-medium flex items-center gap-2`}>
             {degreeLevel}
           </div>
         )}
