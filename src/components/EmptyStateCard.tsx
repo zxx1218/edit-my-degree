@@ -120,16 +120,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
   };
 
   const getVariantClasses = () => {
-    switch (variant) {
-      case "education":
-        return "bg-white border border-gray-200";
-      case "degree":
-        return "bg-white border border-gray-200";
-      case "exam":
-        return "bg-white border border-gray-200";
-      default:
-        return "bg-white border border-gray-200";
-    }
+    return "bg-white shadow-[0_4px_4px_3px_rgba(0,0,0,0.05)]";
   };
 
   const getContent = () => {
@@ -161,7 +152,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-sm p-6 shadow-sm cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-[5px] p-4 cursor-pointer relative min-h-[100px]`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -175,24 +166,24 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
         setShowEditIcon(false);
       }}
     >
-      <div className="flex flex-col items-center justify-center text-center space-y-4">
-        <HelpCircle className="w-6 h-6 text-gray-400" />
-        <p className="text-base text-gray-700 leading-relaxed">
+      <div className="flex flex-col items-center justify-center text-center space-y-3">
+        <HelpCircle className="w-5 h-5 text-gray-400" />
+        <p className="text-sm text-gray-700 leading-relaxed">
           {content.title}
         </p>
         {content.subtitle && (
-          <p className="text-sm text-gray-500 leading-relaxed">
+          <p className="text-xs text-gray-500 leading-relaxed">
             {content.subtitle}
           </p>
         )}
         {content.action && (
-          <button className="text-sm text-[#48C9B0] flex items-center gap-1 border-none outline-none">
-            {content.action} <span className="text-lg">▾</span>
+          <button className="text-xs text-[#48C9B0] flex items-center gap-1 border-none outline-none">
+            {content.action} <span className="text-base">▾</span>
           </button>
         )}
       </div>
       {showEditIcon && (
-        <div className="absolute top-6 right-6 transition-opacity">
+        <div className="absolute top-4 right-4 transition-opacity">
           <Edit2 className="w-4 h-4 text-gray-400" />
         </div>
       )}

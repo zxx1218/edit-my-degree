@@ -47,6 +47,12 @@ All colors MUST be HSL.
     --degree-dark: 234 89% 54%;
     --exam-teal: 180 82% 45%;
 
+    /* New education card colors matching original design */
+    --edu-student-status: 154 42% 53%; /* #59b58a */
+    --edu-education: 215 95% 66%; /* #5d9df9 */
+    --edu-degree: 231 64% 57%; /* #475ed6 */
+    --edu-exam: 187 57% 60%; /* #62bfcf */
+
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -100,6 +106,13 @@ All colors MUST be HSL.
     --degree-blue: 234 89% 60%;
     --degree-dark: 234 89% 54%;
     --exam-teal: 180 82% 45%;
+
+    /* New education card colors matching original design */
+    --edu-student-status: 154 42% 53%; /* #59b58a */
+    --edu-education: 215 95% 66%; /* #5d9df9 */
+    --edu-degree: 231 64% 57%; /* #475ed6 */
+    --edu-exam: 187 57% 60%; /* #62bfcf */
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

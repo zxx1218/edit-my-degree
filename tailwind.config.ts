@@ -57,6 +57,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "edu-student-status": "hsl(var(--edu-student-status))",
+        "edu-education": "hsl(var(--edu-education))",
+        "edu-degree": "hsl(var(--edu-degree))",
+        "edu-exam": "hsl(var(--edu-exam))",
       },
       borderRadius: {
         lg: "var(--radius)",
