@@ -104,11 +104,8 @@ const Login = () => {
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
       
       <Card className="w-full max-w-md shadow-2xl border-primary/10 backdrop-blur-sm bg-card/95 relative z-10 animate-fade-in">
-        <CardHeader className="space-y-3 text-center pb-6">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mb-2 shadow-lg">
-            <span className="text-2xl font-bold text-primary-foreground">学</span>
-          </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">学信档案</CardTitle>
+        <CardHeader className="space-y-2 text-center pb-6">
+          <CardTitle className="text-3xl font-bold">学信档案</CardTitle>
           <CardDescription className="text-base">请登录以继续使用学信网系统</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
