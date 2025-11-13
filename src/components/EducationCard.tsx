@@ -133,7 +133,7 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-[#59b58a] text-white";
+        return "bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] text-white";
       case "education":
         return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
       case "degree":
@@ -148,21 +148,21 @@ const EducationCard = ({
   const getBadgeClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-black/20 backdrop-blur-sm";
+        return "bg-white/20 backdrop-blur-sm";
       case "education":
-        return "bg-black/20 backdrop-blur-sm";
+        return "bg-white/25 backdrop-blur-sm";
       case "degree":
-        return "bg-black/20 backdrop-blur-sm";
+        return "bg-white/25 backdrop-blur-sm";
       case "exam":
-        return "bg-black/20 backdrop-blur-sm";
+        return "bg-white/20 backdrop-blur-sm";
       default:
-        return "bg-black/20 backdrop-blur-sm";
+        return "bg-white/25 backdrop-blur-sm";
     }
   };
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-[5px] p-[5px] shadow-lg cursor-pointer relative group h-[78px]`}
+      className={`${getVariantClasses()} rounded-sm p-5 shadow-lg cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -177,25 +177,25 @@ const EducationCard = ({
       }}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-[17px] font-[330]" style={{ fontFamily: 'Arial, sans-serif' }}>{school}</h3>
+        <h3 className="text-lg font-bold">{school}</h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-3 py-0.5 rounded-sm text-sm font-medium flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-4 py-1 rounded-sm text-sm font-medium flex items-center gap-2`}>
             {degreeLevel}
           </div>
         )}
       </div>
       {variant === "exam" ? (
         <div className="text-white/95">
-          <span className="text-[14px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{major}</span>
+          <span className="text-base">{major}</span>
         </div>
       ) : (
         <div className="flex items-center gap-2 text-white/95">
-          {major && <span className="text-[14px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{major}</span>}
+          {major && <span className="text-base">{major}</span>}
           {major && studyType && (
             <span className="text-white/60">|</span>
           )}
           {studyType && (
-            <span className="text-[14px]" style={{ fontFamily: 'Arial, sans-serif', fontWeight: 'normal' }}>{studyType}</span>
+            <span className="text-base">{studyType}</span>
           )}
         </div>
       )}
