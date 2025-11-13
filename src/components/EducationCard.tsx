@@ -133,21 +133,36 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-edu-student-status shadow-[0_4px_4px_3px_rgba(89,181,138,0.2)]";
+        return "bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] text-white";
       case "education":
-        return "bg-edu-education shadow-[0_4px_4px_3px_rgba(93,157,249,0.2)]";
+        return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
       case "degree":
-        return "bg-edu-degree shadow-[0_4px_4px_3px_rgba(71,94,214,0.2)]";
+        return "bg-gradient-to-br from-[#5B7CFF] to-[#4A69FF] text-white";
       case "exam":
-        return "bg-edu-exam shadow-[0_4px_4px_3px_rgba(98,191,207,0.2)]";
+        return "bg-gradient-to-br from-[#48C9B0] to-[#16A085] text-white";
       default:
-        return "bg-edu-student-status shadow-[0_4px_4px_3px_rgba(89,181,138,0.2)]";
+        return "bg-gradient-to-br from-[#5DADE2] to-[#3498DB] text-white";
+    }
+  };
+
+  const getBadgeClasses = () => {
+    switch (variant) {
+      case "student-status":
+        return "bg-white/20 backdrop-blur-sm";
+      case "education":
+        return "bg-white/25 backdrop-blur-sm";
+      case "degree":
+        return "bg-white/25 backdrop-blur-sm";
+      case "exam":
+        return "bg-white/20 backdrop-blur-sm";
+      default:
+        return "bg-white/25 backdrop-blur-sm";
     }
   };
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-[5px] p-[5px] cursor-pointer relative h-[78px]`}
+      className={`${getVariantClasses()} rounded-sm p-5 shadow-lg cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -161,23 +176,31 @@ const EducationCard = ({
         setShowEditIcon(false);
       }}
     >
-      <div className="absolute left-[10px] top-[10px] text-white text-[17px] font-light">
-        {school}
-      </div>
-      {variant !== "exam" && (
-        <div className="absolute right-[15px] top-[15px] bg-black/20 text-[#d2e7dd] text-[10px] px-[10px] py-[5px] rounded-[10px] flex items-center justify-center">
-          {degreeLevel}
-        </div>
-      )}
-      <div className="absolute left-[10px] bottom-[5px] text-white text-[11px]">
-        {variant === "exam" ? (
-          <span>{major}</span>
-        ) : (
-          <span>{major}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;{studyType}</span>
+      <div className="flex items-start justify-between mb-3">
+        <h3 className="text-lg font-bold">{school}</h3>
+        {variant !== "exam" && (
+          <div className={`${getBadgeClasses()} px-4 py-1 rounded-sm text-sm font-medium flex items-center gap-2`}>
+            {degreeLevel}
+          </div>
         )}
       </div>
+      {variant === "exam" ? (
+        <div className="text-white/95">
+          <span className="text-base">{major}</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-white/95">
+          {major && <span className="text-base">{major}</span>}
+          {major && studyType && (
+            <span className="text-white/60">|</span>
+          )}
+          {studyType && (
+            <span className="text-base">{studyType}</span>
+          )}
+        </div>
+      )}
       {showEditIcon && (
-        <div className="absolute top-[10px] right-[10px] transition-opacity">
+        <div className="absolute top-5 right-5 transition-opacity">
           <Edit2 className="w-4 h-4 text-white/80" />
         </div>
       )}
