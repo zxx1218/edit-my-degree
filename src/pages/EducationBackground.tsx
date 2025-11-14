@@ -35,16 +35,13 @@ const EducationBackground = () => {
     const loadUserData = async () => {
       try {
         const userStr = localStorage.getItem("currentUser");
-        if (!userStr) {
-          navigate("/login");
-          return;
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          const data = await getUserData(user.id);
+
+          setEducationRecords(data.education || []);
+          setDegreeRecords(data.degree || []);
         }
-
-        const user = JSON.parse(userStr);
-        const data = await getUserData(user.id);
-
-        setEducationRecords(data.education || []);
-        setDegreeRecords(data.degree || []);
       } catch (error) {
         console.error("Error loading user data:", error);
         toast.error("加载数据失败");
@@ -54,7 +51,7 @@ const EducationBackground = () => {
     };
 
     loadUserData();
-  }, [navigate]);
+  }, []);
 
   const allRecords = activeTab === "education" ? educationRecords : degreeRecords;
 
