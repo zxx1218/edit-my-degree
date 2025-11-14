@@ -16,12 +16,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { userId } = await req.json();
+    const { username } = await req.json();
 
-    if (!userId) {
+    if (!username) {
       return new Response(
         JSON.stringify({ error: 'Invalid parameters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // 根据用户名查找用户
+    const { data: userData, error: fetchError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .single();
+
+    if (fetchError || !userData) {
+      console.error('Fetch error:', fetchError);
+      return new Response(
+        JSON.stringify({ error: fetchError?.message || '用户不存在' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
@@ -29,7 +44,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from('users')
       .update({ remaining_logins: 0 })
-      .eq('id', userId);
+      .eq('id', userData.id);
 
     if (updateError) {
       console.error('Update error:', updateError);

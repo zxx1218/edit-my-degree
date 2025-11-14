@@ -90,23 +90,12 @@ const SuperAdd = () => {
 
     setIsResetting(true);
     try {
-      // 查找用户
-      const user = users.find(u => u.username === resetUsername);
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "用户不存在",
-          description: "请检查用户名是否正确",
-        });
-        return;
-      }
-
       // 调用 edge function 重置登录次数
       const { data, error } = await supabase.functions.invoke(
         "reset-user-logins",
         {
           body: {
-            userId: user.id,
+            username: resetUsername,
           },
         }
       );
@@ -162,23 +151,12 @@ const SuperAdd = () => {
 
     setIsAddingLogins(true);
     try {
-      // 查找用户
-      const user = users.find(u => u.username === targetUsername);
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "用户不存在",
-          description: "请检查用户名是否正确",
-        });
-        return;
-      }
-
       // 调用 edge function 增加登录次数
       const { data, error } = await supabase.functions.invoke(
         "update-user-logins",
         {
           body: {
-            userId: user.id,
+            username: targetUsername,
             addLogins: loginsToAdd,
           },
         }
