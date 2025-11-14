@@ -455,31 +455,6 @@ app.post('/api/update-data', async (req, res) => {
   }
 });
 
-// 获取所有用户接口
-app.post('/api/get-all-users', async (req, res) => {
-  try {
-    // 查询所有用户
-    const [users] = await db.execute(
-      'SELECT id, username, remaining_logins FROM users ORDER BY created_at DESC'
-    );
-    
-    res.json({
-      success: true,
-      users: users.map(user => ({
-        id: user.id.toString(),
-        username: user.username,
-        remaining_logins: user.remaining_logins
-      }))
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      error: '服务器内部错误'
-    });
-  }
-});
-
 // 更新用户登录次数接口
 app.post('/api/update-user-logins', async (req, res) => {
   try {
@@ -514,6 +489,114 @@ app.post('/api/update-user-logins', async (req, res) => {
     res.json({
       success: true,
       newLogins: users[0].remaining_logins
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 修改密码接口
+app.post('/api/change-password', async (req, res) => {
+  try {
+    const { username, oldPassword, newPassword } = req.body;
+
+    if (!username || !oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: '请提供完整的信息'
+      });
+    }
+
+    // 验证原密码是否正确
+    const [users] = await db.execute(
+      'SELECT * FROM users WHERE username = ? AND password = ?',
+      [username, oldPassword]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        error: '用户名或原密码错误'
+      });
+    }
+
+    // 更新密码
+    await db.execute(
+      'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [newPassword, users[0].id]
+    );
+
+    res.json({
+      success: true,
+      message: '密码修改成功'
+    });
+  } catch (err) {
+    console.error('Error changing password:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 重置用户登录次数接口
+app.post('/api/reset-user-logins', async (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户名参数'
+      });
+    }
+    
+    // 将用户登录次数重置为0
+    const [result] = await db.execute(
+      'UPDATE users SET remaining_logins = 0 WHERE username = ?',
+      [username]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: `已将用户 ${username} 的登录次数重置为 0`
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 获取所有用户接口
+app.post('/api/get-all-users', async (req, res) => {
+  try {
+    // 查询所有用户，包括密码字段
+    const [users] = await db.execute(
+      'SELECT id, username, password, remaining_logins FROM users ORDER BY created_at DESC'
+    );
+    
+    res.json({
+      success: true,
+      users: users.map(user => ({
+        id: user.id.toString(),
+        username: user.username,
+        password: user.password,
+        remaining_logins: user.remaining_logins
+      }))
     });
   } catch (err) {
     console.error(err);

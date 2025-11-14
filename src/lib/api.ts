@@ -108,3 +108,22 @@ export const updateData = async (
 
   return result;
 };
+
+// 修改密码API
+export const changePassword = async (username: string, oldPassword: string, newPassword: string) => {
+  const response = await fetch(`${API_BASE_URL}/change-password`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, oldPassword, newPassword }),
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || '修改密码失败');
+  }
+
+  return data;
+};

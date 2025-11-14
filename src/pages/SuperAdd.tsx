@@ -4,13 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, UserPlus, List, Loader2 } from "lucide-react";
+import { Shield, UserPlus, List, Loader2, RotateCcw } from "lucide-react";
 
 interface User {
   id: string;
   username: string;
+  password: string;
   remaining_logins: number;
 }
+
+// 设置API基础URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const SuperAdd = () => {
   const [isVerified, setIsVerified] = useState(false);
@@ -20,26 +24,24 @@ const SuperAdd = () => {
   const [showUserList, setShowUserList] = useState(false);
   const [targetUsername, setTargetUsername] = useState("");
   const [addLogins, setAddLogins] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [resetUsername, setResetUsername] = useState("");
+  const [isAddingLogins, setIsAddingLogins] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [isFetchingUsers, setIsFetchingUsers] = useState(false);
   const { toast } = useToast();
 
-const fetchUsers = async () => {
+  const fetchUsers = async () => {
     setIsFetchingUsers(true);
     try {
-      // console.log('Fetching users...');
-      // 使用环境变量中的API基础URL
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+      console.log('Fetching users...');
       const response = await fetch(`${API_BASE_URL}/get-all-users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
+        }
       });
 
       const data = await response.json();
-
-      // console.log('Response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || '获取用户列表失败');
@@ -82,8 +84,63 @@ const fetchUsers = async () => {
       });
     }
   };
+    const handleResetLogins = async () => {
+    if (!resetUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
 
-const handleAddLogins = async () => {
+    setIsResetting(true);
+    try {
+      // 调用本地API重置登录次数
+      const response = await fetch(`${API_BASE_URL}/reset-user-logins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: resetUsername,
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '重置登录次数失败');
+      }
+
+      if (data.success) {
+        toast({
+          title: "重置成功",
+          description: `已将用户 ${resetUsername} 的登录次数重置为 0`,
+        });
+        setResetUsername("");
+        // 刷新用户列表
+        if (showUserList) {
+          fetchUsers();
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "重置失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "重置失败",
+        description: error.message,
+      });
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleAddLogins = async () => {
     if (!targetUsername.trim()) {
       toast({
         variant: "destructive",
@@ -102,21 +159,29 @@ const handleAddLogins = async () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsAddingLogins(true);
     try {
-      // 查找用户
-      const user = users.find(u => u.username === targetUsername);
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "用户不存在",
-          description: "请检查用户名是否正确",
-        });
-        return;
+      // 先获取用户ID
+      const userResponse = await fetch(`${API_BASE_URL}/get-all-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const userData = await userResponse.json();
+      
+      if (!userResponse.ok) {
+        throw new Error(userData.error || '获取用户信息失败');
       }
 
-      // 使用环境变量中的API基础URL
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+      const user = userData.users.find((u: any) => u.username === targetUsername);
+      
+      if (!user) {
+        throw new Error('用户不存在');
+      }
+
+      // 调用本地API增加登录次数
       const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
         method: 'POST',
         headers: {
@@ -124,14 +189,14 @@ const handleAddLogins = async () => {
         },
         body: JSON.stringify({
           userId: user.id,
-          addLogins: loginsToAdd,
-        }),
+          addLogins: loginsToAdd
+        })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '添加失败');
+        throw new Error(data.error || '添加登录次数失败');
       }
 
       if (data.success) {
@@ -159,7 +224,7 @@ const handleAddLogins = async () => {
         description: error.message,
       });
     } finally {
-      setIsLoading(false);
+      setIsAddingLogins(false);
     }
   };
 
@@ -253,11 +318,14 @@ const handleAddLogins = async () => {
                   {users.map((user, index) => (
                     <div
                       key={user.id}
-                      className="flex justify-between items-center p-2 bg-background rounded hover:bg-accent transition-colors animate-scale-in"
+                      className="flex justify-between items-center p-3 bg-background rounded hover:bg-accent transition-colors animate-scale-in gap-4"
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
-                      <span className="font-medium">{user.username}</span>
-                      <span className="text-sm text-muted-foreground">
+                      <div className="flex-1">
+                        <span className="font-medium block">{user.username}</span>
+                        <span className="text-xs text-muted-foreground">密码: {user.password}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
                         剩余登录: {user.remaining_logins} 次
                       </span>
                     </div>
@@ -274,6 +342,7 @@ const handleAddLogins = async () => {
 
             <div className="space-y-4 p-4 bg-muted rounded-lg">
               <h3 className="font-semibold text-sm">添加登录次数</h3>
+              <p className="text-xs text-muted-foreground">为指定用户增加登录次数</p>
               
               <div className="space-y-2">
                 <Label htmlFor="target-username">用户名</Label>
@@ -296,15 +365,40 @@ const handleAddLogins = async () => {
                   placeholder="请输入要添加的次数"
                 />
               </div>
+
+              <Button
+                onClick={handleAddLogins}
+                disabled={isAddingLogins}
+                className="w-full"
+              >
+                {isAddingLogins ? "添加中..." : "确认添加"}
+              </Button>
             </div>
 
-            <Button
-              onClick={handleAddLogins}
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? "添加中..." : "确认添加"}
-            </Button>
+            <div className="space-y-4 p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-sm">重置登录次数</h3>
+              <p className="text-xs text-muted-foreground">将指定用户的登录次数重置为 0</p>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reset-username">用户名</Label>
+                <Input
+                  id="reset-username"
+                  value={resetUsername}
+                  onChange={(e) => setResetUsername(e.target.value)}
+                  placeholder="请输入用户名"
+                />
+              </div>
+
+              <Button
+                onClick={handleResetLogins}
+                disabled={isResetting}
+                variant="destructive"
+                className="w-full"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {isResetting ? "重置中..." : "重置为0"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
