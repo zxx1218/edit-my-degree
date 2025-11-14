@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus, List, Loader2 } from "lucide-react";
+import { Shield, UserPlus, List, Loader2, RotateCcw } from "lucide-react";
 
 interface User {
   id: string;
@@ -74,6 +74,68 @@ const SuperAdd = () => {
         title: "验证失败",
         description: "用户名或密码错误",
       });
+    }
+  };
+
+  const handleResetLogins = async () => {
+    if (!targetUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 查找用户
+      const user = users.find(u => u.username === targetUsername);
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "用户不存在",
+          description: "请检查用户名是否正确",
+        });
+        return;
+      }
+
+      // 调用 edge function 重置登录次数
+      const { data, error } = await supabase.functions.invoke(
+        "reset-user-logins",
+        {
+          body: {
+            userId: user.id,
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast({
+          title: "重置成功",
+          description: `已将用户 ${targetUsername} 的登录次数重置为 0`,
+        });
+        setTargetUsername("");
+        // 刷新用户列表
+        if (showUserList) {
+          fetchUsers();
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "重置失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "重置失败",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -289,13 +351,24 @@ const SuperAdd = () => {
               </div>
             </div>
 
-            <Button
-              onClick={handleAddLogins}
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? "添加中..." : "确认添加"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleAddLogins}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {isLoading ? "添加中..." : "确认添加"}
+              </Button>
+              <Button
+                onClick={handleResetLogins}
+                disabled={isLoading}
+                variant="destructive"
+                className="flex-1"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {isLoading ? "重置中..." : "重置为0"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
