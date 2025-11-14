@@ -22,7 +22,9 @@ const SuperAdd = () => {
   const [showUserList, setShowUserList] = useState(false);
   const [targetUsername, setTargetUsername] = useState("");
   const [addLogins, setAddLogins] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [resetUsername, setResetUsername] = useState("");
+  const [isAddingLogins, setIsAddingLogins] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [isFetchingUsers, setIsFetchingUsers] = useState(false);
   const { toast } = useToast();
 
@@ -78,7 +80,7 @@ const SuperAdd = () => {
   };
 
   const handleResetLogins = async () => {
-    if (!targetUsername.trim()) {
+    if (!resetUsername.trim()) {
       toast({
         variant: "destructive",
         title: "请输入用户名",
@@ -86,10 +88,10 @@ const SuperAdd = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsResetting(true);
     try {
       // 查找用户
-      const user = users.find(u => u.username === targetUsername);
+      const user = users.find(u => u.username === resetUsername);
       if (!user) {
         toast({
           variant: "destructive",
@@ -114,9 +116,9 @@ const SuperAdd = () => {
       if (data.success) {
         toast({
           title: "重置成功",
-          description: `已将用户 ${targetUsername} 的登录次数重置为 0`,
+          description: `已将用户 ${resetUsername} 的登录次数重置为 0`,
         });
-        setTargetUsername("");
+        setResetUsername("");
         // 刷新用户列表
         if (showUserList) {
           fetchUsers();
@@ -135,7 +137,7 @@ const SuperAdd = () => {
         description: error.message,
       });
     } finally {
-      setIsLoading(false);
+      setIsResetting(false);
     }
   };
 
@@ -158,7 +160,7 @@ const SuperAdd = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsAddingLogins(true);
     try {
       // 查找用户
       const user = users.find(u => u.username === targetUsername);
@@ -209,7 +211,7 @@ const SuperAdd = () => {
         description: error.message,
       });
     } finally {
-      setIsLoading(false);
+      setIsAddingLogins(false);
     }
   };
 
@@ -327,6 +329,7 @@ const SuperAdd = () => {
 
             <div className="space-y-4 p-4 bg-muted rounded-lg">
               <h3 className="font-semibold text-sm">添加登录次数</h3>
+              <p className="text-xs text-muted-foreground">为指定用户增加登录次数</p>
               
               <div className="space-y-2">
                 <Label htmlFor="target-username">用户名</Label>
@@ -349,24 +352,38 @@ const SuperAdd = () => {
                   placeholder="请输入要添加的次数"
                 />
               </div>
-            </div>
 
-            <div className="flex gap-2">
               <Button
                 onClick={handleAddLogins}
-                disabled={isLoading}
-                className="flex-1"
+                disabled={isAddingLogins}
+                className="w-full"
               >
-                {isLoading ? "添加中..." : "确认添加"}
+                {isAddingLogins ? "添加中..." : "确认添加"}
               </Button>
+            </div>
+
+            <div className="space-y-4 p-4 bg-muted rounded-lg">
+              <h3 className="font-semibold text-sm">重置登录次数</h3>
+              <p className="text-xs text-muted-foreground">将指定用户的登录次数重置为 0</p>
+              
+              <div className="space-y-2">
+                <Label htmlFor="reset-username">用户名</Label>
+                <Input
+                  id="reset-username"
+                  value={resetUsername}
+                  onChange={(e) => setResetUsername(e.target.value)}
+                  placeholder="请输入用户名"
+                />
+              </div>
+
               <Button
                 onClick={handleResetLogins}
-                disabled={isLoading}
+                disabled={isResetting}
                 variant="destructive"
-                className="flex-1"
+                className="w-full"
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
-                {isLoading ? "重置中..." : "重置为0"}
+                {isResetting ? "重置中..." : "重置为0"}
               </Button>
             </div>
           </CardContent>
