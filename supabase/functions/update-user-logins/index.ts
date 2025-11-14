@@ -16,27 +16,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { userId, addLogins } = await req.json();
+    const { username, addLogins } = await req.json();
 
-    if (!userId || !addLogins || addLogins <= 0) {
+    if (!username || !addLogins || addLogins <= 0) {
       return new Response(
         JSON.stringify({ error: 'Invalid parameters' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
-    // 获取当前用户的登录次数
+    // 根据用户名查找用户并获取当前登录次数
     const { data: userData, error: fetchError } = await supabase
       .from('users')
-      .select('remaining_logins')
-      .eq('id', userId)
+      .select('id, remaining_logins')
+      .eq('username', username)
       .single();
 
-    if (fetchError) {
+    if (fetchError || !userData) {
       console.error('Fetch error:', fetchError);
       return new Response(
-        JSON.stringify({ error: fetchError.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        JSON.stringify({ error: fetchError?.message || '用户不存在' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     const { error: updateError } = await supabase
       .from('users')
       .update({ remaining_logins: newLogins })
-      .eq('id', userId);
+      .eq('id', userData.id);
 
     if (updateError) {
       console.error('Update error:', updateError);
