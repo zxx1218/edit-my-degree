@@ -27,21 +27,27 @@ interface EducationRecord {
 const EducationBackground = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [studentStatusRecords, setStudentStatusRecords] = useState<EducationRecord[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
-  const [activeTab, setActiveTab] = useState("education");
+  const [examRecords, setExamRecords] = useState<EducationRecord[]>([]);
+  const [activeTab, setActiveTab] = useState("info");
 
   useEffect(() => {
     const loadUserData = async () => {
       try {
         const userStr = localStorage.getItem("currentUser");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          const data = await getUserData(user.id);
-
-          setEducationRecords(data.education || []);
-          setDegreeRecords(data.degree || []);
+        if (!userStr) {
+          navigate("/login");
+          return;
         }
+        const user = JSON.parse(userStr);
+        const data = await getUserData(user.id);
+
+        setStudentStatusRecords(data.studentStatus || []);
+        setEducationRecords(data.education || []);
+        setDegreeRecords(data.degree || []);
+        setExamRecords(data.exam || []);
       } catch (error) {
         console.error("Error loading user data:", error);
         toast.error("加载数据失败");
@@ -53,7 +59,11 @@ const EducationBackground = () => {
     loadUserData();
   }, []);
 
-  const allRecords = activeTab === "education" ? educationRecords : degreeRecords;
+  const allRecords = 
+    activeTab === "info" ? studentStatusRecords :
+    activeTab === "education" ? educationRecords :
+    activeTab === "degree" ? degreeRecords :
+    examRecords;
 
   return (
     <div className="min-h-screen bg-background">
