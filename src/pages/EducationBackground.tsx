@@ -578,7 +578,7 @@ const EducationBackground = () => {
           </div>
 
           {/* 右侧推荐卡片 */}
-          <div className="space-y-6">
+          <div className="space-y-6 mt-10">
             {/* 专业推荐 */}
             <Card className="p-6">
               <h3 className="font-semibold mb-2">专业推荐</h3>
