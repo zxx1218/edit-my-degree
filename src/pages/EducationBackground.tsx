@@ -412,7 +412,7 @@ const EducationBackground = () => {
                         <div>
                           <h3 className="text-lg font-semibold mb-4 border-b pb-2">成绩信息</h3>
                           <div className="space-y-3 text-sm">
-                            <div className="flex">
+                            <div className="flex mx-0 my-0 px-0 rounded-none">
                               <span className="text-muted-foreground w-28">政治理论：</span>
                               <span>{record.politics_score || "78"}</span>
                             </div>
