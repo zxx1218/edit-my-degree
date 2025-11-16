@@ -159,7 +159,7 @@ const Index = () => {
           name: "新用户",
           school: "新学校",
           year: currentYear.toString(),
-          note: "",
+          note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
         };
       } else {
         // 学历/学籍使用 degree_level
@@ -308,7 +308,11 @@ const Index = () => {
           setDegreeRecords(sortByDegreeType(updateList(degreeRecords)));
           break;
         case "exam":
-          setExamRecords(updateList(examRecords));
+          setExamRecords(examRecords.map((r) => 
+            r.id === updatedRecord.id 
+              ? { ...updatedRecord, year: updatedRecord.major } 
+              : r
+          ));
           break;
       }
 

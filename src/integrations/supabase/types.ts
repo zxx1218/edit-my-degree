@@ -248,6 +248,51 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          amount: string
+          created_at: string
+          id: string
+          paid_at: string | null
+          payment_id: string | null
+          payment_method: string
+          payment_url: string | null
+          plan_logins: string
+          plan_name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_method: string
+          payment_url?: string | null
+          plan_logins: string
+          plan_name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: string
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_method?: string
+          payment_url?: string | null
+          plan_logins?: string
+          plan_name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       student_status: {
         Row: {
           admission_photo: string | null
