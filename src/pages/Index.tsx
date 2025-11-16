@@ -308,7 +308,11 @@ const Index = () => {
           setDegreeRecords(sortByDegreeType(updateList(degreeRecords)));
           break;
         case "exam":
-          setExamRecords(updateList(examRecords));
+          setExamRecords(examRecords.map((r) => 
+            r.id === updatedRecord.id 
+              ? { ...updatedRecord, year: updatedRecord.major } 
+              : r
+          ));
           break;
       }
 
