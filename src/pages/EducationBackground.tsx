@@ -105,7 +105,7 @@ const EducationBackground = () => {
         <div className="container mx-auto px-4">
           <nav className="flex gap-8">
             <button onClick={() => setActiveTab("info")} className={`py-4 border-b-2 transition-colors ${activeTab === "info" ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-              学籍信息/园校对
+              学籍信息/图像校对
             </button>
             <button onClick={() => setActiveTab("education")} className={`py-4 border-b-2 transition-colors ${activeTab === "education" ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               学历信息
