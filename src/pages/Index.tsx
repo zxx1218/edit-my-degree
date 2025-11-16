@@ -333,12 +333,12 @@ const Index = () => {
 
       <div className="space-y-6 mt-4">
         <section>
-          <SectionHeader
-            title="学籍信息"
+          <SectionHeader 
+            title="学籍信息" 
             count={studentStatus.length}
             promptText="还有学籍没有显示出来？"
             actionText="尝试绑定"
-            titleClassName="font-songti"
+            titleClassName="font-yahei"
             onAction={() => {
               setSelectedRecord({ 
                 id: '', 
@@ -368,12 +368,12 @@ const Index = () => {
         </section>
 
         <section>
-          <SectionHeader
-            title="学历信息"
+          <SectionHeader 
+            title="学历信息" 
             count={educationRecords.length}
             promptText="还有学历没有显示出来？"
             actionText="尝试绑定"
-            titleClassName="font-songti"
+            titleClassName="font-yahei"
             onAction={() => {
               setSelectedRecord({ 
                 id: '', 
@@ -417,12 +417,12 @@ const Index = () => {
         </section>
 
         <section>
-          <SectionHeader
-            title="学位信息"
+          <SectionHeader 
+            title="学位信息" 
             count={degreeRecords.length}
             promptText="还有学位没有显示出来？"
             actionText="尝试绑定"
-            titleClassName="font-songti"
+            titleClassName="font-yahei"
             onAction={() => {
               setSelectedRecord({ 
                 id: '', 
