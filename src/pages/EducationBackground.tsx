@@ -24,6 +24,26 @@ interface EducationRecord {
   principalName?: string;
   duration?: string;
   graduation_status?: string;
+  // Exam specific fields
+  year?: string;
+  exam_location?: string;
+  registration_number?: string;
+  exam_unit?: string;
+  department?: string;
+  research_direction?: string;
+  exam_type?: string;
+  special_program?: string;
+  foreign_language_name?: string;
+  foreign_language_score?: string;
+  politics_name?: string;
+  politics_score?: string;
+  business_course1_name?: string;
+  business_course1_score?: string;
+  business_course2_name?: string;
+  business_course2_score?: string;
+  total_score?: string;
+  admission_unit?: string;
+  admission_major?: string;
 }
 
 const EducationBackground = () => {
@@ -32,6 +52,7 @@ const EducationBackground = () => {
   const [studentStatusRecords, setStudentStatusRecords] = useState<any[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
+  const [examRecords, setExamRecords] = useState<EducationRecord[]>([]);
   const [activeTab, setActiveTab] = useState("education");
 
   useEffect(() => {
@@ -45,6 +66,7 @@ const EducationBackground = () => {
           setStudentStatusRecords(data.studentStatus || []);
           setEducationRecords(data.education || []);
           setDegreeRecords(data.degree || []);
+          setExamRecords(data.exam || []);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -57,7 +79,7 @@ const EducationBackground = () => {
     loadUserData();
   }, []);
 
-  const allRecords = activeTab === "education" ? educationRecords : activeTab === "degree" ? degreeRecords : [];
+  const allRecords = activeTab === "education" ? educationRecords : activeTab === "degree" ? degreeRecords : activeTab === "exam" ? examRecords : [];
   const showStudentStatus = activeTab === "info";
 
   return (
@@ -116,6 +138,16 @@ const EducationBackground = () => {
               }`}
             >
               学位信息
+            </button>
+            <button
+              onClick={() => setActiveTab("exam")}
+              className={`py-4 border-b-2 transition-colors ${
+                activeTab === "exam"
+                  ? "border-primary text-primary font-medium"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              考研信息
             </button>
             <button
               onClick={() => setActiveTab("exam")}
@@ -344,6 +376,129 @@ const EducationBackground = () => {
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学位证书编号：</span>
                         <span>{record.certificateNumber || "103473202552016"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : activeTab === "exam" ? (
+              // 考研信息格式
+              allRecords.map((record) => (
+                <Card key={record.id} className="p-6">
+                  {/* 标题栏 */}
+                  <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium mb-6">
+                    {record.year}年({record.school})
+                  </div>
+
+                  {/* 内容区域 */}
+                  <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                    {/* 左侧照片 */}
+                    <div>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
+                        <span className="text-muted-foreground text-sm">照片</span>
+                      </div>
+                    </div>
+
+                    {/* 右侧信息区域 */}
+                    <div className="space-y-6">
+                      {/* 报考信息 */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4 border-b pb-2">报考信息</h3>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                          <div className="flex">
+                            <span className="text-muted-foreground w-28">报考点：</span>
+                            <span>{record.exam_location || "3306"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-32">考试方式：</span>
+                            <span>{record.exam_type || "全国统考"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-28">报名号：</span>
+                            <span>{record.registration_number || "330695769"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-32">专项计划：</span>
+                            <span>{record.special_program || "非专项计划"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-28">报考单位：</span>
+                            <span>{record.exam_unit || "10337"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-32">外语语名称：</span>
+                            <span>{record.foreign_language_name || "英语（二）"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-28">报考院系所：</span>
+                            <span>{record.department || "无"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-32">政治理论名称：</span>
+                            <span>{record.politics_name || "思想政治理论"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-28">报考专业：</span>
+                            <span>{record.major || "085400"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-32">业务课一名称：</span>
+                            <span>{record.business_course1_name || "数学（二）"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-28">研究方向：</span>
+                            <span>{record.research_direction || "无"}</span>
+                          </div>
+                          <div className="flex">
+                            <span className="text-muted-foreground w-32">业务课二名称：</span>
+                            <span>{record.business_course2_name || "数据结构与计算机网络"}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 成绩信息和录取信息 */}
+                      <div className="grid grid-cols-2 gap-6">
+                        {/* 成绩信息 */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4 border-b pb-2">成绩信息</h3>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">政治理论：</span>
+                              <span>{record.politics_score || "78"}</span>
+                            </div>
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">外国语：</span>
+                              <span>{record.foreign_language_score || "60"}</span>
+                            </div>
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">业务课一：</span>
+                              <span>{record.business_course1_score || "57"}</span>
+                            </div>
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">业务课二：</span>
+                              <span>{record.business_course2_score || "109"}</span>
+                            </div>
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">总分：</span>
+                              <span>{record.total_score || "304.0"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 录取信息 */}
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4 border-b pb-2">录取信息</h3>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">录取单位：</span>
+                              <span>{record.admission_unit || record.school || "湖州师范学院"}</span>
+                            </div>
+                            <div className="flex">
+                              <span className="text-muted-foreground w-28">录取专业：</span>
+                              <span>{record.admission_major || "电子信息"}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
