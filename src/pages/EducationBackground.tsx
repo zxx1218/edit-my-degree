@@ -22,6 +22,8 @@ interface EducationRecord {
   graduationDate?: string;
   certificateNumber?: string;
   principalName?: string;
+  duration?: string;
+  graduation_status?: string;
 }
 
 const EducationBackground = () => {
@@ -285,12 +287,12 @@ const EducationBackground = () => {
                 暂无数据
               </Card>
             ) : (
-              // 学历/学位信息格式（保持原样）
+              // 学历/学位信息格式
               allRecords.map((record) => (
                 <Card key={record.id} className="p-6">
                   {/* 标题栏 */}
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b">
-                    <div className="bg-primary/10 text-primary px-4 py-2 rounded">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
                       {record.degreeLevel}-{record.school}-{record.major}
                     </div>
                     <button className="text-primary hover:underline flex items-center gap-1">
@@ -300,71 +302,72 @@ const EducationBackground = () => {
                   </div>
 
                   {/* 内容区域 */}
-                  <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6">
-                    {/* 照片 */}
-                    <div className="flex justify-center">
-                      <div className="w-32 h-40 bg-primary/5 rounded flex items-center justify-center">
+                  <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                    {/* 左侧照片 */}
+                    <div>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
                         <span className="text-muted-foreground text-sm">照片</span>
                       </div>
+                      <p className="text-center text-sm text-muted-foreground">学历照片</p>
                     </div>
 
-                    {/* 详细信息 */}
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                    {/* 右侧详细信息 */}
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm">
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">姓名：</span>
+                        <span className="text-muted-foreground w-32">姓名：</span>
                         <span className="font-medium">{record.name || "朱晓煜"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">性别：</span>
+                        <span className="text-muted-foreground w-32">性别：</span>
                         <span>{record.gender || "男"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">出生日期：</span>
+                        <span className="text-muted-foreground w-32">出生日期：</span>
                         <span>{record.birthDate || "1999年12月18日"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">入学日期：</span>
-                        <span>{record.enrollmentDate || "2018年09月17日"}</span>
+                        <span className="text-muted-foreground w-32">入学日期：</span>
+                        <span>{record.enrollmentDate || "2022年09月03日"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">毕（结）业日期：</span>
-                        <span>{record.graduationDate || "2022年06月17日"}</span>
+                        <span className="text-muted-foreground w-32">毕（结）业日期：</span>
+                        <span>{record.graduationDate || "2025年06月13日"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">学校名称：</span>
+                        <span className="text-muted-foreground w-32">学校名称：</span>
                         <span>{record.school}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">专业：</span>
+                        <span className="text-muted-foreground w-32">专业：</span>
                         <span>{record.major}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">学历类别：</span>
+                        <span className="text-muted-foreground w-32">学历类别：</span>
                         <span>{record.studyType || "普通高等教育"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">学制：</span>
-                        <span>4年</span>
+                        <span className="text-muted-foreground w-32">学制：</span>
+                        <span>{record.duration || "3 年"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">学习形式：</span>
-                        <span>{record.studyType || "普通全日制"}</span>
+                        <span className="text-muted-foreground w-32">学习形式：</span>
+                        <span>{record.studyType || "全日制"}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">层次：</span>
+                        <span className="text-muted-foreground w-32">层次：</span>
                         <span>{record.degreeLevel}</span>
                       </div>
                       <div className="flex">
-                        <span className="text-muted-foreground w-24">毕（结）业：</span>
+                        <span className="text-muted-foreground w-32">毕（结）业：</span>
                         <span>毕业</span>
                       </div>
                       <div className="flex col-span-2">
-                        <span className="text-muted-foreground w-24">校（院）长姓名：</span>
-                        <span>{record.principalName || "姜少飞"}</span>
+                        <span className="text-muted-foreground w-32">校（院）长姓名：</span>
+                        <span>{record.principalName || "盛况"}</span>
                       </div>
                       <div className="flex col-span-2">
-                        <span className="text-muted-foreground w-24">证书编号：</span>
-                        <span>{record.certificateNumber || "1327 5120 2205 0022 15"}</span>
+                        <span className="text-muted-foreground w-32">证书编号：</span>
+                        <span>{record.certificateNumber || "1034 7120 2502 5201 62"}</span>
                       </div>
                     </div>
                   </div>
