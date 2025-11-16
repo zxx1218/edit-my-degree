@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, ShieldCheck } from "lucide-react";
 import { getUserData } from "@/lib/api";
 import { toast } from "sonner";
-
 interface EducationRecord {
   id: string;
   school: string;
@@ -45,7 +44,6 @@ interface EducationRecord {
   admission_unit?: string;
   admission_major?: string;
 }
-
 const EducationBackground = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -54,7 +52,6 @@ const EducationBackground = () => {
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<EducationRecord[]>([]);
   const [activeTab, setActiveTab] = useState("education");
-
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -62,7 +59,6 @@ const EducationBackground = () => {
         if (userStr) {
           const user = JSON.parse(userStr);
           const data = await getUserData(user.id);
-
           setStudentStatusRecords(data.studentStatus || []);
           setEducationRecords(data.education || []);
           setDegreeRecords(data.degree || []);
@@ -75,21 +71,14 @@ const EducationBackground = () => {
         setLoading(false);
       }
     };
-
     loadUserData();
   }, []);
-
   const allRecords = activeTab === "education" ? educationRecords : activeTab === "degree" ? degreeRecords : activeTab === "exam" ? examRecords : [];
   const showStudentStatus = activeTab === "info";
-  
-  // 检查是否所有数据都为空
-  const hasNoData = studentStatusRecords.length === 0 && 
-                    educationRecords.length === 0 && 
-                    degreeRecords.length === 0 && 
-                    examRecords.length === 0;
 
-  return (
-    <div className="min-h-screen bg-background">
+  // 检查是否所有数据都为空
+  const hasNoData = studentStatusRecords.length === 0 && educationRecords.length === 0 && degreeRecords.length === 0 && examRecords.length === 0;
+  return <div className="min-h-screen bg-background">
       {/* 顶部导航栏 */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-md">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -115,44 +104,16 @@ const EducationBackground = () => {
       <div className="bg-card border-b">
         <div className="container mx-auto px-4">
           <nav className="flex gap-8">
-            <button
-              onClick={() => setActiveTab("info")}
-              className={`py-4 border-b-2 transition-colors ${
-                activeTab === "info"
-                  ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
+            <button onClick={() => setActiveTab("info")} className={`py-4 border-b-2 transition-colors ${activeTab === "info" ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               学籍信息/园校对
             </button>
-            <button
-              onClick={() => setActiveTab("education")}
-              className={`py-4 border-b-2 transition-colors ${
-                activeTab === "education"
-                  ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
+            <button onClick={() => setActiveTab("education")} className={`py-4 border-b-2 transition-colors ${activeTab === "education" ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               学历信息
             </button>
-            <button
-              onClick={() => setActiveTab("degree")}
-              className={`py-4 border-b-2 transition-colors ${
-                activeTab === "degree"
-                  ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
+            <button onClick={() => setActiveTab("degree")} className={`py-4 border-b-2 transition-colors ${activeTab === "degree" ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               学位信息
             </button>
-            <button
-              onClick={() => setActiveTab("exam")}
-              className={`py-4 border-b-2 transition-colors ${
-                activeTab === "exam"
-                  ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
+            <button onClick={() => setActiveTab("exam")} className={`py-4 border-b-2 transition-colors ${activeTab === "exam" ? "border-primary text-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
               考研信息
             </button>
           </nav>
@@ -181,22 +142,17 @@ const EducationBackground = () => {
             </div>
 
             {/* 学历数量提示 */}
-            {!hasNoData && (
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {!hasNoData && <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>您一共有 {showStudentStatus ? studentStatusRecords.length : allRecords.length} 个{showStudentStatus ? "学籍" : "学历"}</span>
                 <button className="text-primary hover:underline">还有{showStudentStatus ? "学籍" : "学历"}没有显示出来？</button>
                 <span>|</span>
                 <button className="text-primary hover:underline">{showStudentStatus ? "学籍" : "学历"}查询范围</button>
-              </div>
-            )}
+              </div>}
 
             {/* 学历/学籍列表 */}
-            {loading ? (
-              <Card className="p-8 text-center text-muted-foreground">
+            {loading ? <Card className="p-8 text-center text-muted-foreground">
                 加载中...
-              </Card>
-            ) : hasNoData ? (
-              <Card className="p-12 text-center">
+              </Card> : hasNoData ? <Card className="p-12 text-center">
                 <div className="flex flex-col items-center gap-4">
                   <ShieldCheck className="w-16 h-16 text-muted-foreground/50" />
                   <h3 className="text-xl font-semibold text-muted-foreground">暂无教育信息</h3>
@@ -204,16 +160,11 @@ const EducationBackground = () => {
                     您还没有添加任何学籍、学历、学位或考研信息
                   </p>
                 </div>
-              </Card>
-            ) : showStudentStatus ? (
-              // 学籍信息格式
-              studentStatusRecords.length === 0 ? (
-                <Card className="p-8 text-center text-muted-foreground">
+              </Card> : showStudentStatus ?
+          // 学籍信息格式
+          studentStatusRecords.length === 0 ? <Card className="p-8 text-center text-muted-foreground">
                   暂无数据
-                </Card>
-              ) : (
-                studentStatusRecords.map((record) => (
-                  <Card key={record.id} className="p-6">
+                </Card> : studentStatusRecords.map(record => <Card key={record.id} className="p-6">
                     {/* 标题栏 */}
                     <div className="flex items-center justify-between mb-6">
                       <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
@@ -319,17 +270,11 @@ const EducationBackground = () => {
                         </div>
                       </div>
                     </div>
-                  </Card>
-                ))
-              )
-            ) : allRecords.length === 0 ? (
-              <Card className="p-8 text-center text-muted-foreground">
+                  </Card>) : allRecords.length === 0 ? <Card className="p-8 text-center text-muted-foreground">
                 暂无数据
-              </Card>
-            ) : activeTab === "degree" ? (
-              // 学位信息格式
-              allRecords.map((record) => (
-                <Card key={record.id} className="p-6">
+              </Card> : activeTab === "degree" ?
+          // 学位信息格式
+          allRecords.map(record => <Card key={record.id} className="p-6">
                   {/* 标题栏 */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
@@ -387,12 +332,9 @@ const EducationBackground = () => {
                       </div>
                     </div>
                   </div>
-                </Card>
-              ))
-            ) : activeTab === "exam" ? (
-              // 考研信息格式
-              allRecords.map((record) => (
-                <Card key={record.id} className="p-6">
+                </Card>) : activeTab === "exam" ?
+          // 考研信息格式
+          allRecords.map(record => <Card key={record.id} className="p-6">
                   {/* 标题栏 */}
                   <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium mb-6">
                     {record.year}年({record.school})
@@ -510,12 +452,9 @@ const EducationBackground = () => {
                       </div>
                     </div>
                   </div>
-                </Card>
-              ))
-            ) : (
-              // 学历信息格式
-              allRecords.map((record) => (
-                <Card key={record.id} className="p-6">
+                </Card>) :
+          // 学历信息格式
+          allRecords.map(record => <Card key={record.id} className="p-6">
                   {/* 标题栏 */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
@@ -531,10 +470,10 @@ const EducationBackground = () => {
                   <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 mx-[10px] my-[20px] px-[12px]">
                         <span className="text-muted-foreground text-sm">照片</span>
                       </div>
-                      <p className="text-center text-sm text-muted-foreground">学历照片</p>
+                      
                     </div>
 
                     {/* 右侧详细信息 */}
@@ -597,9 +536,7 @@ const EducationBackground = () => {
                       </div>
                     </div>
                   </div>
-                </Card>
-              ))
-            )}
+                </Card>)}
 
             {/* 职位推荐 */}
             <Card className="p-6">
@@ -612,12 +549,19 @@ const EducationBackground = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { title: "软件工程师", salary: "10.0K-20.0K", level: "本科及以上" },
-                  { title: "售后客服", salary: "8.0K-10.0K", level: "本科及以上" },
-                  { title: "售前客服", salary: "8.0K-12.0K", level: "本科及以上" },
-                ].map((job, index) => (
-                  <Card key={index} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
+                {[{
+                title: "软件工程师",
+                salary: "10.0K-20.0K",
+                level: "本科及以上"
+              }, {
+                title: "售后客服",
+                salary: "8.0K-10.0K",
+                level: "本科及以上"
+              }, {
+                title: "售前客服",
+                salary: "8.0K-12.0K",
+                level: "本科及以上"
+              }].map((job, index) => <Card key={index} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Building2 className="w-5 h-5 text-primary" />
@@ -628,8 +572,7 @@ const EducationBackground = () => {
                         <p className="text-xs text-muted-foreground mt-1">{job.level}</p>
                       </div>
                     </div>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
             </Card>
           </div>
@@ -736,8 +679,6 @@ const EducationBackground = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default EducationBackground;
