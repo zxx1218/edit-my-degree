@@ -15,6 +15,7 @@ import EducationDetail from "./pages/EducationDetail";
 import DegreeDetail from "./pages/DegreeDetail";
 import ExamDetail from "./pages/ExamDetail";
 import SuperAdd from "./pages/SuperAdd";
+import EducationBackground from "./pages/EducationBackground";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/degree/:id" element={<ProtectedRoute><DegreeDetail /></ProtectedRoute>} />
             <Route path="/exam/:id" element={<ProtectedRoute><ExamDetail /></ProtectedRoute>} />
             <Route path="/superadd" element={<SuperAdd />} />
+            <Route path="/educationBackground" element={<EducationBackground />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
