@@ -75,7 +75,7 @@ const StudentStatusDetail = () => {
       try {
         const result = await getUserData(userId);
         const record = result.studentStatus?.find((r: any) => r.id.toString() === id);
-
+        
         if (record) {
           setData({
             name: record.name || defaultData.name,
@@ -323,7 +323,10 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Button */}
-        <Button className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90">
+        <Button 
+          className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
+          onClick={() => navigate('/verification-report')}
+        >
           查看验证报告
         </Button>
       </div>
