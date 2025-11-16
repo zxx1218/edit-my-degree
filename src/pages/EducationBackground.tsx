@@ -477,7 +477,7 @@ const EducationBackground = () => {
                     </div>
 
                     {/* 右侧详细信息 */}
-                    <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm">
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-3.5 text-sm">
                       <div className="flex">
                         <span className="text-muted-foreground w-32">姓名：</span>
                         <span className="font-medium">{record.name || "朱晓煜"}</span>
