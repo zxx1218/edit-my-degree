@@ -81,6 +81,12 @@ const EducationBackground = () => {
 
   const allRecords = activeTab === "education" ? educationRecords : activeTab === "degree" ? degreeRecords : activeTab === "exam" ? examRecords : [];
   const showStudentStatus = activeTab === "info";
+  
+  // 检查是否所有数据都为空
+  const hasNoData = studentStatusRecords.length === 0 && 
+                    educationRecords.length === 0 && 
+                    degreeRecords.length === 0 && 
+                    examRecords.length === 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,16 +155,6 @@ const EducationBackground = () => {
             >
               考研信息
             </button>
-            <button
-              onClick={() => setActiveTab("exam")}
-              className={`py-4 border-b-2 transition-colors ${
-                activeTab === "exam"
-                  ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              考研信息
-            </button>
           </nav>
         </div>
       </div>
@@ -185,17 +181,29 @@ const EducationBackground = () => {
             </div>
 
             {/* 学历数量提示 */}
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>您一共有 {showStudentStatus ? studentStatusRecords.length : allRecords.length} 个{showStudentStatus ? "学籍" : "学历"}</span>
-              <button className="text-primary hover:underline">还有{showStudentStatus ? "学籍" : "学历"}没有显示出来？</button>
-              <span>|</span>
-              <button className="text-primary hover:underline">{showStudentStatus ? "学籍" : "学历"}查询范围</button>
-            </div>
+            {!hasNoData && (
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>您一共有 {showStudentStatus ? studentStatusRecords.length : allRecords.length} 个{showStudentStatus ? "学籍" : "学历"}</span>
+                <button className="text-primary hover:underline">还有{showStudentStatus ? "学籍" : "学历"}没有显示出来？</button>
+                <span>|</span>
+                <button className="text-primary hover:underline">{showStudentStatus ? "学籍" : "学历"}查询范围</button>
+              </div>
+            )}
 
             {/* 学历/学籍列表 */}
             {loading ? (
               <Card className="p-8 text-center text-muted-foreground">
                 加载中...
+              </Card>
+            ) : hasNoData ? (
+              <Card className="p-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <ShieldCheck className="w-16 h-16 text-muted-foreground/50" />
+                  <h3 className="text-xl font-semibold text-muted-foreground">暂无教育信息</h3>
+                  <p className="text-sm text-muted-foreground">
+                    您还没有添加任何学籍、学历、学位或考研信息
+                  </p>
+                </div>
               </Card>
             ) : showStudentStatus ? (
               // 学籍信息格式
