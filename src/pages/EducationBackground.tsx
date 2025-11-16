@@ -81,10 +81,10 @@ const EducationBackground = () => {
   return <div className="min-h-screen bg-background">
       {/* 顶部导航栏 */}
       <header className="bg-primary text-primary-foreground sticky top-0 z-50 shadow-md">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-3 flex items-center gap-8">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-8 h-8" />
-            <span className="text-xl font-semibold">学信档案</span>
+            <span className="text-2xl font-semibold">学信档案</span>
           </div>
           <nav className="hidden md:flex gap-6">
             <button className="hover:text-accent transition-colors">首页</button>
