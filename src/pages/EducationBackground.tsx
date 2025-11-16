@@ -286,8 +286,71 @@ const EducationBackground = () => {
               <Card className="p-8 text-center text-muted-foreground">
                 暂无数据
               </Card>
+            ) : activeTab === "degree" ? (
+              // 学位信息格式
+              allRecords.map((record) => (
+                <Card key={record.id} className="p-6">
+                  {/* 标题栏 */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
+                      {record.degreeLevel}-{record.school}-{record.major}
+                    </div>
+                    <button className="text-primary hover:underline flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4" />
+                      查看该学位的在线验证报告
+                    </button>
+                  </div>
+
+                  {/* 内容区域 */}
+                  <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                    {/* 左侧照片 */}
+                    <div>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
+                        <span className="text-muted-foreground text-sm">照片</span>
+                      </div>
+                      <p className="text-center text-sm text-muted-foreground">学位照片</p>
+                    </div>
+
+                    {/* 右侧详细信息 */}
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm">
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">姓名：</span>
+                        <span className="font-medium">{record.name || "朱晓煜"}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">性别：</span>
+                        <span>{record.gender || "男"}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">出生日期：</span>
+                        <span>{record.birthDate || "1999年12月18日"}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">获学位日期：</span>
+                        <span>{record.graduationDate || "2025年06月13日"}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">学位授予单位：</span>
+                        <span>{record.school}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">所授学位：</span>
+                        <span>{record.degreeType || "电子信息硕士专业学位"}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">学科/专业：</span>
+                        <span>{record.major}</span>
+                      </div>
+                      <div className="flex">
+                        <span className="text-muted-foreground w-32">学位证书编号：</span>
+                        <span>{record.certificateNumber || "103473202552016"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
             ) : (
-              // 学历/学位信息格式
+              // 学历信息格式
               allRecords.map((record) => (
                 <Card key={record.id} className="p-6">
                   {/* 标题栏 */}
