@@ -15,12 +15,12 @@ const SectionHeader = ({ title, count, promptText, actionText, onAction }: Secti
       {(promptText || actionText) && (
         <div className="flex items-center gap-1 text-sm">
           {promptText && (
-            <span className="text-muted-foreground">{promptText}</span>
+            <span className="text-[#999999]">{promptText}</span>
           )}
           {actionText && (
             <button 
               onClick={onAction}
-              className="text-primary hover:opacity-80 transition-opacity"
+              className="text-[#25b887] hover:opacity-80 transition-opacity"
             >
               {actionText}
             </button>

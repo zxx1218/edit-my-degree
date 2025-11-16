@@ -133,31 +133,25 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-[#59b58a] text-white";
-        return "bg-[#59b58a] text-white";
+        return "bg-[#20b080] text-white";
       case "education":
-        return "bg-[#5d9df9] text-white";
-        return "bg-[#5d9df9] text-white";
+        return "bg-[#3a87f2] text-white";
       case "degree":
-        return "bg-[#475ed6] text-white";
-        return "bg-[#475ed6] text-white";
+        return "bg-[#3852da] text-white";
       case "exam":
         return "bg-[#62bfcf] text-white";
-        return "bg-[#62bfcf] text-white";
       default:
-        return "bg-[#5d9df9] text-white";
-        return "bg-[#5d9df9] text-white";
+        return "bg-[#36b2c6] text-white";
     }
   };
 
   const getBadgeClasses = () => {
     return "bg-black/20 backdrop-blur-sm";
-    return "bg-black/20 backdrop-blur-sm";
   };
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-[7px] p-[1.125rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-[7px] p-[1.1rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -172,7 +166,7 @@ const EducationCard = ({
       }}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-xl font-songti">{school}</h3>
+        <h3 className="text-xl font-yahei font-normal">{school}</h3>
         {variant !== "exam" && (
           <div className={`${getBadgeClasses()} px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
             {degreeLevel}
