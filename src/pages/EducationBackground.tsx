@@ -27,6 +27,7 @@ interface EducationRecord {
 const EducationBackground = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [studentStatusRecords, setStudentStatusRecords] = useState<any[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [activeTab, setActiveTab] = useState("education");
@@ -39,6 +40,7 @@ const EducationBackground = () => {
           const user = JSON.parse(userStr);
           const data = await getUserData(user.id);
 
+          setStudentStatusRecords(data.studentStatus || []);
           setEducationRecords(data.education || []);
           setDegreeRecords(data.degree || []);
         }
@@ -53,7 +55,8 @@ const EducationBackground = () => {
     loadUserData();
   }, []);
 
-  const allRecords = activeTab === "education" ? educationRecords : degreeRecords;
+  const allRecords = activeTab === "education" ? educationRecords : activeTab === "degree" ? degreeRecords : [];
+  const showStudentStatus = activeTab === "info";
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,22 +152,140 @@ const EducationBackground = () => {
 
             {/* 学历数量提示 */}
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>您一共有 {allRecords.length} 个学历</span>
-              <button className="text-primary hover:underline">还有学历没有显示出来？</button>
+              <span>您一共有 {showStudentStatus ? studentStatusRecords.length : allRecords.length} 个{showStudentStatus ? "学籍" : "学历"}</span>
+              <button className="text-primary hover:underline">还有{showStudentStatus ? "学籍" : "学历"}没有显示出来？</button>
               <span>|</span>
-              <button className="text-primary hover:underline">学历查询范围</button>
+              <button className="text-primary hover:underline">{showStudentStatus ? "学籍" : "学历"}查询范围</button>
             </div>
 
-            {/* 学历列表 */}
+            {/* 学历/学籍列表 */}
             {loading ? (
               <Card className="p-8 text-center text-muted-foreground">
                 加载中...
               </Card>
+            ) : showStudentStatus ? (
+              // 学籍信息格式
+              studentStatusRecords.length === 0 ? (
+                <Card className="p-8 text-center text-muted-foreground">
+                  暂无数据
+                </Card>
+              ) : (
+                studentStatusRecords.map((record) => (
+                  <Card key={record.id} className="p-6">
+                    {/* 标题栏 */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
+                        {record.degree_level}-{record.school}-{record.major}
+                      </div>
+                      <button className="text-primary hover:underline flex items-center gap-1">
+                        <ShieldCheck className="w-4 h-4" />
+                        查看该学籍的在线验证报告
+                      </button>
+                    </div>
+
+                    {/* 内容区域 */}
+                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                      {/* 左侧照片 */}
+                      <div className="space-y-6">
+                        <div>
+                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
+                            <span className="text-muted-foreground text-sm">照片</span>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground">录取照片</p>
+                        </div>
+                        <div>
+                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
+                            <span className="text-muted-foreground text-sm">照片</span>
+                          </div>
+                          <p className="text-center text-sm text-muted-foreground">学历照片</p>
+                        </div>
+                      </div>
+
+                      {/* 右侧详细信息 */}
+                      <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm">
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">姓名：</span>
+                          <span className="font-medium">{record.name}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">性别：</span>
+                          <span>{record.gender || "男"}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">出生日期：</span>
+                          <span>{record.birth_date || "1999年12月18日"}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">民族：</span>
+                          <span>{record.nationality || "汉族"}</span>
+                        </div>
+                        <div className="flex col-span-2">
+                          <span className="text-muted-foreground w-28">证件号码：</span>
+                          <span>{record.id_number || ""}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">学校名称：</span>
+                          <span>{record.school}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">层次：</span>
+                          <span>{record.degree_level}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">专业：</span>
+                          <span>{record.major}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">学制：</span>
+                          <span>{record.duration || "3 年"}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">学历类别：</span>
+                          <span>{record.education_type || "普通高等教育"}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">学习形式：</span>
+                          <span>{record.study_type || "全日制"}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">分院：</span>
+                          <span>{record.branch || ""}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">系所：</span>
+                          <span>{record.department || ""}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">班级：</span>
+                          <span>{record.class || ""}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">学号：</span>
+                          <span>{record.student_id || ""}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">入学日期：</span>
+                          <span>{record.enrollment_date || ""}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">学籍状态：</span>
+                          <span>{record.status || "不在籍（毕业）"}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="text-muted-foreground w-28">离校日期：</span>
+                          <span>{record.graduation_date || ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )
             ) : allRecords.length === 0 ? (
               <Card className="p-8 text-center text-muted-foreground">
                 暂无数据
               </Card>
             ) : (
+              // 学历/学位信息格式（保持原样）
               allRecords.map((record) => (
                 <Card key={record.id} className="p-6">
                   {/* 标题栏 */}
