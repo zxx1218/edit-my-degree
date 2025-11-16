@@ -151,7 +151,7 @@ const EducationCard = ({
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-sm p-5 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-sm p-[1.125rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
