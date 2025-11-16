@@ -122,11 +122,8 @@ const EducationBackground = () => {
 
       {/* 主内容区域 */}
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 左侧主内容 */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* 横幅广告 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 横幅广告 - 独占一行 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <Card className="bg-gradient-to-r from-orange-100 to-orange-50 p-6 border-orange-200">
                 <h3 className="text-lg font-semibold text-orange-900 mb-2">专业满意度</h3>
                 <p className="text-sm text-orange-700">
@@ -140,7 +137,10 @@ const EducationBackground = () => {
                 </p>
               </Card>
             </div>
-
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 左侧主内容 */}
+          <div className="lg:col-span-2 space-y-6">
             {/* 学历数量提示 */}
             {!hasNoData && <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>您一共有 {showStudentStatus ? studentStatusRecords.length : allRecords.length} 个{showStudentStatus ? "学籍" : "学历"}</span>
