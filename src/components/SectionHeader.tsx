@@ -4,13 +4,12 @@ interface SectionHeaderProps {
   promptText?: string;
   actionText?: string;
   onAction?: () => void;
-  titleClassName?: string;
 }
 
-const SectionHeader = ({ title, count, promptText, actionText, onAction, titleClassName }: SectionHeaderProps) => {
+const SectionHeader = ({ title, count, promptText, actionText, onAction }: SectionHeaderProps) => {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <h2 className={`text-base font-semibold text-foreground ${titleClassName || ''}`}>
+      <h2 className="text-base font-semibold text-foreground">
         {title} ({count})
       </h2>
       {(promptText || actionText) && (
