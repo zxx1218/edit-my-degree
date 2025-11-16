@@ -1,9 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
 
 const VideoPlayer = () => {
   const navigate = useNavigate();
+  const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2">("demo1");
+
+  const videoConfig = {
+    demo1: {
+      src: "t.mp4",
+      title: "演示一",
+      description: "系统基础操作演示"
+    },
+    demo2: {
+      src: "tt.mp4", // 替换为第二个视频的路径
+      title: "演示二",
+      description: "系统高级功能演示"
+    }
+  };
+
+  const currentVideo = videoConfig[selectedVideo];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
@@ -20,18 +37,33 @@ const VideoPlayer = () => {
         </div>
         
         <div className="bg-card rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 border-b flex gap-2">
+            <Button
+              variant={selectedVideo === "demo1" ? "default" : "outline"}
+              onClick={() => setSelectedVideo("demo1")}
+            >
+              演示一
+            </Button>
+            <Button
+              variant={selectedVideo === "demo2" ? "default" : "outline"}
+              onClick={() => setSelectedVideo("demo2")}
+            >
+              演示二
+            </Button>
+          </div>
           <div className="aspect-video w-full">
             <iframe
-              src="t.mp4"
+              key={selectedVideo}
+              src={currentVideo.src}
               className="w-full h-full border-0"
               allowFullScreen
-              title="系统使用介绍视频"
+              title={currentVideo.title}
             />
           </div>
           <div className="p-6">
-            <h1 className="text-2xl font-bold mb-2">系统使用介绍视频</h1>
+            <h1 className="text-2xl font-bold mb-2">{currentVideo.title}</h1>
             <p className="text-muted-foreground mb-4">
-              观看此视频了解如何使用学信档案系统的各项功能
+              {currentVideo.description}
             </p>
             
             <div className="mt-6 space-y-3 text-sm">

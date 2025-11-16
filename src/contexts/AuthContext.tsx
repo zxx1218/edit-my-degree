@@ -9,6 +9,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  // 每次刷新页面都需要重新登录
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const login = () => {

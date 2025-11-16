@@ -159,6 +159,7 @@ const Index = () => {
           name: "新用户",
           school: "新学校",
           year: currentYear.toString(),
+          note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
         };
       } else {
         // 学历/学籍使用 degree_level
@@ -307,7 +308,11 @@ const Index = () => {
           setDegreeRecords(sortByDegreeType(updateList(degreeRecords)));
           break;
         case "exam":
-          setExamRecords(updateList(examRecords));
+          setExamRecords(examRecords.map((r) => 
+            r.id === updatedRecord.id 
+              ? { ...updatedRecord, year: updatedRecord.major } 
+              : r
+          ));
           break;
       }
 
@@ -337,6 +342,17 @@ const Index = () => {
             count={studentStatus.length}
             promptText="还有学籍没有显示出来？"
             actionText="尝试绑定"
+            onAction={() => {
+              setSelectedRecord({ 
+                id: '', 
+                school: '', 
+                major: '', 
+                studyType: '', 
+                degreeLevel: '', 
+                type: 'student-status' 
+              });
+              setIsAddDialogOpen(true);
+            }}
           />
           <div className="px-4 space-y-3">
             {studentStatus.map((record) => (
@@ -360,6 +376,17 @@ const Index = () => {
             count={educationRecords.length}
             promptText="还有学历没有显示出来？"
             actionText="尝试绑定"
+            onAction={() => {
+              setSelectedRecord({ 
+                id: '', 
+                school: '', 
+                major: '', 
+                studyType: '', 
+                degreeLevel: '', 
+                type: 'education' 
+              });
+              setIsAddDialogOpen(true);
+            }}
           />
           <div className="px-4 space-y-3">
             {educationRecords.length > 0 ? (
@@ -397,6 +424,17 @@ const Index = () => {
             count={degreeRecords.length}
             promptText="还有学位没有显示出来？"
             actionText="尝试绑定"
+            onAction={() => {
+              setSelectedRecord({ 
+                id: '', 
+                school: '', 
+                major: '', 
+                studyType: '', 
+                degreeLevel: '', 
+                type: 'degree' 
+              });
+              setIsAddDialogOpen(true);
+            }}
           />
           <div className="px-4 space-y-3">
             {degreeRecords.length > 0 ? (

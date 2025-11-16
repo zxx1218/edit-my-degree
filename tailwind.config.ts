@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        'songti': ['SimSun', 'STSong', 'serif'],
+        'yahei': ['Microsoft YaHei', '微软雅黑', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

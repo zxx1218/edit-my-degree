@@ -134,18 +134,24 @@ const EducationCard = ({
     switch (variant) {
       case "student-status":
         return "bg-[#59b58a] text-white";
+        return "bg-[#59b58a] text-white";
       case "education":
+        return "bg-[#5d9df9] text-white";
         return "bg-[#5d9df9] text-white";
       case "degree":
         return "bg-[#475ed6] text-white";
+        return "bg-[#475ed6] text-white";
       case "exam":
         return "bg-[#62bfcf] text-white";
+        return "bg-[#62bfcf] text-white";
       default:
+        return "bg-[#5d9df9] text-white";
         return "bg-[#5d9df9] text-white";
     }
   };
 
   const getBadgeClasses = () => {
+    return "bg-black/20 backdrop-blur-sm";
     return "bg-black/20 backdrop-blur-sm";
   };
 

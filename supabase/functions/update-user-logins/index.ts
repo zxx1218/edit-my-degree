@@ -1,0 +1,77 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    const { username, addLogins } = await req.json();
+
+    if (!username || !addLogins || addLogins <= 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid parameters' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // 根据用户名查找用户并获取当前登录次数
+    const { data: userData, error: fetchError } = await supabase
+      .from('users')
+      .select('id, remaining_logins')
+      .eq('username', username)
+      .single();
+
+    if (fetchError || !userData) {
+      console.error('Fetch error:', fetchError);
+      return new Response(
+        JSON.stringify({ error: fetchError?.message || '用户不存在' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    // 计算新的登录次数
+    const newLogins = userData.remaining_logins + addLogins;
+
+    // 更新用户的登录次数
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ remaining_logins: newLogins })
+      .eq('id', userData.id);
+
+    if (updateError) {
+      console.error('Update error:', updateError);
+      return new Response(
+        JSON.stringify({ error: updateError.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        newLogins,
+        message: `Successfully added ${addLogins} logins. New total: ${newLogins}` 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    );
+
+  } catch (error) {
+    console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    );
+  }
+});

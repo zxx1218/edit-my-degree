@@ -78,3 +78,16 @@ export const updateData = async (
 
   return result;
 };
+
+// 修改密码API
+export const changePassword = async (username: string, oldPassword: string, newPassword: string) => {
+  const { data, error } = await supabase.functions.invoke('change-password', {
+    body: { username, oldPassword, newPassword },
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return data;
+};
