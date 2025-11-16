@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        'songti': ['SimSun', 'STSong', 'serif'],
+        'songti': ['Noto Serif SC', 'SimSun', 'STSong', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

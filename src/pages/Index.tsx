@@ -338,6 +338,7 @@ const Index = () => {
             count={studentStatus.length}
             promptText="还有学籍没有显示出来？"
             actionText="尝试绑定"
+            titleClassName="font-songti"
             onAction={() => {
               setSelectedRecord({ 
                 id: '', 
@@ -372,6 +373,7 @@ const Index = () => {
             count={educationRecords.length}
             promptText="还有学历没有显示出来？"
             actionText="尝试绑定"
+            titleClassName="font-songti"
             onAction={() => {
               setSelectedRecord({ 
                 id: '', 
@@ -420,6 +422,7 @@ const Index = () => {
             count={degreeRecords.length}
             promptText="还有学位没有显示出来？"
             actionText="尝试绑定"
+            titleClassName="font-songti"
             onAction={() => {
               setSelectedRecord({ 
                 id: '', 
