@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, FileText, Download, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 
 const VerificationReport = () => {
   const navigate = useNavigate();
+  const [degreeDialogOpen, setDegreeDialogOpen] = useState(false);
 
   const reportOptions = [
     {
@@ -45,7 +48,9 @@ const VerificationReport = () => {
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              // TODO: 处理报告查看逻辑
+              if (index === 1) {
+                setDegreeDialogOpen(true);
+              }
             }}
           >
             <div className="flex items-center gap-4">
@@ -84,6 +89,11 @@ const VerificationReport = () => {
           </div>
         </Card>
       </div>
+
+      <DegreeVerificationDialog
+        open={degreeDialogOpen}
+        onOpenChange={setDegreeDialogOpen}
+      />
     </div>
   );
 };

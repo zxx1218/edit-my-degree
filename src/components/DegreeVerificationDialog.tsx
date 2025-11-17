@@ -1,0 +1,400 @@
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { getUserData } from "@/lib/api";
+
+interface DegreeVerificationDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const DegreeVerificationDialog = ({
+  open,
+  onOpenChange,
+}: DegreeVerificationDialogProps) => {
+  const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
+  const [selectedRecordId, setSelectedRecordId] = useState<string>("");
+  const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    gender: "",
+    birthDate: undefined as Date | undefined,
+    degreeDate: undefined as Date | undefined,
+    university: "",
+    degreeType: "",
+    major: "",
+    certificateNumber: "",
+  });
+
+  // 获取用户的学位记录
+  useEffect(() => {
+    const fetchDegreeRecords = async () => {
+      if (open) {
+        setIsLoading(true);
+        try {
+          const currentUser = localStorage.getItem("currentUser");
+          if (currentUser) {
+            const user = JSON.parse(currentUser);
+            // 添加最小延迟确保加载动画可见
+            const [userData] = await Promise.all([
+              getUserData(user.id),
+              new Promise(resolve => setTimeout(resolve, 500))
+            ]);
+            if (userData.degree && userData.degree.length > 0) {
+              setDegreeRecords(userData.degree);
+              setShowForm(false);
+            } else {
+              // 没有学位记录，直接显示表单
+              setShowForm(true);
+            }
+          }
+        } catch (error) {
+          console.error("获取学位记录失败:", error);
+          setShowForm(true);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        // 对话框关闭时重置状态
+        setShowForm(false);
+        setSelectedRecordId("");
+        setIsLoading(false);
+      }
+    };
+    fetchDegreeRecords();
+  }, [open]);
+
+  // 当用户选择一条记录时，自动填充表单
+  const handleRecordSelect = (recordId: string) => {
+    setSelectedRecordId(recordId);
+    const record = degreeRecords.find((r) => r.id === recordId);
+    if (record) {
+      // 解析日期字符串，支持多种格式
+      const parseBirthDate = (dateStr: string | null) => {
+        if (!dateStr) return undefined;
+        // 如果是 "YYYY年MM月DD日" 格式
+        const chineseMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+        if (chineseMatch) {
+          return new Date(parseInt(chineseMatch[1]), parseInt(chineseMatch[2]) - 1, parseInt(chineseMatch[3]));
+        }
+        // 否则尝试直接解析
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? undefined : date;
+      };
+
+      setFormData({
+        name: record.name || "",
+        gender: record.gender || "",
+        birthDate: parseBirthDate(record.birth_date),
+        degreeDate: parseBirthDate(record.degree_date),
+        university: record.school || "",
+        degreeType: record.degree_type || "",
+        major: record.major || "",
+        certificateNumber: record.certificate_number || "",
+      });
+      setShowForm(true);
+    }
+  };
+
+  // 手动填写
+  const handleManualInput = () => {
+    setSelectedRecordId("");
+    setFormData({
+      name: "",
+      gender: "",
+      birthDate: undefined,
+      degreeDate: undefined,
+      university: "",
+      degreeType: "",
+      major: "",
+      certificateNumber: "",
+    });
+    setShowForm(true);
+  };
+
+  const formatDateToChinese = (date: Date | undefined) => {
+    if (!date) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}年${month}月${day}日`;
+  };
+
+  const handleSubmit = async () => {
+    // Validate all fields
+    if (!formData.name || !formData.gender || !formData.birthDate || 
+        !formData.degreeDate || !formData.university || !formData.degreeType || 
+        !formData.major || !formData.certificateNumber) {
+      toast.error("请填写所有必填字段");
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Call the PDF generation edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-degree-pdf`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            gender: formData.gender,
+            birthDate: formatDateToChinese(formData.birthDate),
+            degreeDate: formatDateToChinese(formData.degreeDate),
+            university: formData.university,
+            degreeType: formData.degreeType,
+            major: formData.major,
+            certificateNumber: formData.certificateNumber,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("PDF生成失败");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success("PDF生成成功！");
+      onOpenChange(false);
+      
+      // Reset form
+      setFormData({
+        name: "",
+        gender: "",
+        birthDate: undefined,
+        degreeDate: undefined,
+        university: "",
+        degreeType: "",
+        major: "",
+        certificateNumber: "",
+      });
+    } catch (error) {
+      console.error("PDF生成错误:", error);
+      toast.error("PDF生成失败，请重试");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>学位在线验证报告信息</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          {/* 加载状态 */}
+          {isLoading && (
+            <div className="grid gap-6 py-8">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
+                </div>
+                <p className="text-sm text-muted-foreground">正在加载学位记录...</p>
+              </div>
+              <div className="grid gap-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-32 mx-auto" />
+              </div>
+            </div>
+          )}
+
+          {/* 如果有学位记录但未选择，先显示选择器 */}
+          {!isLoading && degreeRecords.length > 0 && !showForm && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="record-select">选择已有学位记录</Label>
+                <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择一条学位记录" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {degreeRecords.map((record) => (
+                      <SelectItem key={record.id} value={record.id}>
+                        {record.school} - {record.name} - {record.degree_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" onClick={handleManualInput}>
+                  或手动填写
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* 选择记录后或手动填写时显示表单 */}
+          {!isLoading && showForm && (
+            <>
+              {degreeRecords.length > 0 && (
+                <div className="flex justify-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowForm(false)}
+                  >
+                    ← 重新选择
+                  </Button>
+                </div>
+              )}
+          <div className="grid gap-2">
+            <Label htmlFor="name">姓名 *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="请输入姓名"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="gender">性别 *</Label>
+            <Input
+              id="gender"
+              value={formData.gender}
+              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              placeholder="请输入性别（男/女）"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>出生日期 *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.birthDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.birthDate ? formatDateToChinese(formData.birthDate) : "选择日期"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.birthDate}
+                  onSelect={(date) => setFormData({ ...formData, birthDate: date })}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>获学位日期 *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.degreeDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.degreeDate ? formatDateToChinese(formData.degreeDate) : "选择日期"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.degreeDate}
+                  onSelect={(date) => setFormData({ ...formData, degreeDate: date })}
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="university">学位授予单位 *</Label>
+            <Input
+              id="university"
+              value={formData.university}
+              onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+              placeholder="请输入学位授予单位"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="degreeType">所授学位 *</Label>
+            <Input
+              id="degreeType"
+              value={formData.degreeType}
+              onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
+              placeholder="例如：电子信息硕士专业学位"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="major">学科/专业 *</Label>
+            <Input
+              id="major"
+              value={formData.major}
+              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+              placeholder="请输入学科或专业"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="certificateNumber">学位证书编号 *</Label>
+            <Input
+              id="certificateNumber"
+              value={formData.certificateNumber}
+              onChange={(e) => setFormData({ ...formData, certificateNumber: e.target.value })}
+              placeholder="请输入学位证书编号"
+            />
+          </div>
+          </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit}>生成报告</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default DegreeVerificationDialog;
