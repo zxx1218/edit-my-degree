@@ -51,7 +51,11 @@ const DegreeVerificationDialog = ({
           const currentUser = localStorage.getItem("currentUser");
           if (currentUser) {
             const user = JSON.parse(currentUser);
-            const userData = await getUserData(user.id);
+            // 添加最小延迟确保加载动画可见
+            const [userData] = await Promise.all([
+              getUserData(user.id),
+              new Promise(resolve => setTimeout(resolve, 500))
+            ]);
             if (userData.degree && userData.degree.length > 0) {
               setDegreeRecords(userData.degree);
               setShowForm(false);
@@ -209,12 +213,19 @@ const DegreeVerificationDialog = ({
         <div className="grid gap-4 py-4">
           {/* 加载状态 */}
           {isLoading && (
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-10 w-full" />
+            <div className="grid gap-6 py-8">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
+                </div>
+                <p className="text-sm text-muted-foreground">正在加载学位记录...</p>
               </div>
-              <Skeleton className="h-10 w-32 mx-auto" />
+              <div className="grid gap-3">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-32 mx-auto" />
+              </div>
             </div>
           )}
 
