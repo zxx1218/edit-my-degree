@@ -28,6 +28,7 @@ const DegreeVerificationDialog = ({
 }: DegreeVerificationDialogProps) => {
   const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     gender: "",
@@ -50,11 +51,20 @@ const DegreeVerificationDialog = ({
             const userData = await getUserData(user.id);
             if (userData.degree && userData.degree.length > 0) {
               setDegreeRecords(userData.degree);
+              setShowForm(false);
+            } else {
+              // 没有学位记录，直接显示表单
+              setShowForm(true);
             }
           }
         } catch (error) {
           console.error("获取学位记录失败:", error);
+          setShowForm(true);
         }
+      } else {
+        // 对话框关闭时重置状态
+        setShowForm(false);
+        setSelectedRecordId("");
       }
     };
     fetchDegreeRecords();
@@ -88,7 +98,24 @@ const DegreeVerificationDialog = ({
         major: record.major || "",
         certificateNumber: record.certificate_number || "",
       });
+      setShowForm(true);
     }
+  };
+
+  // 手动填写
+  const handleManualInput = () => {
+    setSelectedRecordId("");
+    setFormData({
+      name: "",
+      gender: "",
+      birthDate: undefined,
+      degreeDate: undefined,
+      university: "",
+      degreeType: "",
+      major: "",
+      certificateNumber: "",
+    });
+    setShowForm(true);
   };
 
   const formatDateToChinese = (date: Date | undefined) => {
@@ -174,24 +201,46 @@ const DegreeVerificationDialog = ({
           <DialogTitle>学位在线验证报告信息</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          {/* 如果有学位记录，显示选择器 */}
-          {degreeRecords.length > 0 && (
-            <div className="grid gap-2">
-              <Label htmlFor="record-select">选择学位记录（可选）</Label>
-              <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择已有记录或手动填写" />
-                </SelectTrigger>
-                <SelectContent>
-                  {degreeRecords.map((record) => (
-                    <SelectItem key={record.id} value={record.id}>
-                      {record.school} - {record.name} - {record.degree_type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* 如果有学位记录但未选择，先显示选择器 */}
+          {degreeRecords.length > 0 && !showForm && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="record-select">选择已有学位记录</Label>
+                <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择一条学位记录" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {degreeRecords.map((record) => (
+                      <SelectItem key={record.id} value={record.id}>
+                        {record.school} - {record.name} - {record.degree_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" onClick={handleManualInput}>
+                  或手动填写
+                </Button>
+              </div>
+            </>
           )}
+
+          {/* 选择记录后或手动填写时显示表单 */}
+          {showForm && (
+            <>
+              {degreeRecords.length > 0 && (
+                <div className="flex justify-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowForm(false)}
+                  >
+                    ← 重新选择
+                  </Button>
+                </div>
+              )}
           <div className="grid gap-2">
             <Label htmlFor="name">姓名 *</Label>
             <Input
@@ -305,6 +354,8 @@ const DegreeVerificationDialog = ({
               placeholder="请输入学位证书编号"
             />
           </div>
+          </>
+          )}
         </div>
 
         <div className="flex justify-end gap-3">
