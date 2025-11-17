@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserData } from "@/lib/api";
 
 interface DegreeVerificationDialogProps {
   open: boolean;
@@ -25,6 +26,8 @@ const DegreeVerificationDialog = ({
   open,
   onOpenChange,
 }: DegreeVerificationDialogProps) => {
+  const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
+  const [selectedRecordId, setSelectedRecordId] = useState<string>("");
   const [formData, setFormData] = useState({
     name: "",
     gender: "",
@@ -35,6 +38,58 @@ const DegreeVerificationDialog = ({
     major: "",
     certificateNumber: "",
   });
+
+  // 获取用户的学位记录
+  useEffect(() => {
+    const fetchDegreeRecords = async () => {
+      if (open) {
+        try {
+          const currentUser = localStorage.getItem("currentUser");
+          if (currentUser) {
+            const user = JSON.parse(currentUser);
+            const userData = await getUserData(user.id);
+            if (userData.degree && userData.degree.length > 0) {
+              setDegreeRecords(userData.degree);
+            }
+          }
+        } catch (error) {
+          console.error("获取学位记录失败:", error);
+        }
+      }
+    };
+    fetchDegreeRecords();
+  }, [open]);
+
+  // 当用户选择一条记录时，自动填充表单
+  const handleRecordSelect = (recordId: string) => {
+    setSelectedRecordId(recordId);
+    const record = degreeRecords.find((r) => r.id === recordId);
+    if (record) {
+      // 解析日期字符串，支持多种格式
+      const parseBirthDate = (dateStr: string | null) => {
+        if (!dateStr) return undefined;
+        // 如果是 "YYYY年MM月DD日" 格式
+        const chineseMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+        if (chineseMatch) {
+          return new Date(parseInt(chineseMatch[1]), parseInt(chineseMatch[2]) - 1, parseInt(chineseMatch[3]));
+        }
+        // 否则尝试直接解析
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? undefined : date;
+      };
+
+      setFormData({
+        name: record.name || "",
+        gender: record.gender || "",
+        birthDate: parseBirthDate(record.birth_date),
+        degreeDate: parseBirthDate(record.degree_date),
+        university: record.school || "",
+        degreeType: record.degree_type || "",
+        major: record.major || "",
+        certificateNumber: record.certificate_number || "",
+      });
+    }
+  };
 
   const formatDateToChinese = (date: Date | undefined) => {
     if (!date) return "";
@@ -119,6 +174,24 @@ const DegreeVerificationDialog = ({
           <DialogTitle>学位在线验证报告信息</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {/* 如果有学位记录，显示选择器 */}
+          {degreeRecords.length > 0 && (
+            <div className="grid gap-2">
+              <Label htmlFor="record-select">选择学位记录（可选）</Label>
+              <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="选择已有记录或手动填写" />
+                </SelectTrigger>
+                <SelectContent>
+                  {degreeRecords.map((record) => (
+                    <SelectItem key={record.id} value={record.id}>
+                      {record.school} - {record.name} - {record.degree_type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid gap-2">
             <Label htmlFor="name">姓名 *</Label>
             <Input
