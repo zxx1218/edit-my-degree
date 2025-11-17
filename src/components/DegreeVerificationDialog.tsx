@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ const DegreeVerificationDialog = ({
   const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     gender: "",
@@ -44,6 +46,7 @@ const DegreeVerificationDialog = ({
   useEffect(() => {
     const fetchDegreeRecords = async () => {
       if (open) {
+        setIsLoading(true);
         try {
           const currentUser = localStorage.getItem("currentUser");
           if (currentUser) {
@@ -60,11 +63,14 @@ const DegreeVerificationDialog = ({
         } catch (error) {
           console.error("获取学位记录失败:", error);
           setShowForm(true);
+        } finally {
+          setIsLoading(false);
         }
       } else {
         // 对话框关闭时重置状态
         setShowForm(false);
         setSelectedRecordId("");
+        setIsLoading(false);
       }
     };
     fetchDegreeRecords();
@@ -201,8 +207,19 @@ const DegreeVerificationDialog = ({
           <DialogTitle>学位在线验证报告信息</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          {/* 加载状态 */}
+          {isLoading && (
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <Skeleton className="h-10 w-32 mx-auto" />
+            </div>
+          )}
+
           {/* 如果有学位记录但未选择，先显示选择器 */}
-          {degreeRecords.length > 0 && !showForm && (
+          {!isLoading && degreeRecords.length > 0 && !showForm && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="record-select">选择已有学位记录</Label>
@@ -228,7 +245,7 @@ const DegreeVerificationDialog = ({
           )}
 
           {/* 选择记录后或手动填写时显示表单 */}
-          {showForm && (
+          {!isLoading && showForm && (
             <>
               {degreeRecords.length > 0 && (
                 <div className="flex justify-end">
