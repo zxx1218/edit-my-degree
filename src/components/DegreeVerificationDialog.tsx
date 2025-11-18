@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
+import LoadingDialog from "./LoadingDialog";
 
 interface DegreeVerificationDialogProps {
   open: boolean;
@@ -43,6 +44,7 @@ const DegreeVerificationDialog = ({
     photo: "",
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [degreeDateOpen, setDegreeDateOpen] = useState(false);
 
@@ -162,7 +164,11 @@ const DegreeVerificationDialog = ({
       return;
     }
 
+    // Close the current dialog and show loading dialog
+    onOpenChange(false);
+    setShowLoadingDialog(true);
     setIsGenerating(true);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -193,17 +199,31 @@ const DegreeVerificationDialog = ({
       }
 
       const blob = await response.blob();
+      
+      // Mobile-friendly download approach
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
+      const filename = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
+      
+      // Try modern approach first
+      if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'application/pdf' });
+          await navigator.share({
+            files: [file],
+            title: '学位验证报告'
+          });
+        } catch (shareError) {
+          // Fallback to download
+          downloadFile(url, filename);
+        }
+      } else {
+        // Desktop or fallback download
+        downloadFile(url, filename);
+      }
+      
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
 
       toast.success("PDF生成成功！");
-      onOpenChange(false);
       
       // Reset form
       setFormData({
@@ -222,12 +242,27 @@ const DegreeVerificationDialog = ({
       toast.error("PDF生成失败，请重试");
     } finally {
       setIsGenerating(false);
+      setShowLoadingDialog(false);
     }
   };
 
+  const downloadFile = (url: string, filename: string) => {
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 100);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+    <>
+      <LoadingDialog open={showLoadingDialog} />
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>学位在线验证报告信息</DialogTitle>
         </DialogHeader>
@@ -440,23 +475,6 @@ const DegreeVerificationDialog = ({
           )}
         </div>
 
-        {isGenerating && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-8 w-8 animate-pulse rounded-full bg-primary/20"></div>
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-medium text-foreground">正在生成报告</p>
-                <p className="text-sm text-muted-foreground mt-1">请稍候，这可能需要几秒钟...</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
             取消
@@ -467,6 +485,7 @@ const DegreeVerificationDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
