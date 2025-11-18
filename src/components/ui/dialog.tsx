@@ -100,3 +100,5 @@ export {
   DialogTitle,
   DialogDescription,
 };
+
+export type { DialogContentProps };
