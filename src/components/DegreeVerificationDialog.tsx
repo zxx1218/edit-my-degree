@@ -328,7 +328,7 @@ const DegreeVerificationDialog = ({
                   {formData.birthDate ? formatDateToChinese(formData.birthDate) : "选择日期"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 shadow-lg border-2" align="start">
                 <Calendar
                   mode="single"
                   selected={formData.birthDate}
@@ -340,7 +340,7 @@ const DegreeVerificationDialog = ({
                   captionLayout="dropdown-buttons"
                   fromYear={1950}
                   toYear={new Date().getFullYear()}
-                  className="pointer-events-auto"
+                  className="pointer-events-auto rounded-lg"
                 />
               </PopoverContent>
             </Popover>
@@ -361,7 +361,7 @@ const DegreeVerificationDialog = ({
                   {formData.degreeDate ? formatDateToChinese(formData.degreeDate) : "选择日期"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 shadow-lg border-2" align="start">
                 <Calendar
                   mode="single"
                   selected={formData.degreeDate}
@@ -373,7 +373,7 @@ const DegreeVerificationDialog = ({
                   captionLayout="dropdown-buttons"
                   fromYear={1950}
                   toYear={new Date().getFullYear()}
-                  className="pointer-events-auto"
+                  className="pointer-events-auto rounded-lg"
                 />
               </PopoverContent>
             </Popover>
