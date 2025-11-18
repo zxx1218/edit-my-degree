@@ -193,31 +193,14 @@ const DegreeVerificationDialog = ({
       }
 
       const blob = await response.blob();
-      
-      // 检测是否为移动设备
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      
-      if (isMobile) {
-        // 移动端：在新标签页打开PDF
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow) {
-          // 如果被浏览器阻止弹窗，尝试直接在当前标签打开
-          window.location.href = url;
-        }
-        // 延迟释放URL，确保文件能被加载
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-      } else {
-        // 桌面端：使用下载链接
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       toast.success("PDF生成成功！");
       onOpenChange(false);
@@ -458,17 +441,17 @@ const DegreeVerificationDialog = ({
         </div>
 
         {isGenerating && (
-          <div className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-[100]">
-            <div className="flex flex-col items-center gap-6 p-8 bg-card rounded-2xl shadow-2xl border-2 border-primary/20 max-w-sm mx-4">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+            <div className="flex flex-col items-center gap-4">
               <div className="relative">
-                <div className="h-20 w-20 animate-spin rounded-full border-[5px] border-primary/30 border-t-primary shadow-lg"></div>
+                <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-10 w-10 animate-pulse rounded-full bg-primary/30"></div>
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-primary/20"></div>
                 </div>
               </div>
-              <div className="text-center space-y-2">
-                <p className="text-xl font-semibold text-foreground">正在生成报告</p>
-                <p className="text-sm text-muted-foreground">请稍候，这可能需要几秒钟...</p>
+              <div className="text-center">
+                <p className="text-lg font-medium text-foreground">正在生成报告</p>
+                <p className="text-sm text-muted-foreground mt-1">请稍候，这可能需要几秒钟...</p>
               </div>
             </div>
           </div>
