@@ -16,6 +16,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getUserData } from "@/lib/api";
+import LoadingDialog from "./LoadingDialog";
 
 interface DegreeVerificationDialogProps {
   open: boolean;
@@ -42,6 +43,7 @@ const DegreeVerificationDialog = ({
     photo: "",
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [degreeDateOpen, setDegreeDateOpen] = useState(false);
 
@@ -179,6 +181,8 @@ const DegreeVerificationDialog = ({
       return;
     }
 
+    
+
     // 调试信息
     console.log('准备发送的数据:', {
       name: formData.name,
@@ -192,7 +196,11 @@ const DegreeVerificationDialog = ({
       photo: formData.photo ? `照片数据长度: ${formData.photo.length} 字符` : '无照片数据'
     });
 
+    // Close the current dialog and show loading dialog
+    onOpenChange(false);
+    setShowLoadingDialog(true);
     setIsGenerating(true);
+
     try {
       // 使用本地后端API生成PDF
       const response = await fetch(
@@ -222,33 +230,30 @@ const DegreeVerificationDialog = ({
 
       const blob = await response.blob();
       
-      // 检测是否为移动设备
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // Mobile-friendly download approach
+      const url = window.URL.createObjectURL(blob);
+      const filename = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
       
-      if (isMobile) {
-        // 移动端：在新标签页打开PDF
-        const url = window.URL.createObjectURL(blob);
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow) {
-          // 如果被浏览器阻止弹窗，尝试直接在当前标签打开
-          window.location.href = url;
+      // Try modern approach first
+      if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'application/pdf' });
+          await navigator.share({
+            files: [file],
+            title: '学位验证报告'
+          });
+        } catch (shareError) {
+          // Fallback to download
+          downloadFile(url, filename);
         }
-        // 延迟释放URL，确保文件能被加载
-        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       } else {
-        // 桌面端：使用下载链接
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        // Desktop or fallback download
+        downloadFile(url, filename);
       }
+      
+      window.URL.revokeObjectURL(url);
 
       toast.success("PDF生成成功！");
-      onOpenChange(false);
       
       // Reset form
       setFormData({
@@ -267,15 +272,30 @@ const DegreeVerificationDialog = ({
       toast.error("PDF生成失败，请重试");
     } finally {
       setIsGenerating(false);
+      setShowLoadingDialog(false);
     }
   };
 
+  const downloadFile = (url: string, filename: string) => {
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 100);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>学位在线验证报告信息</DialogTitle>
-        </DialogHeader>
+    <>
+      <LoadingDialog open={showLoadingDialog} />
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="sr-only">学位在线验证报告信息</DialogTitle>
+          </DialogHeader>
         <div className="grid gap-4 py-4">
           {/* 加载状态 */}
           {isLoading && (
@@ -295,33 +315,32 @@ const DegreeVerificationDialog = ({
             </div>
           )}
 
-          {/* 如果有学位记录但未选择，先显示选择器 */}
           {!isLoading && degreeRecords.length > 0 && !showForm && (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="record-select">选择已有学位记录</Label>
-                <Select key={selectedRecordId} value={selectedRecordId} onValueChange={handleRecordSelect}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择一条学位记录" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {degreeRecords.map((record) => (
-                      <SelectItem key={record.id} value={record.id}>
-                        {record.school} - {record.name} - {record.degree_type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-center pt-2">
-                <Button variant="outline" onClick={handleManualInput}>
-                  或手动填写
-                </Button>
-              </div>
-            </>
-          )}
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="record-select">选择已有学位记录</Label>
+                  <Select value={selectedRecordId || undefined} onValueChange={handleRecordSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="请选择一条学位记录" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {degreeRecords.map((record) => (
+                        <SelectItem key={record.id} value={record.id}>
+                          {record.school} - {record.name} - {record.degree_type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-center pt-2">
+                  <Button variant="outline" onClick={handleManualInput}>
+                    或手动填写
+                  </Button>
+                </div>
+              </>
+            )}
 
-          {/* 选择记录后或手动填写时显示表单 */}
+           {/* 选择记录后或手动填写时显示表单 */}
           {!isLoading && showForm && (
             <>
               {degreeRecords.length > 0 && (
@@ -439,7 +458,7 @@ const DegreeVerificationDialog = ({
             <Input
               id="degreeType"
               value={formData.major}
-              onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
               placeholder="例如：工学学士学位"
             />
           </div>
@@ -448,7 +467,7 @@ const DegreeVerificationDialog = ({
             <Label htmlFor="major">学科/专业 *</Label>
             <Input
               id="major"
-              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
               placeholder="请输入您就读的专业名称"
             />
           </div>
@@ -484,23 +503,6 @@ const DegreeVerificationDialog = ({
           )}
         </div>
 
-        {isGenerating && (
-          <div className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-[100]">
-            <div className="flex flex-col items-center gap-6 p-8 bg-card rounded-2xl shadow-2xl border-2 border-primary/20 max-w-sm mx-4">
-              <div className="relative">
-                <div className="h-20 w-20 animate-spin rounded-full border-[5px] border-primary/30 border-t-primary shadow-lg"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-10 w-10 animate-pulse rounded-full bg-primary/30"></div>
-                </div>
-              </div>
-              <div className="text-center space-y-2">
-                <p className="text-xl font-semibold text-foreground">正在生成报告</p>
-                <p className="text-sm text-muted-foreground">请稍候，这可能需要几秒钟...</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
             取消
@@ -511,6 +513,7 @@ const DegreeVerificationDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
