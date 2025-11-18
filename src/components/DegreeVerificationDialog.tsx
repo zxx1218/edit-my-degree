@@ -40,7 +40,11 @@ const DegreeVerificationDialog = ({
     degreeType: "",
     major: "",
     certificateNumber: "",
+    photo: "",
   });
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [birthDateOpen, setBirthDateOpen] = useState(false);
+  const [degreeDateOpen, setDegreeDateOpen] = useState(false);
 
   // 获取用户的学位记录
   useEffect(() => {
@@ -107,6 +111,7 @@ const DegreeVerificationDialog = ({
         degreeType: record.degree_type || "",
         major: record.major || "",
         certificateNumber: record.certificate_number || "",
+        photo: record.photo || "",
       });
       setShowForm(true);
     }
@@ -124,6 +129,7 @@ const DegreeVerificationDialog = ({
       degreeType: "",
       major: "",
       certificateNumber: "",
+      photo: "",
     });
     setShowForm(true);
   };
@@ -136,6 +142,17 @@ const DegreeVerificationDialog = ({
     return `${year}年${month}月${day}日`;
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, photo: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async () => {
     // Validate all fields
     if (!formData.name || !formData.gender || !formData.birthDate || 
@@ -145,6 +162,7 @@ const DegreeVerificationDialog = ({
       return;
     }
 
+    setIsGenerating(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -197,10 +215,13 @@ const DegreeVerificationDialog = ({
         degreeType: "",
         major: "",
         certificateNumber: "",
+        photo: "",
       });
     } catch (error) {
       console.error("PDF生成错误:", error);
       toast.error("PDF生成失败，请重试");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -281,17 +302,20 @@ const DegreeVerificationDialog = ({
 
           <div className="grid gap-2">
             <Label htmlFor="gender">性别 *</Label>
-            <Input
-              id="gender"
-              value={formData.gender}
-              onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-              placeholder="请输入性别（男/女）"
-            />
+            <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="请选择性别" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="男">男</SelectItem>
+                <SelectItem value="女">女</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid gap-2">
             <Label>出生日期 *</Label>
-            <Popover>
+            <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -308,8 +332,14 @@ const DegreeVerificationDialog = ({
                 <Calendar
                   mode="single"
                   selected={formData.birthDate}
-                  onSelect={(date) => setFormData({ ...formData, birthDate: date })}
+                  onSelect={(date) => {
+                    setFormData({ ...formData, birthDate: date });
+                    setBirthDateOpen(false);
+                  }}
                   initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={1950}
+                  toYear={new Date().getFullYear()}
                   className="pointer-events-auto"
                 />
               </PopoverContent>
@@ -318,7 +348,7 @@ const DegreeVerificationDialog = ({
 
           <div className="grid gap-2">
             <Label>获学位日期 *</Label>
-            <Popover>
+            <Popover open={degreeDateOpen} onOpenChange={setDegreeDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -335,8 +365,14 @@ const DegreeVerificationDialog = ({
                 <Calendar
                   mode="single"
                   selected={formData.degreeDate}
-                  onSelect={(date) => setFormData({ ...formData, degreeDate: date })}
+                  onSelect={(date) => {
+                    setFormData({ ...formData, degreeDate: date });
+                    setDegreeDateOpen(false);
+                  }}
                   initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={1950}
+                  toYear={new Date().getFullYear()}
                   className="pointer-events-auto"
                 />
               </PopoverContent>
@@ -382,15 +418,52 @@ const DegreeVerificationDialog = ({
               placeholder="请输入学位证书编号"
             />
           </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="photo">学位照片</Label>
+            <div className="flex flex-col gap-3">
+              {formData.photo && (
+                <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                  <img src={formData.photo} alt="学位照片" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <Input
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="cursor-pointer"
+              />
+            </div>
+          </div>
           </>
           )}
         </div>
 
+        {isGenerating && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-8 w-8 animate-pulse rounded-full bg-primary/20"></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="text-lg font-medium text-foreground">正在生成报告</p>
+                <p className="text-sm text-muted-foreground mt-1">请稍候，这可能需要几秒钟...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
             取消
           </Button>
-          <Button onClick={handleSubmit}>生成报告</Button>
+          <Button onClick={handleSubmit} disabled={isGenerating}>
+            {isGenerating ? "生成中..." : "生成报告"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
