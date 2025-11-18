@@ -133,6 +133,24 @@ const DegreeVerificationDialog = ({
     setShowForm(true);
   };
 
+  // 处理"重新选择"按钮点击
+  const handleReselect = () => {
+    setShowForm(false);
+    // 重置选择的记录ID，确保下次选择相同项时能触发事件
+    setSelectedRecordId("");
+    // 使用setTimeout确保状态更新后再进行下一步操作
+    setTimeout(() => {
+      const selectElement = document.querySelector('[aria-haspopup="listbox"]') as HTMLDivElement;
+      if (selectElement) {
+        // 触发Select重新渲染
+        selectElement.click();
+        setTimeout(() => {
+          selectElement.click();
+        }, 10);
+      }
+    }, 0);
+  };
+
   const formatDateToChinese = (date: Date | undefined) => {
     if (!date) return "";
     const year = date.getFullYear();
@@ -265,7 +283,7 @@ const DegreeVerificationDialog = ({
             <>
               <div className="grid gap-2">
                 <Label htmlFor="record-select">选择已有学位记录</Label>
-                <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
+                <Select key={selectedRecordId} value={selectedRecordId} onValueChange={handleRecordSelect}>
                   <SelectTrigger>
                     <SelectValue placeholder="请选择一条学位记录" />
                   </SelectTrigger>
@@ -294,7 +312,7 @@ const DegreeVerificationDialog = ({
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => setShowForm(false)}
+                    onClick={handleReselect}
                   >
                     ← 重新选择
                   </Button>
@@ -413,9 +431,8 @@ const DegreeVerificationDialog = ({
             <Label htmlFor="major">学科/专业 *</Label>
             <Input
               id="major"
-              value={formData.major}
               onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-              placeholder="请输入学科或专业"
+              placeholder="请输入您就读的专业名称"
             />
           </div>
 
@@ -430,7 +447,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="photo">学位照片</Label>
+            <Label htmlFor="photo">学位照（注意学位照为蓝底证件照） *</Label>
             <div className="flex flex-col gap-3">
               {formData.photo && (
                 <div className="relative w-32 h-32 border rounded-md overflow-hidden">
@@ -460,7 +477,7 @@ const DegreeVerificationDialog = ({
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-lg font-medium text-foreground">正在生成报告</p>
+                <p className="text-lg font-medium text-foreground">报告及二维码正在制作</p>
                 <p className="text-sm text-muted-foreground mt-1">请稍候，这可能需要几秒钟...</p>
               </div>
             </div>
