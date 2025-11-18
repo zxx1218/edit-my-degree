@@ -403,9 +403,9 @@ const DegreeVerificationDialog = ({
             <Label htmlFor="degreeType">所授学位 *</Label>
             <Input
               id="degreeType"
-              value={formData.degreeType}
+              value={formData.major}
               onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
-              placeholder="例如：电子信息硕士专业学位"
+              placeholder="例如：工学学士学位"
             />
           </div>
 
