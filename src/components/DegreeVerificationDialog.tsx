@@ -162,10 +162,7 @@ const DegreeVerificationDialog = ({
       return;
     }
 
-    // 立即关闭对话框并显示加载动画
-    onOpenChange(false);
     setIsGenerating(true);
-    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -223,6 +220,7 @@ const DegreeVerificationDialog = ({
       }
 
       toast.success("PDF生成成功！");
+      onOpenChange(false);
       
       // Reset form
       setFormData({
@@ -245,204 +243,247 @@ const DegreeVerificationDialog = ({
   };
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>学位在线验证报告</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>学位在线验证报告信息</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          {/* 加载状态 */}
+          {isLoading && (
+            <div className="grid gap-6 py-8">
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
+                </div>
+                <p className="text-sm text-muted-foreground">正在加载学位记录...</p>
+              </div>
+              <div className="grid gap-3">
                 <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-32 mx-auto" />
               </div>
-            ) : !showForm ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  请选择一条学位记录，或手动填写信息
-                </p>
-                <div className="space-y-2">
-                  {degreeRecords.map((record) => (
-                    <div
-                      key={record.id}
-                      onClick={() => handleRecordSelect(record.id)}
-                      className="p-3 border rounded-lg cursor-pointer hover:bg-accent transition-colors"
-                    >
-                      <div className="font-medium">{record.school}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {record.name} - {record.degree_type}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleManualInput}
-                >
-                  手动填写
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">姓名</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="gender">性别</Label>
-                  <Select
-                    value={formData.gender}
-                    onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择性别" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="男">男</SelectItem>
-                      <SelectItem value="女">女</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>出生日期</Label>
-                  <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !formData.birthDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.birthDate ? formatDateToChinese(formData.birthDate) : "选择日期"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.birthDate}
-                        onSelect={(date) => {
-                          setFormData({ ...formData, birthDate: date });
-                          setBirthDateOpen(false);
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label>获学位日期</Label>
-                  <Popover open={degreeDateOpen} onOpenChange={setDegreeDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !formData.degreeDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.degreeDate ? formatDateToChinese(formData.degreeDate) : "选择日期"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.degreeDate}
-                        onSelect={(date) => {
-                          setFormData({ ...formData, degreeDate: date });
-                          setDegreeDateOpen(false);
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="university">学位授予单位</Label>
-                  <Input
-                    id="university"
-                    value={formData.university}
-                    onChange={(e) => setFormData({ ...formData, university: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="degreeType">所授学位</Label>
-                  <Input
-                    id="degreeType"
-                    value={formData.degreeType}
-                    onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="major">学科/专业</Label>
-                  <Input
-                    id="major"
-                    value={formData.major}
-                    onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="certificateNumber">学位证书编号</Label>
-                  <Input
-                    id="certificateNumber"
-                    value={formData.certificateNumber}
-                    onChange={(e) =>
-                      setFormData({ ...formData, certificateNumber: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {showForm && (
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                取消
-              </Button>
-              <Button onClick={handleSubmit}>
-                生成报告
-              </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
 
-    {/* 全屏加载动画 */}
-    {isGenerating && (
-      <div className="fixed inset-0 bg-background/95 backdrop-blur-lg flex items-center justify-center z-[9999]">
-        <div className="flex flex-col items-center gap-6 p-8 bg-card rounded-2xl shadow-2xl border-2 border-primary/20 max-w-sm mx-4">
-          <div className="relative">
-            <div className="h-20 w-20 animate-spin rounded-full border-[5px] border-primary/30 border-t-primary shadow-lg"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-10 w-10 animate-pulse rounded-full bg-primary/30"></div>
+          {/* 如果有学位记录但未选择，先显示选择器 */}
+          {!isLoading && degreeRecords.length > 0 && !showForm && (
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="record-select">选择已有学位记录</Label>
+                <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择一条学位记录" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {degreeRecords.map((record) => (
+                      <SelectItem key={record.id} value={record.id}>
+                        {record.school} - {record.name} - {record.degree_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" onClick={handleManualInput}>
+                  或手动填写
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* 选择记录后或手动填写时显示表单 */}
+          {!isLoading && showForm && (
+            <>
+              {degreeRecords.length > 0 && (
+                <div className="flex justify-end">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowForm(false)}
+                  >
+                    ← 重新选择
+                  </Button>
+                </div>
+              )}
+          <div className="grid gap-2">
+            <Label htmlFor="name">姓名 *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="请输入姓名"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="gender">性别 *</Label>
+            <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="请选择性别" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="男">男</SelectItem>
+                <SelectItem value="女">女</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>出生日期 *</Label>
+            <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.birthDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.birthDate ? formatDateToChinese(formData.birthDate) : "选择日期"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 shadow-lg border-2" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.birthDate}
+                  onSelect={(date) => {
+                    setFormData({ ...formData, birthDate: date });
+                    setBirthDateOpen(false);
+                  }}
+                  initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={1950}
+                  toYear={new Date().getFullYear()}
+                  className="pointer-events-auto rounded-lg"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>获学位日期 *</Label>
+            <Popover open={degreeDateOpen} onOpenChange={setDegreeDateOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !formData.degreeDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formData.degreeDate ? formatDateToChinese(formData.degreeDate) : "选择日期"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 shadow-lg border-2" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.degreeDate}
+                  onSelect={(date) => {
+                    setFormData({ ...formData, degreeDate: date });
+                    setDegreeDateOpen(false);
+                  }}
+                  initialFocus
+                  captionLayout="dropdown-buttons"
+                  fromYear={1950}
+                  toYear={new Date().getFullYear()}
+                  className="pointer-events-auto rounded-lg"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="university">学位授予单位 *</Label>
+            <Input
+              id="university"
+              value={formData.university}
+              onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+              placeholder="请输入学位授予单位"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="degreeType">所授学位 *</Label>
+            <Input
+              id="degreeType"
+              value={formData.degreeType}
+              onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
+              placeholder="例如：电子信息硕士专业学位"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="major">学科/专业 *</Label>
+            <Input
+              id="major"
+              value={formData.major}
+              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+              placeholder="请输入学科或专业"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="certificateNumber">学位证书编号 *</Label>
+            <Input
+              id="certificateNumber"
+              value={formData.certificateNumber}
+              onChange={(e) => setFormData({ ...formData, certificateNumber: e.target.value })}
+              placeholder="请输入学位证书编号"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="photo">学位照片</Label>
+            <div className="flex flex-col gap-3">
+              {formData.photo && (
+                <div className="relative w-32 h-32 border rounded-md overflow-hidden">
+                  <img src={formData.photo} alt="学位照片" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <Input
+                id="photo"
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="cursor-pointer"
+              />
             </div>
           </div>
-          <div className="text-center space-y-2">
-            <p className="text-xl font-semibold text-foreground">正在生成报告</p>
-            <p className="text-sm text-muted-foreground">请稍候，这可能需要几秒钟...</p>
-          </div>
+          </>
+          )}
         </div>
-      </div>
-    )}
-    </>
+
+        {isGenerating && (
+          <div className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-[100]">
+            <div className="flex flex-col items-center gap-6 p-8 bg-card rounded-2xl shadow-2xl border-2 border-primary/20 max-w-sm mx-4">
+              <div className="relative">
+                <div className="h-20 w-20 animate-spin rounded-full border-[5px] border-primary/30 border-t-primary shadow-lg"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-primary/30"></div>
+                </div>
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-xl font-semibold text-foreground">正在生成报告</p>
+                <p className="text-sm text-muted-foreground">请稍候，这可能需要几秒钟...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isGenerating}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit} disabled={isGenerating}>
+            {isGenerating ? "生成中..." : "生成报告"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
