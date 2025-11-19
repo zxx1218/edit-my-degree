@@ -4,10 +4,12 @@ import { ChevronLeft, FileText, Download, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
+import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
 
 const VerificationReport = () => {
   const navigate = useNavigate();
   const [degreeDialogOpen, setDegreeDialogOpen] = useState(false);
+  const [educationDialogOpen, setEducationDialogOpen] = useState(false);
 
   const reportOptions = [
     {
@@ -50,6 +52,8 @@ const VerificationReport = () => {
             onClick={() => {
               if (index === 1) {
                 setDegreeDialogOpen(true);
+              } else if (index === 2) {
+                setEducationDialogOpen(true);
               }
             }}
           >
@@ -93,6 +97,10 @@ const VerificationReport = () => {
       <DegreeVerificationDialog
         open={degreeDialogOpen}
         onOpenChange={setDegreeDialogOpen}
+      />
+      <EducationRegistrationDialog
+        open={educationDialogOpen}
+        onOpenChange={setEducationDialogOpen}
       />
     </div>
   );
