@@ -84,7 +84,7 @@ const VerificationReport = () => {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-white mb-1">
-                  查看完整学历背景
+                  查看网页版学历学籍信息页面
                 </h3>
                 <p className="text-white/80 text-sm">
                   查看您的所有学历、学位和学籍信息
