@@ -11,12 +11,24 @@ const VideoPlayer = () => {
     demo1: {
       src: "t.mp4",
       title: "系统基础操作演示",
-      description: "添加学籍、学历、学位、考研信息等基础功能演示"
+      description: "添加学籍、学历、学位、考研信息等基础功能演示",
+      instructions: [
+        { number: "1", text: "长按选项卡可以编辑学历信息内容或者添加学籍学历学位，单点选项卡可以跳转到信息详情页面（存在1-2秒加载延迟）", isWarning: false },
+        { number: "2", text: "每个学历学位的详情页面都支持上传自己的照片，且所有个人数据都会加密存储，下次登录依然存在", isWarning: false },
+        { number: "3", text: "系统没有登陆时间限制，能否登陆只看登录次数余额", isWarning: false },
+        { number: "4", text: "登录次数余额为0后7天会删除个人信息，如需续费请在信息删除之前，否则只能重新注册", isWarning: false },
+        { number: "5", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上", isWarning: true }
+      ]
     },
     demo2: {
-      src: "tt.mp4", // 替换为第二个视频的路径
+      src: "tt.mp4",
       title: "在线验证报告生成演示",
-      description: "学籍、学历、学位在线验证报告生成功能演示"
+      description: "学籍、学历、学位在线验证报告生成功能演示",
+      instructions: [
+        { number: "1", text: "演示二的第一条说明", isWarning: false },
+        { number: "2", text: "演示二的第二条说明", isWarning: false },
+        { number: "3", text: "演示二的第三条说明", isWarning: false }
+      ]
     }
   };
 
@@ -67,26 +79,20 @@ const VideoPlayer = () => {
             </p>
             
             <div className="mt-6 space-y-3 text-sm">
-              <div className="flex gap-2">
-                <span className="text-primary font-semibold">1.</span>
-                <p className="text-foreground/80">长按选项卡可以编辑学历信息内容或者添加学籍学历学位，单点选项卡可以跳转到信息详情页面（存在1-2秒加载延迟）</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-primary font-semibold">2.</span>
-                <p className="text-foreground/80">每个学历学位的详情页面都支持上传自己的照片，且所有个人数据都会加密存储，下次登录依然存在</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-primary font-semibold">3.</span>
-                <p className="text-foreground/80">系统没有登陆时间限制，能否登陆只看登录次数余额</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-primary font-semibold">4.</span>
-                <p className="text-foreground/80">登录次数余额为0后7天会删除个人信息，如需续费请在信息删除之前，否则只能重新注册</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-destructive font-semibold">5.</span>
-                <p className="text-foreground/80"><span className="font-semibold text-destructive">特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上</span></p>
-              </div>
+              {currentVideo.instructions.map((instruction) => (
+                <div key={instruction.number} className="flex gap-2">
+                  <span className={`font-semibold ${instruction.isWarning ? 'text-destructive' : 'text-primary'}`}>
+                    {instruction.number}.
+                  </span>
+                  <p className="text-foreground/80">
+                    {instruction.isWarning ? (
+                      <span className="font-semibold text-destructive">{instruction.text}</span>
+                    ) : (
+                      instruction.text
+                    )}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
