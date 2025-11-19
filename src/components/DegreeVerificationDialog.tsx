@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +56,7 @@ const DegreeVerificationDialog = ({
   const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [degreeDateOpen, setDegreeDateOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // 获取用户的学位记录
   useEffect(() => {
@@ -135,24 +146,6 @@ const DegreeVerificationDialog = ({
     setShowForm(true);
   };
 
-  // 处理"重新选择"按钮点击
-  const handleReselect = () => {
-    setShowForm(false);
-    // 重置选择的记录ID，确保下次选择相同项时能触发事件
-    setSelectedRecordId("");
-    // 使用setTimeout确保状态更新后再进行下一步操作
-    setTimeout(() => {
-      const selectElement = document.querySelector('[aria-haspopup="listbox"]') as HTMLDivElement;
-      if (selectElement) {
-        // 触发Select重新渲染
-        selectElement.click();
-        setTimeout(() => {
-          selectElement.click();
-        }, 10);
-      }
-    }, 0);
-  };
-
   const formatDateToChinese = (date: Date | undefined) => {
     if (!date) return "";
     const year = date.getFullYear();
@@ -181,29 +174,77 @@ const DegreeVerificationDialog = ({
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmGenerate = async () => {
+    setShowConfirmDialog(false);
     
-
-    // 调试信息
-    console.log('准备发送的数据:', {
-      name: formData.name,
-      gender: formData.gender,
-      birthDate: formatDateToChinese(formData.birthDate),
-      degreeDate: formatDateToChinese(formData.degreeDate),
-      university: formData.university,
-      degreeType: formData.degreeType,
-      major: formData.major,
-      certificateNumber: formData.certificateNumber,
-      photo: formData.photo ? `照片数据长度: ${formData.photo.length} 字符` : '无照片数据'
-    });
-
-    // Close the current dialog and show loading dialog
-    onOpenChange(false);
-    setShowLoadingDialog(true);
-    setIsGenerating(true);
-
     try {
-      // 使用本地后端API生成PDF
-      const response = await fetch(
+      // Check remaining logins
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        toast.error("用户信息获取失败");
+        return;
+      }
+      
+      const user = JSON.parse(currentUser);
+      
+      // 获取用户当前的登录次数
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/get-user-data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const userData = await response.json();
+      
+      if (!response.ok) {
+        toast.error("无法获取用户信息");
+        return;
+      }
+
+      if (user.remaining_logins < 30) {
+        toast.error("剩余登录次数不足30次，无法生成报告");
+        return;
+      }
+
+      // Deduct 30 logins from user's remaining_logins
+      const updateResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/update-user-logins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: user.id,
+          addLogins: -30
+        }),
+      });
+
+      const updateResult = await updateResponse.json();
+      
+      if (!updateResponse.ok) {
+        toast.error("扣除登录次数失败，请重试");
+        return;
+      }
+
+      // Update localStorage with new remaining_logins
+      const updatedUser = { 
+        ...user, 
+        remaining_logins: updateResult.newLogins 
+      };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+      // Close the current dialog and show loading dialog
+      onOpenChange(false);
+      setShowLoadingDialog(true);
+      setIsGenerating(true);
+
+      // Call the PDF generation API
+      const pdfResponse = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/generate-degree-pdf`,
         {
           method: "POST",
@@ -219,16 +260,16 @@ const DegreeVerificationDialog = ({
             degreeType: formData.degreeType,
             major: formData.major,
             certificateNumber: formData.certificateNumber,
-            photo: formData.photo, // 添加照片数据
+            photo: formData.photo,
           }),
         }
       );
 
-      if (!response.ok) {
+      if (!pdfResponse.ok) {
         throw new Error("PDF生成失败");
       }
 
-      const blob = await response.blob();
+      const blob = await pdfResponse.blob();
       
       // Mobile-friendly download approach
       const url = window.URL.createObjectURL(blob);
@@ -275,6 +316,7 @@ const DegreeVerificationDialog = ({
       setShowLoadingDialog(false);
     }
   };
+// ... existing code ...
 
   const downloadFile = (url: string, filename: string) => {
     const a = document.createElement("a");
@@ -293,9 +335,9 @@ const DegreeVerificationDialog = ({
       <LoadingDialog open={showLoadingDialog} />
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="sr-only">学位在线验证报告信息</DialogTitle>
-          </DialogHeader>
+        <DialogHeader>
+          <DialogTitle>学位在线验证报告信息</DialogTitle>
+        </DialogHeader>
         <div className="grid gap-4 py-4">
           {/* 加载状态 */}
           {isLoading && (
@@ -315,32 +357,33 @@ const DegreeVerificationDialog = ({
             </div>
           )}
 
+          {/* 如果有学位记录但未选择，先显示选择器 */}
           {!isLoading && degreeRecords.length > 0 && !showForm && (
-              <>
-                <div className="grid gap-2">
-                  <Label htmlFor="record-select">选择已有学位记录</Label>
-                  <Select value={selectedRecordId || undefined} onValueChange={handleRecordSelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="请选择一条学位记录" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {degreeRecords.map((record) => (
-                        <SelectItem key={record.id} value={record.id}>
-                          {record.school} - {record.name} - {record.degree_type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-center pt-2">
-                  <Button variant="outline" onClick={handleManualInput}>
-                    或手动填写
-                  </Button>
-                </div>
-              </>
-            )}
+            <>
+              <div className="grid gap-2">
+                <Label htmlFor="record-select">选择已有学位记录</Label>
+                <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择一条学位记录" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {degreeRecords.map((record) => (
+                      <SelectItem key={record.id} value={record.id}>
+                        {record.school} - {record.name} - {record.degree_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" onClick={handleManualInput}>
+                  或手动填写
+                </Button>
+              </div>
+            </>
+          )}
 
-           {/* 选择记录后或手动填写时显示表单 */}
+          {/* 选择记录后或手动填写时显示表单 */}
           {!isLoading && showForm && (
             <>
               {degreeRecords.length > 0 && (
@@ -348,7 +391,7 @@ const DegreeVerificationDialog = ({
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={handleReselect}
+                    onClick={() => setShowForm(false)}
                   >
                     ← 重新选择
                   </Button>
@@ -457,9 +500,9 @@ const DegreeVerificationDialog = ({
             <Label htmlFor="degreeType">所授学位 *</Label>
             <Input
               id="degreeType"
-              value={formData.major}
-              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
-              placeholder="例如：工学学士学位"
+              value={formData.degreeType}
+              onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
+              placeholder="例如：电子信息硕士专业学位"
             />
           </div>
 
@@ -467,8 +510,9 @@ const DegreeVerificationDialog = ({
             <Label htmlFor="major">学科/专业 *</Label>
             <Input
               id="major"
-              onChange={(e) => setFormData({ ...formData, degreeType: e.target.value })}
-              placeholder="请输入您就读的专业名称"
+              value={formData.major}
+              onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+              placeholder="请输入学科或专业"
             />
           </div>
 
@@ -483,7 +527,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="photo">学位照（注意学位照为蓝底证件照） *</Label>
+            <Label htmlFor="photo">学位照片</Label>
             <div className="flex flex-col gap-3">
               {formData.photo && (
                 <div className="relative w-32 h-32 border rounded-md overflow-hidden">
@@ -513,6 +557,26 @@ const DegreeVerificationDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    <LoadingDialog 
+      open={showLoadingDialog} 
+      message="正在生成学位验证报告，请稍候..." 
+    />
+
+    <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+          <AlertDialogDescription>
+            生成学位验证报告PDF需要消耗30次登录权限，是否确认生成？
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmGenerate}>确认</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
