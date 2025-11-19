@@ -91,6 +91,30 @@ const StudentStatusDialog = ({
     fetchStudentRecords();
   }, [open]);
 
+  // 手动填写
+  const handleManualInput = () => {
+    setSelectedRecordId("");
+    setFormData({
+      name: "",
+      gender: "",
+      birthDate: undefined,
+      nationality: "",
+      school: "",
+      degreeLevel: "",
+      major: "",
+      duration: "",
+      educationType: "",
+      studyType: "",
+      branch: "",
+      enrollmentDate: undefined,
+      status: "",
+      graduationDate: undefined,
+      admissionPhoto: "",
+      degreePhoto: "",
+    });
+    setShowForm(true);
+  };
+
   // 当用户选择一条记录时，自动填充表单
   const handleRecordSelect = (recordId: string) => {
     setSelectedRecordId(recordId);
@@ -248,35 +272,40 @@ const StudentStatusDialog = ({
           </DialogHeader>
 
           {isLoading ? (
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
           ) : !showForm ? (
-            <div className="space-y-4">
-              <div className="text-sm text-muted-foreground">
-                选择一条已有的学籍记录，或手动填写信息：
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                请选择一条学籍记录或手动填写：
+              </p>
+              <div className="space-y-2">
+                {studentRecords.map((record) => (
+                  <Button
+                    key={record.id}
+                    variant="outline"
+                    className="w-full justify-start text-left h-auto py-3"
+                    onClick={() => handleRecordSelect(record.id)}
+                  >
+                    <div>
+                      <div className="font-medium">{record.school}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {record.major} · {record.degree_level}
+                      </div>
+                    </div>
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleManualInput}
+                >
+                  手动填写
+                </Button>
               </div>
-              <Select onValueChange={handleRecordSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择学籍记录" />
-                </SelectTrigger>
-                <SelectContent>
-                  {studentRecords.map((record) => (
-                    <SelectItem key={record.id} value={record.id}>
-                      {record.school} - {record.major}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setShowForm(true)}
-              >
-                手动填写
-              </Button>
             </div>
           ) : (
             <div className="space-y-4">
