@@ -135,7 +135,7 @@ const ExamDetail = () => {
     const userId = JSON.parse(currentUser).id;
     
     try {
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
       await updateData('exam', 'update', userId, { [dbField]: newValue }, id);
       
       toast({

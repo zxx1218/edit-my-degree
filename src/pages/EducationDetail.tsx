@@ -108,7 +108,7 @@ const EducationDetail = () => {
     const userId = JSON.parse(currentUser).id;
     
     try {
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
       await updateData('education', 'update', userId, { [dbField]: newValue }, id);
       
       toast({

@@ -128,7 +128,7 @@ const StudentStatusDetail = () => {
     
     try {
       // Convert camelCase to snake_case for database
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
       await updateData('student_status', 'update', userId, { [dbField]: newValue }, id);
       
       toast({
@@ -157,7 +157,7 @@ const StudentStatusDetail = () => {
         const userId = JSON.parse(currentUser).id;
         
         try {
-          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase();
+          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
           await updateData('student_status', 'update', userId, { [dbField]: photoData }, id);
           
           toast({
