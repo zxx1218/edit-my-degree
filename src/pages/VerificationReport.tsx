@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
+import StudentStatusDialog from "@/components/StudentStatusDialog";
 
 const VerificationReport = () => {
   const navigate = useNavigate();
   const [degreeDialogOpen, setDegreeDialogOpen] = useState(false);
   const [educationDialogOpen, setEducationDialogOpen] = useState(false);
+  const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
 
   const reportOptions = [
     {
@@ -50,7 +52,9 @@ const VerificationReport = () => {
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              if (index === 1) {
+              if (index === 0) {
+                setStudentStatusDialogOpen(true);
+              } else if (index === 1) {
                 setDegreeDialogOpen(true);
               } else if (index === 2) {
                 setEducationDialogOpen(true);
@@ -94,6 +98,10 @@ const VerificationReport = () => {
         </Card>
       </div>
 
+      <StudentStatusDialog
+        open={studentStatusDialogOpen}
+        onOpenChange={setStudentStatusDialogOpen}
+      />
       <DegreeVerificationDialog
         open={degreeDialogOpen}
         onOpenChange={setDegreeDialogOpen}
