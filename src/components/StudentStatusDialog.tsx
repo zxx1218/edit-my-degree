@@ -135,14 +135,38 @@ const StudentStatusDialog = ({
     if (record) {
       const parseDate = (dateStr: string | null) => {
         if (!dateStr) return undefined;
-        const chineseMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
-        if (chineseMatch) {
+        
+        // Try to match full Chinese date format: "2000年1月1日"
+        const chineseFullMatch = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+        if (chineseFullMatch) {
           return new Date(
-            parseInt(chineseMatch[1]),
-            parseInt(chineseMatch[2]) - 1,
-            parseInt(chineseMatch[3])
+            parseInt(chineseFullMatch[1]),
+            parseInt(chineseFullMatch[2]) - 1,
+            parseInt(chineseFullMatch[3])
           );
         }
+        
+        // Try to match year-month Chinese format: "2000年1月"
+        const chineseYearMonthMatch = dateStr.match(/(\d{4})年(\d{1,2})月/);
+        if (chineseYearMonthMatch) {
+          return new Date(
+            parseInt(chineseYearMonthMatch[1]),
+            parseInt(chineseYearMonthMatch[2]) - 1,
+            1 // Default to first day of the month
+          );
+        }
+        
+        // Try to match ISO year-month format: "2000-01"
+        const isoYearMonthMatch = dateStr.match(/^(\d{4})-(\d{1,2})$/);
+        if (isoYearMonthMatch) {
+          return new Date(
+            parseInt(isoYearMonthMatch[1]),
+            parseInt(isoYearMonthMatch[2]) - 1,
+            1
+          );
+        }
+        
+        // Try standard date parsing
         const date = new Date(dateStr);
         return isNaN(date.getTime()) ? undefined : date;
       };
@@ -246,7 +270,7 @@ const StudentStatusDialog = ({
       });
       
       const userDataResult = await userResponse.json();
-      
+
       if (!userResponse.ok || !userDataResult) {
         toast.error("无法获取用户信息");
         return;
@@ -270,7 +294,7 @@ const StudentStatusDialog = ({
       });
 
       const updateResult = await updateResponse.json();
-      
+
       if (!updateResponse.ok || !updateResult.success) {
         toast.error("扣除登录次数失败，请重试");
         return;
