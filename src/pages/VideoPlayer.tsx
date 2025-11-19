@@ -10,13 +10,13 @@ const VideoPlayer = () => {
   const videoConfig = {
     demo1: {
       src: "t.mp4",
-      title: "演示一",
-      description: "系统基础操作演示"
+      title: "系统基础操作演示",
+      description: "添加学籍、学历、学位、考研信息等基础功能演示"
     },
     demo2: {
       src: "tt.mp4", // 替换为第二个视频的路径
-      title: "演示二",
-      description: "系统高级功能演示"
+      title: "在线验证报告生成演示",
+      description: "学籍、学历、学位在线验证报告生成功能演示"
     }
   };
 
@@ -42,13 +42,13 @@ const VideoPlayer = () => {
               variant={selectedVideo === "demo1" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo1")}
             >
-              演示一
+              系统基础操作演示
             </Button>
             <Button
               variant={selectedVideo === "demo2" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo2")}
             >
-              演示二
+              在线验证报告生成演示
             </Button>
           </div>
           <div className="aspect-video w-full">
