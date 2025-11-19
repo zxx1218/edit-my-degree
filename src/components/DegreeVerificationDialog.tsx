@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +57,7 @@ const DegreeVerificationDialog = ({
   const [showLoadingDialog, setShowLoadingDialog] = useState(false);
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [degreeDateOpen, setDegreeDateOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // 获取用户的学位记录
   useEffect(() => {
@@ -164,14 +175,43 @@ const DegreeVerificationDialog = ({
       return;
     }
 
-    // Close the current dialog and show loading dialog
-    onOpenChange(false);
-    setShowLoadingDialog(true);
-    setIsGenerating(true);
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
 
+  const handleConfirmGenerate = async () => {
+    setShowConfirmDialog(false);
+    
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Check remaining logins
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        toast.error("用户信息获取失败");
+        return;
+      }
       
+      const user = JSON.parse(currentUser);
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("remaining_logins")
+        .eq("id", user.id)
+        .single();
+
+      if (userError || !userData) {
+        toast.error("无法获取用户信息");
+        return;
+      }
+
+      if (userData.remaining_logins < 30) {
+        toast.error("剩余登录次数不足30次，无法生成报告");
+        return;
+      }
+
+      // Close the current dialog and show loading dialog
+      onOpenChange(false);
+      setShowLoadingDialog(true);
+      setIsGenerating(true);
+
       // Call the PDF generation edge function
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-degree-pdf`,
@@ -485,6 +525,26 @@ const DegreeVerificationDialog = ({
         </div>
       </DialogContent>
     </Dialog>
+
+    <LoadingDialog 
+      open={showLoadingDialog} 
+      message="正在生成学位验证报告，请稍候..." 
+    />
+
+    <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+          <AlertDialogDescription>
+            生成学位验证报告PDF需要消耗30次登录权限，是否确认生成？
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirmGenerate}>确认</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 };
