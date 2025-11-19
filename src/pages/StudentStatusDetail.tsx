@@ -128,8 +128,22 @@ const StudentStatusDetail = () => {
     
     try {
       // Convert camelCase to snake_case for database
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
-      await updateData('student_status', 'update', userId, { [dbField]: newValue }, id);
+      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+      
+      // Prepare update data
+      let updatePayload: any = { [dbField]: newValue };
+      
+      // Special handling for personalInfo field
+      if (field === 'personalInfo') {
+        // Parse personalInfo to extract gender and birth_date
+        const parts = newValue.split(' | ');
+        if (parts.length >= 2) {
+          updatePayload.gender = parts[0].trim();
+          updatePayload.birth_date = parts[1].trim();
+        }
+      }
+      
+      await updateData('student_status', 'update', userId, updatePayload, id);
       
       toast({
         title: "修改成功",
@@ -157,7 +171,7 @@ const StudentStatusDetail = () => {
         const userId = JSON.parse(currentUser).id;
         
         try {
-          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase();
+          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
           await updateData('student_status', 'update', userId, { [dbField]: photoData }, id);
           
           toast({
