@@ -351,6 +351,9 @@ const EducationRegistrationDialog = ({
                       }}
                       initialFocus
                       className="pointer-events-auto"
+                      captionLayout="dropdown-buttons"
+                      fromYear={1950}
+                      toYear={new Date().getFullYear()}
                     />
                   </PopoverContent>
                 </Popover>
@@ -378,6 +381,9 @@ const EducationRegistrationDialog = ({
                       }}
                       initialFocus
                       className="pointer-events-auto"
+                      captionLayout="dropdown-buttons"
+                      fromYear={1950}
+                      toYear={new Date().getFullYear() + 10}
                     />
                   </PopoverContent>
                 </Popover>
@@ -405,6 +411,9 @@ const EducationRegistrationDialog = ({
                       }}
                       initialFocus
                       className="pointer-events-auto"
+                      captionLayout="dropdown-buttons"
+                      fromYear={1950}
+                      toYear={new Date().getFullYear() + 10}
                     />
                   </PopoverContent>
                 </Popover>
