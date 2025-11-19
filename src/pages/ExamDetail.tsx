@@ -79,7 +79,7 @@ const ExamDetail = () => {
 
       try {
         const result = await getUserData(userId);
-        const record = result.studentStatus?.find((r: any) => r.id.toString() === id);
+        const record = result.exam?.find((r: any) => r.id.toString() === id);
         
         if (record) {
           setData({
