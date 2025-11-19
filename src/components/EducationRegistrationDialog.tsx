@@ -220,6 +220,21 @@ const EducationRegistrationDialog = ({
         return;
       }
 
+      // Deduct 30 logins from user's remaining_logins
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ remaining_logins: userData.remaining_logins - 30 })
+        .eq("id", user.id);
+
+      if (updateError) {
+        toast.error("扣除登录次数失败，请重试");
+        return;
+      }
+
+      // Update localStorage with new remaining_logins
+      const updatedUser = { ...user, remaining_logins: userData.remaining_logins - 30 };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
       onOpenChange(false);
       setShowLoadingDialog(true);
       setIsGenerating(true);
