@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +66,7 @@ const EducationRegistrationDialog = ({
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [enrollmentDateOpen, setEnrollmentDateOpen] = useState(false);
   const [graduationDateOpen, setGraduationDateOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // 获取用户的学历记录
   useEffect(() => {
@@ -180,80 +191,160 @@ const EducationRegistrationDialog = ({
       return;
     }
 
-    onOpenChange(false);
-    setShowLoadingDialog(true);
-    setIsGenerating(true);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmGenerate = async () => {
+    setShowConfirmDialog(false);
 
     try {
-      // 将原来的 Supabase 函数调用替换为本地 API 调用
-      const response = await fetch(`${API_BASE_URL}/generate-education-pdf`, {
+      // Check remaining logins
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        toast.error("用户信息获取失败");
+        return;
+      }
+      
+      const user = JSON.parse(currentUser);
+      
+      // 使用本地API替代supabase调用
+      const userResponse = await fetch(`${API_BASE_URL}/get-all-users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const userDataResult = await userResponse.json();
+      
+      if (!userDataResult.success) {
+        toast.error("无法获取用户信息");
+        return;
+      }
+      
+      const currentUserData = userDataResult.users.find((u: any) => u.id === user.id.toString());
+      
+      if (!currentUserData) {
+        toast.error("无法获取用户信息");
+        return;
+      }
+
+      if (currentUserData.remaining_logins < 30) {
+        toast.error("剩余登录次数不足30次，无法生成报告");
+        return;
+      }
+
+      // 使用本地API扣除登录次数
+      const updateResponse = await fetch(`${API_BASE_URL}/update-user-logins`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
-          gender: formData.gender,
-          birthDate: formatDateForDisplay(formData.birthDate),
-          enrollmentDate: formatDateForDisplay(formData.enrollmentDate),
-          graduationDate: formatDateForDisplay(formData.graduationDate),
-          school: formData.school,
-          major: formData.major,
-          duration: formData.duration,
-          degreeLevel: formData.degreeLevel,
-          educationType: formData.educationType,
-          studyType: formData.studyType,
-          graduationStatus: formData.graduationStatus,
-          certificateNumber: formData.certificateNumber,
-          principalName: formData.principalName,
-          photo: formData.photo,
-        }),
+          userId: user.id,
+          addLogins: -30
+        })
       });
-
-      if (!response.ok) {
-        throw new Error('生成报告失败');
+      
+      const updateResult = await updateResponse.json();
+      
+      if (!updateResult.success) {
+        toast.error("扣除登录次数失败，请重试");
+        return;
       }
 
-      // 获取 PDF 数据并下载
-      const blob = await response.blob();
-      const filename = "教育部学历证书电子注册备案表.pdf";
-      
-      if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        const file = new File([blob], filename, { type: "application/pdf" });
-        navigator
-          .share({
-            files: [file],
-            title: filename,
-          })
-          .catch((error) => {
-            console.log("分享失败，尝试直接下载", error);
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          });
-      } else {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+      // Update localStorage with new remaining_logins
+      const updatedUser = { ...user, remaining_logins: updateResult.newLogins };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+      onOpenChange(false);
+      setShowLoadingDialog(true);
+      setIsGenerating(true);
+
+      try {
+        // 将原来的 Supabase 函数调用替换为本地 API 调用
+        const response = await fetch(`${API_BASE_URL}/generate-education-pdf`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            gender: formData.gender,
+            birthDate: formatDateForDisplay(formData.birthDate),
+            enrollmentDate: formatDateForDisplay(formData.enrollmentDate),
+            graduationDate: formatDateForDisplay(formData.graduationDate),
+            school: formData.school,
+            major: formData.major,
+            duration: formData.duration,
+            degreeLevel: formData.degreeLevel,
+            educationType: formData.educationType,
+            studyType: formData.studyType,
+            graduationStatus: formData.graduationStatus,
+            certificateNumber: formData.certificateNumber,
+            principalName: formData.principalName,
+            photo: formData.photo,
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('生成PDF失败');
+        }
+        
+        // 获取响应的文件名和内容类型
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = "教育部学历证书电子注册备案表.pdf";
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+          if (filenameMatch) {
+            filename = decodeURIComponent(filenameMatch[1]);
+          }
+        }
+        
+        // 获取PDF的二进制数据
+        const blob = await response.blob();
+        
+        // 下载文件
+        if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          const file = new File([blob], filename, { type: "application/pdf" });
+          navigator
+            .share({
+              files: [file],
+              title: filename,
+            })
+            .catch((error) => {
+              console.log("分享失败，尝试直接下载", error);
+              const url = window.URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            });
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }
+        
+        toast.success("报告生成成功！");
+      } catch (error) {
+        console.error("生成报告失败:", error);
+        toast.error("生成报告失败，请稍后重试");
+      } finally {
+        setIsGenerating(false);
+        setShowLoadingDialog(false);
       }
-      
-      toast.success("报告生成成功！");
     } catch (error) {
-      console.error("生成报告失败:", error);
-      toast.error("生成报告失败，请稍后重试");
-    } finally {
-      setIsGenerating(false);
-      setShowLoadingDialog(false);
+      console.error("处理请求失败:", error);
+      toast.error("处理请求失败，请稍后重试");
     }
   };
 
@@ -557,6 +648,21 @@ const EducationRegistrationDialog = ({
         message="正在生成报告"
         description="请稍候，这可能需要几秒钟..."
       />
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+            <AlertDialogDescription>
+              生成学历证书电子注册备案表PDF需要消耗30次登录权限，是否确认生成？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmGenerate}>确认</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

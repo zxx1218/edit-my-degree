@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +25,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-// import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 
@@ -55,6 +64,10 @@ const StudentStatusDialog = ({
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [enrollmentDateOpen, setEnrollmentDateOpen] = useState(false);
   const [graduationDateOpen, setGraduationDateOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // 设置API基础URL
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
   // 获取用户的学籍记录
   useEffect(() => {
@@ -207,11 +220,73 @@ const StudentStatusDialog = ({
       return;
     }
 
-    setIsGenerating(true);
-    onOpenChange(false);
-    setShowLoadingDialog(true);
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmGenerate = async () => {
+    setShowConfirmDialog(false);
 
     try {
+      // Check remaining logins
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        toast.error("用户信息获取失败");
+        return;
+      }
+      
+      const user = JSON.parse(currentUser);
+      
+      // 获取用户当前登录次数
+      const userResponse = await fetch(`${API_BASE_URL}/get-user-data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      
+      const userDataResult = await userResponse.json();
+      
+      if (!userResponse.ok || !userDataResult) {
+        toast.error("无法获取用户信息");
+        return;
+      }
+
+      if (user.remaining_logins < 30) {
+        toast.error("剩余登录次数不足30次，无法生成报告");
+        return;
+      }
+
+      // 扣除30次登录次数
+      const updateResponse = await fetch(`${API_BASE_URL}/update-user-logins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          userId: user.id,
+          addLogins: -30
+        }),
+      });
+
+      const updateResult = await updateResponse.json();
+      
+      if (!updateResponse.ok || !updateResult.success) {
+        toast.error("扣除登录次数失败，请重试");
+        return;
+      }
+
+      // 更新localStorage中的剩余登录次数
+      const updatedUser = { 
+        ...user, 
+        remaining_logins: updateResult.newLogins 
+      };
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+      setIsGenerating(true);
+      onOpenChange(false);
+      setShowLoadingDialog(true);
+
       const pdfData = {
         name: formData.name,
         gender: formData.gender,
@@ -231,8 +306,8 @@ const StudentStatusDialog = ({
         degreePhoto: formData.degreePhoto,
       };
 
-      // 调用后端API生成PDF
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/generate-student-status-pdf`, {
+      // 调用本地后端API生成PDF
+      const response = await fetch(`${API_BASE_URL}/generate-student-status-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +319,7 @@ const StudentStatusDialog = ({
         throw new Error('生成PDF失败');
       }
 
-      // 直接获取PDF数据并创建下载链接
+      // 获取PDF数据并下载
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -607,6 +682,21 @@ const StudentStatusDialog = ({
         open={showLoadingDialog}
         message="正在生成学籍验证报告..."
       />
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+            <AlertDialogDescription>
+              生成学籍在线验证报告PDF需要消耗30次登录权限，是否确认生成？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmGenerate}>确认</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
