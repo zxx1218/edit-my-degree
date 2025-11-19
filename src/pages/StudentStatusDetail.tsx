@@ -77,9 +77,14 @@ const StudentStatusDetail = () => {
         const record = result.studentStatus?.find((r: any) => r.id === id);
         
         if (record) {
+          // 从 gender 和 birth_date 构建 personalInfo
+          const personalInfo = record.gender && record.birth_date 
+            ? `${record.gender} | ${record.birth_date}` 
+            : defaultData.personalInfo;
+          
           setData({
             name: record.name || defaultData.name,
-            personalInfo: record.personal_info || defaultData.personalInfo,
+            personalInfo: personalInfo,
             gender: record.gender || defaultData.gender,
             birthDate: record.birth_date || defaultData.birthDate,
             school: record.school || defaultData.school,
