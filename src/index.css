@@ -41,7 +41,7 @@ All colors MUST be HSL.
     /* Education card colors */
     --student-status: 158 64% 52%;
     --student-status-dark: 158 64% 45%;
-    --student-status-start: 164 70% 40%;
+    --student-status-start: 160 70% 40%;
     --student-status-end: 155 58% 52%;
     --education-blue: 217 91% 60%;
     --education-light: 204 94% 94%;
@@ -97,7 +97,7 @@ All colors MUST be HSL.
     
     --student-status: 158 64% 52%;
     --student-status-dark: 158 64% 45%;
-    --student-status-start: 164 70% 40%;
+    --student-status-start: 160 70% 40%;
     --student-status-end: 155 58% 52%;
     --education-blue: 217 91% 60%;
     --education-light: 204 94% 94%;
