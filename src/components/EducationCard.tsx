@@ -133,7 +133,7 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-[#20b080] text-white";
+        return "bg-gradient-to-br from-student-status-start to-student-status-end text-white";
       case "education":
         return "bg-[#3a87f2] text-white";
       case "degree":
