@@ -23,6 +23,8 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        "student-status-start": "hsl(var(--student-status-start))",
+        "student-status-end": "hsl(var(--student-status-end))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
