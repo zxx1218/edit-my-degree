@@ -5,6 +5,15 @@ import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface EducationData {
   name: string;
@@ -95,6 +104,7 @@ const EducationDetail = () => {
     loadData();
   }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof EducationData; label: string } | null>(null);
+  const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
 
   const handleFieldClick = (field: keyof EducationData, label: string) => {
     setEditingField({ field, label });
@@ -281,7 +291,7 @@ const EducationDetail = () => {
         {/* Button */}
         <Button 
           className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
-          onClick={() => navigate('/verification-report')}
+          onClick={() => setShowComingSoonDialog(true)}
         >
           查看验证报告
         </Button>
@@ -297,6 +307,23 @@ const EducationDetail = () => {
           onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
         />
       )}
+
+      {/* Coming Soon Dialog */}
+      <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>功能即将上线</AlertDialogTitle>
+            <AlertDialogDescription className="text-base leading-relaxed">
+              报告下载功能将于2025年12月1日上线，您可以加Q群关注版本更新通知：
+              <br />
+              <span className="font-semibold text-foreground">QQ：1034981273</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>我知道了</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
