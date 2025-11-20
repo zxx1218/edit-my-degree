@@ -135,7 +135,7 @@ const EducationCard = ({
       case "student-status":
         return "text-white";
       case "education":
-        return "bg-[#3a87f2] text-white";
+        return "text-white";
       case "degree":
         return "bg-[#3852da] text-white";
       case "exam":
@@ -149,6 +149,11 @@ const EducationCard = ({
     if (variant === "student-status") {
       return {
         background: "linear-gradient(to bottom right, rgb(31, 174, 127), rgb(61, 203, 145))"
+      };
+    }
+    if (variant === "education") {
+      return {
+        background: "linear-gradient(to bottom right, rgb(55, 134, 243), rgb(92, 168, 247))"
       };
     }
     return {};
