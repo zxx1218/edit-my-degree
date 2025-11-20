@@ -139,7 +139,7 @@ const EducationCard = ({
       case "degree":
         return "text-white";
       case "exam":
-        return "bg-[#62bfcf] text-white";
+        return "text-white";
       default:
         return "bg-[#36b2c6] text-white";
     }
@@ -159,6 +159,11 @@ const EducationCard = ({
     if (variant === "degree") {
       return {
         background: "linear-gradient(to bottom right, rgb(56, 80, 218), rgb(86, 126, 231))"
+      };
+    }
+    if (variant === "exam") {
+      return {
+        background: "linear-gradient(to bottom right, rgb(54, 177, 197), rgb(93, 200, 218))"
       };
     }
     return {};
