@@ -34,7 +34,8 @@ const Login = () => {
       const result = await loginUser(username, password);
       
       if (result.error) {
-        toast.error(result.error, { duration: 1500 });
+        // 显示后端返回的具体错误信息
+        toast.error(result.error, { duration: 2000 });
         setIsLoading(false);
         return;
       }
@@ -47,7 +48,9 @@ const Login = () => {
         navigate("/");
       }
     } catch (error) {
-      toast.error("登录失败，请重试", { duration: 1500 });
+      // 捕获网络错误或其他异常
+      const errorMessage = error instanceof Error ? error.message : "网络连接失败，请检查网络后重试";
+      toast.error(errorMessage, { duration: 2000 });
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
