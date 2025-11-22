@@ -33,6 +33,9 @@ const SuperAdd = () => {
   const [queryUsername, setQueryUsername] = useState("");
   const [queriedUser, setQueriedUser] = useState<User | null>(null);
   const [isQuerying, setIsQuerying] = useState(false);
+  const [passwordQueryUsername, setPasswordQueryUsername] = useState("");
+  const [queriedPassword, setQueriedPassword] = useState<{ username: string; password: string } | null>(null);
+  const [isQueryingPassword, setIsQueryingPassword] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -68,10 +71,6 @@ const SuperAdd = () => {
   const handleVerify = () => {
     if (verifyUsername === "zxx" && verifyPassword === "991218aa") {
       setIsVerified(true);
-      toast({
-        title: "验证成功",
-        description: "欢迎进入管理界面",
-      });
     } else {
       toast({
         variant: "destructive",
@@ -125,6 +124,56 @@ const SuperAdd = () => {
       });
     } finally {
       setIsQuerying(false);
+    }
+  };
+
+  const handleQueryPassword = async () => {
+    if (!passwordQueryUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
+
+    setIsQueryingPassword(true);
+    setQueriedPassword(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "query-user",
+        {
+          body: {
+            username: passwordQueryUsername,
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      if (data.success) {
+        setQueriedPassword({
+          username: data.user.username,
+          password: data.user.password,
+        });
+        toast({
+          title: "查询成功",
+          description: `用户 ${data.user.username} 的密码已找到`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "查询失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "查询失败",
+        description: error.message,
+      });
+    } finally {
+      setIsQueryingPassword(false);
     }
   };
 
@@ -357,7 +406,7 @@ const SuperAdd = () => {
           <p className="text-muted-foreground text-lg">管理和监控用户登录次数</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
           {/* 查询用户卡片 */}
           <Card className="shadow-lg border-2 hover:shadow-xl transition-shadow">
             <CardHeader className="pb-4">
@@ -420,6 +469,70 @@ const SuperAdd = () => {
                     <div className="flex justify-between items-center pt-2 border-t border-blue-300 dark:border-blue-700">
                       <span className="text-sm text-muted-foreground">剩余登录次数:</span>
                       <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">{queriedUser.remaining_logins}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 查询密码卡片 */}
+          <Card className="shadow-lg border-2 hover:shadow-xl transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
+                  <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">查询密码</CardTitle>
+                  <CardDescription>根据用户名查询用户密码</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="password-query-username">用户名</Label>
+                <Input
+                  id="password-query-username"
+                  value={passwordQueryUsername}
+                  onChange={(e) => setPasswordQueryUsername(e.target.value)}
+                  placeholder="请输入用户名"
+                  onKeyPress={(e) => e.key === 'Enter' && handleQueryPassword()}
+                  className="h-10"
+                />
+              </div>
+
+              <Button
+                onClick={handleQueryPassword}
+                disabled={isQueryingPassword}
+                className="w-full h-10 bg-cyan-600 hover:bg-cyan-700"
+              >
+                {isQueryingPassword ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    查询中...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    查询密码
+                  </>
+                )}
+              </Button>
+
+              {queriedPassword && (
+                <div className="mt-4 p-4 bg-gradient-to-br from-cyan-50 to-cyan-100 dark:from-cyan-950/30 dark:to-cyan-900/30 rounded-lg border-2 border-cyan-200 dark:border-cyan-800 animate-fade-in">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center pb-2 border-b border-cyan-300 dark:border-cyan-700">
+                      <span className="text-sm font-medium text-muted-foreground">密码信息</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">用户名:</span>
+                      <span className="font-semibold">{queriedPassword.username}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-cyan-300 dark:border-cyan-700">
+                      <span className="text-sm text-muted-foreground">密码:</span>
+                      <span className="font-bold text-xl font-mono text-cyan-600 dark:text-cyan-400 select-all">{queriedPassword.password}</span>
                     </div>
                   </div>
                 </div>
