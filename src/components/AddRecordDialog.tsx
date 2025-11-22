@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEGREE_LEVELS, DegreeLevel, DEGREE_TYPES, DegreeType } from "@/lib/educationSort";
 
 interface AddRecordDialogProps {
@@ -48,6 +48,13 @@ const AddRecordDialog = ({
   const [selectedLevel, setSelectedLevel] = useState<DegreeLevel | DegreeType>(
     isDegree ? "学士" : "本科"
   );
+
+  // 每次打开对话框时重置为默认值
+  useEffect(() => {
+    if (open) {
+      setSelectedLevel(isDegree ? "学士" : "本科");
+    }
+  }, [open, isDegree]);
 
   const handleConfirm = () => {
     onConfirm(selectedLevel);
