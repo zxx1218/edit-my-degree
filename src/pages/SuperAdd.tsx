@@ -68,10 +68,6 @@ const SuperAdd = () => {
   const handleVerify = () => {
     if (verifyUsername === "zxx" && verifyPassword === "991218aa") {
       setIsVerified(true);
-      toast({
-        title: "验证成功",
-        description: "欢迎进入管理界面",
-      });
     } else {
       toast({
         variant: "destructive",
