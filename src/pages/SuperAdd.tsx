@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus, List, Loader2, RotateCcw } from "lucide-react";
+import { Shield, UserPlus, List, Loader2, RotateCcw, Search } from "lucide-react";
 
 interface User {
   id: string;
@@ -26,6 +26,9 @@ const SuperAdd = () => {
   const [isAddingLogins, setIsAddingLogins] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+  const [queryUsername, setQueryUsername] = useState("");
+  const [queriedUser, setQueriedUser] = useState<User | null>(null);
+  const [isQuerying, setIsQuerying] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -127,6 +130,53 @@ const SuperAdd = () => {
       });
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleQueryUser = async () => {
+    if (!queryUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
+
+    setIsQuerying(true);
+    setQueriedUser(null);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "query-user",
+        {
+          body: {
+            username: queryUsername,
+          },
+        }
+      );
+
+      if (error) throw error;
+
+      if (data.success) {
+        setQueriedUser(data.user);
+        toast({
+          title: "查询成功",
+          description: `用户 ${data.user.username} 剩余登录次数: ${data.user.remaining_logins} 次`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "查询失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "查询失败",
+        description: error.message,
+      });
+    } finally {
+      setIsQuerying(false);
     }
   };
 
@@ -265,6 +315,63 @@ const SuperAdd = () => {
                   </>
                 )}
               </Button>
+            </div>
+
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                查询用户剩余次数
+              </h3>
+              <p className="text-xs text-muted-foreground">输入用户名查询当前剩余登录次数</p>
+              
+              <div className="space-y-2">
+                <Label htmlFor="query-username">用户名</Label>
+                <Input
+                  id="query-username"
+                  value={queryUsername}
+                  onChange={(e) => setQueryUsername(e.target.value)}
+                  placeholder="请输入用户名"
+                  onKeyPress={(e) => e.key === 'Enter' && handleQueryUser()}
+                />
+              </div>
+
+              <Button
+                onClick={handleQueryUser}
+                disabled={isQuerying}
+                className="w-full"
+                variant="secondary"
+              >
+                {isQuerying ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    查询中...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    查询
+                  </>
+                )}
+              </Button>
+
+              {queriedUser && (
+                <div className="mt-4 p-4 bg-background rounded-lg border border-border animate-fade-in">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">用户名:</span>
+                      <span className="font-medium">{queriedUser.username}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">密码:</span>
+                      <span className="font-medium">{queriedUser.password}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <span className="text-sm text-muted-foreground">剩余登录次数:</span>
+                      <span className="font-bold text-lg text-primary">{queriedUser.remaining_logins} 次</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {isFetchingUsers && (
