@@ -72,10 +72,11 @@ const AddRecordDialog = ({
             <Label htmlFor="degree-level">{label}</Label>
             <Select
               value={selectedLevel}
+              defaultValue={selectedLevel}
               onValueChange={(value) => setSelectedLevel(value as DegreeLevel | DegreeType)}
             >
               <SelectTrigger id="degree-level">
-                <SelectValue placeholder={`请选择${label}`} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {options.map((level) => (
