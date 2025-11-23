@@ -5,6 +5,7 @@ import { ChevronLeft, Search, Menu, Download } from 'lucide-react';
 const Verification = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [selectedLanguage, setSelectedLanguage] = useState<'chinese' | 'english'>('chinese');
   const [data, setData] = useState({
     name: '',
     gender: '',
@@ -88,8 +89,26 @@ const Verification = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-gray-600 text-sm">报告语种</span>
-            <button className="text-blue-500 font-medium text-sm">中文</button>
-            <button className="text-gray-500 text-sm">英文</button>
+            <button 
+              onClick={() => setSelectedLanguage('chinese')}
+              className={`px-3 py-1 text-sm font-medium rounded ${
+                selectedLanguage === 'chinese' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'text-gray-500'
+              }`}
+            >
+              中文
+            </button>
+            <button 
+              onClick={() => setSelectedLanguage('english')}
+              className={`px-3 py-1 text-sm rounded ${
+                selectedLanguage === 'english' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'text-gray-500'
+              }`}
+            >
+              英文
+            </button>
           </div>
           <button className="p-2 bg-gray-100 rounded">
             <Download className="w-4 h-4 text-gray-600" />
