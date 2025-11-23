@@ -168,7 +168,7 @@ const EducationBackground = () => {
                     {/* 标题栏 */}
                     <div className="flex items-center justify-between mb-6">
                       <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
-                        {record.degree_level}-{record.school}-{record.major}
+                        {[record.degree_level, record.school, record.major].filter(Boolean).join('-')}
                       </div>
                       <button className="text-primary hover:underline flex items-center gap-1">
                         <ShieldCheck className="w-4 h-4" />
@@ -278,7 +278,7 @@ const EducationBackground = () => {
                   {/* 标题栏 */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
-                      {record.degreeLevel}-{record.school}-{record.major}
+                      {[record.degreeLevel, record.school, record.major].filter(Boolean).join('-')}
                     </div>
                     <button className="text-primary hover:underline flex items-center gap-1">
                       <ShieldCheck className="w-4 h-4" />
@@ -458,7 +458,7 @@ const EducationBackground = () => {
                   {/* 标题栏 */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
-                      {record.degreeLevel}-{record.school}-{record.major}
+                      {[record.degreeLevel, record.school, record.major].filter(Boolean).join('-')}
                     </div>
                     <button className="text-primary hover:underline flex items-center gap-1">
                       <ShieldCheck className="w-4 h-4" />
