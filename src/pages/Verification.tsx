@@ -93,8 +93,8 @@ const Verification = () => {
               onClick={() => setSelectedLanguage('chinese')}
               className={`px-3 py-1 text-sm font-medium rounded ${
                 selectedLanguage === 'chinese' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'text-gray-500'
+                  ? 'text-[rgb(0,186,198)] bg-[rgb(239,248,249)]' 
+                  : 'text-[rgb(136,143,152)]'
               }`}
             >
               中文
@@ -103,8 +103,8 @@ const Verification = () => {
               onClick={() => setSelectedLanguage('english')}
               className={`px-3 py-1 text-sm rounded ${
                 selectedLanguage === 'english' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'text-gray-500'
+                  ? 'text-[rgb(0,186,198)] bg-[rgb(239,248,249)]' 
+                  : 'text-[rgb(136,143,152)]'
               }`}
             >
               英文
