@@ -23,6 +23,9 @@ interface EducationRecord {
   principalName?: string;
   duration?: string;
   graduation_status?: string;
+  photo?: string;
+  admission_photo?: string;
+  degree_photo?: string;
   // Exam specific fields
   year?: string;
   exam_location?: string;
@@ -181,14 +184,30 @@ const EducationBackground = () => {
                       {/* 左侧照片 */}
                       <div className="space-y-6">
                         <div>
-                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                            <span className="text-muted-foreground text-sm">照片</span>
+                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                            {record.admission_photo ? (
+                              <img 
+                                src={record.admission_photo} 
+                                alt="录取照片" 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-muted-foreground text-sm">照片</span>
+                            )}
                           </div>
                           <p className="text-center text-sm text-muted-foreground">录取照片</p>
                         </div>
                         <div>
-                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                            <span className="text-muted-foreground text-sm">照片</span>
+                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                            {record.degree_photo ? (
+                              <img 
+                                src={record.degree_photo} 
+                                alt="学历照片" 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-muted-foreground text-sm">照片</span>
+                            )}
                           </div>
                           <p className="text-center text-sm text-muted-foreground">学历照片</p>
                         </div>
@@ -290,8 +309,16 @@ const EducationBackground = () => {
                   <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                        <span className="text-muted-foreground text-sm">照片</span>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                        {record.photo ? (
+                          <img 
+                            src={record.photo} 
+                            alt="学位照片" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">照片</span>
+                        )}
                       </div>
                       <p className="text-center text-sm text-muted-foreground">学位照片</p>
                     </div>
@@ -344,8 +371,16 @@ const EducationBackground = () => {
                   <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                        <span className="text-muted-foreground text-sm">照片</span>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                        {record.photo ? (
+                          <img 
+                            src={record.photo} 
+                            alt="考研照片" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">照片</span>
+                        )}
                       </div>
                     </div>
 
@@ -470,8 +505,16 @@ const EducationBackground = () => {
                   <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 mx-[10px] my-[20px] px-[12px]">
-                        <span className="text-muted-foreground text-sm">照片</span>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 mx-[10px] my-[20px] px-[12px] overflow-hidden">
+                        {record.photo ? (
+                          <img 
+                            src={record.photo} 
+                            alt="学历照片" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">照片</span>
+                        )}
                       </div>
                       
                     </div>
