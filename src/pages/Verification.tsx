@@ -119,82 +119,82 @@ const Verification = () => {
 
         {/* Information Fields */}
         <div className="space-y-0">
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">姓名</span>
             <span className="text-gray-900 ml-2">{data.name}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">性别</span>
             <span className="text-gray-900 ml-2">{data.gender}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">出生日期</span>
             <span className="text-gray-900 ml-2">{data.birthDate}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">入学日期</span>
             <span className="text-gray-900 ml-2">{data.enrollmentDate}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">毕（结）业日期</span>
             <span className="text-gray-900 ml-2">{data.graduationDate}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学校名称</span>
             <span className="text-gray-900 ml-2">{data.school}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">专业</span>
             <span className="text-gray-900 ml-2">{data.major}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学制</span>
             <span className="text-gray-900 ml-2">{data.duration}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">层次</span>
             <span className="text-gray-900 ml-2">{data.level}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学历类别</span>
             <span className="text-gray-900 ml-2">{data.educationType}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学习形式</span>
             <span className="text-gray-900 ml-2">{data.studyType}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">毕（结）业</span>
             <span className="text-gray-900 ml-2">{data.graduationStatus}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">证书编号</span>
             <span className="text-gray-900 ml-2">{data.certificateNumber}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">校（院）长姓名</span>
             <span className="text-gray-900 ml-2">{data.principalName}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">在线验证码</span>
             <span className="text-gray-900 ml-2">{data.verificationCode}</span>
           </div>
 
-          <div className="flex py-1">
+          <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">更新日期</span>
             <span className="text-gray-900 ml-2">{data.updateDate}</span>
           </div>
