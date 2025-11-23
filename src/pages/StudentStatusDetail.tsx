@@ -123,7 +123,6 @@ const StudentStatusDetail = () => {
     loadData();
   }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof StudentData; label: string } | null>(null);
-  const [showComingSoonDialog, setShowComingSoonDialog] = useState(false);
 
   const handleFieldClick = (field: keyof StudentData, label: string) => {
     setEditingField({ field, label });
@@ -349,7 +348,30 @@ const StudentStatusDetail = () => {
         {/* Button */}
         <Button 
           className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
-          onClick={() => setShowComingSoonDialog(true)}
+          onClick={() => {
+            const params = new URLSearchParams({
+              name: data.name,
+              gender: data.gender,
+              birthDate: data.birthDate,
+              enrollmentDate: data.enrollmentDate,
+              graduationDate: data.graduationDate,
+              school: data.school,
+              major: data.major,
+              duration: data.duration,
+              level: data.degreeLevel,
+              educationType: data.educationType,
+              studyType: data.studyType,
+              status: data.status,
+              nationality: data.nationality,
+              idNumber: data.idNumber,
+              branch: data.branch,
+              department: data.department,
+              class: data.class,
+              studentId: data.studentId,
+              ...(data.degreePhoto && { photo: data.degreePhoto }),
+            });
+            navigate(`/verification?${params.toString()}`);
+          }}
         >
           查看验证报告
         </Button>
@@ -366,22 +388,6 @@ const StudentStatusDetail = () => {
         />
       )}
 
-      {/* Coming Soon Dialog */}
-      <AlertDialog open={showComingSoonDialog} onOpenChange={setShowComingSoonDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>功能即将上线</AlertDialogTitle>
-            <AlertDialogDescription className="text-base leading-relaxed">
-              报告下载功能将于2025年12月1日上线，您可以加Q群关注版本更新通知：
-              <br />
-              <span className="font-semibold text-foreground">QQ：1034981273</span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction>我知道了</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
