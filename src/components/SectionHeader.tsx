@@ -10,7 +10,7 @@ const SectionHeader = ({ title, count, promptText, actionText, onAction }: Secti
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <h2 className="text-lg text-foreground font-yahei">
-        {title} ({count})
+        {title} <span className="font-times">({count})</span>
       </h2>
       {(promptText || actionText) && (
         <div className="flex items-center gap-1 text-sm">
