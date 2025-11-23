@@ -105,15 +105,17 @@ const Verification = () => {
         </h1>
 
         {/* Photo */}
-        {data.photo && (
-          <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-6">
+          {data.photo ? (
             <img 
               src={data.photo} 
               alt="证件照" 
               className="w-32 h-40 object-cover border border-gray-200"
             />
-          </div>
-        )}
+          ) : (
+            <div className="w-32 h-40 border border-gray-200 bg-gray-50" />
+          )}
+        </div>
 
         {/* Information Fields */}
         <div className="space-y-4">
