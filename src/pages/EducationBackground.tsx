@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, ShieldCheck } from "lucide-react";
 import { getUserData } from "@/lib/api";
 import { toast } from "sonner";
+import { sortByDegreeLevel, sortByDegreeType } from "@/lib/educationSort";
 interface EducationRecord {
   id: string;
   school: string;
@@ -62,9 +63,34 @@ const EducationBackground = () => {
         if (userStr) {
           const user = JSON.parse(userStr);
           const data = await getUserData(user.id);
-          setStudentStatusRecords(data.studentStatus || []);
-          setEducationRecords(data.education || []);
-          setDegreeRecords(data.degree || []);
+          
+          // 按学历层次排序学籍信息
+          const sortedStudentStatus = sortByDegreeLevel(
+            (data.studentStatus || []).map((record: any) => ({
+              ...record,
+              degreeLevel: record.degree_level
+            }))
+          );
+          
+          // 按学历层次排序学历信息
+          const sortedEducation = sortByDegreeLevel(
+            (data.education || []).map((record: any) => ({
+              ...record,
+              degreeLevel: record.degree_level
+            }))
+          );
+          
+          // 按学位类型排序学位信息
+          const sortedDegree = sortByDegreeType(
+            (data.degree || []).map((record: any) => ({
+              ...record,
+              degreeType: record.degree_level
+            }))
+          );
+          
+          setStudentStatusRecords(sortedStudentStatus);
+          setEducationRecords(sortedEducation);
+          setDegreeRecords(sortedDegree);
           setExamRecords(data.exam || []);
         }
       } catch (error) {
