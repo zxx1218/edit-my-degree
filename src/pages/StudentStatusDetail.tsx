@@ -348,30 +348,7 @@ const StudentStatusDetail = () => {
         {/* Button */}
         <Button 
           className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
-          onClick={() => {
-            const params = new URLSearchParams({
-              name: data.name,
-              gender: data.gender,
-              birthDate: data.birthDate,
-              enrollmentDate: data.enrollmentDate,
-              graduationDate: data.graduationDate,
-              school: data.school,
-              major: data.major,
-              duration: data.duration,
-              level: data.degreeLevel,
-              educationType: data.educationType,
-              studyType: data.studyType,
-              status: data.status,
-              nationality: data.nationality,
-              idNumber: data.idNumber,
-              branch: data.branch,
-              department: data.department,
-              class: data.class,
-              studentId: data.studentId,
-              ...(data.degreePhoto && { photo: data.degreePhoto }),
-            });
-            navigate(`/verification?${params.toString()}`);
-          }}
+          onClick={() => navigate('/verification-report')}
         >
           查看验证报告
         </Button>
