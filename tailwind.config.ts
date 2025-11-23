@@ -14,8 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        'songti': ['SimSun', 'STSong', 'serif'], // 思源黑体
+        'siyuan': ['Source Han Sans', 'sans-serif'], // 思源黑体
+        'songti': ['SimSun', 'STSong', 'serif'], // 宋体
         'yahei': ['Microsoft YaHei', '微软雅黑', 'sans-serif'], // 微软雅黑
+        'times': ['Times New Roman', 'Times', 'serif'], // Times New Roman
       },
       colors: {
         border: "hsl(var(--border))",

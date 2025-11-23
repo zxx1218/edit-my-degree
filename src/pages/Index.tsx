@@ -335,7 +335,7 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-8">
       <EducationHeader />
 
-      <div className="space-y-6 mt-4">
+      <div className="space-y-2 mt-4">
         <section>
           <SectionHeader
             title="学籍信息"

@@ -175,7 +175,7 @@ const EducationCard = ({
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-[7px] p-[1.1rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
+      className={`${getVariantClasses()} rounded-[7px] p-[1.05rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
       style={getVariantStyle()}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
@@ -191,9 +191,9 @@ const EducationCard = ({
       }}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-xl font-yahei font-normal">{school}</h3>
+        <h3 className="text-xl font-siyuan" style={{ fontSize: '20.5px' }}>{school}</h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-2 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
             {degreeLevel}
           </div>
         )}
@@ -204,12 +204,12 @@ const EducationCard = ({
         </div>
       ) : (
         <div className="flex items-center gap-2 text-white/95">
-          {major && <span className="text-base">{major}</span>}
+          {major && <span className="text-base" style={{ fontSize: '15px' }}>{major}</span>}
           {major && studyType && (
-            <span className="text-white/60">|</span>
+            <span className="text-white/60" style={{ fontSize: '15px' }}>|</span>
           )}
           {studyType && (
-            <span className="text-base">{studyType}</span>
+            <span className="text-base" style={{ fontSize: '15px' }}>{studyType}</span>
           )}
         </div>
       )}

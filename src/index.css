@@ -6,6 +6,14 @@
 All colors MUST be HSL.
 */
 
+@font-face {
+  font-family: 'Source Han Sans';
+  src: url('/fonts/SourceHanSans-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 240 10% 96%;
