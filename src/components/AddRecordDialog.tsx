@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEGREE_LEVELS, DegreeLevel, DEGREE_TYPES, DegreeType } from "@/lib/educationSort";
 
 interface AddRecordDialogProps {
@@ -49,6 +49,13 @@ const AddRecordDialog = ({
     isDegree ? "学士" : "本科"
   );
 
+  // 每次打开对话框时重置为默认值
+  useEffect(() => {
+    if (open) {
+      setSelectedLevel(isDegree ? "学士" : "本科");
+    }
+  }, [open, isDegree]);
+
   const handleConfirm = () => {
     onConfirm(selectedLevel);
     onOpenChange(false);
@@ -72,10 +79,11 @@ const AddRecordDialog = ({
             <Label htmlFor="degree-level">{label}</Label>
             <Select
               value={selectedLevel}
+              defaultValue={selectedLevel}
               onValueChange={(value) => setSelectedLevel(value as DegreeLevel | DegreeType)}
             >
               <SelectTrigger id="degree-level">
-                <SelectValue placeholder={`请选择${label}`} />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {options.map((level) => (

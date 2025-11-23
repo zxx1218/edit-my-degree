@@ -34,9 +34,9 @@ export const loginUser = async (username: string, password: string): Promise<Log
 
   const data = await response.json();
   
-  if (!response.ok) {
-    throw new Error(data.error || '登录失败');
-  }
+  // if (!response.ok) {
+  //   throw new Error(data.error || '登录失败');
+  // }
 
   return data;
 };
@@ -53,9 +53,10 @@ export const registerUser = async (username: string, password: string): Promise<
 
   const data = await response.json();
   
-  if (!response.ok && response.status !== 400) {
-    throw new Error('网络错误');
-  }
+  // if (!response.ok) {
+  //   // 对于所有非2xx响应，直接返回数据，让调用者处理错误信息
+  //   return data;
+  // }
 
   return data;
 };

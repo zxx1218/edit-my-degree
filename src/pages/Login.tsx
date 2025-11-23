@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { loginUser, changePassword } from "@/lib/api";
@@ -31,10 +31,17 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const result = await loginUser(username, password);
-      
+
+      const result = await loginUser(username, password); // 调用登录API,获取登录结果
+
       if (result.error) {
-        toast.error(result.error, { duration: 1500 });
+        if (result.error === '登录次数已用完') {
+          toast.error("登录失败：登录次数已用完", { duration: 1500 });
+        } else if (result.error === '用户名或密码错误') {
+          toast.error("登录失败：用户名或密码错误", { duration: 1500 });
+        } else {
+          toast.error(result.error, { duration: 1500 });
+        }
         setIsLoading(false);
         return;
       }

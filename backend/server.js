@@ -463,19 +463,49 @@ app.post('/api/update-data', async (req, res) => {
 // 更新用户登录次数接口
 app.post('/api/update-user-logins', async (req, res) => {
   try {
-    const { userId, addLogins } = req.body;
+    const { userId, username, addLogins } = req.body; // 支持通过userId或username
     
-    if (!userId || addLogins === undefined) {
+    if (!userId && !username) {
       return res.status(400).json({
         success: false,
-        error: '缺少必要参数'
+        error: '缺少用户ID或用户名参数'
+      });
+    }
+    
+    if (addLogins === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少addLogins参数'
+      });
+    }
+    
+    // 查找用户
+    let user;
+    if (userId) {
+      const [users] = await db.execute(
+        'SELECT id FROM users WHERE id = ?',
+        [userId]
+      );
+      user = users[0];
+    } else if (username) {
+      const [users] = await db.execute(
+        'SELECT id FROM users WHERE username = ?',
+        [username]
+      );
+      user = users[0];
+    }
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
       });
     }
     
     // 更新用户登录次数
     const [result] = await db.execute(
       'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
-      [addLogins, userId]
+      [addLogins, user.id]
     );
     
     if (result.affectedRows === 0) {
@@ -488,7 +518,7 @@ app.post('/api/update-user-logins', async (req, res) => {
     // 获取更新后的用户信息
     const [users] = await db.execute(
       'SELECT remaining_logins FROM users WHERE id = ?',
-      [userId]
+      [user.id]
     );
     
     res.json({
@@ -1402,6 +1432,49 @@ app.post('/api/generate-student-status-pdf', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'PDF生成失败: ' + error.message
+    });
+  }
+});
+
+// 查询特定用户接口
+app.post('/api/query-user', async (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户名参数'
+      });
+    }
+    
+    // 查询特定用户
+    const [users] = await db.execute(
+      'SELECT id, username, password, remaining_logins FROM users WHERE username = ?',
+      [username]
+    );
+    
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+    
+    res.json({
+      success: true,
+      user: {
+        id: users[0].id.toString(),
+        username: users[0].username,
+        password: users[0].password,
+        remaining_logins: users[0].remaining_logins
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
     });
   }
 });

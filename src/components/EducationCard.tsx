@@ -133,16 +133,40 @@ const EducationCard = ({
   const getVariantClasses = () => {
     switch (variant) {
       case "student-status":
-        return "bg-[#20b080] text-white";
+        return "text-white";
       case "education":
-        return "bg-[#3a87f2] text-white";
+        return "text-white";
       case "degree":
-        return "bg-[#3852da] text-white";
+        return "text-white";
       case "exam":
-        return "bg-[#62bfcf] text-white";
+        return "text-white";
       default:
         return "bg-[#36b2c6] text-white";
     }
+  };
+
+  const getVariantStyle = () => {
+    if (variant === "student-status") {
+      return {
+        background: "linear-gradient(to bottom right, rgb(31, 174, 127), rgb(61, 203, 145))"
+      };
+    }
+    if (variant === "education") {
+      return {
+        background: "linear-gradient(to bottom right, rgb(55, 134, 243), rgb(92, 168, 247))"
+      };
+    }
+    if (variant === "degree") {
+      return {
+        background: "linear-gradient(to bottom right, rgb(56, 80, 218), rgb(86, 126, 231))"
+      };
+    }
+    if (variant === "exam") {
+      return {
+        background: "linear-gradient(to bottom right, rgb(54, 177, 197), rgb(93, 200, 218))"
+      };
+    }
+    return {};
   };
 
   const getBadgeClasses = () => {
@@ -152,6 +176,7 @@ const EducationCard = ({
   return (
     <div 
       className={`${getVariantClasses()} rounded-[7px] p-[1.1rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
+      style={getVariantStyle()}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
