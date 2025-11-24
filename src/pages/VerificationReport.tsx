@@ -6,12 +6,14 @@ import { Card } from "@/components/ui/card";
 import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
 import StudentStatusDialog from "@/components/StudentStatusDialog";
+import LoadingDialog from "@/components/LoadingDialog";
 
 const VerificationReport = () => {
   const navigate = useNavigate();
   const [degreeDialogOpen, setDegreeDialogOpen] = useState(false);
   const [educationDialogOpen, setEducationDialogOpen] = useState(false);
   const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   const reportOptions = [
     {
@@ -52,6 +54,7 @@ const VerificationReport = () => {
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
+              setIsLoadingData(true);
               if (index === 0) {
                 setStudentStatusDialogOpen(true);
               } else if (index === 1) {
@@ -101,14 +104,23 @@ const VerificationReport = () => {
       <StudentStatusDialog
         open={studentStatusDialogOpen}
         onOpenChange={setStudentStatusDialogOpen}
+        onLoadingChange={setIsLoadingData}
       />
       <DegreeVerificationDialog
         open={degreeDialogOpen}
         onOpenChange={setDegreeDialogOpen}
+        onLoadingChange={setIsLoadingData}
       />
       <EducationRegistrationDialog
         open={educationDialogOpen}
         onOpenChange={setEducationDialogOpen}
+        onLoadingChange={setIsLoadingData}
+      />
+      
+      <LoadingDialog
+        open={isLoadingData}
+        message="正在加载数据"
+        description="请稍候..."
       />
     </div>
   );
