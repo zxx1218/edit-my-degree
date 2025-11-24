@@ -222,8 +222,7 @@ const DegreeVerificationDialog = ({
       const updatedUser = { ...user, remaining_logins: userData.remaining_logins - 30 };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
-      // Close the current dialog and show loading dialog
-      onOpenChange(false);
+      // Show loading dialog
       setShowLoadingDialog(true);
       setIsGenerating(true);
 
@@ -298,6 +297,7 @@ const DegreeVerificationDialog = ({
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
+      onOpenChange(false);
     }
   };
 
@@ -315,8 +315,7 @@ const DegreeVerificationDialog = ({
 
   return (
     <>
-      <LoadingDialog open={showLoadingDialog} />
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open && !showLoadingDialog} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>学位在线验证报告信息</DialogTitle>
@@ -541,7 +540,8 @@ const DegreeVerificationDialog = ({
 
     <LoadingDialog 
       open={showLoadingDialog} 
-      message="正在生成学位验证报告，请稍候..." 
+      message="正在生成学位验证报告..."
+      description="请稍候，这可能需要几秒钟..."
     />
 
     <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>

@@ -235,7 +235,6 @@ const EducationRegistrationDialog = ({
       const updatedUser = { ...user, remaining_logins: userData.remaining_logins - 30 };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
-      onOpenChange(false);
       setShowLoadingDialog(true);
       setIsGenerating(true);
 
@@ -312,6 +311,7 @@ const EducationRegistrationDialog = ({
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
+      onOpenChange(false);
     }
   };
 
