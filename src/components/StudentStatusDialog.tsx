@@ -32,11 +32,13 @@ import LoadingDialog from "./LoadingDialog";
 interface StudentStatusDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const StudentStatusDialog = ({
   open,
   onOpenChange,
+  onLoadingChange,
 }: StudentStatusDialogProps) => {
   const [studentRecords, setStudentRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
@@ -72,6 +74,7 @@ const StudentStatusDialog = ({
     const fetchStudentRecords = async () => {
       if (open) {
         setIsLoading(true);
+        onLoadingChange?.(true);
         try {
           const currentUser = localStorage.getItem("currentUser");
           if (currentUser) {
@@ -92,15 +95,17 @@ const StudentStatusDialog = ({
           setShowForm(true);
         } finally {
           setIsLoading(false);
+          onLoadingChange?.(false);
         }
       } else {
         setShowForm(false);
         setSelectedRecordId("");
         setIsLoading(false);
+        onLoadingChange?.(false);
       }
     };
     fetchStudentRecords();
-  }, [open]);
+  }, [open, onLoadingChange]);
 
   // 手动填写
   const handleManualInput = () => {

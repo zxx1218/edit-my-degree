@@ -32,11 +32,13 @@ import LoadingDialog from "./LoadingDialog";
 interface DegreeVerificationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const DegreeVerificationDialog = ({
   open,
   onOpenChange,
+  onLoadingChange,
 }: DegreeVerificationDialogProps) => {
   const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
@@ -64,6 +66,7 @@ const DegreeVerificationDialog = ({
     const fetchDegreeRecords = async () => {
       if (open) {
         setIsLoading(true);
+        onLoadingChange?.(true);
         try {
           const currentUser = localStorage.getItem("currentUser");
           if (currentUser) {
@@ -86,16 +89,18 @@ const DegreeVerificationDialog = ({
           setShowForm(true);
         } finally {
           setIsLoading(false);
+          onLoadingChange?.(false);
         }
       } else {
         // 对话框关闭时重置状态
         setShowForm(false);
         setSelectedRecordId("");
         setIsLoading(false);
+        onLoadingChange?.(false);
       }
     };
     fetchDegreeRecords();
-  }, [open]);
+  }, [open, onLoadingChange]);
 
   // 当用户选择一条记录时，自动填充表单
   const handleRecordSelect = (recordId: string) => {

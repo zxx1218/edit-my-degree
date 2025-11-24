@@ -32,11 +32,13 @@ import LoadingDialog from "./LoadingDialog";
 interface EducationRegistrationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const EducationRegistrationDialog = ({
   open,
   onOpenChange,
+  onLoadingChange,
 }: EducationRegistrationDialogProps) => {
   const [educationRecords, setEducationRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
@@ -71,6 +73,7 @@ const EducationRegistrationDialog = ({
     const fetchEducationRecords = async () => {
       if (open) {
         setIsLoading(true);
+        onLoadingChange?.(true);
         try {
           const currentUser = localStorage.getItem("currentUser");
           if (currentUser) {
@@ -91,15 +94,17 @@ const EducationRegistrationDialog = ({
           setShowForm(true);
         } finally {
           setIsLoading(false);
+          onLoadingChange?.(false);
         }
       } else {
         setShowForm(false);
         setSelectedRecordId("");
         setIsLoading(false);
+        onLoadingChange?.(false);
       }
     };
     fetchEducationRecords();
-  }, [open]);
+  }, [open, onLoadingChange]);
 
   // 当用户选择一条记录时，自动填充表单
   const handleRecordSelect = (recordId: string) => {
