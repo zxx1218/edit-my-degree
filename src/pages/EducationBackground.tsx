@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building2, ShieldCheck } from "lucide-react";
 import { getUserData } from "@/lib/api";
 import { toast } from "sonner";
+import { sortByDegreeLevel, sortByDegreeType } from "@/lib/educationSort";
 interface EducationRecord {
   id: string;
   school: string;
@@ -23,6 +24,9 @@ interface EducationRecord {
   principalName?: string;
   duration?: string;
   graduation_status?: string;
+  photo?: string;
+  admission_photo?: string;
+  degree_photo?: string;
   // Exam specific fields
   year?: string;
   exam_location?: string;
@@ -59,9 +63,34 @@ const EducationBackground = () => {
         if (userStr) {
           const user = JSON.parse(userStr);
           const data = await getUserData(user.id);
-          setStudentStatusRecords(data.studentStatus || []);
-          setEducationRecords(data.education || []);
-          setDegreeRecords(data.degree || []);
+          
+          // 按学历层次排序学籍信息
+          const sortedStudentStatus = sortByDegreeLevel(
+            (data.studentStatus || []).map((record: any) => ({
+              ...record,
+              degreeLevel: record.degree_level
+            }))
+          );
+          
+          // 按学历层次排序学历信息
+          const sortedEducation = sortByDegreeLevel(
+            (data.education || []).map((record: any) => ({
+              ...record,
+              degreeLevel: record.degree_level
+            }))
+          );
+          
+          // 按学位类型排序学位信息
+          const sortedDegree = sortByDegreeType(
+            (data.degree || []).map((record: any) => ({
+              ...record,
+              degreeType: record.degree_level
+            }))
+          );
+          
+          setStudentStatusRecords(sortedStudentStatus);
+          setEducationRecords(sortedEducation);
+          setDegreeRecords(sortedDegree);
           setExamRecords(data.exam || []);
         }
       } catch (error) {
@@ -168,7 +197,7 @@ const EducationBackground = () => {
                     {/* 标题栏 */}
                     <div className="flex items-center justify-between mb-6">
                       <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
-                        {record.degree_level}-{record.school}-{record.major}
+                        {[record.degree_level, record.school, record.major].filter(Boolean).join('-')}
                       </div>
                       <button className="text-primary hover:underline flex items-center gap-1">
                         <ShieldCheck className="w-4 h-4" />
@@ -177,18 +206,34 @@ const EducationBackground = () => {
                     </div>
 
                     {/* 内容区域 */}
-                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                       {/* 左侧照片 */}
                       <div className="space-y-6">
                         <div>
-                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                            <span className="text-muted-foreground text-sm">照片</span>
+                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                            {record.admission_photo ? (
+                              <img 
+                                src={record.admission_photo} 
+                                alt="录取照片" 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-muted-foreground text-sm">照片</span>
+                            )}
                           </div>
                           <p className="text-center text-sm text-muted-foreground">录取照片</p>
                         </div>
                         <div>
-                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                            <span className="text-muted-foreground text-sm">照片</span>
+                          <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                            {record.degree_photo ? (
+                              <img 
+                                src={record.degree_photo} 
+                                alt="学历照片" 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-muted-foreground text-sm">照片</span>
+                            )}
                           </div>
                           <p className="text-center text-sm text-muted-foreground">学历照片</p>
                         </div>
@@ -278,7 +323,7 @@ const EducationBackground = () => {
                   {/* 标题栏 */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
-                      {record.degreeLevel}-{record.school}-{record.major}
+                      {[record.degreeLevel, record.school, record.major].filter(Boolean).join('-')}
                     </div>
                     <button className="text-primary hover:underline flex items-center gap-1">
                       <ShieldCheck className="w-4 h-4" />
@@ -287,11 +332,19 @@ const EducationBackground = () => {
                   </div>
 
                   {/* 内容区域 */}
-                  <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                        <span className="text-muted-foreground text-sm">照片</span>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                        {record.photo ? (
+                          <img 
+                            src={record.photo} 
+                            alt="学位照片" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">照片</span>
+                        )}
                       </div>
                       <p className="text-center text-sm text-muted-foreground">学位照片</p>
                     </div>
@@ -341,11 +394,19 @@ const EducationBackground = () => {
                   </div>
 
                   {/* 内容区域 */}
-                  <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2">
-                        <span className="text-muted-foreground text-sm">照片</span>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
+                        {record.photo ? (
+                          <img 
+                            src={record.photo} 
+                            alt="考研照片" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">照片</span>
+                        )}
                       </div>
                     </div>
 
@@ -458,7 +519,7 @@ const EducationBackground = () => {
                   {/* 标题栏 */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="bg-primary text-primary-foreground px-6 py-3 rounded text-lg font-medium">
-                      {record.degreeLevel}-{record.school}-{record.major}
+                      {[record.degreeLevel, record.school, record.major].filter(Boolean).join('-')}
                     </div>
                     <button className="text-primary hover:underline flex items-center gap-1">
                       <ShieldCheck className="w-4 h-4" />
@@ -467,11 +528,19 @@ const EducationBackground = () => {
                   </div>
 
                   {/* 内容区域 */}
-                  <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 mx-[10px] my-[20px] px-[12px]">
-                        <span className="text-muted-foreground text-sm">照片</span>
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 mx-[10px] my-[20px] px-[12px] overflow-hidden">
+                        {record.photo ? (
+                          <img 
+                            src={record.photo} 
+                            alt="学历照片" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">照片</span>
+                        )}
                       </div>
                       
                     </div>
