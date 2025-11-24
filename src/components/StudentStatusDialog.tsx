@@ -289,6 +289,7 @@ const StudentStatusDialog = ({
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       setIsGenerating(true);
+      onOpenChange(false);
       setShowLoadingDialog(true);
 
       const pdfData = {
@@ -339,13 +340,12 @@ const StudentStatusDialog = ({
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
-      onOpenChange(false);
     }
   };
 
   return (
     <>
-      <Dialog open={open && !showLoadingDialog} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>教育部学籍在线验证报告</DialogTitle>
