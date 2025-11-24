@@ -191,7 +191,7 @@ const EducationCard = ({
       }}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-xl font-siyuan" style={{ fontSize: '20.5px' }}>{school}</h3>
+        <h3 className="text-xl font-yahei" style={{ fontSize: '20.5px' }}>{school}</h3>
         {variant !== "exam" && (
           <div className={`${getBadgeClasses()} px-2 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
             {degreeLevel}

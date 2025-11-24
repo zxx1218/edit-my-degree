@@ -336,51 +336,49 @@ const DegreeVerificationDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>学位在线验证报告信息</DialogTitle>
+          
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {/* 加载状态 */}
           {isLoading && (
-            <div className="grid gap-6 py-8">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.3s]"></div>
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
-                </div>
-                <p className="text-sm text-muted-foreground">正在加载学位记录...</p>
-              </div>
-              <div className="grid gap-3">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-32 mx-auto" />
-              </div>
+            <div className="space-y-4 py-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
             </div>
           )}
 
           {/* 如果有学位记录但未选择，先显示选择器 */}
           {!isLoading && degreeRecords.length > 0 && !showForm && (
-            <>
-              <div className="grid gap-2">
-                <Label htmlFor="record-select">选择已有学位记录</Label>
-                <Select value={selectedRecordId} onValueChange={handleRecordSelect}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="请选择一条学位记录" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {degreeRecords.map((record) => (
-                      <SelectItem key={record.id} value={record.id}>
-                        {record.school} - {record.name} - {record.degree_type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-center pt-2">
-                <Button variant="outline" onClick={handleManualInput}>
-                  或手动填写
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                请选择一条学位记录或手动填写：
+              </p>
+              <div className="space-y-2">
+                {degreeRecords.map((record) => (
+                  <Button
+                    key={record.id}
+                    variant="outline"
+                    className="w-full justify-start text-left h-auto py-3"
+                    onClick={() => handleRecordSelect(record.id)}
+                  >
+                    <div>
+                      <div className="font-medium">{record.school}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {record.name} · {record.degree_type}
+                      </div>
+                    </div>
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleManualInput}
+                >
+                  手动填写
                 </Button>
               </div>
-            </>
+            </div>
           )}
 
           {/* 选择记录后或手动填写时显示表单 */}
