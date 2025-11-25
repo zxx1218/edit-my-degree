@@ -264,7 +264,7 @@ const StudentStatusDialog = ({
       const user = JSON.parse(currentUser);
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("remaining_logins")
+        .select("pdf_limit")
         .eq("id", user.id)
         .single();
 
@@ -273,24 +273,24 @@ const StudentStatusDialog = ({
         return;
       }
 
-      if (userData.remaining_logins < 30) {
-        toast.error("剩余登录次数不足30次，无法生成报告");
+      if (userData.pdf_limit < 30) {
+        toast.error("剩余PDF下载积分不足30，无法生成报告");
         return;
       }
 
-      // Deduct 30 logins from user's remaining_logins
+      // Deduct 30 from user's pdf_limit
       const { error: updateError } = await supabase
         .from("users")
-        .update({ remaining_logins: userData.remaining_logins - 30 })
+        .update({ pdf_limit: userData.pdf_limit - 30 })
         .eq("id", user.id);
 
       if (updateError) {
-        toast.error("扣除登录次数失败，请重试");
+        toast.error("扣除PDF下载积分失败，请重试");
         return;
       }
 
-      // Update localStorage with new remaining_logins
-      const updatedUser = { ...user, remaining_logins: userData.remaining_logins - 30 };
+      // Update localStorage with new pdf_limit
+      const updatedUser = { ...user, pdf_limit: userData.pdf_limit - 30 };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       setIsGenerating(true);
@@ -694,10 +694,10 @@ const StudentStatusDialog = ({
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认生成报告</AlertDialogTitle>
-            <AlertDialogDescription>
-              生成学籍在线验证报告PDF需要消耗30次登录权限，是否确认生成？
-            </AlertDialogDescription>
+          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+          <AlertDialogDescription>
+            生成学籍在线验证报告PDF需要消耗30个PDF下载积分，是否确认生成？
+          </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>

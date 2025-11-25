@@ -390,6 +390,7 @@ export type Database = {
           created_at: string | null
           id: string
           password: string
+          pdf_limit: number
           remaining_logins: number
           updated_at: string | null
           username: string
@@ -398,6 +399,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           password: string
+          pdf_limit?: number
           remaining_logins?: number
           updated_at?: string | null
           username: string
@@ -406,6 +408,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           password?: string
+          pdf_limit?: number
           remaining_logins?: number
           updated_at?: string | null
           username?: string
