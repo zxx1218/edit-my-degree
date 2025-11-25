@@ -33,10 +33,21 @@ const VerificationReport = () => {
     setIsLoadingData(true);
 
     try {
-      const username = localStorage.getItem("username");
-      if (!username) {
+      const currentUserStr = localStorage.getItem("currentUser");
+      if (!currentUserStr) {
         toast.error("未找到用户信息，请重新登录");
         setIsLoadingData(false);
+        navigate("/login");
+        return;
+      }
+
+      const currentUser = JSON.parse(currentUserStr);
+      const username = currentUser.username;
+      
+      if (!username) {
+        toast.error("用户信息不完整，请重新登录");
+        setIsLoadingData(false);
+        navigate("/login");
         return;
       }
 
