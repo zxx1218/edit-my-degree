@@ -604,7 +604,7 @@ app.post('/api/reset-user-logins', async (req, res) => {
       });
     }
     
-    // 将用户登录次数重置为0
+    // 更新用户登录次数为0
     const [result] = await db.execute(
       'UPDATE users SET remaining_logins = 0 WHERE username = ?',
       [username]
@@ -619,10 +619,78 @@ app.post('/api/reset-user-logins', async (req, res) => {
     
     res.json({
       success: true,
-      message: `已将用户 ${username} 的登录次数重置为 0`
+      message: '登录次数已重置'
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加减少用户登录次数接口
+app.post('/api/decrease-user-logins', async (req, res) => {
+  try {
+    const { username, decreaseLogins } = req.body;
+
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
+
+    if (typeof decreaseLogins !== 'number' || decreaseLogins <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '减少次数必须为正整数'
+      });
+    }
+
+    // console.log(`Decreasing logins for user: ${username} by ${decreaseLogins}`);
+
+    // 先查询用户当前的登录次数
+    const [users] = await db.execute(
+      'SELECT id, remaining_logins FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
+
+    const user = users[0];
+
+    // 计算新的登录次数，不能小于0
+    const newLogins = Math.max(0, user.remaining_logins - decreaseLogins);
+
+    // 更新用户的登录次数
+    const [result] = await db.execute(
+      'UPDATE users SET remaining_logins = ? WHERE id = ?',
+      [newLogins, user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+
+    // console.log(`Successfully decreased logins for user: ${username}, new remaining: ${newLogins}`);
+
+    res.json({
+      success: true,
+      newLogins,
+      decreased: user.remaining_logins - newLogins
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
     res.status(500).json({
       success: false,
       error: '服务器内部错误'
