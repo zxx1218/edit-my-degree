@@ -86,7 +86,8 @@ async function createTables() {
       id VARCHAR(36) PRIMARY KEY,
       username VARCHAR(255) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
-      remaining_logins INT NOT NULL DEFAULT 10,
+      remaining_logins INT NOT NULL DEFAULT 0,
+      pdf_limit INT NOT NULL DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
