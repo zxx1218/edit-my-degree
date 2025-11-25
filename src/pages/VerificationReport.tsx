@@ -7,6 +7,18 @@ import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
 import StudentStatusDialog from "@/components/StudentStatusDialog";
 import LoadingDialog from "@/components/LoadingDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const VerificationReport = () => {
   const navigate = useNavigate();
@@ -14,6 +26,51 @@ const VerificationReport = () => {
   const [educationDialogOpen, setEducationDialogOpen] = useState(false);
   const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [showAccessConfirm, setShowAccessConfirm] = useState(false);
+
+  const handleEducationBackgroundAccess = async () => {
+    setShowAccessConfirm(false);
+    setIsLoadingData(true);
+
+    try {
+      const username = localStorage.getItem("username");
+      if (!username) {
+        toast.error("未找到用户信息，请重新登录");
+        setIsLoadingData(false);
+        return;
+      }
+
+      // 调用 edge function 扣除登录次数
+      const { data, error } = await supabase.functions.invoke(
+        "decrease-user-logins",
+        {
+          body: { username, decreaseLogins: 1 },
+        }
+      );
+
+      setIsLoadingData(false);
+
+      if (error) {
+        toast.error("操作失败，请稍后重试");
+        return;
+      }
+
+      if (data.success) {
+        // 更新本地存储的登录次数
+        if (data.newLogins !== undefined) {
+          localStorage.setItem("remainingLogins", data.newLogins.toString());
+        }
+        // 跳转到学历学籍信息页面
+        navigate("/educationBackground");
+      } else {
+        toast.error(data.message || "登录次数不足，无法访问");
+      }
+    } catch (error) {
+      setIsLoadingData(false);
+      console.error("访问页面失败:", error);
+      toast.error("访问失败，请稍后重试");
+    }
+  };
 
   const reportOptions = [
     {
@@ -82,7 +139,7 @@ const VerificationReport = () => {
         <Card className="mt-8 overflow-hidden">
           <div
             className="relative bg-gradient-to-br from-[#5DADE2] to-[#3498DB] p-6 cursor-pointer hover:opacity-90 transition-opacity"
-            onClick={() => navigate("/educationBackground")}
+            onClick={() => setShowAccessConfirm(true)}
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
@@ -122,6 +179,26 @@ const VerificationReport = () => {
         message="正在加载数据"
         description="请稍候..."
       />
+
+      <AlertDialog open={showAccessConfirm} onOpenChange={setShowAccessConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>访问确认</AlertDialogTitle>
+            <AlertDialogDescription>
+              建议使用电脑访问该页面以获得更好的浏览体验。
+              <br />
+              <br />
+              访问该页面需要消耗 <span className="font-semibold text-foreground">1次登录次数</span>，是否确认访问？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEducationBackgroundAccess}>
+              确认访问
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
