@@ -136,7 +136,7 @@ const Purchase = () => {
               </div>
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">⑤</span>
-                <span>稍等片刻，卖家点击发货即代表开通成功</span>
+                <span>稍等片刻，商品发货即代表开通成功</span>
               </div>
             </div>
 
@@ -169,7 +169,7 @@ const Purchase = () => {
               
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <Users className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">售后QQ群</h3>
+                <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
                 <p className="text-2xl font-bold text-primary mb-2">1034981273</p>
                 <p className="text-sm text-muted-foreground text-center">
                   售后1群已满<br />二群建立于2025年11月

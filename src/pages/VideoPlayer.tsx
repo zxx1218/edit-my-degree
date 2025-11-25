@@ -10,10 +10,10 @@ const VideoPlayer = () => {
   const videoConfig = {
     demo1: {
       src: "t.mp4",
-      title: "系统基础操作演示",
+      title: "系统基础操作",
       description: "添加学籍、学历、学位、考研信息等基础功能演示",
       instructions: [
-        { number: "1", text: "长按选项卡可以编辑学历信息内容或者添加学籍学历学位，单点选项卡可以跳转到信息详情页面（存在1-2秒加载延迟）", isWarning: false },
+        { number: "1", text: "点击或者长按选项卡可以编辑学历信息内容，点击“尝试绑定”可以添加学籍学历学位，单点选项卡可以跳转到信息详情页面", isWarning: false },
         { number: "2", text: "每个学历学位的详情页面都支持上传自己的照片，且所有个人数据都会加密存储，下次登录依然存在", isWarning: false },
         { number: "3", text: "系统没有登陆时间限制，能否登陆只看登录次数余额", isWarning: false },
         { number: "4", text: "登录次数余额为0后7天会删除个人信息，如需续费请在信息删除之前，否则只能重新注册", isWarning: false },
@@ -22,12 +22,12 @@ const VideoPlayer = () => {
     },
     demo2: {
       src: "tt.mp4",
-      title: "在线验证报告生成演示",
-      description: "学籍、学历、学位在线验证报告生成功能演示",
+      title: "在线验证报告生成",
+      description: "学籍、学历、学位在线验证报告生成功能以及网页版学信档案操作演示",
       instructions: [
-        { number: "1", text: "演示二的第一条说明", isWarning: false },
-        { number: "2", text: "演示二的第二条说明", isWarning: false },
-        { number: "3", text: "演示二的第三条说明", isWarning: false }
+        { number: "1", text: "在线报告中二维码功能请等待2026年1月版本上线", isWarning: false },
+        { number: "2", text: "每次生成报告会消耗30次登录次数", isWarning: false },
+        { number: "3", text: "请使用电脑登录系统操作PDF报告的下载，手机浏览器接收返回的报告可能导致只能观看无法下载", isWarning: false }
       ]
     }
   };
@@ -54,13 +54,13 @@ const VideoPlayer = () => {
               variant={selectedVideo === "demo1" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo1")}
             >
-              系统基础操作演示
+              系统基础操作
             </Button>
             <Button
               variant={selectedVideo === "demo2" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo2")}
             >
-              在线验证报告生成演示
+              在线验证报告生成
             </Button>
           </div>
           <div className="aspect-video w-full">
