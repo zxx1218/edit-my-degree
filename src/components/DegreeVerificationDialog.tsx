@@ -196,35 +196,49 @@ const DegreeVerificationDialog = ({
       }
       
       const user = JSON.parse(currentUser);
+      console.log("Current user:", user);
+      
       const { data: userData, error: userError } = await supabase
         .from("users")
         .select("pdf_limit")
         .eq("id", user.id)
         .single();
 
-      if (userError || !userData) {
-        toast.error("无法获取用户信息");
+      console.log("Query result:", { userData, userError });
+
+      if (userError) {
+        console.error("Database error:", userError);
+        toast.error(`无法获取用户信息: ${userError.message}`);
         return;
       }
 
-      if (userData.pdf_limit < 30) {
-        toast.error("剩余PDF下载积分不足30，无法生成报告");
+      if (!userData) {
+        toast.error("用户数据不存在");
+        return;
+      }
+
+      const pdfLimit = userData.pdf_limit ?? 0;
+      
+      if (pdfLimit < 30) {
+        toast.error(`剩余PDF下载积分不足30，当前积分：${pdfLimit}`);
         return;
       }
 
       // Deduct 30 from user's pdf_limit
+      const newPdfLimit = pdfLimit - 30;
       const { error: updateError } = await supabase
         .from("users")
-        .update({ pdf_limit: userData.pdf_limit - 30 })
+        .update({ pdf_limit: newPdfLimit })
         .eq("id", user.id);
 
       if (updateError) {
+        console.error("Update error:", updateError);
         toast.error("扣除PDF下载积分失败，请重试");
         return;
       }
 
       // Update localStorage with new pdf_limit
-      const updatedUser = { ...user, pdf_limit: userData.pdf_limit - 30 };
+      const updatedUser = { ...user, pdf_limit: newPdfLimit };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       // Close the current dialog and show loading dialog
