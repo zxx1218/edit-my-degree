@@ -188,7 +188,6 @@ const DegreeVerificationDialog = ({
     setShowConfirmDialog(false);
     
     try {
-      // Check remaining logins
       const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast.error("用户信息获取失败");
@@ -197,48 +196,25 @@ const DegreeVerificationDialog = ({
       
       const user = JSON.parse(currentUser);
       console.log("Current user:", user);
-      
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("pdf_limit")
-        .eq("id", user.id)
-        .single();
 
-      console.log("Query result:", { userData, userError });
+      // 调用edge function扣除PDF积分
+      const { data: pdfLimitData, error: pdfLimitError } = await supabase.functions.invoke(
+        "decrease-pdf-limit",
+        {
+          body: { username: user.username, decreaseAmount: 30 },
+        }
+      );
 
-      if (userError) {
-        console.error("Database error:", userError);
-        toast.error(`无法获取用户信息: ${userError.message}`);
-        return;
-      }
+      console.log("PDF limit result:", { pdfLimitData, pdfLimitError });
 
-      if (!userData) {
-        toast.error("用户数据不存在");
-        return;
-      }
-
-      const pdfLimit = userData.pdf_limit ?? 0;
-      
-      if (pdfLimit < 30) {
-        toast.error(`剩余PDF下载积分不足30，当前积分：${pdfLimit}`);
-        return;
-      }
-
-      // Deduct 30 from user's pdf_limit
-      const newPdfLimit = pdfLimit - 30;
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ pdf_limit: newPdfLimit })
-        .eq("id", user.id);
-
-      if (updateError) {
-        console.error("Update error:", updateError);
-        toast.error("扣除PDF下载积分失败，请重试");
+      if (pdfLimitError || !pdfLimitData?.success) {
+        const errorMsg = pdfLimitData?.message || pdfLimitError?.message || "扣除PDF下载积分失败";
+        toast.error(errorMsg);
         return;
       }
 
       // Update localStorage with new pdf_limit
-      const updatedUser = { ...user, pdf_limit: newPdfLimit };
+      const updatedUser = { ...user, pdf_limit: pdfLimitData.newPdfLimit };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       // Close the current dialog and show loading dialog
