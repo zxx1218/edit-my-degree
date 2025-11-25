@@ -55,7 +55,7 @@ const EducationBackground = () => {
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<EducationRecord[]>([]);
-  const [activeTab, setActiveTab] = useState("education");
+  const [activeTab, setActiveTab] = useState("info");
   useEffect(() => {
     const loadUserData = async () => {
       try {
