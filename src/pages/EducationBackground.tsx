@@ -55,7 +55,7 @@ const EducationBackground = () => {
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<EducationRecord[]>([]);
-  const [activeTab, setActiveTab] = useState("education");
+  const [activeTab, setActiveTab] = useState("info");
   useEffect(() => {
     const loadUserData = async () => {
       try {
@@ -531,7 +531,7 @@ const EducationBackground = () => {
                   <div className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-8">
                     {/* 左侧照片 */}
                     <div>
-                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 mx-[10px] my-[20px] px-[12px] overflow-hidden">
+                      <div className="w-full aspect-[3/4] bg-primary/5 rounded flex items-center justify-center mb-2 overflow-hidden">
                         {record.photo ? (
                           <img 
                             src={record.photo} 
