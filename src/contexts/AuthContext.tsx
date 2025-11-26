@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isCheckingAuth: boolean;
   login: () => void;
   logout: () => void;
 }
@@ -13,6 +14,7 @@ const SESSION_DURATION = 5 * 60 * 1000; // 5分钟（毫秒）
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   // 检查登录状态是否在5分钟内
   useEffect(() => {
@@ -30,6 +32,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
       }
     }
+
+    // 无论是否命中时间戳检查，都结束加载状态
+    setIsCheckingAuth(false);
   }, []);
 
   const login = () => {
@@ -45,7 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isCheckingAuth, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
