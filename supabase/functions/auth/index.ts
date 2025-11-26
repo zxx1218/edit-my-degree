@@ -63,6 +63,18 @@ Deno.serve(async (req) => {
       console.error('Update error:', updateError);
     }
 
+    // 记录登录日志
+    const { error: logError } = await supabase
+      .from('login_logs')
+      .insert({
+        user_id: user.id,
+        username: user.username
+      });
+
+    if (logError) {
+      console.error('Login log error:', logError);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

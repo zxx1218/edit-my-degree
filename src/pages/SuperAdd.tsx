@@ -36,6 +36,8 @@ const SuperAdd = () => {
   const [queryUsername, setQueryUsername] = useState("");
   const [queriedUser, setQueriedUser] = useState<User | null>(null);
   const [isQuerying, setIsQuerying] = useState(false);
+  const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
+  const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
   const { toast } = useToast();
 
   // 检查登录状态是否在72小时内
@@ -55,6 +57,42 @@ const SuperAdd = () => {
       }
     }
   }, []);
+
+  // 获取今日登录次数
+  const fetchTodayLoginCount = async () => {
+    setIsLoadingLoginCount(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-today-login-count`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          }
+        }
+      );
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setTodayLoginCount(data.count);
+      } else {
+        console.error('获取登录次数失败:', data.error);
+      }
+    } catch (error) {
+      console.error('获取登录次数时出错:', error);
+    } finally {
+      setIsLoadingLoginCount(false);
+    }
+  };
+
+  // 登录验证成功后获取今日登录次数
+  useEffect(() => {
+    if (isVerified) {
+      fetchTodayLoginCount();
+    }
+  }, [isVerified]);
 
   const fetchUsers = async () => {
     setIsFetchingUsers(true);
@@ -375,6 +413,51 @@ const SuperAdd = () => {
           <h1 className="text-4xl font-bold tracking-tight">用户登录次数管理系统</h1>
           <p className="text-muted-foreground text-lg">管理和监控用户登录次数</p>
         </div>
+
+        {/* 今日登录次数统计卡片 */}
+        <Card className="mb-6 shadow-xl border-2 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-200 dark:border-indigo-800">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-600 dark:bg-indigo-500 rounded-lg shadow-lg">
+                  <List className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl text-indigo-900 dark:text-indigo-100">今日系统登录统计</CardTitle>
+                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">Today's Login Count</CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                {isLoadingLoginCount ? (
+                  <div className="flex items-center gap-3 animate-pulse">
+                    <div className="h-16 w-16 bg-indigo-300 dark:bg-indigo-700 rounded-xl"></div>
+                    <div className="h-10 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                    <div className="text-5xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">
+                      {todayLoginCount ?? '-'}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">次</div>
+                  </div>
+                )}
+                <Button
+                  onClick={fetchTodayLoginCount}
+                  variant="outline"
+                  size="sm"
+                  disabled={isLoadingLoginCount}
+                  className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 h-10 px-4"
+                >
+                  {isLoadingLoginCount ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    '刷新'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2 mb-6">
           {/* 查询用户卡片 */}
