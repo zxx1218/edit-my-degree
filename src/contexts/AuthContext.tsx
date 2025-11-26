@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -8,15 +8,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const LOGIN_TIMESTAMP_KEY = "auth_login_timestamp";
+const SESSION_DURATION = 5 * 60 * 1000; // 5分钟（毫秒）
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // 每次刷新页面都需要重新登录
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // 检查登录状态是否在5分钟内
+  useEffect(() => {
+    const loginTimestamp = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
+    if (loginTimestamp) {
+      const loginTime = parseInt(loginTimestamp, 10);
+      const currentTime = Date.now();
+      const timeDiff = currentTime - loginTime;
+
+      if (timeDiff < SESSION_DURATION) {
+        // 在5分钟内，保持登录状态
+        setIsAuthenticated(true);
+      } else {
+        // 超过5分钟，清除时间戳
+        localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
+      }
+    }
+  }, []);
+
   const login = () => {
+    // 登录时记录当前时间戳
+    localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
     setIsAuthenticated(true);
   };
 
   const logout = () => {
+    // 退出时清除时间戳
+    localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
     setIsAuthenticated(false);
   };
 
