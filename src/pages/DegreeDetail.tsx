@@ -30,12 +30,12 @@ const DegreeDetail = () => {
   const defaultData: DegreeData = {
     name: "浆果儿",
     gender: "女",
-    birthDate: "2001-06-15",
-    school: "示例大学",
-    degreeType: "工学学士学位",
+    birthDate: "2002-12-09",
+    school: "清华大学",
+    degreeType: "经济学学士学位",
     degreeLevel: "学士",
-    degreeDate: "2024-06-30",
-    major: "计算机科学与技术",
+    degreeDate: "2025-06-30",
+    major: "经济与金融",
     certificateNumber: "123456789012345678",
     photo: "",
   };

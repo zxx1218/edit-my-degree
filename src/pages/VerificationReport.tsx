@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, FileText, Download, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
@@ -111,7 +110,7 @@ const VerificationReport = () => {
           <button onClick={() => navigate(-1)} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-medium">在线验证报告查看与下载</h1>
+          <h1 className="text-lg font-medium">在线验证报告生成与下载</h1>
           <div className="w-10"></div>
         </div>
       </div>
@@ -157,10 +156,10 @@ const VerificationReport = () => {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-white mb-1">
-                  查看网页版学历学籍信息页面
+                  登录网页版学历学籍信息页面
                 </h3>
                 <p className="text-white/80 text-sm">
-                  查看您的所有学历、学位和学籍信息
+                  跳转到网页版学信信息查询页面，建议使用电脑端访问
                 </p>
               </div>
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ml-4">

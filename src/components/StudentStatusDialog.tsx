@@ -25,7 +25,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-// import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 
@@ -446,6 +445,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    placeholder="请输入姓名"
                   />
                 </div>
 
@@ -510,6 +510,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, nationality: e.target.value })
                     }
+                    placeholder="请输入民族"
                   />
                 </div>
 
@@ -521,6 +522,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, school: e.target.value })
                     }
+                    placeholder="请输入学校名称"
                   />
                 </div>
 
@@ -532,6 +534,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, degreeLevel: e.target.value })
                     }
+                    placeholder="例：本科 \ 硕士研究生 \ 博士研究生"
                   />
                 </div>
 
@@ -543,6 +546,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, major: e.target.value })
                     }
+                    placeholder="请输入专业名称"
                   />
                 </div>
 
@@ -554,6 +558,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, duration: e.target.value })
                     }
+                    placeholder="例：4 年（注意：4年的“4”与“年”之间存在空格）"
                   />
                 </div>
 
@@ -565,6 +570,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, educationType: e.target.value })
                     }
+                    placeholder="例：普通高等教育"
                   />
                 </div>
 
@@ -576,17 +582,19 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, studyType: e.target.value })
                     }
+                    placeholder="例：全日制 \ 非全日制"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="branch">分院系所 *</Label>
+                  <Label htmlFor="branch">分院系所</Label>
                   <Input
                     id="branch"
                     value={formData.branch}
                     onChange={(e) =>
                       setFormData({ ...formData, branch: e.target.value })
                     }
+                    placeholder="一般不写！"
                   />
                 </div>
 
@@ -633,6 +641,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, status: e.target.value })
                     }
+                    placeholder="例：在籍 \不在籍（毕业）"
                   />
                 </div>
 

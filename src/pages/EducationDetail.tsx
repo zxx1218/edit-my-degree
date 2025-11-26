@@ -36,19 +36,19 @@ const EducationDetail = () => {
 
   // 默认值
   const defaultData: EducationData = {
-    name: "张三",
-    gender: "男",
-    birthDate: "1995-06-15",
-    school: "示例大学",
-    major: "计算机科学与技术",
+    name: "浆果儿",
+    gender: "女",
+    birthDate: "2002-12-09",
+    school: "清华大学",
+    major: "经济与金融",
     studyType: "普通全日制",
     degreeLevel: "本科",
-    enrollmentDate: "2020-09-01",
-    graduationDate: "2024-06-30",
+    enrollmentDate: "2021-09-01",
+    graduationDate: "2025-06-30",
     educationType: "普通高等教育",
     duration: "4年",
     graduationStatus: "毕业",
-    principalName: "李校长",
+    principalName: "李路明",
     certificateNumber: "123456789012345678",
     photo: "",
   };

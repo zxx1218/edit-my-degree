@@ -25,9 +25,10 @@ const VideoPlayer = () => {
       title: "在线验证报告生成",
       description: "学籍、学历、学位在线验证报告生成功能以及网页版学信档案操作演示",
       instructions: [
-        { number: "1", text: "在线报告中二维码功能请等待2026年1月版本上线", isWarning: false },
-        { number: "2", text: "每次生成报告会消耗30次登录次数", isWarning: false },
-        { number: "3", text: "请使用电脑登录系统操作PDF报告的下载，手机浏览器接收返回的报告可能导致只能观看无法下载", isWarning: false }
+        { number: "1", text: "在线报告中二维码扫描后跳转功能请等待2026年1月版本上线", isWarning: false },
+        { number: "2", text: "建议使用电脑登录系统操作PDF报告的下载，部分手机浏览器接收返回的报告可能导致只能观看无法下载", isWarning: false },
+        { number: "3", text: "每生成一份报告需消耗30个PDF生成积分，永久版用户开通后默认获得90积分，PDF下载积分充值请在购买页下单", isWarning: true },
+        { number: "4", text: "特别注意：低调使用！", isWarning: true }
       ]
     }
   };

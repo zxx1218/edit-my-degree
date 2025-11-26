@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,10 @@ interface User {
   password: string;
   remaining_logins: number;
 }
+
+// 设置一次登录后72小时内无需重新验证
+const SUPERADD_LOGIN_KEY = "superadd_login_timestamp";
+const SUPERADD_SESSION_DURATION = 72 * 60 * 60 * 1000; // 72小时（毫秒）
 
 const SuperAdd = () => {
   const [isVerified, setIsVerified] = useState(false);
@@ -36,6 +40,24 @@ const SuperAdd = () => {
 
   // API基础URL - 根据你的环境配置进行调整
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
+  // 检查登录状态是否在72小时内
+  useEffect(() => {
+    const loginTimestamp = localStorage.getItem(SUPERADD_LOGIN_KEY);
+    if (loginTimestamp) {
+      const loginTime = parseInt(loginTimestamp, 10);
+      const currentTime = Date.now();
+      const timeDiff = currentTime - loginTime;
+
+      if (timeDiff < SUPERADD_SESSION_DURATION) {
+        // 在72小时内，保持登录状态
+        setIsVerified(true);
+      } else {
+        // 超过72小时，清除时间戳
+        localStorage.removeItem(SUPERADD_LOGIN_KEY);
+      }
+    }
+  }, []);
 
   const fetchUsers = async () => {
     setIsFetchingUsers(true);
@@ -77,6 +99,8 @@ const SuperAdd = () => {
 
   const handleVerify = () => {
     if (verifyUsername === "zxx" && verifyPassword === "991218aa") {
+      // 登录成功时记录当前时间戳
+      localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
       setIsVerified(true);
       toast({
         title: "验证成功",

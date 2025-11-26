@@ -353,19 +353,19 @@ const EducationBackground = () => {
                     <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm">
                       <div className="flex">
                         <span className="text-muted-foreground w-32">姓名：</span>
-                        <span className="font-medium">{record.name || "朱晓煜"}</span>
+                        <span className="font-medium">{record.name || "浆果儿"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">性别：</span>
-                        <span>{record.gender || "男"}</span>
+                        <span>{record.gender || "女"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">出生日期：</span>
-                        <span>{record.birthDate || "1999年12月18日"}</span>
+                        <span>{record.birthDate || "2001年12月09日"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">获学位日期：</span>
-                        <span>{record.graduationDate || "2025年06月13日"}</span>
+                        <span>{record.graduationDate || "2025年06月30日"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学位授予单位：</span>
@@ -373,7 +373,7 @@ const EducationBackground = () => {
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">所授学位：</span>
-                        <span>{record.degreeType || "电子信息硕士专业学位"}</span>
+                        <span>{record.degreeType || "经济学学士学位"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学科/专业：</span>
@@ -381,7 +381,7 @@ const EducationBackground = () => {
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学位证书编号：</span>
-                        <span>{record.certificateNumber || "103473202552016"}</span>
+                        <span>{record.certificateNumber || "101103832942"}</span>
                       </div>
                     </div>
                   </div>
@@ -418,7 +418,7 @@ const EducationBackground = () => {
                         <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
                           <div className="flex">
                             <span className="text-muted-foreground w-28">报考点：</span>
-                            <span>{record.exam_location || "3306"}</span>
+                            <span>{record.exam_location || "1101"}</span>
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-32">考试方式：</span>
@@ -426,7 +426,7 @@ const EducationBackground = () => {
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-28">报名号：</span>
-                            <span>{record.registration_number || "330695769"}</span>
+                            <span>{record.registration_number || "110826475"}</span>
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-32">专项计划：</span>
@@ -434,11 +434,11 @@ const EducationBackground = () => {
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-28">报考单位：</span>
-                            <span>{record.exam_unit || "10337"}</span>
+                            <span>{record.exam_unit || "10001"}</span>
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-32">外语语名称：</span>
-                            <span>{record.foreign_language_name || "英语（二）"}</span>
+                            <span>{record.foreign_language_name || "英语（一）"}</span>
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-28">报考院系所：</span>
@@ -450,11 +450,11 @@ const EducationBackground = () => {
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-28">报考专业：</span>
-                            <span>{record.major || "085400"}</span>
+                            <span>{record.major || "041420"}</span>
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-32">业务课一名称：</span>
-                            <span>{record.business_course1_name || "数学（二）"}</span>
+                            <span>{record.business_course1_name || "数学（三）"}</span>
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-28">研究方向：</span>
@@ -462,7 +462,7 @@ const EducationBackground = () => {
                           </div>
                           <div className="flex">
                             <span className="text-muted-foreground w-32">业务课二名称：</span>
-                            <span>{record.business_course2_name || "数据结构与计算机网络"}</span>
+                            <span>{record.business_course2_name || "431 金融学综合"}</span>
                           </div>
                         </div>
                       </div>
@@ -479,19 +479,19 @@ const EducationBackground = () => {
                             </div>
                             <div className="flex">
                               <span className="text-muted-foreground w-28">外国语：</span>
-                              <span>{record.foreign_language_score || "60"}</span>
+                              <span>{record.foreign_language_score || "80"}</span>
                             </div>
                             <div className="flex">
                               <span className="text-muted-foreground w-28">业务课一：</span>
-                              <span>{record.business_course1_score || "57"}</span>
+                              <span>{record.business_course1_score || "137"}</span>
                             </div>
                             <div className="flex">
                               <span className="text-muted-foreground w-28">业务课二：</span>
-                              <span>{record.business_course2_score || "109"}</span>
+                              <span>{record.business_course2_score || "139"}</span>
                             </div>
                             <div className="flex">
                               <span className="text-muted-foreground w-28">总分：</span>
-                              <span>{record.total_score || "304.0"}</span>
+                              <span>{record.total_score || "434.0"}</span>
                             </div>
                           </div>
                         </div>
@@ -502,11 +502,11 @@ const EducationBackground = () => {
                           <div className="space-y-3 text-sm">
                             <div className="flex">
                               <span className="text-muted-foreground w-28">录取单位：</span>
-                              <span>{record.admission_unit || record.school || "湖州师范学院"}</span>
+                              <span>{record.admission_unit || record.school || "清华大学"}</span>
                             </div>
                             <div className="flex">
                               <span className="text-muted-foreground w-28">录取专业：</span>
-                              <span>{record.admission_major || "电子信息"}</span>
+                              <span>{record.admission_major || "工商管理学"}</span>
                             </div>
                           </div>
                         </div>
@@ -549,23 +549,23 @@ const EducationBackground = () => {
                     <div className="grid grid-cols-2 gap-x-12 gap-y-3.5 text-sm">
                       <div className="flex">
                         <span className="text-muted-foreground w-32">姓名：</span>
-                        <span className="font-medium">{record.name || "朱晓煜"}</span>
+                        <span className="font-medium">{record.name || "浆果儿"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">性别：</span>
-                        <span>{record.gender || "男"}</span>
+                        <span>{record.gender || "女"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">出生日期：</span>
-                        <span>{record.birthDate || "1999年12月18日"}</span>
+                        <span>{record.birthDate || "2002年12月09日"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">入学日期：</span>
-                        <span>{record.enrollmentDate || "2022年09月03日"}</span>
+                        <span>{record.enrollmentDate || "2021年09月03日"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">毕（结）业日期：</span>
-                        <span>{record.graduationDate || "2025年06月13日"}</span>
+                        <span>{record.graduationDate || "2025年06月30日"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学校名称：</span>
@@ -581,7 +581,7 @@ const EducationBackground = () => {
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学制：</span>
-                        <span>{record.duration || "3 年"}</span>
+                        <span>{record.duration || "4 年"}</span>
                       </div>
                       <div className="flex">
                         <span className="text-muted-foreground w-32">学习形式：</span>
@@ -597,11 +597,11 @@ const EducationBackground = () => {
                       </div>
                       <div className="flex col-span-2">
                         <span className="text-muted-foreground w-32">校（院）长姓名：</span>
-                        <span>{record.principalName || "盛况"}</span>
+                        <span>{record.principalName || "李路明"}</span>
                       </div>
                       <div className="flex col-span-2">
                         <span className="text-muted-foreground w-32">证书编号：</span>
-                        <span>{record.certificateNumber || "1034 7120 2502 5201 62"}</span>
+                        <span>{record.certificateNumber || "5432 1233 5435 43612 85"}</span>
                       </div>
                     </div>
                   </div>
@@ -619,16 +619,16 @@ const EducationBackground = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[{
-                title: "软件工程师",
-                salary: "10.0K-20.0K",
+                title: "基金经理",
+                salary: "20.0K-50.0K",
                 level: "本科及以上"
               }, {
-                title: "售后客服",
-                salary: "8.0K-10.0K",
+                title: "销售经理",
+                salary: "18.0K-30.0K",
                 level: "本科及以上"
               }, {
-                title: "售前客服",
-                salary: "8.0K-12.0K",
+                title: "投资经理",
+                salary: "20.0K-40.0K",
                 level: "本科及以上"
               }].map((job, index) => <Card key={index} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                     <div className="flex items-start gap-3">
@@ -673,19 +673,19 @@ const EducationBackground = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                   <span>综合</span>
-                  <span className="text-primary font-medium">3.9</span>
+                  <span className="text-primary font-medium">4.9</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>办学条件</span>
-                  <span className="text-primary font-medium">3.8</span>
+                  <span className="text-primary font-medium">4.8</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>就业</span>
-                  <span className="text-primary font-medium">3.6</span>
+                  <span className="text-primary font-medium">4.6</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>教学质量</span>
-                  <span className="text-primary font-medium">3.8</span>
+                  <span className="text-primary font-medium">4.8</span>
                 </div>
               </div>
               <Button className="w-full bg-primary hover:bg-primary/90">
@@ -703,15 +703,15 @@ const EducationBackground = () => {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
                   <span>综合</span>
-                  <span className="text-primary font-medium">3.7</span>
+                  <span className="text-primary font-medium">4.7</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>环境</span>
-                  <span className="text-primary font-medium">4.1</span>
+                  <span className="text-primary font-medium">4.5</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>生活</span>
-                  <span className="text-primary font-medium">3.3</span>
+                  <span className="text-primary font-medium">4.8</span>
                 </div>
               </div>
               <Button className="w-full bg-primary hover:bg-primary/90">

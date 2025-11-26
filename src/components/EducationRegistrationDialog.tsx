@@ -370,6 +370,7 @@ const handleConfirmGenerate = async () => {
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="请输入姓名"
                     required
                   />
                 </div>
@@ -483,6 +484,7 @@ const handleConfirmGenerate = async () => {
                   id="school"
                   value={formData.school}
                   onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                  placeholder="请输入大学的名称"
                   required
                 />
               </div>
@@ -494,6 +496,7 @@ const handleConfirmGenerate = async () => {
                     id="major"
                     value={formData.major}
                     onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+                    placeholder="例：经济与金融"
                     required
                   />
                 </div>
@@ -503,6 +506,7 @@ const handleConfirmGenerate = async () => {
                     id="duration"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    placeholder="例：4 年（存在空格）"
                     required
                   />
                 </div>
@@ -514,6 +518,7 @@ const handleConfirmGenerate = async () => {
                   id="degreeLevel"
                   value={formData.degreeLevel}
                   onChange={(e) => setFormData({ ...formData, degreeLevel: e.target.value })}
+                  placeholder="例：本科"
                   required
                 />
               </div>
@@ -525,6 +530,7 @@ const handleConfirmGenerate = async () => {
                     id="educationType"
                     value={formData.educationType}
                     onChange={(e) => setFormData({ ...formData, educationType: e.target.value })}
+                    placeholder="例：普通高等教育"
                     required
                   />
                 </div>
@@ -534,6 +540,7 @@ const handleConfirmGenerate = async () => {
                     id="studyType"
                     value={formData.studyType}
                     onChange={(e) => setFormData({ ...formData, studyType: e.target.value })}
+                    placeholder="例：普通全日制"
                     required
                   />
                 </div>
@@ -545,6 +552,7 @@ const handleConfirmGenerate = async () => {
                   id="graduationStatus"
                   value={formData.graduationStatus}
                   onChange={(e) => setFormData({ ...formData, graduationStatus: e.target.value })}
+                  placeholder="例：毕业 或 结业"
                   required
                 />
               </div>
@@ -555,6 +563,7 @@ const handleConfirmGenerate = async () => {
                   id="certificateNumber"
                   value={formData.certificateNumber}
                   onChange={(e) => setFormData({ ...formData, certificateNumber: e.target.value })}
+                  placeholder="例：1234 5678 1234 5678 12"
                   required
                 />
               </div>
@@ -565,6 +574,7 @@ const handleConfirmGenerate = async () => {
                   id="principalName"
                   value={formData.principalName}
                   onChange={(e) => setFormData({ ...formData, principalName: e.target.value })}
+                  placeholder="请输入校（院）长的姓名"
                   required
                 />
               </div>
@@ -578,7 +588,7 @@ const handleConfirmGenerate = async () => {
                   <label htmlFor="photo-upload" className="cursor-pointer">
                     <div className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80">
                       <Upload className="w-4 h-4" />
-                      <span>{formData.photo ? "更换照片" : "上传照片"}</span>
+                      <span>{formData.photo ? "更换照片" : "上传蓝底照片"}</span>
                     </div>
                     <input
                       id="photo-upload"

@@ -75,9 +75,9 @@ const Index = () => {
         if (data.studentStatus.length === 0) {
           try {
             const defaultData = {
-              name: "新用户",
+              name: "浆果儿",
               school: "清华大学",
-              major: "汉语言文学",
+              major: "经济与金融",
               study_type: "全日制",
               degree_level: "本科",
             };
@@ -146,7 +146,7 @@ const Index = () => {
       
       if (selectedRecord.type === "degree") {
         newData = {
-          name: "新用户",
+          name: "浆果儿",
           school: "新学校",
           degree_type: level, // 学位使用 degree_type
           degree_level: "", // 学位的 degree_level 可以为空
@@ -156,7 +156,7 @@ const Index = () => {
         // 考研信息不需要 degree_level 字段，使用当前年份作为默认值
         const currentYear = new Date().getFullYear();
         newData = {
-          name: "新用户",
+          name: "浆果儿",
           school: "新学校",
           year: currentYear.toString(),
           note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
@@ -164,7 +164,7 @@ const Index = () => {
       } else {
         // 学历/学籍使用 degree_level
         newData = {
-          name: "新用户",
+          name: "浆果儿",
           school: "新学校",
           major: "新专业",
           study_type: "全日制",
