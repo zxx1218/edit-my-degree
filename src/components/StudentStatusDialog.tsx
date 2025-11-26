@@ -393,6 +393,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    placeholder="请输入姓名"
                   />
                 </div>
 
@@ -457,6 +458,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, nationality: e.target.value })
                     }
+                    placeholder="请输入民族"
                   />
                 </div>
 
@@ -468,6 +470,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, school: e.target.value })
                     }
+                    placeholder="请输入学校名称"
                   />
                 </div>
 
@@ -479,6 +482,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, degreeLevel: e.target.value })
                     }
+                    placeholder="请输入层次（如：本科、硕士研究生）"
                   />
                 </div>
 
@@ -490,6 +494,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, major: e.target.value })
                     }
+                    placeholder="请输入专业名称"
                   />
                 </div>
 
@@ -498,9 +503,10 @@ const StudentStatusDialog = ({
                   <Input
                     id="duration"
                     value={formData.duration}
-                    onChange={(e) =>
+                     onChange={(e) =>
                       setFormData({ ...formData, duration: e.target.value })
                     }
+                    placeholder="请输入学制（如：4年）"
                   />
                 </div>
 
@@ -512,6 +518,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, educationType: e.target.value })
                     }
+                    placeholder="请输入学历类别（如：普通高等教育）"
                   />
                 </div>
 
@@ -523,6 +530,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, studyType: e.target.value })
                     }
+                    placeholder="请输入学习形式（如：全日制）"
                   />
                 </div>
 
@@ -534,6 +542,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, branch: e.target.value })
                     }
+                    placeholder="请输入分院系所"
                   />
                 </div>
 
@@ -580,6 +589,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, status: e.target.value })
                     }
+                    placeholder="请输入学籍状态（如：在学）"
                   />
                 </div>
 

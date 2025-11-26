@@ -363,6 +363,7 @@ const EducationRegistrationDialog = ({
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="请输入姓名"
                     required
                   />
                 </div>
@@ -476,6 +477,7 @@ const EducationRegistrationDialog = ({
                   id="school"
                   value={formData.school}
                   onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                  placeholder="请输入学校名称"
                   required
                 />
               </div>
@@ -487,6 +489,7 @@ const EducationRegistrationDialog = ({
                     id="major"
                     value={formData.major}
                     onChange={(e) => setFormData({ ...formData, major: e.target.value })}
+                    placeholder="请输入专业名称"
                     required
                   />
                 </div>
@@ -496,6 +499,7 @@ const EducationRegistrationDialog = ({
                     id="duration"
                     value={formData.duration}
                     onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                    placeholder="请输入学制（如：4年）"
                     required
                   />
                 </div>
@@ -507,6 +511,7 @@ const EducationRegistrationDialog = ({
                   id="degreeLevel"
                   value={formData.degreeLevel}
                   onChange={(e) => setFormData({ ...formData, degreeLevel: e.target.value })}
+                  placeholder="请输入层次（如：本科）"
                   required
                 />
               </div>
@@ -518,6 +523,7 @@ const EducationRegistrationDialog = ({
                     id="educationType"
                     value={formData.educationType}
                     onChange={(e) => setFormData({ ...formData, educationType: e.target.value })}
+                    placeholder="请输入学历类别（如：普通高等教育）"
                     required
                   />
                 </div>
@@ -527,6 +533,7 @@ const EducationRegistrationDialog = ({
                     id="studyType"
                     value={formData.studyType}
                     onChange={(e) => setFormData({ ...formData, studyType: e.target.value })}
+                    placeholder="请输入学习形式（如：全日制）"
                     required
                   />
                 </div>
@@ -538,6 +545,7 @@ const EducationRegistrationDialog = ({
                   id="graduationStatus"
                   value={formData.graduationStatus}
                   onChange={(e) => setFormData({ ...formData, graduationStatus: e.target.value })}
+                  placeholder="请输入毕业或结业"
                   required
                 />
               </div>
@@ -548,6 +556,7 @@ const EducationRegistrationDialog = ({
                   id="certificateNumber"
                   value={formData.certificateNumber}
                   onChange={(e) => setFormData({ ...formData, certificateNumber: e.target.value })}
+                  placeholder="请输入证书编号"
                   required
                 />
               </div>
@@ -558,6 +567,7 @@ const EducationRegistrationDialog = ({
                   id="principalName"
                   value={formData.principalName}
                   onChange={(e) => setFormData({ ...formData, principalName: e.target.value })}
+                  placeholder="请输入校长或院长姓名"
                   required
                 />
               </div>
