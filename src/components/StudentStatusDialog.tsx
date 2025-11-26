@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+// import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 
@@ -67,9 +68,6 @@ const StudentStatusDialog = ({
   const [enrollmentDateOpen, setEnrollmentDateOpen] = useState(false);
   const [graduationDateOpen, setGraduationDateOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-
-  // 设置API基础URL
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
   // 获取用户的学籍记录
   useEffect(() => {
@@ -252,11 +250,10 @@ const StudentStatusDialog = ({
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmGenerate = async () => {
+const handleConfirmGenerate = async () => {
     setShowConfirmDialog(false);
 
     try {
-      // Check remaining logins
       const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast.error("用户信息获取失败");
@@ -264,52 +261,29 @@ const StudentStatusDialog = ({
       }
       
       const user = JSON.parse(currentUser);
-      
-      // 获取用户当前登录次数
-      const userResponse = await fetch(`${API_BASE_URL}/get-user-data`, {
+      console.log("Current user:", user);
+
+      // 调用后端接口扣除PDF积分
+      const pdfLimitResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/decrease-pdf-limit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id }),
-      });
-      
-      const userDataResult = await userResponse.json();
-
-      if (!userResponse.ok || !userDataResult) {
-        toast.error("无法获取用户信息");
-        return;
-      }
-
-      if (user.remaining_logins < 30) {
-        toast.error("剩余登录次数不足30次，无法生成报告");
-        return;
-      }
-
-      // 扣除30次登录次数
-      const updateResponse = await fetch(`${API_BASE_URL}/update-user-logins`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          userId: user.id,
-          addLogins: -30
-        }),
+        body: JSON.stringify({ username: user.username, decreaseAmount: 30 }),
       });
 
-      const updateResult = await updateResponse.json();
+      const pdfLimitData = await pdfLimitResponse.json();
 
-      if (!updateResponse.ok || !updateResult.success) {
-        toast.error("扣除登录次数失败，请重试");
+      console.log("PDF limit result:", pdfLimitData);
+
+      if (!pdfLimitResponse.ok || !pdfLimitData.success) {
+        const errorMsg = pdfLimitData.message || "扣除PDF下载积分失败";
+        toast.error(errorMsg);
         return;
       }
 
-      // 更新localStorage中的剩余登录次数
-      const updatedUser = { 
-        ...user, 
-        remaining_logins: updateResult.newLogins 
-      };
+      // Update localStorage with new pdf_limit
+      const updatedUser = { ...user, pdf_limit: pdfLimitData.newPdfLimit };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       setIsGenerating(true);
@@ -335,8 +309,8 @@ const StudentStatusDialog = ({
         degreePhoto: formData.degreePhoto,
       };
 
-      // 调用本地后端API生成PDF
-      const response = await fetch(`${API_BASE_URL}/generate-student-status-pdf`, {
+      // 调用后端接口生成学籍验证报告PDF
+      const generateResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/generate-student-status-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -344,22 +318,70 @@ const StudentStatusDialog = ({
         body: JSON.stringify(pdfData),
       });
 
-      if (!response.ok) {
-        throw new Error('生成PDF失败');
+      console.log("学籍验证报告PDF response:", generateResponse);
+
+      // if (!generateResponse.ok) {
+      //   throw new Error('生成PDF失败');
+      // }
+
+      console.log("学籍验证报告PDF响应状态:", generateResponse.status);
+
+      // 检查响应是否成功
+      if (!generateResponse.ok) {
+        const errorText = await generateResponse.text();
+        let errorMessage = '生成PDF失败';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // 如果不是JSON格式，则使用原始文本
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      // 获取PDF数据并下载
-      const blob = await response.blob();
+      // 检查响应的内容类型
+      const contentType = generateResponse.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/pdf')) {
+        const errorText = await generateResponse.text();
+        let errorMessage = '服务器返回了意外的响应格式';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (e) {
+          // 如果不是JSON格式，则使用原始文本
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // 使用 arrayBuffer() 替代 blob()
+      const arrayBuffer = await generateResponse.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+
+      // 下载PDF
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `学籍在线验证报告_${formData.name}.pdf`;
+      const contentDisposition = generateResponse.headers.get('content-disposition');
+      let fileName = `教育部学籍在线验证报告_${formData.name}_${Date.now()}.pdf`;
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (fileNameMatch && fileNameMatch[1]) {
+          fileName = fileNameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      link.download = decodeURIComponent(fileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success("学籍验证报告生成成功");
+      toast.success("教育部学籍在线验证报告生成成功");
     } catch (error) {
       console.error("生成学籍验证报告失败:", error);
       toast.error("生成学籍验证报告失败，请重试");
@@ -715,10 +737,10 @@ const StudentStatusDialog = ({
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认生成报告</AlertDialogTitle>
-            <AlertDialogDescription>
-              生成学籍在线验证报告PDF需要消耗30次登录权限，是否确认生成？
-            </AlertDialogDescription>
+          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+          <AlertDialogDescription>
+            生成学籍在线验证报告PDF需要消耗30个PDF下载积分，是否确认生成？
+          </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>

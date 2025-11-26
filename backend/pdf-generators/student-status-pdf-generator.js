@@ -249,21 +249,21 @@ const generateStudentStatusPdf = async (req, res) => {
     }
 
     // 保存PDF
-    console.log('正在保存PDF文档...');
+    console.log('正在保存学籍在线验证报告PDF文档...');
     const pdfBytes = await pdfDoc.save();
-    console.log('PDF文档保存完成，大小:', pdfBytes.length, '字节');
+    console.log('学籍在线验证报告PDF文档保存完成，大小:', pdfBytes.length, '字节');
 
     // 生成文件名
-    const fileName = `学籍状态报告_${name}_${Date.now()}.pdf`;
+    const fileName = `教育部学籍在线验证报告_${name}_${Date.now()}.pdf`;
     
     // 保存PDF到后端目录
     try {
       const reportDir = path.join(__dirname, '../report_records');
       const filePath = path.join(reportDir, fileName);
       await fs.writeFile(filePath, pdfBytes);
-      console.log('PDF文件已在后端保存:', filePath);
+      console.log('学籍在线验证报告PDF文件已在后端保存:', filePath);
     } catch (saveError) {
-      console.error('保存PDF到后端目录失败:', saveError.message);
+      console.error('保存学籍在线验证报告PDF到后端目录失败:', saveError.message);
       // 不中断流程，仍然发送给前端
     }
 
@@ -271,17 +271,20 @@ const generateStudentStatusPdf = async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     // 对文件名进行编码以避免特殊字符导致的错误
     const encodedFileName = encodeURIComponent(fileName);
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodedFileName}`);
+    // 修复文件名显示问题，同时兼容不同浏览器
+    res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
+    // 添加额外的头部确保浏览器将响应视为附件而非内联内容
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     console.log('设置响应头完成，文件名:', fileName);
 
     // 发送PDF数据
     res.send(Buffer.from(pdfBytes));
-    console.log('学籍状态PDF文件发送成功');
+    console.log('学籍在线验证报告PDF文件发送成功');
   } catch (error) {
-    console.error("学籍状态PDF生成错误:", error);
+    console.error("学籍在线验证报告PDF生成错误:", error);
     res.status(500).json({
       success: false,
-      error: 'PDF生成失败: ' + error.message
+      error: '学籍在线验证报告PDF生成失败: ' + error.message
     });
   }
 };

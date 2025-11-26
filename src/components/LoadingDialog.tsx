@@ -1,6 +1,9 @@
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface LoadingDialogProps {
@@ -17,6 +20,10 @@ const LoadingDialog = ({
   return (
     <Dialog open={open}>
       <DialogContent className="sm:max-w-[400px] border-none shadow-2xl" hideClose>
+        <DialogHeader className="sr-only">
+          <DialogTitle>正在生成报告</DialogTitle>
+          <DialogDescription>请稍候，这可能需要几秒钟...</DialogDescription>
+        </DialogHeader>
         <div className="flex flex-col items-center justify-center gap-6 py-8">
           <div className="relative">
             <div className="h-20 w-20 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>

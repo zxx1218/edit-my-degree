@@ -8,8 +8,16 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 9092,
+    // 添加代理配置解决跨域问题
+    proxy: {
+      '/api': {
+        target: 'http://jk.fortunefreedom.top:10002',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    },
     // 添加允许的主机列表，包含需要放行的所有域名
-    allowedHosts: ['fortunefreedom.top','jk.fortunefreedom.top', 'localhost']
+    allowedHosts: ['fortunefreedom.top','jk.fortunefreedom.top', 'localhost', 'chsiii.cn']
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

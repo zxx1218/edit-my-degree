@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 
@@ -183,11 +184,10 @@ const DegreeVerificationDialog = ({
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmGenerate = async () => {
+const handleConfirmGenerate = async () => {
     setShowConfirmDialog(false);
     
     try {
-      // Check remaining logins
       const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast.error("用户信息获取失败");
@@ -195,52 +195,30 @@ const DegreeVerificationDialog = ({
       }
       
       const user = JSON.parse(currentUser);
-      
-      // 获取用户当前的登录次数
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/get-user-data`, {
-        method: 'POST',
+      console.log("Current user:", user);
+
+      // 调用后端API扣除PDF积分
+      const pdfLimitResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/decrease-pdf-limit`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      const userData = await response.json();
-      
-      if (!response.ok) {
-        toast.error("无法获取用户信息");
-        return;
-      }
-
-      if (user.remaining_logins < 30) {
-        toast.error("剩余登录次数不足30次，无法生成报告");
-        return;
-      }
-
-      // Deduct 30 logins from user's remaining_logins
-      const updateResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/update-user-logins`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          userId: user.id,
-          addLogins: -30
+        body: JSON.stringify({
+          username: user.username,
+          decreaseAmount: 30,
         }),
       });
 
-      const updateResult = await updateResponse.json();
-      
-      if (!updateResponse.ok) {
-        toast.error("扣除登录次数失败，请重试");
+      const pdfLimitData = await pdfLimitResponse.json();
+
+      if (!pdfLimitResponse.ok || !pdfLimitData?.success) {
+        const errorMsg = pdfLimitData?.message || pdfLimitData?.error || "扣除PDF下载积分失败";
+        toast.error(errorMsg);
         return;
       }
 
-      // Update localStorage with new remaining_logins
-      const updatedUser = { 
-        ...user, 
-        remaining_logins: updateResult.newLogins 
-      };
+      // Update localStorage with new pdf_limit
+      const updatedUser = { ...user, pdf_limit: pdfLimitData.newPdfLimit };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       // Close the current dialog and show loading dialog
@@ -249,8 +227,8 @@ const DegreeVerificationDialog = ({
       setIsGenerating(true);
 
       // Call the PDF generation API
-      const pdfResponse = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/generate-degree-pdf`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/generate-degree-pdf`,
         {
           method: "POST",
           headers: {
@@ -270,15 +248,16 @@ const DegreeVerificationDialog = ({
         }
       );
 
-      if (!pdfResponse.ok) {
+      if (!response.ok) {
         throw new Error("PDF生成失败");
       }
 
-      const blob = await pdfResponse.blob();
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
       
       // Mobile-friendly download approach
       const url = window.URL.createObjectURL(blob);
-      const filename = `学位验证报告_${formData.name}_${Date.now()}.pdf`;
+      const filename = `中国高等教育学位在线验证报告_${formData.name}_${Date.now()}.pdf`;
       
       // Try modern approach first
       if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
@@ -299,7 +278,7 @@ const DegreeVerificationDialog = ({
       
       window.URL.revokeObjectURL(url);
 
-      toast.success("PDF生成成功！");
+      toast.success("学位在线验证报告PDF生成成功！");
       
       // Reset form
       setFormData({
@@ -314,14 +293,13 @@ const DegreeVerificationDialog = ({
         photo: "",
       });
     } catch (error) {
-      console.error("PDF生成错误:", error);
-      toast.error("PDF生成失败，请重试");
+      console.error("学位在线验证报告PDF生成错误:", error);
+      toast.error("学位在线验证报告PDF生成失败，请重试");
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
     }
   };
-// ... existing code ...
 
   const downloadFile = (url: string, filename: string) => {
     const a = document.createElement("a");
@@ -341,7 +319,7 @@ const DegreeVerificationDialog = ({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          
+          <DialogTitle>学位在线验证报告信息</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           {/* 加载状态 */}
@@ -571,7 +549,7 @@ const DegreeVerificationDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle>确认生成报告</AlertDialogTitle>
           <AlertDialogDescription>
-            生成学位验证报告PDF需要消耗30次登录权限，是否确认生成？
+            生成学位验证报告PDF需要消耗30个PDF下载积分，是否确认生成？
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

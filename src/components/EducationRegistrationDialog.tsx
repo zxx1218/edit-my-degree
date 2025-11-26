@@ -25,11 +25,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+// import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
-
-// 添加 API_BASE_URL 常量
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 interface EducationRegistrationDialogProps {
   open: boolean;
@@ -199,11 +197,10 @@ const EducationRegistrationDialog = ({
     setShowConfirmDialog(true);
   };
 
-  const handleConfirmGenerate = async () => {
+const handleConfirmGenerate = async () => {
     setShowConfirmDialog(false);
 
     try {
-      // Check remaining logins
       const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast.error("用户信息获取失败");
@@ -211,67 +208,44 @@ const EducationRegistrationDialog = ({
       }
       
       const user = JSON.parse(currentUser);
-      
-      // 使用本地API替代supabase调用
-      const userResponse = await fetch(`${API_BASE_URL}/get-all-users`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      const userDataResult = await userResponse.json();
-      
-      if (!userDataResult.success) {
-        toast.error("无法获取用户信息");
-        return;
-      }
-      
-      const currentUserData = userDataResult.users.find((u: any) => u.id === user.id.toString());
-      
-      if (!currentUserData) {
-        toast.error("无法获取用户信息");
-        return;
-      }
+      console.log("Current user:", user);
 
-      if (currentUserData.remaining_logins < 30) {
-        toast.error("剩余登录次数不足30次，无法生成报告");
-        return;
-      }
-
-      // 使用本地API扣除登录次数
-      const updateResponse = await fetch(`${API_BASE_URL}/update-user-logins`, {
-        method: 'POST',
+      // 调用后端API扣除PDF积分
+      const pdfLimitResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/decrease-pdf-limit`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: user.id,
-          addLogins: -30
-        })
+          username: user.username,
+          decreaseAmount: 30,
+        }),
       });
-      
-      const updateResult = await updateResponse.json();
-      
-      if (!updateResult.success) {
-        toast.error("扣除登录次数失败，请重试");
+
+      const pdfLimitData = await pdfLimitResponse.json();
+
+      if (!pdfLimitResponse.ok || !pdfLimitData?.success) {
+        const errorMsg = pdfLimitData?.message || pdfLimitData?.error || "扣除PDF下载积分失败";
+        toast.error(errorMsg);
         return;
       }
 
-      // Update localStorage with new remaining_logins
-      const updatedUser = { ...user, remaining_logins: updateResult.newLogins };
+      // Update localStorage with new pdf_limit
+      const updatedUser = { ...user, pdf_limit: pdfLimitData.newPdfLimit };
       localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
+      // Close the current dialog and show loading dialog
       onOpenChange(false);
       setShowLoadingDialog(true);
       setIsGenerating(true);
 
-      try {
-        // 将原来的 Supabase 函数调用替换为本地 API 调用
-        const response = await fetch(`${API_BASE_URL}/generate-education-pdf`, {
-          method: 'POST',
+      // 调用后端API生成学籍验证报告PDF
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/generate-education-pdf`,
+        {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             name: formData.name,
@@ -290,67 +264,57 @@ const EducationRegistrationDialog = ({
             principalName: formData.principalName,
             photo: formData.photo,
           }),
-        });
-        
-        if (!response.ok) {
-          throw new Error('生成PDF失败');
         }
-        
-        // 获取响应的文件名和内容类型
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = "教育部学历证书电子注册备案表.pdf";
-        if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
-          if (filenameMatch) {
-            filename = decodeURIComponent(filenameMatch[1]);
-          }
+      );
+      console.log("学籍报告pdf的Response:", response);
+      if (!response.ok) throw new Error("生成学籍报告PDF失败");
+
+      const arrayBuffer = await response.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      
+      // Mobile-friendly download approach
+      const url = window.URL.createObjectURL(blob);
+      const filename = `教育部学历证书电子注册备案表_${formData.name}_${Date.now()}.pdf`;
+      
+      // Try modern approach first
+      if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([blob], filename, { type: 'application/pdf' });
+          await navigator.share({
+            files: [file],
+            title: '学历证书电子注册备案表'
+          });
+        } catch (shareError) {
+          // Fallback to download
+          downloadFile(url, filename);
         }
-        
-        // 获取PDF的二进制数据
-        const blob = await response.blob();
-        
-        // 下载文件
-        if (navigator.share && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          const file = new File([blob], filename, { type: "application/pdf" });
-          navigator
-            .share({
-              files: [file],
-              title: filename,
-            })
-            .catch((error) => {
-              console.log("分享失败，尝试直接下载", error);
-              const url = window.URL.createObjectURL(blob);
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = filename;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              window.URL.revokeObjectURL(url);
-            });
-        } else {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-        }
-        
-        toast.success("报告生成成功！");
-      } catch (error) {
-        console.error("生成报告失败:", error);
-        toast.error("生成报告失败，请稍后重试");
-      } finally {
-        setIsGenerating(false);
-        setShowLoadingDialog(false);
+      } else {
+        // Desktop or fallback download
+        downloadFile(url, filename);
       }
+      
+      window.URL.revokeObjectURL(url);
+
+      toast.success("教育部学历证书电子注册备案表报告生成成功！");
     } catch (error) {
-      console.error("处理请求失败:", error);
-      toast.error("处理请求失败，请稍后重试");
+      console.error("生成报告失败:", error);
+      toast.error("生成报告失败，请稍后重试");
+    } finally {
+      setIsGenerating(false);
+      setShowLoadingDialog(false);
     }
+  };
+
+  const downloadFile = (url: string, filename: string) => {
+    const a = document.createElement("a");
+    a.style.display = "none";
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 100);
   };
 
   return (
@@ -657,10 +621,10 @@ const EducationRegistrationDialog = ({
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认生成报告</AlertDialogTitle>
-            <AlertDialogDescription>
-              生成学历证书电子注册备案表PDF需要消耗30次登录权限，是否确认生成？
-            </AlertDialogDescription>
+          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+          <AlertDialogDescription>
+            生成学历证书电子注册备案表PDF需要消耗30个PDF下载积分，是否确认生成？
+          </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
