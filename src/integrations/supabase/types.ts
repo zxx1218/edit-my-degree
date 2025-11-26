@@ -248,6 +248,30 @@ export type Database = {
           },
         ]
       }
+      login_logs: {
+        Row: {
+          created_at: string
+          id: string
+          login_time: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          login_time?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          login_time?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           amount: string
