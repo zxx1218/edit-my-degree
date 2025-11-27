@@ -18,6 +18,7 @@ import SuperAdd from "./pages/SuperAdd";
 import EducationBackground from "./pages/EducationBackground";
 import VerificationReport from "./pages/VerificationReport";
 import Verification from "./pages/Verification";
+import VerificationDegree from "./pages/VerificationDegree";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/purchase" element={<Purchase />} />
             <Route path="/video" element={<VideoPlayer />} />
             <Route path="/verification-education" element={<Verification />} />
+            <Route path="/verification-degree" element={<VerificationDegree />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/student-status/:id" element={<ProtectedRoute><StudentStatusDetail /></ProtectedRoute>} />
             <Route path="/education/:id" element={<ProtectedRoute><EducationDetail /></ProtectedRoute>} />
