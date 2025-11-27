@@ -37,6 +37,7 @@ const SuperAdd = () => {
   const [queriedUser, setQueriedUser] = useState<User | null>(null);
   const [isQuerying, setIsQuerying] = useState(false);
   const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
+  const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
   const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
   const { toast } = useToast();
 
@@ -58,7 +59,7 @@ const SuperAdd = () => {
     }
   }, []);
 
-  // 获取今日登录次数
+  // 获取今日登录统计
   const fetchTodayLoginCount = async () => {
     setIsLoadingLoginCount(true);
     try {
@@ -76,12 +77,13 @@ const SuperAdd = () => {
       const data = await response.json();
       
       if (data.success) {
-        setTodayLoginCount(data.count);
+        setTodayLoginCount(data.total_logins);
+        setDistinctUsers(data.distinct_users);
       } else {
-        console.error('获取登录次数失败:', data.error);
+        console.error('获取登录统计失败:', data.error);
       }
     } catch (error) {
-      console.error('获取登录次数时出错:', error);
+      console.error('获取登录统计时出错:', error);
     } finally {
       setIsLoadingLoginCount(false);
     }
@@ -414,7 +416,7 @@ const SuperAdd = () => {
           <p className="text-muted-foreground text-lg">管理和监控用户登录次数</p>
         </div>
 
-        {/* 今日登录次数统计卡片 */}
+        {/* 今日登录统计卡片 */}
         <Card className="mb-6 shadow-xl border-2 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-200 dark:border-indigo-800">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
@@ -424,39 +426,64 @@ const SuperAdd = () => {
                 </div>
                 <div>
                   <CardTitle className="text-2xl text-indigo-900 dark:text-indigo-100">今日系统登录统计</CardTitle>
-                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">Today's Login Count</CardDescription>
+                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">Today's Login Statistics</CardDescription>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <Button
+                onClick={fetchTodayLoginCount}
+                variant="outline"
+                size="sm"
+                disabled={isLoadingLoginCount}
+                className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 h-10 px-4"
+              >
                 {isLoadingLoginCount ? (
-                  <div className="flex items-center gap-3 animate-pulse">
-                    <div className="h-16 w-16 bg-indigo-300 dark:bg-indigo-700 rounded-xl"></div>
-                    <div className="h-10 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
-                  </div>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <div className="flex items-center gap-3 px-6 py-3 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
-                    <div className="text-5xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums">
-                      {todayLoginCount ?? '-'}
-                    </div>
-                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">次</div>
-                  </div>
+                  '刷新'
                 )}
-                <Button
-                  onClick={fetchTodayLoginCount}
-                  variant="outline"
-                  size="sm"
-                  disabled={isLoadingLoginCount}
-                  className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 h-10 px-4"
-                >
-                  {isLoadingLoginCount ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    '刷新'
-                  )}
-                </Button>
-              </div>
+              </Button>
             </div>
           </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-6">
+              {/* 不同用户数 */}
+              <div className="px-6 py-4 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                {isLoadingLoginCount ? (
+                  <div className="animate-pulse">
+                    <div className="h-12 w-20 bg-indigo-300 dark:bg-indigo-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+                      {distinctUsers ?? '-'}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">
+                      不同用户数
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* 总登录次数 */}
+              <div className="px-6 py-4 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                {isLoadingLoginCount ? (
+                  <div className="animate-pulse">
+                    <div className="h-12 w-20 bg-indigo-300 dark:bg-indigo-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+                      {todayLoginCount ?? '-'}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">
+                      总登录次数
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         <div className="grid gap-6 md:grid-cols-2 mb-6">

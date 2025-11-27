@@ -24,26 +24,44 @@ Deno.serve(async (req) => {
 
     console.log('Querying login count since:', todayStart);
 
-    // 查询今天的登录次数
-    const { data, error, count } = await supabase
+    // 查询今天的总登录次数
+    const { data: loginData, error: countError, count: totalLogins } = await supabase
       .from('login_logs')
       .select('*', { count: 'exact', head: true })
       .gte('login_time', todayStart);
 
-    if (error) {
-      console.error('Query error:', error);
+    if (countError) {
+      console.error('Query error:', countError);
       return new Response(
         JSON.stringify({ error: '查询失败' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    console.log('Today login count:', count);
+    // 查询今天的不同用户数
+    const { data: distinctUsers, error: distinctError } = await supabase
+      .from('login_logs')
+      .select('user_id')
+      .gte('login_time', todayStart);
+
+    if (distinctError) {
+      console.error('Distinct users query error:', distinctError);
+      return new Response(
+        JSON.stringify({ error: '查询失败' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
+    // 计算不同用户数
+    const uniqueUsers = new Set(distinctUsers?.map(log => log.user_id) || []).size;
+
+    console.log('Today login stats - Total:', totalLogins, 'Unique users:', uniqueUsers);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        count: count || 0
+        total_logins: totalLogins || 0,
+        distinct_users: uniqueUsers
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
