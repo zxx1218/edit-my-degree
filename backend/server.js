@@ -75,7 +75,6 @@ async function initDB() {
   }
 }
 
-// 创建表结构
 async function createTables() {
   // 首先设置时区为中国时区
   await db.execute("SET time_zone = '+08:00'");
@@ -197,11 +196,41 @@ async function createTables() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      username TEXT NOT NULL,
+      login_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
     `
   ];
 
+  // 创建表
   for (const query of tables) {
     await db.execute(query);
+  }
+  
+  // 单独处理索引创建，使用 try-catch 避免重复创建索引的错误
+  try {
+    await db.execute('CREATE INDEX idx_login_logs_login_time ON login_logs(login_time)');
+  } catch (err) {
+    // 如果索引已存在，忽略错误
+    if (err.code !== 'ER_DUP_KEYNAME') {
+      throw err; // 如果是其他错误，则抛出
+    }
+  }
+  
+  try {
+    await db.execute('CREATE INDEX idx_login_logs_user_id ON login_logs(user_id)');
+  } catch (err) {
+    // 如果索引已存在，忽略错误
+    if (err.code !== 'ER_DUP_KEYNAME') {
+      throw err; // 如果是其他错误，则抛出
+    }
   }
   
   console.log('Database tables initialized');
@@ -252,6 +281,12 @@ app.post('/api/auth', async (req, res) => {
     await db.execute(
       'UPDATE users SET remaining_logins = remaining_logins - 1 WHERE id = ?',
       [user.id]
+    );
+    
+    // 记录登录日志到login_logs表
+    await db.execute(
+      'INSERT INTO login_logs (user_id, username) VALUES (?, ?)',
+      [user.id, username]
     );
     
     // 生成 JWT token
@@ -833,6 +868,138 @@ app.post('/api/decrease-pdf-limit', async (req, res) => {
     });
   } catch (err) {
     console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加减少用户PDF积分接口
+app.post('/api/decrease-pdf-limit', async (req, res) => {
+  try {
+    const { username, decreaseAmount } = req.body;
+
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
+
+    if (typeof decreaseAmount !== 'number' || decreaseAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '减少数量必须为正整数'
+      });
+    }
+
+    // 先查询用户当前的PDF积分
+    const [users] = await db.execute(
+      'SELECT id, pdf_limit FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
+
+    const user = users[0];
+
+    // 检查是否有足够的PDF积分
+    if (user.pdf_limit < decreaseAmount) {
+      return res.status(400).json({
+        success: false,
+        error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
+      });
+    }
+
+    // 计算新的PDF积分
+    const newPdfLimit = user.pdf_limit - decreaseAmount;
+
+    // 更新用户的PDF积分
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = ? WHERE id = ?',
+      [newPdfLimit, user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+
+    res.json({
+      success: true,
+      newPdfLimit,
+      decreased: decreaseAmount
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 获取今日登录统计接口
+app.post('/api/get-today-login-count', async (req, res) => {
+  try {
+    // 获取今天的开始和结束时间 (使用本地时间格式 YYYY-MM-DD)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 格式化为 YYYY-MM-DD 字符串
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    const todayStr = formatDate(today);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = formatDate(tomorrow);
+
+    // console.log('查询日期范围:', {
+    //   todayStr,
+    //   tomorrowStr
+    // });
+
+    // 查询今日登录总次数
+    const [totalLoginsResult] = await db.execute(
+      `SELECT COUNT(*) as total_logins 
+       FROM login_logs 
+       WHERE DATE(login_time) = ?`,
+      [todayStr]
+    );
+
+    // 查询今日不同用户数
+    const [distinctUsersResult] = await db.execute(
+      `SELECT COUNT(DISTINCT user_id) as distinct_users 
+       FROM login_logs 
+       WHERE DATE(login_time) = ?`,
+      [todayStr]
+    );
+
+    // console.log('今日登录统计:', {
+    //   total_logins: totalLoginsResult[0].total_logins,
+    //   distinct_users: distinctUsersResult[0].distinct_users
+    // });
+
+    res.json({
+      success: true,
+      total_logins: totalLoginsResult[0].total_logins,
+      distinct_users: distinctUsersResult[0].distinct_users
+    });
+  } catch (err) {
+    console.error('获取今日登录统计失败:', err);
     res.status(500).json({
       success: false,
       error: '服务器内部错误'

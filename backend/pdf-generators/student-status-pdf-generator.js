@@ -20,10 +20,10 @@ const generateStudentStatusPdf = async (req, res) => {
       educationType,
       studyType,
       branch,
+      department,
       enrollmentDate,
       status,
       graduationDate,
-      admissionPhoto,
       degreePhoto
     } = req.body;
 
@@ -39,18 +39,18 @@ const generateStudentStatusPdf = async (req, res) => {
       educationType,
       studyType,
       branch,
+      department,
       enrollmentDate,
       status,
       graduationDate,
-      admissionPhoto: admissionPhoto ? '录取照片数据已接收' : '无录取照片数据',
       degreePhoto: degreePhoto ? '毕业照片数据已接收' : '无毕业照片数据'
     });
 
     // 验证必要字段
     if (!name || !gender || !birthDate || !nationality || !school || 
         !degreeLevel || !major || !duration || !educationType || 
-        !studyType || !branch || !enrollmentDate || !status || 
-        !graduationDate) {
+        !studyType || !enrollmentDate || 
+        !status || !graduationDate) {
       console.warn('缺少必要字段，无法生成PDF');
       return res.status(400).json({
         success: false,
@@ -140,7 +140,7 @@ const generateStudentStatusPdf = async (req, res) => {
       { content: educationType, x: 179, y: 485, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
       { content: studyType, x: 179, y: 457, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
       { content: branch, x: 179, y: 431, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
-      { content: '', x: 179, y: 403.5, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
+      { content: department, x: 179, y: 403.5, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
       { content: enrollmentDate, x: 179, y: 373, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
       { content: status, x: 179, y: 345, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
       { content: graduationDate, x: 179, y: 317, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont }
@@ -159,24 +159,52 @@ const generateStudentStatusPdf = async (req, res) => {
     }
     console.log('文本内容添加完成');
 
-    // 添加录取照片到PDF（如果提供了照片）
-    if (admissionPhoto) {
+    // 添加毕业照片到PDF（如果提供了照片）
+    if (degreePhoto) {
       try {
-        console.log('开始处理录取照片...');
+        console.log('开始处理毕业照片...');
         
         // 从Base64字符串中提取图片数据
-        const base64Data = admissionPhoto.replace(/^data:image\/\w+;base64,/, "");
+        const base64Data = degreePhoto.replace(/^data:image\/\w+;base64,/, "");
         const imageBuffer = Buffer.from(base64Data, 'base64');
         
         // 确定图片类型并嵌入到PDF中
         let photoImage;
-        if (admissionPhoto.startsWith('data:image/jpeg') || admissionPhoto.startsWith('data:image/jpg')) {
+        if (degreePhoto.startsWith('data:image/jpeg') || degreePhoto.startsWith('data:image/jpg')) {
+          console.log('检测到JPG或者JPEG格式照片');
           photoImage = await pdfDoc.embedJpg(imageBuffer);
-        } else if (admissionPhoto.startsWith('data:image/png')) {
-          photoImage = await pdfDoc.embedPng(imageBuffer);
+        } else if (degreePhoto.startsWith('data:image/png')) {
+          console.log('检测到PNG格式照片');
+          try {
+            photoImage = await pdfDoc.embedPng(imageBuffer);
+          } catch (pngError) {
+            console.warn('PNG解析失败，尝试用JPG解析:', pngError);
+            // 如果PNG解析失败，尝试用JPG解析
+            try {
+              photoImage = await pdfDoc.embedJpg(imageBuffer);
+              console.log('使用JPG解析成功');
+            } catch (jpgError) {
+              console.warn('JPG解析也失败了，使用默认PNG解析:', jpgError);
+              // 如果都失败了，默认再试一次PNG
+              photoImage = await pdfDoc.embedPng(imageBuffer);
+            }
+          }
         } else {
-          // 默认当作PNG处理
-          photoImage = await pdfDoc.embedPng(imageBuffer);
+          // 尝试自动检测图片类型
+          console.log('无法确定照片格式，尝试自动检测');
+          try {
+            photoImage = await pdfDoc.embedPng(imageBuffer);
+            console.log('自动检测为PNG格式');
+          } catch (pngError) {
+            console.warn('PNG解析失败，尝试JPG解析:', pngError.message);
+            try {
+              photoImage = await pdfDoc.embedJpg(imageBuffer);
+              console.log('自动检测为JPG格式');
+            } catch (jpgError) {
+              console.error('无法解析图片数据:', jpgError.message);
+              throw new Error('无法识别的图片格式');
+            }
+          }
         }
         
         // 证件照配置
@@ -200,22 +228,27 @@ const generateStudentStatusPdf = async (req, res) => {
           align: 'center', 
           valign: 'center' 
         });
-        console.log(`✅ 已添加录取证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
+        console.log(`✅ 已添加毕业证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
       } catch (photoError) {
-        console.error('处理录取照片时出错:', photoError.message);
+        console.error('处理毕业照片时出错:', photoError.message || photoError);
         // 继续执行而不中断整个过程
       }
     } else {
-      console.log('未提供录取照片，跳过照片添加步骤');
+      console.log('未提供毕业照片，跳过照片添加步骤');
     }
 
     // 生成并添加二维码
     try {
       console.log('开始生成二维码...');
+
+      /*
+        二维码路由
+        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
+      */
       
       // 二维码配置
       const qrCodeConfig = {
-        content: 'http://chsiii.cn:9092?data=more_complex_data_to_increase_density', // 二维码内容
+        content: '?data=more_complex_data_to_increase_density', // 二维码内容
         x: 76.5,                           // 二维码X坐标
         y: 126,                            // 二维码Y坐标
         size: 68.5,                        // 二维码大小(宽高)

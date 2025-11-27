@@ -146,25 +146,53 @@ const generateDegreePdf = async (req, res) => {
         // 确定图片类型并嵌入到PDF中
         let photoImage;
         if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
+          console.log('检测到JPG或者JPEG格式照片');
           photoImage = await pdfDoc.embedJpg(imageBuffer);
         } else if (photo.startsWith('data:image/png')) {
-          photoImage = await pdfDoc.embedPng(imageBuffer);
+          console.log('检测到PNG格式照片');
+          try {
+            photoImage = await pdfDoc.embedPng(imageBuffer);
+          } catch (pngError) {
+            console.warn('PNG解析失败，尝试用JPG解析:', pngError);
+            // 如果PNG解析失败，尝试用JPG解析
+            try {
+              photoImage = await pdfDoc.embedJpg(imageBuffer);
+              console.log('使用JPG解析成功');
+            } catch (jpgError) {
+              console.warn('JPG解析也失败了，使用默认PNG解析:', jpgError);
+              // 如果都失败了，默认再试一次PNG
+              photoImage = await pdfDoc.embedPng(imageBuffer);
+            }
+          }
         } else {
-          // 默认当作PNG处理
-          photoImage = await pdfDoc.embedPng(imageBuffer);
+          // 尝试自动检测图片类型
+          console.log('无法确定照片格式，尝试自动检测');
+          try {
+            photoImage = await pdfDoc.embedPng(imageBuffer);
+            console.log('自动检测为PNG格式');
+          } catch (pngError) {
+            console.warn('PNG解析失败，尝试JPG解析:', pngError.message);
+            try {
+              photoImage = await pdfDoc.embedJpg(imageBuffer);
+              console.log('自动检测为JPG格式');
+            } catch (jpgError) {
+              console.error('无法解析图片数据:', jpgError.message);
+              throw new Error('无法识别的图片格式');
+            }
+          }
         }
         
         // 证件照配置
         const photoConfig = { 
-          x: 455, // 右侧X坐标（根据PDF宽度调整）
-          y: 589, // Y坐标（与文字区域对齐）
-          width: 80, // 证件照宽度
+          x: 455.5, // 右侧X坐标（根据PDF宽度调整）
+          y: 627.5, // Y坐标（与文字区域对齐）
+          width: 79.5, // 证件照宽度
           height: 106, // 证件照高度（保持1:1.33的标准证件照比例）
           borderWidth: 0, // 边框宽度设为0，去掉黑色边框
           borderColor: rgb(0, 0, 0) // 边框颜色（黑色，此时已无效）
         };
 
-        // 7. 添加证件照（无边框）
+        // 添加证件照（无边框）
         const { x, y, width: photoWidth, height: photoHeight } = photoConfig;
         page.drawImage(photoImage, { 
           x: x, 
@@ -188,6 +216,11 @@ const generateDegreePdf = async (req, res) => {
     try {
       console.log('开始生成二维码...');
       
+      /*
+        二维码路由
+        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
+      */
+
       // 二维码配置
       const qrCodeConfig = {
         content: 'http://chsiii.cn:9092?data=more_complex_data_to_increase_density', // 二维码内容

@@ -1,56 +1,44 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search, Menu, Download } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { ChevronLeft, Search, Menu, Download } from "lucide-react";
 
 /*
-二维码扫描后跳转页面
-url示例参数：
-/verification?name=浆果儿&gender=女&birthDate=2002-12-09&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=清华大学&major=计算机科学与技术&duration=4年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
+    样例url - 学位
+    /verification-degree?name=张三&gender=男&birthDate=1998年5月12日&degreeDate=2022年6月20日&school=清华大学&degreeName=工学学士&major=计算机科学与技术&certificateNumber=1041842022000123&verificationCode=XWYZ202511270001&updateDate=2025年11月27日&photo=https://example.com/photo.jpg
 */
 
-const Verification = () => {
+const VerificationDegree = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [selectedLanguage, setSelectedLanguage] = useState<'chinese' | 'english'>('chinese');
+
   const [data, setData] = useState({
-    name: '',
-    gender: '',
-    birthDate: '',
-    enrollmentDate: '',
-    graduationDate: '',
-    school: '',
-    major: '',
-    duration: '',
-    level: '',
-    educationType: '',
-    studyType: '',
-    graduationStatus: '',
-    certificateNumber: '',
-    principalName: '',
-    verificationCode: '',
-    updateDate: '',
-    photo: ''
+    name: "",
+    gender: "",
+    birthDate: "",
+    degreeDate: "",
+    school: "",
+    degreeName: "",
+    major: "",
+    certificateNumber: "",
+    verificationCode: "",
+    updateDate: "",
+    photo: "",
   });
 
   useEffect(() => {
     setData({
-      name: searchParams.get('name') || '',
-      gender: searchParams.get('gender') || '',
-      birthDate: searchParams.get('birthDate') || '',
-      enrollmentDate: searchParams.get('enrollmentDate') || '',
-      graduationDate: searchParams.get('graduationDate') || '',
-      school: searchParams.get('school') || '',
-      major: searchParams.get('major') || '',
-      duration: searchParams.get('duration') || '',
-      level: searchParams.get('level') || '',
-      educationType: searchParams.get('educationType') || '',
-      studyType: searchParams.get('studyType') || '',
-      graduationStatus: searchParams.get('graduationStatus') || '',
-      certificateNumber: searchParams.get('certificateNumber') || '',
-      principalName: searchParams.get('principalName') || '',
-      verificationCode: searchParams.get('verificationCode') || '',
-      updateDate: searchParams.get('updateDate') || '',
-      photo: searchParams.get('photo') || ''
+      name: searchParams.get("name") || "",
+      gender: searchParams.get("gender") || "",
+      birthDate: searchParams.get("birthDate") || "",
+      degreeDate: searchParams.get("degreeDate") || "",
+      school: searchParams.get("school") || "",
+      degreeName: searchParams.get("degreeName") || "",
+      major: searchParams.get("major") || "",
+      certificateNumber: searchParams.get("certificateNumber") || "",
+      verificationCode: searchParams.get("verificationCode") || "",
+      updateDate: searchParams.get("updateDate") || "",
+      photo: searchParams.get("photo") || "",
     });
   }, [searchParams]);
 
@@ -126,7 +114,7 @@ const Verification = () => {
       <div className="px-4 py-6 max-w-2xl mx-auto">
         {/* Title */}
         <h1 className="text-center text-xl font-bold text-gray-900 mb-6">
-          教育部学历证书电子注册备案表
+          中国高等教育学位在线验证报告
         </h1>
 
         {/* Photo */}
@@ -135,92 +123,62 @@ const Verification = () => {
             <img 
               src={data.photo} 
               alt="证件照" 
-              className="w-32 h-40 object-cover border border-gray-200"
+              className="w-[6.8rem] h-[8.5rem] object-cover border border-gray-200"
             />
           ) : (
-            <div className="w-32 h-40 border border-gray-200 bg-gray-50" />
+            <div className="w-[6.8rem] h-[8.5rem] border border-gray-200 bg-gray-50" />
           )}
         </div>
 
         {/* Information Fields */}
         <div className="space-y-0">
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">姓名</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">姓名</span>
             <span className="text-gray-900 ml-2">{data.name}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">性别</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">性别</span>
             <span className="text-gray-900 ml-2">{data.gender}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">出生日期</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">出生日期</span>
             <span className="text-gray-900 ml-2">{data.birthDate}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">入学日期</span>
-            <span className="text-gray-900 ml-2">{data.enrollmentDate}</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">获学位日期</span>
+            <span className="text-gray-900 ml-2">{data.degreeDate}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">毕（结）业日期</span>
-            <span className="text-gray-900 ml-2">{data.graduationDate}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学校名称</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学位授予单位</span>
             <span className="text-gray-900 ml-2">{data.school}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">专业</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">所授学位</span>
+            <span className="text-gray-900 ml-2">{data.degreeName}</span>
+          </div>
+
+          <div className="flex py-2">
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学科/专业</span>
             <span className="text-gray-900 ml-2">{data.major}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学制</span>
-            <span className="text-gray-900 ml-2">{data.duration}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">层次</span>
-            <span className="text-gray-900 ml-2">{data.level}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学历类别</span>
-            <span className="text-gray-900 ml-2">{data.educationType}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学习形式</span>
-            <span className="text-gray-900 ml-2">{data.studyType}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">毕（结）业</span>
-            <span className="text-gray-900 ml-2">{data.graduationStatus}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">证书编号</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学位证书编号</span>
             <span className="text-gray-900 ml-2">{data.certificateNumber}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">校（院）长姓名</span>
-            <span className="text-gray-900 ml-2">{data.principalName}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">在线验证码</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">在线验证码</span>
             <span className="text-gray-900 ml-2">{data.verificationCode}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">更新日期</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">更新日期</span>
             <span className="text-gray-900 ml-2">{data.updateDate}</span>
           </div>
         </div>
@@ -237,4 +195,4 @@ const Verification = () => {
   );
 };
 
-export default Verification;
+export default VerificationDegree;

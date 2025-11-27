@@ -25,7 +25,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-// import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 
@@ -365,7 +364,7 @@ const handleConfirmGenerate = async () => {
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">姓名 *</Label>
+                  <Label htmlFor="name">姓名 <span className="text-destructive">*</span></Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -375,7 +374,7 @@ const handleConfirmGenerate = async () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">性别 *</Label>
+                  <Label htmlFor="gender">性别 <span className="text-destructive">*</span></Label>
                   <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择性别" />
@@ -389,7 +388,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label>出生日期 *</Label>
+                <Label>出生日期 <span className="text-destructive">*</span></Label>
                 <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -419,7 +418,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label>入学日期 *</Label>
+                <Label>入学日期 <span className="text-destructive">*</span></Label>
                 <Popover open={enrollmentDateOpen} onOpenChange={setEnrollmentDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -449,7 +448,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label>毕（结）业日期 *</Label>
+                <Label>毕（结）业日期 <span className="text-destructive">*</span></Label>
                 <Popover open={graduationDateOpen} onOpenChange={setGraduationDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -479,19 +478,19 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="school">学校名称 *</Label>
+                <Label htmlFor="school">学校名称 <span className="text-destructive">*</span></Label>
                 <Input
                   id="school"
                   value={formData.school}
                   onChange={(e) => setFormData({ ...formData, school: e.target.value })}
-                  placeholder="请输入大学的名称"
+                  placeholder="就读学校的名字"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="major">专业 *</Label>
+                  <Label htmlFor="major">专业 <span className="text-destructive">*</span></Label>
                   <Input
                     id="major"
                     value={formData.major}
@@ -501,7 +500,7 @@ const handleConfirmGenerate = async () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duration">学制 *</Label>
+                  <Label htmlFor="duration">学制 <span className="text-destructive">*</span></Label>
                   <Input
                     id="duration"
                     value={formData.duration}
@@ -513,19 +512,19 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="degreeLevel">层次 *</Label>
+                <Label htmlFor="degreeLevel">层次 <span className="text-destructive">*</span></Label>
                 <Input
                   id="degreeLevel"
                   value={formData.degreeLevel}
                   onChange={(e) => setFormData({ ...formData, degreeLevel: e.target.value })}
-                  placeholder="例：本科"
+                  placeholder="例：本科 \ 硕士研究生 \ 博士研究生"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="educationType">学历类别 *</Label>
+                  <Label htmlFor="educationType">学历类别 <span className="text-destructive">*</span></Label>
                   <Input
                     id="educationType"
                     value={formData.educationType}
@@ -535,7 +534,7 @@ const handleConfirmGenerate = async () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="studyType">学习形式 *</Label>
+                  <Label htmlFor="studyType">学习形式 <span className="text-destructive">*</span></Label>
                   <Input
                     id="studyType"
                     value={formData.studyType}
@@ -547,7 +546,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="graduationStatus">毕（结）业 *</Label>
+                <Label htmlFor="graduationStatus">毕（结）业 <span className="text-destructive">*</span></Label>
                 <Input
                   id="graduationStatus"
                   value={formData.graduationStatus}
@@ -558,7 +557,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="certificateNumber">证书编号 *</Label>
+                <Label htmlFor="certificateNumber">证书编号 <span className="text-destructive">*</span></Label>
                 <Input
                   id="certificateNumber"
                   value={formData.certificateNumber}
@@ -569,7 +568,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="principalName">校（院）长姓名 *</Label>
+                <Label htmlFor="principalName">校（院）长姓名 <span className="text-destructive">*</span></Label>
                 <Input
                   id="principalName"
                   value={formData.principalName}
@@ -580,7 +579,7 @@ const handleConfirmGenerate = async () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="photo">蓝底证件照 *</Label>
+                <Label htmlFor="photo">蓝底证件照 <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-4">
                   {formData.photo && (
                     <img src={formData.photo} alt="证件照" className="w-20 h-24 object-cover rounded" />
@@ -633,7 +632,7 @@ const handleConfirmGenerate = async () => {
           <AlertDialogHeader>
           <AlertDialogTitle>确认生成报告</AlertDialogTitle>
           <AlertDialogDescription>
-            生成学历证书电子注册备案表PDF需要消耗30个PDF下载积分，是否确认生成？
+            生成学历证书电子注册备案表PDF<span className="text-destructive">需要消耗30个PDF下载积分</span>，是否确认生成？
           </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

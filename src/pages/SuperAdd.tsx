@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+// import { supabase } from "@/integrations/supabase/client";
 import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -36,6 +37,9 @@ const SuperAdd = () => {
   const [queryUsername, setQueryUsername] = useState("");
   const [queriedUser, setQueriedUser] = useState<User | null>(null);
   const [isQuerying, setIsQuerying] = useState(false);
+  const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
+  const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
+  const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
   const { toast } = useToast();
 
   // API基础URL - 根据你的环境配置进行调整
@@ -58,23 +62,51 @@ const SuperAdd = () => {
       }
     }
   }, []);
+  // 获取今日登录统计
+  const fetchTodayLoginCount = async () => {
+    setIsLoadingLoginCount(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/get-today-login-count`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setTodayLoginCount(data.total_logins);
+        setDistinctUsers(data.distinct_users);
+      } else {
+        console.error('获取登录统计失败:', data.error);
+      }
+    } catch (error) {
+      console.error('获取登录统计时出错:', error);
+    } finally {
+      setIsLoadingLoginCount(false);
+    }
+  };
+
+  // 登录验证成功后获取今日登录次数
+  useEffect(() => {
+    if (isVerified) {
+      fetchTodayLoginCount();
+    }
+  }, [isVerified]);
 
   const fetchUsers = async () => {
     setIsFetchingUsers(true);
     try {
+      // 替换 Supabase 调用为本地 API 调用
       const response = await fetch(`${API_BASE_URL}/get-all-users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({}),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-      throw new Error(data.error || '获取用户列表失败');
-      }
 
       if (data.success) {
         setUsers(data.users || []);
@@ -102,10 +134,6 @@ const SuperAdd = () => {
       // 登录成功时记录当前时间戳
       localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
       setIsVerified(true);
-      toast({
-        title: "验证成功",
-        description: "欢迎进入管理界面",
-      });
     } else {
       toast({
         variant: "destructive",
@@ -127,38 +155,31 @@ const SuperAdd = () => {
     setIsQuerying(true);
     setQueriedUser(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/get-all-users`, {
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/query-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+          username: queryUsername,
+        }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || '查询用户失败');
-      }
-
       if (data.success) {
-        // 在返回的用户列表中查找目标用户
-        const user = data.users.find((u: User) => u.username === queryUsername);
-        if (user) {
-          setQueriedUser(user);
-          toast({
-            title: "查询成功",
-            description: `用户 ${user.username} 剩余登录次数: ${user.remaining_logins} 次`,
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "查询失败",
-            description: "未找到该用户",
-          });
-        }
+        setQueriedUser(data.user);
+        toast({
+          title: "查询成功",
+          description: `用户 ${data.user.username} 剩余登录次数: ${data.user.remaining_logins} 次`,
+        });
       } else {
-        throw new Error(data.error || "未知错误");
+        toast({
+          variant: "destructive",
+          title: "查询失败",
+          description: data.error || "未知错误",
+        });
       }
     } catch (error: any) {
       toast({
@@ -182,6 +203,7 @@ const SuperAdd = () => {
 
     setIsResetting(true);
     try {
+      // 替换 Supabase 调用为本地 API 调用
       const response = await fetch(`${API_BASE_URL}/reset-user-logins`, {
         method: 'POST',
         headers: {
@@ -194,21 +216,21 @@ const SuperAdd = () => {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || '重置失败');
-      }
-
       if (data.success) {
         toast({
           title: "重置成功",
-          description: data.message || `已将用户 ${resetUsername} 的登录次数重置为 0`,
+          description: `已将用户 ${resetUsername} 的登录次数重置为 0`,
         });
         setResetUsername("");
         if (showUserList) {
           fetchUsers();
         }
       } else {
-        throw new Error(data.error || "未知错误");
+        toast({
+          variant: "destructive",
+          title: "重置失败",
+          description: data.error || "未知错误",
+        });
       }
     } catch (error: any) {
       toast({
@@ -242,22 +264,19 @@ const SuperAdd = () => {
 
     setIsAddingLogins(true);
     try {
+      // 替换 Supabase 调用为本地 API 调用
       const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: targetUsername, // 使用username而不是userId
+          username: targetUsername,
           addLogins: loginsToAdd,
         }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || '添加失败');
-      }
 
       if (data.success) {
         toast({
@@ -270,7 +289,11 @@ const SuperAdd = () => {
           fetchUsers();
         }
       } else {
-        throw new Error(data.error || "未知错误");
+        toast({
+          variant: "destructive",
+          title: "添加失败",
+          description: data.error || "未知错误",
+        });
       }
     } catch (error: any) {
       toast({
@@ -304,28 +327,24 @@ const SuperAdd = () => {
 
     setIsDecreasingLogins(true);
     try {
-      // 注意：后端没有专门的减少登录次数接口，我们可以通过传递负数给更新接口实现
-      const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/decrease-user-logins`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: decreaseUsername, // 使用username而不是userId
-          addLogins: -loginsToDecrease, // 传递负数实现减少功能
+          username: decreaseUsername,
+          decreaseLogins: loginsToDecrease,
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || '减少失败');
-      }
-
       if (data.success) {
         toast({
           title: "减少成功",
-          description: `已为用户 ${decreaseUsername} 减少 ${loginsToDecrease} 次登录，当前剩余 ${data.newLogins} 次`,
+          description: `已为用户 ${decreaseUsername} 减少 ${data.decreased} 次登录，当前剩余 ${data.newLogins} 次`,
         });
         setDecreaseUsername("");
         setDecreaseLogins("");
@@ -333,7 +352,11 @@ const SuperAdd = () => {
           fetchUsers();
         }
       } else {
-        throw new Error(data.error || "未知错误");
+        toast({
+          variant: "destructive",
+          title: "减少失败",
+          description: data.error || "未知错误",
+        });
       }
     } catch (error: any) {
       toast({
@@ -403,6 +426,76 @@ const SuperAdd = () => {
           <h1 className="text-4xl font-bold tracking-tight">用户登录次数管理系统</h1>
           <p className="text-muted-foreground text-lg">管理和监控用户登录次数</p>
         </div>
+
+        {/* 今日登录统计卡片 */}
+        <Card className="mb-6 shadow-xl border-2 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-200 dark:border-indigo-800">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-600 dark:bg-indigo-500 rounded-lg shadow-lg">
+                  <List className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl text-indigo-900 dark:text-indigo-100">今日系统登录统计</CardTitle>
+                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">Today's Login Statistics</CardDescription>
+                </div>
+              </div>
+              <Button
+                onClick={fetchTodayLoginCount}
+                variant="outline"
+                size="sm"
+                disabled={isLoadingLoginCount}
+                className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 h-10 px-4"
+              >
+                {isLoadingLoginCount ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  '刷新'
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-6">
+              {/* 不同用户数 */}
+              <div className="px-6 py-4 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                {isLoadingLoginCount ? (
+                  <div className="animate-pulse">
+                    <div className="h-12 w-20 bg-indigo-300 dark:bg-indigo-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+                      {distinctUsers ?? '-'}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">
+                      不同用户数
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* 总登录次数 */}
+              <div className="px-6 py-4 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                {isLoadingLoginCount ? (
+                  <div className="animate-pulse">
+                    <div className="h-12 w-20 bg-indigo-300 dark:bg-indigo-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+                      {todayLoginCount ?? '-'}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">
+                      总登录次数
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2 mb-6">
           {/* 查询用户卡片 */}
