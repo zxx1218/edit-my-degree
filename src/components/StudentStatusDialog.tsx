@@ -233,8 +233,6 @@ const StudentStatusDialog = ({
       !formData.duration ||
       !formData.educationType ||
       !formData.studyType ||
-      !formData.branch ||
-      !formData.department ||
       !formData.enrollmentDate ||
       !formData.status ||
       !formData.graduationDate ||
@@ -532,7 +530,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="branch">分院 *</Label>
+                  <Label htmlFor="branch">分院</Label>
                   <Input
                     id="branch"
                     value={formData.branch}
@@ -544,7 +542,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="department">系所 *</Label>
+                  <Label htmlFor="department">系所</Label>
                   <Input
                     id="department"
                     value={formData.department}
