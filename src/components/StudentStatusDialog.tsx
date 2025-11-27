@@ -56,10 +56,10 @@ const StudentStatusDialog = ({
     educationType: "",
     studyType: "",
     branch: "",
+    department: "",
     enrollmentDate: undefined as Date | undefined,
     status: "",
     graduationDate: undefined as Date | undefined,
-    admissionPhoto: "",
     degreePhoto: "",
   });
   const [isGenerating, setIsGenerating] = useState(false);
@@ -122,10 +122,10 @@ const StudentStatusDialog = ({
       educationType: "",
       studyType: "",
       branch: "",
+      department: "",
       enrollmentDate: undefined,
       status: "",
       graduationDate: undefined,
-      admissionPhoto: "",
       degreePhoto: "",
     });
     setShowForm(true);
@@ -186,10 +186,10 @@ const StudentStatusDialog = ({
         educationType: record.education_type || "",
         studyType: record.study_type || "",
         branch: record.branch || "",
+        department: record.department || "",
         enrollmentDate: parseDate(record.enrollment_date),
         status: record.status || "",
         graduationDate: parseDate(record.graduation_date),
-        admissionPhoto: record.admission_photo || "",
         degreePhoto: record.degree_photo || "",
       });
       setShowForm(true);
@@ -204,16 +204,13 @@ const StudentStatusDialog = ({
     return `${year}年${month}月${day}日`;
   };
 
-  const handlePhotoUpload = async (
-    file: File,
-    field: "admissionPhoto" | "degreePhoto"
-  ) => {
+  const handlePhotoUpload = async (file: File) => {
     try {
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData((prev) => ({
           ...prev,
-          [field]: reader.result as string,
+          degreePhoto: reader.result as string,
         }));
       };
       reader.readAsDataURL(file);
@@ -237,10 +234,10 @@ const StudentStatusDialog = ({
       !formData.educationType ||
       !formData.studyType ||
       !formData.branch ||
+      !formData.department ||
       !formData.enrollmentDate ||
       !formData.status ||
       !formData.graduationDate ||
-      !formData.admissionPhoto ||
       !formData.degreePhoto
     ) {
       toast.error("请填写所有必填字段");
@@ -299,10 +296,10 @@ const StudentStatusDialog = ({
         educationType: formData.educationType,
         studyType: formData.studyType,
         branch: formData.branch,
+        department: formData.department,
         enrollmentDate: formatDate(formData.enrollmentDate),
         status: formData.status,
         graduationDate: formatDate(formData.graduationDate),
-        admissionPhoto: formData.admissionPhoto,
         degreePhoto: formData.degreePhoto,
       };
 
@@ -535,14 +532,26 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="branch">分院系所 *</Label>
+                  <Label htmlFor="branch">分院 *</Label>
                   <Input
                     id="branch"
                     value={formData.branch}
                     onChange={(e) =>
                       setFormData({ ...formData, branch: e.target.value })
                     }
-                    placeholder="请输入分院系所"
+                    placeholder="请输入分院"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="department">系所 *</Label>
+                  <Input
+                    id="department"
+                    value={formData.department}
+                    onChange={(e) =>
+                      setFormData({ ...formData, department: e.target.value })
+                    }
+                    placeholder="请输入系所"
                   />
                 </div>
 
@@ -629,28 +638,6 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="admissionPhoto">录取证件照（不要求底色） *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="admissionPhoto"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handlePhotoUpload(file, "admissionPhoto");
-                      }}
-                    />
-                    {formData.admissionPhoto && (
-                      <img
-                        src={formData.admissionPhoto}
-                        alt="录取照片预览"
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2 col-span-2">
                   <Label htmlFor="degreePhoto">毕业学历证件照（一般要求蓝底） *</Label>
                   <div className="flex gap-2">
                     <Input
@@ -659,7 +646,7 @@ const StudentStatusDialog = ({
                       accept="image/*"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handlePhotoUpload(file, "degreePhoto");
+                        if (file) handlePhotoUpload(file);
                       }}
                     />
                     {formData.degreePhoto && (
