@@ -381,7 +381,7 @@ const StudentStatusDialog = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">姓名 *</Label>
+                  <Label htmlFor="name">姓名 <span className="text-destructive">*</span></Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -393,7 +393,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gender">性别 *</Label>
+                  <Label htmlFor="gender">性别 <span className="text-destructive">*</span></Label>
                   <Select
                     value={formData.gender}
                     onValueChange={(value) =>
@@ -411,7 +411,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>出生日期 *</Label>
+                  <Label>出生日期 <span className="text-destructive">*</span></Label>
                   <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -446,7 +446,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="nationality">民族 *</Label>
+                  <Label htmlFor="nationality">民族 <span className="text-destructive">*</span></Label>
                   <Input
                     id="nationality"
                     value={formData.nationality}
@@ -458,7 +458,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="school">学校名称 *</Label>
+                  <Label htmlFor="school">学校名称 <span className="text-destructive">*</span></Label>
                   <Input
                     id="school"
                     value={formData.school}
@@ -470,7 +470,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="degreeLevel">层次 *</Label>
+                  <Label htmlFor="degreeLevel">层次 <span className="text-destructive">*</span></Label>
                   <Input
                     id="degreeLevel"
                     value={formData.degreeLevel}
@@ -482,7 +482,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="major">专业 *</Label>
+                  <Label htmlFor="major">专业 <span className="text-destructive">*</span></Label>
                   <Input
                     id="major"
                     value={formData.major}
@@ -494,7 +494,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="duration">学制 *</Label>
+                  <Label htmlFor="duration">学制 <span className="text-destructive">*</span></Label>
                   <Input
                     id="duration"
                     value={formData.duration}
@@ -506,7 +506,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="educationType">学历类别 *</Label>
+                  <Label htmlFor="educationType">学历类别 <span className="text-destructive">*</span></Label>
                   <Input
                     id="educationType"
                     value={formData.educationType}
@@ -518,7 +518,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="studyType">学习形式 *</Label>
+                  <Label htmlFor="studyType">学习形式 <span className="text-destructive">*</span></Label>
                   <Input
                     id="studyType"
                     value={formData.studyType}
@@ -554,7 +554,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>入学日期 *</Label>
+                  <Label>入学日期 <span className="text-destructive">*</span></Label>
                   <Popover open={enrollmentDateOpen} onOpenChange={setEnrollmentDateOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -589,7 +589,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status">学籍状态 *</Label>
+                  <Label htmlFor="status">学籍状态 <span className="text-destructive">*</span></Label>
                   <Input
                     id="status"
                     value={formData.status}
@@ -601,7 +601,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>离校日期 *</Label>
+                  <Label>离校日期 <span className="text-destructive">*</span></Label>
                   <Popover open={graduationDateOpen} onOpenChange={setGraduationDateOpen}>
                     <PopoverTrigger asChild>
                       <Button
@@ -636,7 +636,7 @@ const StudentStatusDialog = ({
                 </div>
 
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="degreePhoto">毕业学历证件照（一般要求蓝底） *</Label>
+                  <Label htmlFor="degreePhoto">毕业学历证件照（一般要求蓝底） <span className="text-destructive">*</span></Label>
                   <div className="flex gap-2">
                     <Input
                       id="degreePhoto"

@@ -374,7 +374,7 @@ const DegreeVerificationDialog = ({
                 </div>
               )}
           <div className="grid gap-2">
-            <Label htmlFor="name">姓名 *</Label>
+            <Label htmlFor="name">姓名 <span className="text-destructive">*</span></Label>
             <Input
               id="name"
               value={formData.name}
@@ -384,7 +384,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="gender">性别 *</Label>
+            <Label htmlFor="gender">性别 <span className="text-destructive">*</span></Label>
             <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="请选择性别" />
@@ -397,7 +397,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label>出生日期 *</Label>
+            <Label>出生日期 <span className="text-destructive">*</span></Label>
             <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -430,7 +430,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label>获学位日期 *</Label>
+            <Label>获学位日期 <span className="text-destructive">*</span></Label>
             <Popover open={degreeDateOpen} onOpenChange={setDegreeDateOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -463,7 +463,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="university">学位授予单位 *</Label>
+            <Label htmlFor="university">学位授予单位 <span className="text-destructive">*</span></Label>
             <Input
               id="university"
               value={formData.university}
@@ -473,7 +473,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="degreeType">所授学位 *</Label>
+            <Label htmlFor="degreeType">所授学位 <span className="text-destructive">*</span></Label>
             <Input
               id="degreeType"
               value={formData.degreeType}
@@ -483,7 +483,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="major">学科/专业 *</Label>
+            <Label htmlFor="major">学科/专业 <span className="text-destructive">*</span></Label>
             <Input
               id="major"
               value={formData.major}
@@ -493,7 +493,7 @@ const DegreeVerificationDialog = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="certificateNumber">学位证书编号 *</Label>
+            <Label htmlFor="certificateNumber">学位证书编号 <span className="text-destructive">*</span></Label>
             <Input
               id="certificateNumber"
               value={formData.certificateNumber}

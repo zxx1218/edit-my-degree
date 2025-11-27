@@ -358,7 +358,7 @@ const EducationRegistrationDialog = ({
             <form onSubmit={handleSubmit} className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">姓名 *</Label>
+                  <Label htmlFor="name">姓名 <span className="text-destructive">*</span></Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -368,7 +368,7 @@ const EducationRegistrationDialog = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">性别 *</Label>
+                  <Label htmlFor="gender">性别 <span className="text-destructive">*</span></Label>
                   <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
                     <SelectTrigger>
                       <SelectValue placeholder="选择性别" />
@@ -382,7 +382,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label>出生日期 *</Label>
+                <Label>出生日期 <span className="text-destructive">*</span></Label>
                 <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -412,7 +412,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label>入学日期 *</Label>
+                <Label>入学日期 <span className="text-destructive">*</span></Label>
                 <Popover open={enrollmentDateOpen} onOpenChange={setEnrollmentDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -442,7 +442,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label>毕（结）业日期 *</Label>
+                <Label>毕（结）业日期 <span className="text-destructive">*</span></Label>
                 <Popover open={graduationDateOpen} onOpenChange={setGraduationDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -472,7 +472,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="school">学校名称 *</Label>
+                <Label htmlFor="school">学校名称 <span className="text-destructive">*</span></Label>
                 <Input
                   id="school"
                   value={formData.school}
@@ -484,7 +484,7 @@ const EducationRegistrationDialog = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="major">专业 *</Label>
+                  <Label htmlFor="major">专业 <span className="text-destructive">*</span></Label>
                   <Input
                     id="major"
                     value={formData.major}
@@ -494,7 +494,7 @@ const EducationRegistrationDialog = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="duration">学制 *</Label>
+                  <Label htmlFor="duration">学制 <span className="text-destructive">*</span></Label>
                   <Input
                     id="duration"
                     value={formData.duration}
@@ -506,7 +506,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="degreeLevel">层次 *</Label>
+                <Label htmlFor="degreeLevel">层次 <span className="text-destructive">*</span></Label>
                 <Input
                   id="degreeLevel"
                   value={formData.degreeLevel}
@@ -518,7 +518,7 @@ const EducationRegistrationDialog = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="educationType">学历类别 *</Label>
+                  <Label htmlFor="educationType">学历类别 <span className="text-destructive">*</span></Label>
                   <Input
                     id="educationType"
                     value={formData.educationType}
@@ -528,7 +528,7 @@ const EducationRegistrationDialog = ({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="studyType">学习形式 *</Label>
+                  <Label htmlFor="studyType">学习形式 <span className="text-destructive">*</span></Label>
                   <Input
                     id="studyType"
                     value={formData.studyType}
@@ -540,7 +540,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="graduationStatus">毕（结）业 *</Label>
+                <Label htmlFor="graduationStatus">毕（结）业 <span className="text-destructive">*</span></Label>
                 <Input
                   id="graduationStatus"
                   value={formData.graduationStatus}
@@ -551,7 +551,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="certificateNumber">证书编号 *</Label>
+                <Label htmlFor="certificateNumber">证书编号 <span className="text-destructive">*</span></Label>
                 <Input
                   id="certificateNumber"
                   value={formData.certificateNumber}
@@ -562,7 +562,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="principalName">校（院）长姓名 *</Label>
+                <Label htmlFor="principalName">校（院）长姓名 <span className="text-destructive">*</span></Label>
                 <Input
                   id="principalName"
                   value={formData.principalName}
@@ -573,7 +573,7 @@ const EducationRegistrationDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="photo">蓝底证件照 *</Label>
+                <Label htmlFor="photo">蓝底证件照 <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-4">
                   {formData.photo && (
                     <img src={formData.photo} alt="证件照" className="w-20 h-24 object-cover rounded" />
