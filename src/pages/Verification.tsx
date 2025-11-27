@@ -129,10 +129,10 @@ const Verification = () => {
             <img 
               src={data.photo} 
               alt="证件照" 
-              className="w-32 h-40 object-cover border border-gray-200"
+              className="w-[6.8rem] h-[8.5rem] object-cover border border-gray-200"
             />
           ) : (
-            <div className="w-32 h-40 border border-gray-200 bg-gray-50" />
+            <div className="w-[6.8rem] h-[8.5rem] border border-gray-200 bg-gray-50" />
           )}
         </div>
 
