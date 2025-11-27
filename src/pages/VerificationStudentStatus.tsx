@@ -141,87 +141,87 @@ const VerificationStudentStatus = () => {
         {/* Information Fields */}
         <div className="space-y-0">
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">姓名</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">姓名</span>
             <span className="text-gray-900 ml-2">{data.name}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">性别</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">性别</span>
             <span className="text-gray-900 ml-2">{data.gender}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">出生日期</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">出生日期</span>
             <span className="text-gray-900 ml-2">{data.birthDate}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">民族</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">民族</span>
             <span className="text-gray-900 ml-2">{data.nationality}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学校名称</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学校名称</span>
             <span className="text-gray-900 ml-2">{data.school}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">层次</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">层次</span>
             <span className="text-gray-900 ml-2">{data.degreeLevel}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">专业</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">专业</span>
             <span className="text-gray-900 ml-2">{data.major}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学制</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学制</span>
             <span className="text-gray-900 ml-2">{data.duration}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学历类别</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学历类别</span>
             <span className="text-gray-900 ml-2">{data.educationType}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学习形式</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学习形式</span>
             <span className="text-gray-900 ml-2">{data.studyType}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">分院</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">分院</span>
             <span className="text-gray-900 ml-2">{data.branch}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">系所</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">系所</span>
             <span className="text-gray-900 ml-2">{data.department}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">入学日期</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">入学日期</span>
             <span className="text-gray-900 ml-2">{data.enrollmentDate}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学籍状态</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">学籍状态</span>
             <span className="text-gray-900 ml-2">{data.status}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">离校日期</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">离校日期</span>
             <span className="text-gray-900 ml-2">{data.graduationDate}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">在线验证码</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">在线验证码</span>
             <span className="text-gray-900 ml-2">{data.verificationCode}</span>
           </div>
 
           <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">更新日期</span>
+            <span className="text-[rgb(136,143,152)] w-24 flex-shrink-0 text-right">更新日期</span>
             <span className="text-gray-900 ml-2">{data.updateDate}</span>
           </div>
         </div>
