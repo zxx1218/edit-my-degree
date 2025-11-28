@@ -192,7 +192,7 @@ const EducationDetail = () => {
                 onChange={handleImageUpload}
               />
               <div
-                className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => photoRef.current?.click()}
               >
                 {data.photo ? (
