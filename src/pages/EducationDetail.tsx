@@ -265,7 +265,7 @@ const EducationDetail = () => {
         </div>
 
         {/* Detail Info */}
-        <div className="space-y-3">
+        <div className="space-y-3 pl-6">
           {[
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "graduationDate", label: "毕（结）业日期", value: data.graduationDate },
@@ -275,10 +275,10 @@ const EducationDetail = () => {
             { field: "principalName", label: "校（院）长姓名", value: data.principalName },
             { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-center gap-12 py-1">
-              <span className="text-muted-foreground text-right w-32">{label}</span>
+            <div key={field} className="flex items-center gap-4 py-1">
+              <span className="text-muted-foreground text-left w-32 flex-shrink-0">{label}</span>
               <span
-                className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
+                className="font-medium cursor-pointer hover:text-primary flex-1"
                 onClick={() => handleFieldClick(field as keyof EducationData, label)}
               >
                 {value || "-"}
