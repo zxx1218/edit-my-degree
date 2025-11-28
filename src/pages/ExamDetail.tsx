@@ -243,13 +243,11 @@ const ExamDetail = () => {
           </div>
 
           {/* Year */}
-          <div className="flex items-center gap-4 text-sm">
-            <div
-              onClick={() => handleFieldClick("year", "年份")}
-              className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal text-white flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
-            >
-              {data.year}
-            </div>
+          <div
+            onClick={() => handleFieldClick("year", "年份")}
+            className="text-sm font-normal text-white cursor-pointer hover:opacity-80"
+          >
+            {data.year}
           </div>
         </div>
 
