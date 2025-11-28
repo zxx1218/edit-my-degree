@@ -276,7 +276,7 @@ const EducationDetail = () => {
             { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
             <div key={field} className="flex items-center gap-4 py-1">
-              <span className="text-muted-foreground text-left w-32 flex-shrink-0">{label}</span>
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
               <span
                 className="font-medium cursor-pointer hover:text-primary flex-1"
                 onClick={() => handleFieldClick(field as keyof EducationData, label)}
