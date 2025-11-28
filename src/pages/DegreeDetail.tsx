@@ -247,6 +247,7 @@ const DegreeDetail = () => {
         {/* Detail Info */}
         <div className="space-y-3">
           {[
+            { field: "major", label: "学科/专业", value: data.major },
             { field: "degreeDate", label: "获学位日期", value: data.degreeDate },
             { field: "certificateNumber", label: "学位证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
