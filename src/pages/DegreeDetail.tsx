@@ -157,7 +157,7 @@ const DegreeDetail = () => {
           <button onClick={() => navigate(-1)} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-medium">学位</h1>
+          <h1 className="text-base font-medium">学位信息</h1>
           <div className="w-10"></div>
         </div>
       </div>
@@ -165,8 +165,8 @@ const DegreeDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-br from-[#5B7FDB] to-[#4A6BCF] rounded-2xl p-6 text-white mb-6 relative">
-          <div className="flex items-start gap-4 mb-6">
+        <div className="bg-gradient-to-b from-[rgb(56,80,218)] to-[rgb(86,126,231)] rounded-[5px] p-5 text-white mb-6 relative shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-5">
             {/* Photo */}
             <div className="text-center">
               <input
@@ -177,7 +177,7 @@ const DegreeDetail = () => {
                 onChange={handleImageUpload}
               />
               <div
-                className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => photoRef.current?.click()}
               >
                 {data.photo ? (
@@ -191,12 +191,12 @@ const DegreeDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-2xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
               </h2>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 text-sm">
                 <span
                   className="cursor-pointer hover:opacity-80"
                   onClick={() => handleFieldClick("gender", "性别")}
@@ -217,25 +217,29 @@ const DegreeDetail = () => {
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-3">
               <h3
-                className="text-2xl font-bold cursor-pointer hover:opacity-80"
+                className="text-xl font-bold cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
-              <div className="bg-white/25 backdrop-blur-sm px-4 py-1 rounded-full flex-shrink-0">
-                <span
-                  className="text-sm font-medium cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("degreeLevel", "学位层次")}
-                >
-                  {data.degreeLevel}
-                </span>
+              <div className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("degreeLevel", "学位层次")}>
+                {data.degreeLevel}
               </div>
             </div>
-            <div
-              className="text-base cursor-pointer hover:opacity-80"
-              onClick={() => handleFieldClick("degreeType", "学位类型")}
-            >
-              {data.degreeType}
+            <div className="flex items-center gap-4 text-sm">
+              <span
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("major", "学科/专业")}
+              >
+                {data.major}
+              </span>
+              <span className="text-white/60">|</span>
+              <span
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("degreeType", "学位类型")}
+              >
+                {data.degreeType}
+              </span>
             </div>
           </div>
         </div>
@@ -244,13 +248,12 @@ const DegreeDetail = () => {
         <div className="space-y-3">
           {[
             { field: "degreeDate", label: "获学位日期", value: data.degreeDate },
-            { field: "major", label: "学科/专业", value: data.major },
             { field: "certificateNumber", label: "学位证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-center gap-8 py-1">
-              <span className="text-muted-foreground text-right w-32">{label}</span>
+            <div key={field} className="flex items-center gap-4 py-1 text-sm">
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
               <span
-                className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
+                className="font-medium cursor-pointer hover:text-primary flex-1"
                 onClick={() => handleFieldClick(field as keyof DegreeData, label)}
               >
                 {value || "-"}
@@ -261,7 +264,7 @@ const DegreeDetail = () => {
 
         {/* Button */}
         <Button 
-          className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
+          className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
           onClick={() => navigate('/verification-report')}
         >
           查看验证报告
