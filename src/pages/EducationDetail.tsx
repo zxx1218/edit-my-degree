@@ -180,7 +180,7 @@ const EducationDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-b from-[rgb(55,134,243)] to-[rgb(91,167,248)] rounded-[5px] p-6 text-white mb-6 relative">
+        <div className="bg-gradient-to-b from-[rgb(55,134,243)] to-[rgb(91,167,248)] rounded-[5px] p-6 text-white mb-6 relative shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
           <div className="flex items-start gap-4 mb-6">
             {/* Photo */}
             <div className="text-center">
