@@ -289,7 +289,7 @@ const EducationDetail = () => {
 
         {/* Button */}
         <Button 
-          className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
+          className="w-full mt-6 h-14 text-lg rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
           onClick={() => navigate('/verification-report')}
         >
           查看验证报告
