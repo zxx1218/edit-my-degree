@@ -265,7 +265,7 @@ const EducationDetail = () => {
         </div>
 
         {/* Detail Info */}
-        <div className="space-y-3 pl-6">
+        <div className="space-y-3">
           {[
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "graduationDate", label: "毕（结）业日期", value: data.graduationDate },
