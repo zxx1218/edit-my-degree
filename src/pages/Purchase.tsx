@@ -60,29 +60,61 @@ const Purchase = () => {
           <p className="text-muted-foreground text-lg">购买或续费学信档案账号，享受便捷的学历信息管理服务</p>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
-          {plans.map((plan, index) => (
-            <Card
-              key={index}
-              className={`relative transition-all hover:shadow-lg ${
-                plan.popular ? "border-primary shadow-lg scale-105" : ""
-              }`}
-            >
-              {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">推荐</Badge>}
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-center mb-6">主要套餐</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {plans.slice(0, 3).map((plan, index) => (
+              <Card
+                key={index}
+                className={`relative transition-all hover:shadow-lg ${
+                  plan.popular ? "border-primary shadow-lg scale-105" : ""
+                }`}
+              >
+                {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">推荐</Badge>}
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                  </div>
+                  <CardDescription className="mt-2 text-lg font-medium">{plan.logins}登录次数</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                      <p className="text-sm text-muted-foreground">{plan.description}</p>
+                    </div>
+                    {plan.features.map((feature, featureIndex) => (
+                      <div key={featureIndex} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <p className="text-sm text-muted-foreground">{feature}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-center mb-6">附加产品</h2>
+          <div className="max-w-md mx-auto">
+            <Card className="relative transition-all hover:shadow-lg">
               <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                <CardTitle className="text-2xl">{plans[3].name}</CardTitle>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-4xl font-bold">{plans[3].price}</span>
                 </div>
-                <CardDescription className="mt-2 text-lg font-medium">{plan.logins}登录次数</CardDescription>
+                <CardDescription className="mt-2 text-lg font-medium">{plans[3].logins}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                    <p className="text-sm text-muted-foreground">{plans[3].description}</p>
                   </div>
-                  {plan.features.map((feature, featureIndex) => (
+                  {plans[3].features.map((feature, featureIndex) => (
                     <div key={featureIndex} className="flex items-start gap-2">
                       <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                       <p className="text-sm text-muted-foreground">{feature}</p>
@@ -91,7 +123,7 @@ const Purchase = () => {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          </div>
         </div>
 
         <Card className="max-w-2xl mx-auto">
