@@ -13,6 +13,7 @@ interface User {
   username: string;
   password: string;
   remaining_logins: number;
+  pdf_limit: number;
 }
 
 // 设置一次登录后72小时内无需重新验证
@@ -40,6 +41,17 @@ const SuperAdd = () => {
   const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
   const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
   const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
+  
+  // PDF积分管理相关状态
+  const [pdfUsername, setPdfUsername] = useState("");
+  const [pdfAmount, setPdfAmount] = useState("");
+  const [decreasePdfUsername, setDecreasePdfUsername] = useState("");
+  const [decreasePdfAmount, setDecreasePdfAmount] = useState("");
+  const [resetPdfUsername, setResetPdfUsername] = useState("");
+  const [isAddingPdf, setIsAddingPdf] = useState(false);
+  const [isDecreasingPdf, setIsDecreasingPdf] = useState(false);
+  const [isResettingPdf, setIsResettingPdf] = useState(false);
+  
   const { toast } = useToast();
 
   // API基础URL - 根据你的环境配置进行调整
@@ -552,6 +564,12 @@ const SuperAdd = () => {
                         {queriedUser.remaining_logins}
                       </span>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">PDF积分:</span>
+                      <span className="font-bold text-xl text-blue-600 dark:text-blue-400">
+                        {queriedUser.pdf_limit}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -615,7 +633,10 @@ const SuperAdd = () => {
                         </div>
                         <div className="ml-3 flex items-center gap-2">
                           <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full whitespace-nowrap">
-                            {user.remaining_logins} 次
+                            登录: {user.remaining_logins}
+                          </span>
+                          <span className="text-sm font-medium px-3 py-1 bg-secondary/10 text-secondary rounded-full whitespace-nowrap">
+                            PDF: {user.pdf_limit}
                           </span>
                         </div>
                       </div>
@@ -627,8 +648,8 @@ const SuperAdd = () => {
           </Card>
         </div>
 
-        {/* 操作标签页 */}
-        <Card className="shadow-lg border-2">
+        {/* 登录次数操作标签页 */}
+        <Card className="shadow-lg border-2 mb-6">
           <CardHeader>
             <CardTitle className="text-2xl">登录次数操作</CardTitle>
             <CardDescription>添加、减少或重置用户登录次数</CardDescription>
@@ -785,6 +806,271 @@ const SuperAdd = () => {
                       className="w-full h-11 text-base"
                     >
                       {isResetting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          重置中...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          重置为 0
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* PDF积分操作标签页 */}
+        <Card className="shadow-lg border-2">
+          <CardHeader>
+            <CardTitle className="text-2xl">PDF积分操作</CardTitle>
+            <CardDescription>添加、减少或重置用户PDF积分</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="add-pdf" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 h-12">
+                <TabsTrigger value="add-pdf" className="text-base">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  添加积分
+                </TabsTrigger>
+                <TabsTrigger value="decrease-pdf" className="text-base">
+                  <Minus className="mr-2 h-4 w-4" />
+                  减少积分
+                </TabsTrigger>
+                <TabsTrigger value="reset-pdf" className="text-base">
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  重置积分
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="add-pdf" className="space-y-4 mt-6">
+                <div className="p-6 bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-950/20 dark:to-teal-950/20 rounded-lg border-2 border-cyan-200 dark:border-cyan-800">
+                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <UserPlus className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    添加PDF积分
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">为指定用户增加PDF下载积分</p>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pdf-username">用户名</Label>
+                      <Input
+                        id="pdf-username"
+                        value={pdfUsername}
+                        onChange={(e) => setPdfUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pdf-amount">添加积分数量</Label>
+                      <Input
+                        id="pdf-amount"
+                        type="number"
+                        min="1"
+                        value={pdfAmount}
+                        onChange={(e) => setPdfAmount(e.target.value)}
+                        placeholder="请输入要添加的积分"
+                        className="h-10"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        /* 
+                        伪代码：handleAddPdfLimit
+                        
+                        1. 验证输入：
+                           - 检查 pdfUsername 是否为空
+                           - 检查 pdfAmount 是否为有效正整数
+                           - 如果验证失败，显示错误提示并返回
+                        
+                        2. 设置加载状态：setIsAddingPdf(true)
+                        
+                        3. 调用后端API：
+                           - 请求路径：${API_BASE_URL}/update-pdf-limit
+                           - 请求方法：POST
+                           - 请求体：{ username: pdfUsername, addAmount: pdfAmount }
+                        
+                        4. 处理响应：
+                           - 如果成功 (data.success === true)：
+                             * 显示成功提示：已为用户 xxx 添加 xxx 积分，当前剩余 xxx 积分
+                             * 清空输入框：setPdfUsername(''), setPdfAmount('')
+                             * 如果用户列表已展开，刷新用户列表
+                           - 如果失败：
+                             * 显示错误提示
+                        
+                        5. 结束加载状态：setIsAddingPdf(false)
+                        */
+                        toast({
+                          title: "伪代码模式",
+                          description: "此功能为伪代码实现，需要后端API支持",
+                        });
+                      }}
+                      disabled={isAddingPdf}
+                      className="w-full h-11 text-base bg-cyan-600 hover:bg-cyan-700"
+                    >
+                      {isAddingPdf ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          添加中...
+                        </>
+                      ) : (
+                        "确认添加"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="decrease-pdf" className="space-y-4 mt-6">
+                <div className="p-6 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20 rounded-lg border-2 border-violet-200 dark:border-violet-800">
+                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <Minus className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                    减少PDF积分
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">为指定用户减少PDF下载积分</p>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="decrease-pdf-username">用户名</Label>
+                      <Input
+                        id="decrease-pdf-username"
+                        value={decreasePdfUsername}
+                        onChange={(e) => setDecreasePdfUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="decrease-pdf-amount">减少积分数量</Label>
+                      <Input
+                        id="decrease-pdf-amount"
+                        type="number"
+                        min="1"
+                        value={decreasePdfAmount}
+                        onChange={(e) => setDecreasePdfAmount(e.target.value)}
+                        placeholder="请输入要减少的积分"
+                        className="h-10"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        /* 
+                        伪代码：handleDecreasePdfLimit
+                        
+                        1. 验证输入：
+                           - 检查 decreasePdfUsername 是否为空
+                           - 检查 decreasePdfAmount 是否为有效正整数
+                           - 如果验证失败，显示错误提示并返回
+                        
+                        2. 设置加载状态：setIsDecreasingPdf(true)
+                        
+                        3. 调用后端API：
+                           - 请求路径：${API_BASE_URL}/decrease-pdf-limit
+                           - 请求方法：POST
+                           - 请求体：{ username: decreasePdfUsername, decreaseAmount: decreasePdfAmount }
+                        
+                        4. 处理响应：
+                           - 如果成功 (data.success === true)：
+                             * 显示成功提示：已为用户 xxx 减少 xxx 积分，当前剩余 xxx 积分
+                             * 清空输入框：setDecreasePdfUsername(''), setDecreasePdfAmount('')
+                             * 如果用户列表已展开，刷新用户列表
+                           - 如果失败（如积分不足）：
+                             * 显示错误提示
+                        
+                        5. 结束加载状态：setIsDecreasingPdf(false)
+                        */
+                        toast({
+                          title: "伪代码模式",
+                          description: "此功能为伪代码实现，需要后端API支持",
+                        });
+                      }}
+                      disabled={isDecreasingPdf}
+                      className="w-full h-11 text-base bg-violet-600 hover:bg-violet-700"
+                    >
+                      {isDecreasingPdf ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          减少中...
+                        </>
+                      ) : (
+                        "确认减少"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reset-pdf" className="space-y-4 mt-6">
+                <div className="p-6 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20 rounded-lg border-2 border-pink-200 dark:border-pink-800">
+                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <RotateCcw className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                    重置PDF积分
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">将指定用户的PDF积分重置为 0</p>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-pdf-username">用户名</Label>
+                      <Input
+                        id="reset-pdf-username"
+                        value={resetPdfUsername}
+                        onChange={(e) => setResetPdfUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
+                    </div>
+
+                    <div className="p-4 bg-pink-100 dark:bg-pink-900/30 border border-pink-300 dark:border-pink-700 rounded-lg">
+                      <p className="text-sm text-pink-800 dark:text-pink-200 font-medium">
+                        ⚠️ 警告：此操作将把用户PDF积分重置为 0，请谨慎操作！
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        /* 
+                        伪代码：handleResetPdfLimit
+                        
+                        1. 验证输入：
+                           - 检查 resetPdfUsername 是否为空
+                           - 如果为空，显示错误提示并返回
+                        
+                        2. 设置加载状态：setIsResettingPdf(true)
+                        
+                        3. 调用后端API：
+                           - 请求路径：${API_BASE_URL}/reset-pdf-limit
+                           - 请求方法：POST
+                           - 请求体：{ username: resetPdfUsername }
+                        
+                        4. 处理响应：
+                           - 如果成功 (data.success === true)：
+                             * 显示成功提示：已将用户 xxx 的PDF积分重置为 0
+                             * 清空输入框：setResetPdfUsername('')
+                             * 如果用户列表已展开，刷新用户列表
+                           - 如果失败：
+                             * 显示错误提示
+                        
+                        5. 结束加载状态：setIsResettingPdf(false)
+                        */
+                        toast({
+                          title: "伪代码模式",
+                          description: "此功能为伪代码实现，需要后端API支持",
+                        });
+                      }}
+                      disabled={isResettingPdf}
+                      variant="destructive"
+                      className="w-full h-11 text-base"
+                    >
+                      {isResettingPdf ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           重置中...
