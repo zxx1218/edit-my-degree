@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 // import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus } from "lucide-react";
+import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, CreditCard, LogIn } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface User {
@@ -798,20 +799,22 @@ const SuperAdd = () => {
                     {users.map((user, index) => (
                       <div
                         key={user.id}
-                        className="flex justify-between items-center p-3 bg-background rounded-lg hover:shadow-md transition-all border animate-scale-in"
+                        className="flex justify-between items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in"
                         style={{ animationDelay: `${index * 30}ms` }}
                       >
-                        <div className="flex-1 min-w-0">
-                          <span className="font-semibold block truncate">{user.username}</span>
-                          <span className="text-xs text-muted-foreground">密码: {user.password}</span>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <span className="font-bold text-lg block truncate">{user.username}</span>
+                          <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
                         </div>
-                        <div className="ml-3 flex items-center gap-2">
-                          <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full whitespace-nowrap">
-                            登录: {user.remaining_logins}
-                          </span>
-                          <span className="text-sm font-medium px-3 py-1 bg-secondary/10 text-secondary rounded-full whitespace-nowrap">
-                            PDF: {user.pdf_limit}
-                          </span>
+                        <div className="ml-4 flex flex-col gap-2">
+                          <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                            <LogIn className="h-3.5 w-3.5" />
+                            <span className="font-medium">登录次数: {user.remaining_logins}</span>
+                          </Badge>
+                          <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                            <CreditCard className="h-3.5 w-3.5" />
+                            <span className="font-medium">PDF积分: {user.pdf_limit}</span>
+                          </Badge>
                         </div>
                       </div>
                     ))}
