@@ -15,6 +15,7 @@ const Purchase = () => {
       price: "¥9",
       description: "为您的个人账号充值5次登录次数",
       popular: false,
+      features: ["数据加密存储", "支持学历信息修改"],
     },
     {
       name: "标准版",
@@ -22,6 +23,7 @@ const Purchase = () => {
       price: "¥29",
       description: "为您的个人账号充值50次登录次数",
       popular: true,
+      features: ["数据加密存储", "支持学历信息修改"],
     },
     {
       name: "永久版",
@@ -29,6 +31,7 @@ const Purchase = () => {
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
+      features: ["数据加密存储", "支持学历信息修改", "永久不限次数"],
     },
     {
       name: "PDF积分包",
@@ -36,6 +39,7 @@ const Purchase = () => {
       price: "¥1/积分",
       description: "购买PDF报告积分，1元1个积分，积分永不过期",
       popular: false,
+      features: ["积分永不过期", "支持生成所有报告类型"],
     },
   ];
 
@@ -78,14 +82,12 @@ const Purchase = () => {
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
                     <p className="text-sm text-muted-foreground">{plan.description}</p>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">数据加密存储</p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">支持学历信息修改</p>
-                  </div>
+                  {plan.features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                      <p className="text-sm text-muted-foreground">{feature}</p>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
