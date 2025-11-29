@@ -272,7 +272,7 @@ const handleConfirmGenerate = async () => {
       console.log("PDF limit result:", pdfLimitData);
 
       if (!pdfLimitResponse.ok || !pdfLimitData.success) {
-        const errorMsg = pdfLimitData.message || "扣除PDF下载积分失败";
+        const errorMsg = pdfLimitData.error || "扣除PDF下载积分失败";
         toast.error(errorMsg);
         return;
       }
