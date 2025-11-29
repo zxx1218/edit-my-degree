@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     // 使用 service role key 查询指定用户
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, username, password, remaining_logins')
+      .select('id, username, password, remaining_logins, pdf_limit')
       .eq('username', username)
       .maybeSingle();
 
