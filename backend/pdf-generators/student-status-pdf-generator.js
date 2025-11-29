@@ -242,26 +242,54 @@ const generateStudentStatusPdf = async (req, res) => {
       console.log('开始生成二维码...');
 
       /*
-        二维码路由
-        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
+          样例url - 学籍
+          /verification-studentStatus?name=张三&gender=男&birthDate=1998年01月15日&nationality=汉族&school=北京大学&degreeLevel=本科&major=计算机科学与技术&duration=四年&educationType=普通高等教育&studyType=普通全日制&branch=信息科学技术学院&department=计算机系&enrollmentDate=2016年09月01日&status=注册学籍&graduationDate=2020年06月30日&verificationCode=ABCD1234567890&updateDate=2024年11月27日&photo=https://example.com/photo.jpg
       */
       
+      // 构建查询参数对象
+      const t = '服务器错误'
+      const queryParams = {
+        name: name || t,
+        gender: gender || t,
+        birthDate: birthDate || t,
+        nationality: nationality || t,
+        school: school || t,
+        degreeLevel: degreeLevel || t,
+        major: major || t,
+        duration: duration || t,
+        educationType: educationType || t,
+        studyType: studyType || t,
+        branch: branch || t,
+        department: department || t,
+        enrollmentDate: enrollmentDate || t,
+        status: status || t,
+        graduationDate: graduationDate || t,
+        verificationCode: 'A4DV5W4DV20DV8S', // 在线验证码，目前先写死
+        updateDate: currentDate,
+        photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加miniio
+        // photo: degreePhoto || 'https://example.com/photo.jpg'
+      };
+
+      // 构建查询字符串并对所有值进行编码
+      const queryString = Object.keys(queryParams)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
+        .join('&');
+
       // 二维码配置
       const qrCodeConfig = {
-        content: '?data=more_complex_data_to_increase_density', // 二维码内容
+        content: `${process.env.VERIFICATION_BASE_URL}/verification-studentStatus?${queryString}`, // 二维码内容
         x: 76.5,                           // 二维码X坐标
         y: 126,                            // 二维码Y坐标
         size: 68.5,                        // 二维码大小(宽高)
-        quality: 'H'                       // 容错级别: L(7%), M(15%), Q(25%), H(30%)
+        quality: 'L'                       // 容错级别: L(7%), M(15%), Q(25%), H(30%)
       };
-      
       // 使用更高的分辨率生成二维码（10倍于目标尺寸）
-      const highResolution = qrCodeConfig.size * 10;
+      const highResolution = qrCodeConfig.size * 1;
       const qrCodeDataUrl = await QRCode.toDataURL(qrCodeConfig.content, {
         width: highResolution,  // 提高分辨率
         margin: 0,
         errorCorrectionLevel: qrCodeConfig.quality,
-        quality: 1.0,  // 最高质量
+        quality: 0.5,  // 质量 0-1.0
         type: 'image/png'
       });
 

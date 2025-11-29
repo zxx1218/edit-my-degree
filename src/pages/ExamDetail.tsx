@@ -79,7 +79,7 @@ const ExamDetail = () => {
 
       try {
         const result = await getUserData(userId);
-        const record = result.exam?.find((r: any) => r.id.toString() === id);
+        const record = result.exam?.find((r: any) => r.id === id);
         
         if (record) {
           setData({
@@ -135,7 +135,7 @@ const ExamDetail = () => {
     const userId = JSON.parse(currentUser).id;
     
     try {
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase();
+      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
       await updateData('exam', 'update', userId, { [dbField]: newValue }, id);
       
       toast({
@@ -190,7 +190,7 @@ const ExamDetail = () => {
           <button onClick={() => navigate(-1)} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-medium">考研信息</h1>
+          <h1 className="text-base font-medium">考研信息</h1>
           <div className="w-10"></div>
         </div>
       </div>
@@ -198,8 +198,8 @@ const ExamDetail = () => {
       {/* Content */}
       <div className="px-4 py-6 space-y-6">
         {/* Photo and Name Card */}
-        <div className="bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-2xl p-6 shadow-lg">
-          <div className="flex items-start gap-4 mb-6">
+        <div className="bg-gradient-to-b from-[rgb(54,177,197)] to-[rgb(93,200,218)] rounded-[5px] p-5 mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-4">
             {/* Photo */}
             <div className="text-center">
               <input
@@ -210,7 +210,7 @@ const ExamDetail = () => {
                 onChange={handleImageUpload}
               />
               <div
-                className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {data.photo ? (
@@ -236,20 +236,18 @@ const ExamDetail = () => {
           <div className="text-white">
             <div
               onClick={() => handleFieldClick("school", "学校名称")}
-              className="text-2xl font-bold mb-3 cursor-pointer hover:opacity-80"
+              className="text-xl font-bold mb-3 cursor-pointer hover:opacity-80"
             >
               {data.school}
             </div>
           </div>
 
           {/* Year */}
-          <div className="text-white">
-            <div
-              onClick={() => handleFieldClick("year", "年份")}
-              className="text-xl cursor-pointer hover:opacity-80"
-            >
-              {data.year}
-            </div>
+          <div
+            onClick={() => handleFieldClick("year", "年份")}
+            className="text-sm font-normal text-white cursor-pointer hover:opacity-80"
+          >
+            {data.year}
           </div>
         </div>
 
@@ -269,13 +267,13 @@ const ExamDetail = () => {
             { field: "businessCourse1Name" as keyof ExamData, label: "业务课一名称", value: data.businessCourse1Name },
             { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-center gap-12 py-1">
-              <span className="text-muted-foreground text-sm min-w-[120px] text-right">
+            <div key={field} className="flex items-center gap-4 py-1 text-sm">
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">
                 {label}
               </span>
               <span
                 onClick={() => handleFieldClick(field, label)}
-                className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
+                className="flex-1 cursor-pointer hover:text-primary"
               >
                 {value}
               </span>
@@ -294,13 +292,13 @@ const ExamDetail = () => {
               { field: "businessCourse2Score" as keyof ExamData, label: "业务课二", value: data.businessCourse2Score },
               { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
             ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center justify-center gap-12 py-1">
-                <span className="text-muted-foreground text-sm min-w-[120px] text-right">
+              <div key={field} className="flex items-center gap-4 py-1 text-sm">
+                <span className="text-muted-foreground text-right w-32 flex-shrink-0">
                   {label}
                 </span>
                 <span
                   onClick={() => handleFieldClick(field, label)}
-                  className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
+                  className="flex-1 cursor-pointer hover:text-primary"
                 >
                   {value}
                 </span>
@@ -317,13 +315,13 @@ const ExamDetail = () => {
               { field: "admissionUnit" as keyof ExamData, label: "录取单位", value: data.admissionUnit },
               { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
             ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center justify-center gap-12 py-1">
-                <span className="text-muted-foreground text-sm min-w-[120px] text-right">
+              <div key={field} className="flex items-center gap-4 py-1 text-sm">
+                <span className="text-muted-foreground text-right w-32 flex-shrink-0">
                   {label}
                 </span>
                 <span
                   onClick={() => handleFieldClick(field, label)}
-                  className="flex-1 text-sm cursor-pointer hover:text-primary max-w-md"
+                  className="flex-1 cursor-pointer hover:text-primary"
                 >
                   {value}
                 </span>

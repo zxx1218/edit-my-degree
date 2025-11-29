@@ -74,7 +74,7 @@ const StudentStatusDetail = () => {
 
       try {
         const result = await getUserData(userId);
-        const record = result.studentStatus?.find((r: any) => r.id.toString() === id);
+        const record = result.studentStatus?.find((r: any) => r.id === id);
         
         if (record) {
           setData({
@@ -206,8 +206,8 @@ const StudentStatusDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-br from-[hsl(var(--student-status))] to-[hsl(var(--student-status-dark))] rounded-2xl p-6 text-white mb-6 relative">
-          <div className="flex items-start gap-4 mb-6">
+        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[5px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-5">
             {/* Photos */}
             <div className="flex gap-3">
               <div className="text-center">
@@ -219,7 +219,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("admissionPhoto", e)}
                 />
                 <div
-                  className="w-20 h-24 bg-white/20 rounded-lg mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                   onClick={() => admissionPhotoRef.current?.click()}
                 >
                   {data.admissionPhoto ? (
@@ -239,7 +239,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-20 h-24 bg-gray-300 rounded-lg mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  className="w-[72px] h-24 bg-gray-300 rounded-[5px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
@@ -259,13 +259,13 @@ const StudentStatusDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-2xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
               </h2>
               <div
-                className="cursor-pointer hover:opacity-80"
+                className="text-sm cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("personalInfo", "个人信息")}
               >
                 {data.personalInfo}
@@ -277,21 +277,19 @@ const StudentStatusDetail = () => {
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-3">
               <h3
-                className="text-2xl font-bold cursor-pointer hover:opacity-80"
+                className="text-xl font-bold cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-1 rounded-full flex-shrink-0">
-                <span
-                  className="text-sm font-medium cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("degreeLevel", "学位层次")}
-                >
-                  {data.degreeLevel}
-                </span>
+              <div 
+                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("degreeLevel", "学位层次")}
+              >
+                {data.degreeLevel}
               </div>
             </div>
-            <div className="flex items-center gap-4 text-base">
+            <div className="flex items-center gap-4 text-sm">
               <span
                 className="cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("major", "专业")}
@@ -310,7 +308,7 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Detail Info */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {[
             { field: "nationality", label: "民族", value: data.nationality },
             { field: "idNumber", label: "证件号码", value: data.idNumber },
@@ -324,10 +322,10 @@ const StudentStatusDetail = () => {
             { field: "status", label: "学籍状态", value: data.status },
             { field: "graduationDate", label: "离校日期", value: data.graduationDate },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center justify-center gap-8 py-2">
-              <span className="text-muted-foreground text-right w-24">{label}</span>
+            <div key={field} className="text-sm flex items-center gap-4 py-1">
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
               <span
-                className="font-medium cursor-pointer hover:text-primary flex-1 max-w-xs"
+                className="flex-1 cursor-pointer hover:text-primary"
                 onClick={() => handleFieldClick(field as keyof StudentData, label)}
               >
                 {value || "-"}
@@ -338,7 +336,7 @@ const StudentStatusDetail = () => {
 
         {/* Button */}
         <Button 
-          className="w-full mt-6 h-14 text-lg bg-[#48C9B0] hover:bg-[#48C9B0]/90"
+          className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
           onClick={() => navigate('/verification-report')}
         >
           查看验证报告
@@ -355,6 +353,7 @@ const StudentStatusDetail = () => {
           onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
         />
       )}
+
     </div>
   );
 };
