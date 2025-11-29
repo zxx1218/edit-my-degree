@@ -41,7 +41,7 @@ const SuperAdd = () => {
   const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
   const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
   const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
-  
+
   // PDF积分管理相关状态
   const [pdfUsername, setPdfUsername] = useState("");
   const [pdfAmount, setPdfAmount] = useState("");
@@ -51,7 +51,7 @@ const SuperAdd = () => {
   const [isAddingPdf, setIsAddingPdf] = useState(false);
   const [isDecreasingPdf, setIsDecreasingPdf] = useState(false);
   const [isResettingPdf, setIsResettingPdf] = useState(false);
-  
+
   const { toast } = useToast();
 
   // API基础URL - 根据你的环境配置进行调整
@@ -378,6 +378,180 @@ const SuperAdd = () => {
       });
     } finally {
       setIsDecreasingLogins(false);
+    }
+  };
+
+  const handleAddPdfLimit = async () => {
+    if (!pdfUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
+
+    const amountToAdd = parseInt(pdfAmount);
+    if (isNaN(amountToAdd) || amountToAdd <= 0) {
+      toast({
+        variant: "destructive",
+        title: "请输入有效的积分数量",
+        description: "积分数量必须为正整数",
+      });
+      return;
+    }
+
+    setIsAddingPdf(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/increase-pdf-limit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: pdfUsername,
+          increaseAmount: amountToAdd,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "添加成功",
+          description: `已为用户 ${pdfUsername} 添加 ${amountToAdd} 积分，当前剩余 ${data.newPdfLimit} 积分`,
+        });
+        setPdfUsername("");
+        setPdfAmount("");
+        if (showUserList) {
+          fetchUsers();
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "添加失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "添加失败",
+        description: error.message,
+      });
+    } finally {
+      setIsAddingPdf(false);
+    }
+  };
+
+  const handleDecreasePdfLimit = async () => {
+    if (!decreasePdfUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
+
+    const amountToDecrease = parseInt(decreasePdfAmount);
+    if (isNaN(amountToDecrease) || amountToDecrease <= 0) {
+      toast({
+        variant: "destructive",
+        title: "请输入有效的积分数量",
+        description: "积分数量必须为正整数",
+      });
+      return;
+    }
+
+    setIsDecreasingPdf(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: decreasePdfUsername,
+          decreaseAmount: amountToDecrease,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "减少成功",
+          description: `已为用户 ${decreasePdfUsername} 减少 ${amountToDecrease} 积分，当前剩余 ${data.newPdfLimit} 积分`,
+        });
+        setDecreasePdfUsername("");
+        setDecreasePdfAmount("");
+        if (showUserList) {
+          fetchUsers();
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "减少失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "减少失败",
+        description: error.message,
+      });
+    } finally {
+      setIsDecreasingPdf(false);
+    }
+  };
+
+  const handleResetPdfLimit = async () => {
+    if (!resetPdfUsername.trim()) {
+      toast({
+        variant: "destructive",
+        title: "请输入用户名",
+      });
+      return;
+    }
+
+    setIsResettingPdf(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/reset-pdf-limit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: resetPdfUsername,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "重置成功",
+          description: `已将用户 ${resetPdfUsername} 的PDF积分重置为 0`,
+        });
+        setResetPdfUsername("");
+        if (showUserList) {
+          fetchUsers();
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "重置失败",
+          description: data.error || "未知错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "重置失败",
+        description: error.message,
+      });
+    } finally {
+      setIsResettingPdf(false);
     }
   };
 
@@ -881,37 +1055,7 @@ const SuperAdd = () => {
                     </div>
 
                     <Button
-                      onClick={() => {
-                        /* 
-                        伪代码：handleAddPdfLimit
-                        
-                        1. 验证输入：
-                           - 检查 pdfUsername 是否为空
-                           - 检查 pdfAmount 是否为有效正整数
-                           - 如果验证失败，显示错误提示并返回
-                        
-                        2. 设置加载状态：setIsAddingPdf(true)
-                        
-                        3. 调用后端API：
-                           - 请求路径：${API_BASE_URL}/update-pdf-limit
-                           - 请求方法：POST
-                           - 请求体：{ username: pdfUsername, addAmount: pdfAmount }
-                        
-                        4. 处理响应：
-                           - 如果成功 (data.success === true)：
-                             * 显示成功提示：已为用户 xxx 添加 xxx 积分，当前剩余 xxx 积分
-                             * 清空输入框：setPdfUsername(''), setPdfAmount('')
-                             * 如果用户列表已展开，刷新用户列表
-                           - 如果失败：
-                             * 显示错误提示
-                        
-                        5. 结束加载状态：setIsAddingPdf(false)
-                        */
-                        toast({
-                          title: "伪代码模式",
-                          description: "此功能为伪代码实现，需要后端API支持",
-                        });
-                      }}
+                      onClick={handleAddPdfLimit}
                       disabled={isAddingPdf}
                       className="w-full h-11 text-base bg-cyan-600 hover:bg-cyan-700"
                     >
@@ -962,37 +1106,7 @@ const SuperAdd = () => {
                     </div>
 
                     <Button
-                      onClick={() => {
-                        /* 
-                        伪代码：handleDecreasePdfLimit
-                        
-                        1. 验证输入：
-                           - 检查 decreasePdfUsername 是否为空
-                           - 检查 decreasePdfAmount 是否为有效正整数
-                           - 如果验证失败，显示错误提示并返回
-                        
-                        2. 设置加载状态：setIsDecreasingPdf(true)
-                        
-                        3. 调用后端API：
-                           - 请求路径：${API_BASE_URL}/decrease-pdf-limit
-                           - 请求方法：POST
-                           - 请求体：{ username: decreasePdfUsername, decreaseAmount: decreasePdfAmount }
-                        
-                        4. 处理响应：
-                           - 如果成功 (data.success === true)：
-                             * 显示成功提示：已为用户 xxx 减少 xxx 积分，当前剩余 xxx 积分
-                             * 清空输入框：setDecreasePdfUsername(''), setDecreasePdfAmount('')
-                             * 如果用户列表已展开，刷新用户列表
-                           - 如果失败（如积分不足）：
-                             * 显示错误提示
-                        
-                        5. 结束加载状态：setIsDecreasingPdf(false)
-                        */
-                        toast({
-                          title: "伪代码模式",
-                          description: "此功能为伪代码实现，需要后端API支持",
-                        });
-                      }}
+                      onClick={handleDecreasePdfLimit}
                       disabled={isDecreasingPdf}
                       className="w-full h-11 text-base bg-violet-600 hover:bg-violet-700"
                     >
@@ -1036,36 +1150,7 @@ const SuperAdd = () => {
                     </div>
 
                     <Button
-                      onClick={() => {
-                        /* 
-                        伪代码：handleResetPdfLimit
-                        
-                        1. 验证输入：
-                           - 检查 resetPdfUsername 是否为空
-                           - 如果为空，显示错误提示并返回
-                        
-                        2. 设置加载状态：setIsResettingPdf(true)
-                        
-                        3. 调用后端API：
-                           - 请求路径：${API_BASE_URL}/reset-pdf-limit
-                           - 请求方法：POST
-                           - 请求体：{ username: resetPdfUsername }
-                        
-                        4. 处理响应：
-                           - 如果成功 (data.success === true)：
-                             * 显示成功提示：已将用户 xxx 的PDF积分重置为 0
-                             * 清空输入框：setResetPdfUsername('')
-                             * 如果用户列表已展开，刷新用户列表
-                           - 如果失败：
-                             * 显示错误提示
-                        
-                        5. 结束加载状态：setIsResettingPdf(false)
-                        */
-                        toast({
-                          title: "伪代码模式",
-                          description: "此功能为伪代码实现，需要后端API支持",
-                        });
-                      }}
+                      onClick={handleResetPdfLimit}
                       disabled={isResettingPdf}
                       variant="destructive"
                       className="w-full h-11 text-base"
