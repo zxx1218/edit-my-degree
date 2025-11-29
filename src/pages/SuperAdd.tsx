@@ -184,7 +184,7 @@ const SuperAdd = () => {
         setQueriedUser(data.user);
         toast({
           title: "查询成功",
-          description: `用户 ${data.user.username} 剩余登录次数: ${data.user.remaining_logins} 次`,
+          description: `用户 ${data.user.username} 剩余登录次数: ${data.user.remaining_logins} 次，PDF积分: ${data.user.pdf_limit}`,
         });
       } else {
         toast({
