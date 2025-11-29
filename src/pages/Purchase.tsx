@@ -44,7 +44,7 @@ const Purchase = () => {
   ];
 
   const handlePurchase = () => {
-    window.open("https://m.tb.cn/h.Sn7Xrtk?tk=jTiAffAGIsg", "_blank");
+    window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
   };
 
   return (
