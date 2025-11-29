@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, FileText } from "lucide-react";
+// import { supabase } from "@/integrations/supabase/client";
+import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface User {
@@ -13,9 +13,9 @@ interface User {
   username: string;
   password: string;
   remaining_logins: number;
-  pdf_limit: number;
 }
 
+// 设置一次登录后72小时内无需重新验证
 const SUPERADD_LOGIN_KEY = "superadd_login_timestamp";
 const SUPERADD_SESSION_DURATION = 72 * 60 * 60 * 1000; // 72小时（毫秒）
 
@@ -40,18 +40,10 @@ const SuperAdd = () => {
   const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
   const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
   const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
-  
-  // PDF积分管理状态
-  const [pdfUsername, setPdfUsername] = useState("");
-  const [addPdfLimit, setAddPdfLimit] = useState("");
-  const [decreasePdfUsername, setDecreasePdfUsername] = useState("");
-  const [decreasePdfLimit, setDecreasePdfLimit] = useState("");
-  const [resetPdfUsername, setResetPdfUsername] = useState("");
-  const [isAddingPdf, setIsAddingPdf] = useState(false);
-  const [isDecreasingPdf, setIsDecreasingPdf] = useState(false);
-  const [isResettingPdf, setIsResettingPdf] = useState(false);
-  
   const { toast } = useToast();
+
+  // API基础URL - 根据你的环境配置进行调整
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
   // 检查登录状态是否在72小时内
   useEffect(() => {
@@ -70,32 +62,27 @@ const SuperAdd = () => {
       }
     }
   }, []);
-
   // 获取今日登录统计
   const fetchTodayLoginCount = async () => {
     setIsLoadingLoginCount(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-today-login-count`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-          }
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/get-today-login-count`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setTodayLoginCount(data.total_logins);
         setDistinctUsers(data.distinct_users);
       } else {
-        console.error('获取登录统计失败:', data.error);
+        console.error("获取登录统计失败:", data.error);
       }
     } catch (error) {
-      console.error('获取登录统计时出错:', error);
+      console.error("获取登录统计时出错:", error);
     } finally {
       setIsLoadingLoginCount(false);
     }
@@ -111,11 +98,15 @@ const SuperAdd = () => {
   const fetchUsers = async () => {
     setIsFetchingUsers(true);
     try {
-      const { data, error } = await supabase.functions.invoke('get-all-users');
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/get-all-users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      if (error) {
-        throw error;
-      }
+      const data = await response.json();
 
       if (data.success) {
         setUsers(data.users || []);
@@ -125,7 +116,7 @@ const SuperAdd = () => {
           description: `共 ${data.users?.length || 0} 个用户`,
         });
       } else {
-        throw new Error(data.error || '获取用户列表失败');
+        throw new Error(data.error || "获取用户列表失败");
       }
     } catch (error: any) {
       toast({
@@ -164,16 +155,18 @@ const SuperAdd = () => {
     setIsQuerying(true);
     setQueriedUser(null);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "query-user",
-        {
-          body: {
-            username: queryUsername,
-          },
-        }
-      );
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/query-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: queryUsername,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
 
       if (data.success) {
         setQueriedUser(data.user);
@@ -210,16 +203,18 @@ const SuperAdd = () => {
 
     setIsResetting(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "reset-user-logins",
-        {
-          body: {
-            username: resetUsername,
-          },
-        }
-      );
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/reset-user-logins`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: resetUsername,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
 
       if (data.success) {
         toast({
@@ -269,17 +264,19 @@ const SuperAdd = () => {
 
     setIsAddingLogins(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "update-user-logins",
-        {
-          body: {
-            username: targetUsername,
-            addLogins: loginsToAdd,
-          },
-        }
-      );
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: targetUsername,
+          addLogins: loginsToAdd,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
 
       if (data.success) {
         toast({
@@ -330,17 +327,19 @@ const SuperAdd = () => {
 
     setIsDecreasingLogins(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "decrease-user-logins",
-        {
-          body: {
-            username: decreaseUsername,
-            decreaseLogins: loginsToDecrease,
-          },
-        }
-      );
+      // 替换 Supabase 调用为本地 API 调用
+      const response = await fetch(`${API_BASE_URL}/decrease-user-logins`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: decreaseUsername,
+          decreaseLogins: loginsToDecrease,
+        }),
+      });
 
-      if (error) throw error;
+      const data = await response.json();
 
       if (data.success) {
         toast({
@@ -370,178 +369,6 @@ const SuperAdd = () => {
     }
   };
 
-  // PDF积分管理函数
-  const handleAddPdfLimit = async () => {
-    if (!pdfUsername.trim()) {
-      toast({
-        variant: "destructive",
-        title: "请输入用户名",
-      });
-      return;
-    }
-
-    const pdfToAdd = parseInt(addPdfLimit);
-    if (isNaN(pdfToAdd) || pdfToAdd <= 0) {
-      toast({
-        variant: "destructive",
-        title: "请输入有效的PDF积分",
-        description: "PDF积分必须为正整数",
-      });
-      return;
-    }
-
-    setIsAddingPdf(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "update-pdf-limit",
-        {
-          body: {
-            username: pdfUsername,
-            addPdfLimit: pdfToAdd,
-          },
-        }
-      );
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "添加成功",
-          description: `已为用户 ${pdfUsername} 添加 ${pdfToAdd} 个PDF积分，当前积分: ${data.newPdfLimit}`,
-        });
-        setPdfUsername("");
-        setAddPdfLimit("");
-        if (showUserList) {
-          fetchUsers();
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "添加失败",
-          description: data.error || "未知错误",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "添加失败",
-        description: error.message,
-      });
-    } finally {
-      setIsAddingPdf(false);
-    }
-  };
-
-  const handleDecreasePdfLimit = async () => {
-    if (!decreasePdfUsername.trim()) {
-      toast({
-        variant: "destructive",
-        title: "请输入用户名",
-      });
-      return;
-    }
-
-    const pdfToDecrease = parseInt(decreasePdfLimit);
-    if (isNaN(pdfToDecrease) || pdfToDecrease <= 0) {
-      toast({
-        variant: "destructive",
-        title: "请输入有效的PDF积分",
-        description: "PDF积分必须为正整数",
-      });
-      return;
-    }
-
-    setIsDecreasingPdf(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "decrease-pdf-limit",
-        {
-          body: {
-            username: decreasePdfUsername,
-            decreaseAmount: pdfToDecrease,
-          },
-        }
-      );
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "减少成功",
-          description: data.message || `已减少PDF积分`,
-        });
-        setDecreasePdfUsername("");
-        setDecreasePdfLimit("");
-        if (showUserList) {
-          fetchUsers();
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "减少失败",
-          description: data.message || "未知错误",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "减少失败",
-        description: error.message,
-      });
-    } finally {
-      setIsDecreasingPdf(false);
-    }
-  };
-
-  const handleResetPdfLimit = async () => {
-    if (!resetPdfUsername.trim()) {
-      toast({
-        variant: "destructive",
-        title: "请输入用户名",
-      });
-      return;
-    }
-
-    setIsResettingPdf(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "reset-pdf-limit",
-        {
-          body: {
-            username: resetPdfUsername,
-          },
-        }
-      );
-
-      if (error) throw error;
-
-      if (data.success) {
-        toast({
-          title: "重置成功",
-          description: `已将用户 ${resetPdfUsername} 的PDF积分重置为 0`,
-        });
-        setResetPdfUsername("");
-        if (showUserList) {
-          fetchUsers();
-        }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "重置失败",
-          description: data.error || "未知错误",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "重置失败",
-        description: error.message,
-      });
-    } finally {
-      setIsResettingPdf(false);
-    }
-  };
-
   if (!isVerified) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
@@ -563,7 +390,7 @@ const SuperAdd = () => {
                 type="text"
                 value={verifyUsername}
                 onChange={(e) => setVerifyUsername(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleVerify()}
+                onKeyPress={(e) => e.key === "Enter" && handleVerify()}
                 className="h-11"
               />
             </div>
@@ -574,7 +401,7 @@ const SuperAdd = () => {
                 type="password"
                 value={verifyPassword}
                 onChange={(e) => setVerifyPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleVerify()}
+                onKeyPress={(e) => e.key === "Enter" && handleVerify()}
                 className="h-11"
               />
             </div>
@@ -610,7 +437,9 @@ const SuperAdd = () => {
                 </div>
                 <div>
                   <CardTitle className="text-2xl text-indigo-900 dark:text-indigo-100">今日系统登录统计</CardTitle>
-                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">Today's Login Statistics</CardDescription>
+                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">
+                    Today's Login Statistics
+                  </CardDescription>
                 </div>
               </div>
               <Button
@@ -620,11 +449,7 @@ const SuperAdd = () => {
                 disabled={isLoadingLoginCount}
                 className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 h-10 px-4"
               >
-                {isLoadingLoginCount ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  '刷新'
-                )}
+                {isLoadingLoginCount ? <Loader2 className="h-4 w-4 animate-spin" /> : "刷新"}
               </Button>
             </div>
           </CardHeader>
@@ -640,11 +465,9 @@ const SuperAdd = () => {
                 ) : (
                   <>
                     <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
-                      {distinctUsers ?? '-'}
+                      {distinctUsers ?? "-"}
                     </div>
-                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">
-                      不同用户数
-                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">不同用户数</div>
                   </>
                 )}
               </div>
@@ -658,11 +481,9 @@ const SuperAdd = () => {
                 ) : (
                   <>
                     <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
-                      {todayLoginCount ?? '-'}
+                      {todayLoginCount ?? "-"}
                     </div>
-                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">
-                      总登录次数
-                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">总登录次数</div>
                   </>
                 )}
               </div>
@@ -692,17 +513,12 @@ const SuperAdd = () => {
                   value={queryUsername}
                   onChange={(e) => setQueryUsername(e.target.value)}
                   placeholder="请输入用户名"
-                  onKeyPress={(e) => e.key === 'Enter' && handleQueryUser()}
+                  onKeyPress={(e) => e.key === "Enter" && handleQueryUser()}
                   className="h-10"
                 />
               </div>
 
-              <Button
-                onClick={handleQueryUser}
-                disabled={isQuerying}
-                className="w-full h-10"
-                variant="default"
-              >
+              <Button onClick={handleQueryUser} disabled={isQuerying} className="w-full h-10" variant="default">
                 {isQuerying ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -732,11 +548,9 @@ const SuperAdd = () => {
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-blue-300 dark:border-blue-700">
                       <span className="text-sm text-muted-foreground">剩余登录次数:</span>
-                      <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">{queriedUser.remaining_logins}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">PDF积分:</span>
-                      <span className="font-bold text-xl text-purple-600 dark:text-purple-400">{queriedUser.pdf_limit ?? 0}</span>
+                      <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">
+                        {queriedUser.remaining_logins}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -758,9 +572,9 @@ const SuperAdd = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={fetchUsers} 
-                variant="outline" 
+              <Button
+                onClick={fetchUsers}
+                variant="outline"
                 className="w-full h-10 border-2"
                 disabled={isFetchingUsers}
               >
@@ -799,12 +613,9 @@ const SuperAdd = () => {
                           <span className="font-semibold block truncate">{user.username}</span>
                           <span className="text-xs text-muted-foreground">密码: {user.password}</span>
                         </div>
-                        <div className="ml-3 flex items-center gap-2 flex-wrap">
+                        <div className="ml-3 flex items-center gap-2">
                           <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full whitespace-nowrap">
-                            登录: {user.remaining_logins}
-                          </span>
-                          <span className="text-sm font-medium px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full whitespace-nowrap">
-                            PDF: {user.pdf_limit ?? 0}
+                            {user.remaining_logins} 次
                           </span>
                         </div>
                       </div>
@@ -816,8 +627,8 @@ const SuperAdd = () => {
           </Card>
         </div>
 
-        {/* 登录次数操作标签页 */}
-        <Card className="shadow-lg border-2 mb-6">
+        {/* 操作标签页 */}
+        <Card className="shadow-lg border-2">
           <CardHeader>
             <CardTitle className="text-2xl">登录次数操作</CardTitle>
             <CardDescription>添加、减少或重置用户登录次数</CardDescription>
@@ -846,7 +657,7 @@ const SuperAdd = () => {
                     添加登录次数
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">为指定用户增加登录次数</p>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="target-username">用户名</Label>
@@ -897,7 +708,7 @@ const SuperAdd = () => {
                     减少登录次数
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">为指定用户减少登录次数</p>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="decrease-username">用户名</Label>
@@ -948,7 +759,7 @@ const SuperAdd = () => {
                     重置登录次数
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">将指定用户的登录次数重置为 0</p>
-                  
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="reset-username">用户名</Label>
@@ -974,182 +785,6 @@ const SuperAdd = () => {
                       className="w-full h-11 text-base"
                     >
                       {isResetting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          重置中...
-                        </>
-                      ) : (
-                        <>
-                          <RotateCcw className="mr-2 h-4 w-4" />
-                          重置为 0
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* PDF积分操作标签页 */}
-        <Card className="shadow-lg border-2">
-          <CardHeader>
-            <CardTitle className="text-2xl">PDF积分操作</CardTitle>
-            <CardDescription>添加、减少或重置用户PDF下载积分</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="add-pdf" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 h-12">
-                <TabsTrigger value="add-pdf" className="text-base">
-                  <FileText className="mr-2 h-4 w-4" />
-                  添加积分
-                </TabsTrigger>
-                <TabsTrigger value="decrease-pdf" className="text-base">
-                  <Minus className="mr-2 h-4 w-4" />
-                  减少积分
-                </TabsTrigger>
-                <TabsTrigger value="reset-pdf" className="text-base">
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  重置积分
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="add-pdf" className="space-y-4 mt-6">
-                <div className="p-6 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 rounded-lg border-2 border-purple-200 dark:border-purple-800">
-                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    添加PDF积分
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">为指定用户增加PDF下载积分</p>
-                  
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="pdf-username">用户名</Label>
-                      <Input
-                        id="pdf-username"
-                        value={pdfUsername}
-                        onChange={(e) => setPdfUsername(e.target.value)}
-                        placeholder="请输入用户名"
-                        className="h-10"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="add-pdf-limit">添加PDF积分</Label>
-                      <Input
-                        id="add-pdf-limit"
-                        type="number"
-                        min="1"
-                        value={addPdfLimit}
-                        onChange={(e) => setAddPdfLimit(e.target.value)}
-                        placeholder="请输入要添加的积分"
-                        className="h-10"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleAddPdfLimit}
-                      disabled={isAddingPdf}
-                      className="w-full h-11 text-base bg-purple-600 hover:bg-purple-700"
-                    >
-                      {isAddingPdf ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          添加中...
-                        </>
-                      ) : (
-                        "确认添加"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="decrease-pdf" className="space-y-4 mt-6">
-                <div className="p-6 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20 rounded-lg border-2 border-amber-200 dark:border-amber-800">
-                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                    <Minus className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                    减少PDF积分
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">为指定用户减少PDF下载积分</p>
-                  
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="decrease-pdf-username">用户名</Label>
-                      <Input
-                        id="decrease-pdf-username"
-                        value={decreasePdfUsername}
-                        onChange={(e) => setDecreasePdfUsername(e.target.value)}
-                        placeholder="请输入用户名"
-                        className="h-10"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="decrease-pdf-limit">减少PDF积分</Label>
-                      <Input
-                        id="decrease-pdf-limit"
-                        type="number"
-                        min="1"
-                        value={decreasePdfLimit}
-                        onChange={(e) => setDecreasePdfLimit(e.target.value)}
-                        placeholder="请输入要减少的积分"
-                        className="h-10"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleDecreasePdfLimit}
-                      disabled={isDecreasingPdf}
-                      className="w-full h-11 text-base bg-amber-600 hover:bg-amber-700"
-                    >
-                      {isDecreasingPdf ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          减少中...
-                        </>
-                      ) : (
-                        "确认减少"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="reset-pdf" className="space-y-4 mt-6">
-                <div className="p-6 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-lg border-2 border-red-200 dark:border-red-800">
-                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                    <RotateCcw className="h-5 w-5 text-red-600 dark:text-red-400" />
-                    重置PDF积分
-                  </h3>
-                  <p className="text-sm text-muted-foreground mb-4">将指定用户的PDF积分重置为 0</p>
-                  
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="reset-pdf-username">用户名</Label>
-                      <Input
-                        id="reset-pdf-username"
-                        value={resetPdfUsername}
-                        onChange={(e) => setResetPdfUsername(e.target.value)}
-                        placeholder="请输入用户名"
-                        className="h-10"
-                      />
-                    </div>
-
-                    <div className="p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
-                      <p className="text-sm text-red-800 dark:text-red-200 font-medium">
-                        ⚠️ 警告：此操作将把用户PDF积分重置为 0，请谨慎操作！
-                      </p>
-                    </div>
-
-                    <Button
-                      onClick={handleResetPdfLimit}
-                      disabled={isResettingPdf}
-                      variant="destructive"
-                      className="w-full h-11 text-base"
-                    >
-                      {isResettingPdf ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           重置中...
