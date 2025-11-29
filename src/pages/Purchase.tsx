@@ -30,6 +30,13 @@ const Purchase = () => {
       description: "永久使用，不限制登录次数",
       popular: false,
     },
+    {
+      name: "PDF积分包",
+      logins: "PDF积分",
+      price: "¥1/积分",
+      description: "购买PDF报告积分，1元1个积分，积分永不过期",
+      popular: false,
+    },
   ];
 
   const handlePurchase = () => {
@@ -49,7 +56,7 @@ const Purchase = () => {
           <p className="text-muted-foreground text-lg">购买或续费学信档案账号，享受便捷的学历信息管理服务</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-4 gap-6 mb-12">
           {plans.map((plan, index) => (
             <Card
               key={index}
