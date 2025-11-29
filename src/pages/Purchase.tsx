@@ -15,6 +15,7 @@ const Purchase = () => {
       price: "¥9",
       description: "为您的个人账号充值5次登录次数",
       popular: false,
+      features: ["数据加密存储", "支持学历信息修改"],
     },
     {
       name: "标准版",
@@ -22,6 +23,7 @@ const Purchase = () => {
       price: "¥29",
       description: "为您的个人账号充值50次登录次数",
       popular: true,
+      features: ["数据加密存储", "支持学历信息修改"],
     },
     {
       name: "永久版",
@@ -29,6 +31,15 @@ const Purchase = () => {
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
+      features: ["赠送30个PDF下载积分", "数据加密存储", "支持学历信息修改"],
+    },
+    {
+      name: "PDF积分包",
+      logins: "PDF积分",
+      price: "¥1/积分",
+      description: "购买PDF报告积分，1元1个积分，积分永不过期",
+      popular: false,
+      features: ["积分永不过期", "支持生成三种类型报告"],
     },
   ];
 
@@ -39,68 +50,80 @@ const Purchase = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/login")}
-          className="mb-6"
-        >
+        <Button variant="ghost" onClick={() => navigate("/login")} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           返回登录
         </Button>
 
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">选择您的套餐</h1>
-          <p className="text-muted-foreground text-lg">
-            购买或续费学信档案账号，享受便捷的学历信息管理服务
-          </p>
+          <p className="text-muted-foreground text-lg">购买或续费学信档案账号，享受便捷的学历信息管理服务</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {plans.map((plan, index) => (
-            <Card
-              key={index}
-              className={`relative transition-all hover:shadow-lg ${
-                plan.popular ? "border-primary shadow-lg scale-105" : ""
-              }`}
-            >
-              {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                  推荐
-                </Badge>
-              )}
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-center mb-6">主要套餐</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {plans.slice(0, 3).map((plan, index) => (
+              <Card
+                key={index}
+                className={`relative transition-all hover:shadow-lg ${
+                  plan.popular ? "border-primary shadow-lg scale-105" : ""
+                }`}
+              >
+                {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">推荐</Badge>}
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                  </div>
+                  <CardDescription className="mt-2 text-lg font-medium">{plan.logins}登录次数</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                      <p className="text-sm text-muted-foreground">{plan.description}</p>
+                    </div>
+                    {plan.features.map((feature, featureIndex) => (
+                      <div key={featureIndex} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <p className="text-sm text-muted-foreground">{feature}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-12">
+          <h2 className="text-2xl font-semibold text-center mb-6">附加产品</h2>
+          <div className="max-w-md mx-auto">
+            <Card className="relative transition-all hover:shadow-lg">
               <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                <CardTitle className="text-2xl">{plans[3].name}</CardTitle>
                 <div className="mt-4">
-                  <span className="text-4xl font-bold">{plan.price}</span>
+                  <span className="text-4xl font-bold">{plans[3].price}</span>
                 </div>
-                <CardDescription className="mt-2 text-lg font-medium">
-                  {plan.logins}登录次数
-                </CardDescription>
+                <CardDescription className="mt-2 text-lg font-medium">{plans[3].logins}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      {plan.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{plans[3].description}</p>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      数据加密存储
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      支持学历信息修改
-                    </p>
-                  </div>
+                  {plans[3].features.map((feature, featureIndex) => (
+                    <div key={featureIndex} className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                      <p className="text-sm text-muted-foreground">{feature}</p>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          ))}
+          </div>
         </div>
 
         <Card className="max-w-2xl mx-auto">
@@ -110,13 +133,9 @@ const Purchase = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex justify-center">
-              <img
-                src={xianyuImage}
-                alt="闲鱼购买"
-                className="max-w-sm h-auto rounded-lg shadow-md"
-              />
+              <img src={xianyuImage} alt="闲鱼购买" className="max-w-sm h-auto rounded-lg shadow-md" />
             </div>
-            
+
             <div className="space-y-3 text-sm text-muted-foreground">
               <div className="flex items-start gap-2">
                 <span className="font-bold text-foreground">①</span>
@@ -140,11 +159,7 @@ const Purchase = () => {
               </div>
             </div>
 
-            <Button
-              onClick={handlePurchase}
-              className="w-full h-12 text-lg"
-              size="lg"
-            >
+            <Button onClick={handlePurchase} className="w-full h-12 text-lg" size="lg">
               前往购买
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
@@ -163,16 +178,20 @@ const Purchase = () => {
                 <h3 className="font-semibold text-lg mb-2">客服微信</h3>
                 <p className="text-2xl font-bold text-primary mb-2">Accddvva</p>
                 <p className="text-sm text-muted-foreground text-center">
-                  如果闲鱼不方便购买<br />联系客服微信同样可以下单
+                  如果闲鱼不方便购买
+                  <br />
+                  联系客服微信同样可以下单
                 </p>
               </div>
-              
+
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <Users className="h-8 w-8 text-primary mb-3" />
                 <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
                 <p className="text-2xl font-bold text-primary mb-2">1034981273</p>
                 <p className="text-sm text-muted-foreground text-center">
-                  售后1群已满<br />二群建立于2025年11月
+                  售后1群已满
+                  <br />
+                  二群建立于2025年11月
                 </p>
               </div>
             </div>

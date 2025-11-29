@@ -739,7 +739,7 @@ app.post('/api/get-all-users', async (req, res) => {
   try {
     // 查询所有用户，包括密码字段
     const [users] = await db.execute(
-      'SELECT id, username, password, remaining_logins FROM users ORDER BY created_at DESC'
+      'SELECT id, username, password, remaining_logins, pdf_limit FROM users ORDER BY created_at DESC'
     );
     
     res.json({
@@ -748,7 +748,8 @@ app.post('/api/get-all-users', async (req, res) => {
         id: user.id.toString(),
         username: user.username,
         password: user.password,
-        remaining_logins: user.remaining_logins
+        remaining_logins: user.remaining_logins,
+        pdf_limit: user.pdf_limit
       }))
     });
   } catch (err) {
@@ -774,7 +775,7 @@ app.post('/api/query-user', async (req, res) => {
     
     // 查询特定用户
     const [users] = await db.execute(
-      'SELECT id, username, password, remaining_logins FROM users WHERE username = ?',
+      'SELECT id, username, password, remaining_logins, pdf_limit FROM users WHERE username = ?',
       [username]
     );
     
@@ -791,7 +792,8 @@ app.post('/api/query-user', async (req, res) => {
         id: users[0].id.toString(),
         username: users[0].username,
         password: users[0].password,
-        remaining_logins: users[0].remaining_logins
+        remaining_logins: users[0].remaining_logins,
+        pdf_limit: users[0].pdf_limit
       }
     });
   } catch (err) {
@@ -1000,6 +1002,180 @@ app.post('/api/get-today-login-count', async (req, res) => {
     });
   } catch (err) {
     console.error('获取今日登录统计失败:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加减少用户PDF积分接口
+app.post('/api/decrease-pdf-limit', async (req, res) => {
+  try {
+    const { username, decreaseAmount } = req.body;
+
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
+
+    if (typeof decreaseAmount !== 'number' || decreaseAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '减少数量必须为正整数'
+      });
+    }
+
+    // 先查询用户当前的PDF积分
+    const [users] = await db.execute(
+      'SELECT id, pdf_limit FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
+
+    const user = users[0];
+
+    // 检查是否有足够的PDF积分
+    if (user.pdf_limit < decreaseAmount) {
+      return res.status(400).json({
+        success: false,
+        error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
+      });
+    }
+
+    // 计算新的PDF积分
+    const newPdfLimit = user.pdf_limit - decreaseAmount;
+
+    // 更新用户的PDF积分
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = ? WHERE id = ?',
+      [newPdfLimit, user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+
+    res.json({
+      success: true,
+      newPdfLimit,
+      decreased: decreaseAmount
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加增加用户PDF积分接口
+app.post('/api/increase-pdf-limit', async (req, res) => {
+  try {
+    const { username, increaseAmount } = req.body;
+
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
+
+    if (typeof increaseAmount !== 'number' || increaseAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '增加数量必须为正整数'
+      });
+    }
+
+    // 先查询用户
+    const [users] = await db.execute(
+      'SELECT id, pdf_limit FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
+
+    const user = users[0];
+
+    // 计算新的PDF积分
+    const newPdfLimit = user.pdf_limit + increaseAmount;
+
+    // 更新用户的PDF积分
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = ? WHERE id = ?',
+      [newPdfLimit, user.id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+
+    res.json({
+      success: true,
+      newPdfLimit,
+      increased: increaseAmount
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加重置用户PDF积分接口
+app.post('/api/reset-pdf-limit', async (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户名参数'
+      });
+    }
+    
+    // 更新用户PDF积分为0
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = 0 WHERE username = ?',
+      [username]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'PDF积分已重置'
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({
       success: false,
       error: '服务器内部错误'
