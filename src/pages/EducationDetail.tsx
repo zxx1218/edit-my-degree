@@ -1,6 +1,3 @@
-/*
-  高等学历详情页
-*/
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
