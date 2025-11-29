@@ -31,7 +31,7 @@ const Purchase = () => {
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
-      features: ["数据加密存储", "支持学历信息修改", "永久不限次数"],
+      features: ["赠送30个PDF下载积分", "数据加密存储", "支持学历信息修改"],
     },
     {
       name: "PDF积分包",
@@ -39,7 +39,7 @@ const Purchase = () => {
       price: "¥1/积分",
       description: "购买PDF报告积分，1元1个积分，积分永不过期",
       popular: false,
-      features: ["积分永不过期", "支持生成所有报告类型"],
+      features: ["积分永不过期", "支持生成三种类型报告"],
     },
   ];
 
