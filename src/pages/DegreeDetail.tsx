@@ -53,25 +53,6 @@ const DegreeDetail = () => {
 
   // 从数据库加载数据
   useEffect(() => {
-    // 优先使用从 Index 页面传递的完整数据
-    const fullData = location.state?.fullData;
-    if (fullData) {
-      setData({
-        name: fullData.name || defaultData.name,
-        gender: fullData.gender || defaultData.gender,
-        birthDate: fullData.birth_date || defaultData.birthDate,
-        school: fullData.school || defaultData.school,
-        degreeType: fullData.degree_type || defaultData.degreeType,
-        degreeLevel: fullData.degree_level || defaultData.degreeLevel,
-        degreeDate: fullData.degree_date || defaultData.degreeDate,
-        major: fullData.major || defaultData.major,
-        certificateNumber: fullData.certificate_number || defaultData.certificateNumber,
-        photo: fullData.photo || defaultData.photo,
-      });
-      return;
-    }
-    
-    // 如果没有传递数据，才从数据库加载
     const loadData = async () => {
       const currentUser = localStorage.getItem('currentUser');
       if (!currentUser || !id) return;
@@ -106,7 +87,7 @@ const DegreeDetail = () => {
     };
 
     loadData();
-  }, [id, location.state, toast]);
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof DegreeData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof DegreeData, label: string) => {

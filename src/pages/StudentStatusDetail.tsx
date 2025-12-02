@@ -76,36 +76,6 @@ const StudentStatusDetail = () => {
 
   // 从数据库加载数据
   useEffect(() => {
-    // 优先使用从 Index 页面传递的完整数据
-    const fullData = location.state?.fullData;
-    if (fullData) {
-      setData({
-        name: fullData.name || defaultData.name,
-        personalInfo: fullData.personal_info || defaultData.personalInfo,
-        gender: fullData.gender || defaultData.gender,
-        birthDate: fullData.birth_date || defaultData.birthDate,
-        school: fullData.school || defaultData.school,
-        major: fullData.major || defaultData.major,
-        studyType: fullData.study_type || defaultData.studyType,
-        degreeLevel: fullData.degree_level || defaultData.degreeLevel,
-        status: fullData.status || defaultData.status,
-        nationality: fullData.nationality || defaultData.nationality,
-        idNumber: fullData.id_number || defaultData.idNumber,
-        enrollmentDate: fullData.enrollment_date || defaultData.enrollmentDate,
-        graduationDate: fullData.graduation_date || defaultData.graduationDate,
-        duration: fullData.duration || defaultData.duration,
-        educationType: fullData.education_type || defaultData.educationType,
-        branch: fullData.branch || defaultData.branch,
-        department: fullData.department || defaultData.department,
-        class: fullData.class || defaultData.class,
-        studentId: fullData.student_id || defaultData.studentId,
-        admissionPhoto: fullData.admission_photo || defaultData.admissionPhoto,
-        degreePhoto: fullData.degree_photo || defaultData.degreePhoto,
-      });
-      return;
-    }
-    
-    // 如果没有传递数据，才从数据库加载
     const loadData = async () => {
       const currentUser = localStorage.getItem('currentUser');
       if (!currentUser || !id) return;
@@ -151,7 +121,7 @@ const StudentStatusDetail = () => {
     };
 
     loadData();
-  }, [id, location.state, toast]);
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof StudentData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof StudentData, label: string) => {
