@@ -7,6 +7,7 @@ import EmptyStateCard from "@/components/EmptyStateCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
 import ActionMenuDialog from "@/components/ActionMenuDialog";
 import AddRecordDialog from "@/components/AddRecordDialog";
+import LoadingDialog from "@/components/LoadingDialog";
 import { toast } from "sonner";
 import { getUserData, updateData } from "@/lib/api";
 import { 
@@ -37,6 +38,7 @@ const Index = () => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([]);
@@ -249,15 +251,40 @@ const Index = () => {
     }
   };
 
-  const handleCardClick = (record: EducationRecord) => {
-    if (record.type === "student-status") {
-      navigate(`/student-status/${record.id}`, { state: { record } });
-    } else if (record.type === "education") {
-      navigate(`/education/${record.id}`, { state: { record } });
-    } else if (record.type === "degree") {
-      navigate(`/degree/${record.id}`, { state: { record } });
-    } else if (record.type === "exam") {
-      navigate(`/exam/${record.id}`, { state: { record } });
+  const handleCardClick = async (record: EducationRecord) => {
+    try {
+      setIsNavigating(true);
+      
+      // 先从数据库获取完整数据
+      const data = await getUserData(currentUserId);
+      
+      // 根据类型找到对应的完整记录
+      let fullRecord = null;
+      const tableMap: Record<string, string> = {
+        "student-status": "studentStatus",
+        "education": "education",
+        "degree": "degree",
+        "exam": "exam",
+      };
+      
+      const dataKey = tableMap[record.type];
+      fullRecord = data[dataKey as keyof typeof data]?.find((item: any) => item.id === record.id);
+      
+      // 数据加载完成后再跳转
+      if (record.type === "student-status") {
+        navigate(`/student-status/${record.id}`, { state: { fullData: fullRecord } });
+      } else if (record.type === "education") {
+        navigate(`/education/${record.id}`, { state: { fullData: fullRecord } });
+      } else if (record.type === "degree") {
+        navigate(`/degree/${record.id}`, { state: { fullData: fullRecord } });
+      } else if (record.type === "exam") {
+        navigate(`/exam/${record.id}`, { state: { fullData: fullRecord } });
+      }
+    } catch (error) {
+      console.error("Error loading record data:", error);
+      toast.error("加载数据失败", { duration: 1500 });
+    } finally {
+      setIsNavigating(false);
     }
   };
 
@@ -531,6 +558,8 @@ const Index = () => {
           )}
         </>
       )}
+      
+      <LoadingDialog open={isNavigating} message="正在加载数据..." />
     </div>
   );
 };

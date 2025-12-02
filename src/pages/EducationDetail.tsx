@@ -63,6 +63,30 @@ const EducationDetail = () => {
 
   // 从数据库加载数据
   useEffect(() => {
+    // 优先使用从 Index 页面传递的完整数据
+    const fullData = location.state?.fullData;
+    if (fullData) {
+      setData({
+        name: fullData.name || defaultData.name,
+        gender: fullData.gender || defaultData.gender,
+        birthDate: fullData.birth_date || defaultData.birthDate,
+        school: fullData.school || defaultData.school,
+        major: fullData.major || defaultData.major,
+        studyType: fullData.study_type || defaultData.studyType,
+        degreeLevel: fullData.degree_level || defaultData.degreeLevel,
+        enrollmentDate: fullData.enrollment_date || defaultData.enrollmentDate,
+        graduationDate: fullData.graduation_date || defaultData.graduationDate,
+        educationType: fullData.education_type || defaultData.educationType,
+        duration: fullData.duration || defaultData.duration,
+        graduationStatus: fullData.graduation_status || defaultData.graduationStatus,
+        principalName: fullData.principal_name || defaultData.principalName,
+        certificateNumber: fullData.certificate_number || defaultData.certificateNumber,
+        photo: fullData.photo || defaultData.photo,
+      });
+      return;
+    }
+    
+    // 如果没有传递数据，才从数据库加载
     const loadData = async () => {
       const currentUser = localStorage.getItem('currentUser');
       if (!currentUser || !id) return;
@@ -102,7 +126,7 @@ const EducationDetail = () => {
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, location.state, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof EducationData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof EducationData, label: string) => {
