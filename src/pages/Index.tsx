@@ -250,12 +250,6 @@ const Index = () => {
   };
 
   const handleCardClick = (record: EducationRecord) => {
-    // 如果数据正在加载，阻止跳转
-    if (loading) {
-      toast.error("数据加载中，请稍候", { duration: 1500 });
-      return;
-    }
-
     if (record.type === "student-status") {
       navigate(`/student-status/${record.id}`, { state: { record } });
     } else if (record.type === "education") {
