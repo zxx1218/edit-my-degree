@@ -81,6 +81,36 @@ const StudentStatusDetail = () => {
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          personalInfo: detailRecord.personal_info || defaultData.personalInfo,
+          gender: detailRecord.gender || defaultData.gender,
+          birthDate: detailRecord.birth_date || defaultData.birthDate,
+          school: detailRecord.school || defaultData.school,
+          major: detailRecord.major || defaultData.major,
+          studyType: detailRecord.study_type || defaultData.studyType,
+          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
+          status: detailRecord.status || defaultData.status,
+          nationality: detailRecord.nationality || defaultData.nationality,
+          idNumber: detailRecord.id_number || defaultData.idNumber,
+          enrollmentDate: detailRecord.enrollment_date || defaultData.enrollmentDate,
+          graduationDate: detailRecord.graduation_date || defaultData.graduationDate,
+          duration: detailRecord.duration || defaultData.duration,
+          educationType: detailRecord.education_type || defaultData.educationType,
+          branch: detailRecord.branch || defaultData.branch,
+          department: detailRecord.department || defaultData.department,
+          class: detailRecord.class || defaultData.class,
+          studentId: detailRecord.student_id || defaultData.studentId,
+          admissionPhoto: detailRecord.admission_photo || defaultData.admissionPhoto,
+          degreePhoto: detailRecord.degree_photo || defaultData.degreePhoto,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.studentStatus?.find((r: any) => r.id === id);
@@ -121,7 +151,7 @@ const StudentStatusDetail = () => {
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof StudentData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof StudentData, label: string) => {
