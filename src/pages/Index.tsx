@@ -357,14 +357,6 @@ const Index = () => {
     );
   }
 
-  if (loadingDetail) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-lg">正在加载详情...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background pb-8">
       <EducationHeader />
