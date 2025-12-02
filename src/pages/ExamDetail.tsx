@@ -72,6 +72,39 @@ const ExamDetail = () => {
 
   // 从数据库加载数据
   useEffect(() => {
+    // 优先使用从 Index 页面传递的完整数据
+    const fullData = location.state?.fullData;
+    if (fullData) {
+      setData({
+        name: fullData.name || defaultData.name,
+        school: fullData.school || defaultData.school,
+        year: fullData.year || defaultData.year,
+        photo: fullData.photo || defaultData.photo,
+        examLocation: fullData.exam_location || defaultData.examLocation,
+        registrationNumber: fullData.registration_number || defaultData.registrationNumber,
+        examUnit: fullData.exam_unit || defaultData.examUnit,
+        department: fullData.department || defaultData.department,
+        major: fullData.major || defaultData.major,
+        researchDirection: fullData.research_direction || defaultData.researchDirection,
+        examType: fullData.exam_type || defaultData.examType,
+        specialProgram: fullData.special_program || defaultData.specialProgram,
+        politicsName: fullData.politics_name || defaultData.politicsName,
+        politicsScore: fullData.politics_score || defaultData.politicsScore,
+        foreignLanguageName: fullData.foreign_language_name || defaultData.foreignLanguageName,
+        foreignLanguageScore: fullData.foreign_language_score || defaultData.foreignLanguageScore,
+        businessCourse1Name: fullData.business_course1_name || defaultData.businessCourse1Name,
+        businessCourse1Score: fullData.business_course1_score || defaultData.businessCourse1Score,
+        businessCourse2Name: fullData.business_course2_name || defaultData.businessCourse2Name,
+        businessCourse2Score: fullData.business_course2_score || defaultData.businessCourse2Score,
+        totalScore: fullData.total_score || defaultData.totalScore,
+        admissionUnit: fullData.admission_unit || defaultData.admissionUnit,
+        admissionMajor: fullData.admission_major || defaultData.admissionMajor,
+        note: fullData.note || defaultData.note,
+      });
+      return;
+    }
+    
+    // 如果没有传递数据，才从数据库加载
     const loadData = async () => {
       const currentUser = localStorage.getItem('currentUser');
       if (!currentUser || !id) return;
@@ -120,7 +153,7 @@ const ExamDetail = () => {
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, location.state, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof ExamData, label: string) => {
