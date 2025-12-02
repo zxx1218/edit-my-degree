@@ -193,7 +193,7 @@ const EducationDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2">
+          <button onClick={() => navigate('/')} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-base font-medium">高等学历</h1>
