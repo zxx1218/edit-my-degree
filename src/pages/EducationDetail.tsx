@@ -68,6 +68,30 @@ const EducationDetail = () => {
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          gender: detailRecord.gender || defaultData.gender,
+          birthDate: detailRecord.birth_date || defaultData.birthDate,
+          school: detailRecord.school || defaultData.school,
+          major: detailRecord.major || defaultData.major,
+          studyType: detailRecord.study_type || defaultData.studyType,
+          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
+          enrollmentDate: detailRecord.enrollment_date || defaultData.enrollmentDate,
+          graduationDate: detailRecord.graduation_date || defaultData.graduationDate,
+          educationType: detailRecord.education_type || defaultData.educationType,
+          duration: detailRecord.duration || defaultData.duration,
+          graduationStatus: detailRecord.graduation_status || defaultData.graduationStatus,
+          principalName: detailRecord.principal_name || defaultData.principalName,
+          certificateNumber: detailRecord.certificate_number || defaultData.certificateNumber,
+          photo: detailRecord.photo || defaultData.photo,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.education?.find((r: any) => r.id === id);
@@ -102,7 +126,7 @@ const EducationDetail = () => {
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof EducationData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof EducationData, label: string) => {
