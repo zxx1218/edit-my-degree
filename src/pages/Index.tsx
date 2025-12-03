@@ -37,6 +37,7 @@ const Index = () => {
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([]);
@@ -249,15 +250,40 @@ const Index = () => {
     }
   };
 
-  const handleCardClick = (record: EducationRecord) => {
-    if (record.type === "student-status") {
-      navigate(`/student-status/${record.id}`, { state: { record } });
-    } else if (record.type === "education") {
-      navigate(`/education/${record.id}`, { state: { record } });
-    } else if (record.type === "degree") {
-      navigate(`/degree/${record.id}`, { state: { record } });
-    } else if (record.type === "exam") {
-      navigate(`/exam/${record.id}`, { state: { record } });
+  const handleCardClick = async (record: EducationRecord) => {
+    setLoadingDetail(true);
+    
+    try {
+      // 先加载详细数据
+      const data = await getUserData(currentUserId);
+      
+      // 根据类型找到对应的详细记录
+      let detailRecord = null;
+      if (record.type === "student-status") {
+        detailRecord = data.studentStatus.find((r: any) => r.id === record.id);
+      } else if (record.type === "education") {
+        detailRecord = data.education.find((r: any) => r.id === record.id);
+      } else if (record.type === "degree") {
+        detailRecord = data.degree.find((r: any) => r.id === record.id);
+      } else if (record.type === "exam") {
+        detailRecord = data.exam.find((r: any) => r.id === record.id);
+      }
+      
+      // 数据加载完成后再跳转
+      if (record.type === "student-status") {
+        navigate(`/student-status/${record.id}`, { state: { record, detailRecord } });
+      } else if (record.type === "education") {
+        navigate(`/education/${record.id}`, { state: { record, detailRecord } });
+      } else if (record.type === "degree") {
+        navigate(`/degree/${record.id}`, { state: { record, detailRecord } });
+      } else if (record.type === "exam") {
+        navigate(`/exam/${record.id}`, { state: { record, detailRecord } });
+      }
+    } catch (error) {
+      console.error("Error loading detail data:", error);
+      toast.error("加载详情失败", { duration: 1500 });
+    } finally {
+      setLoadingDetail(false);
     }
   };
 

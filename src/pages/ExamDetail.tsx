@@ -77,6 +77,39 @@ const ExamDetail = () => {
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          school: detailRecord.school || defaultData.school,
+          year: detailRecord.year || defaultData.year,
+          photo: detailRecord.photo || defaultData.photo,
+          examLocation: detailRecord.exam_location || defaultData.examLocation,
+          registrationNumber: detailRecord.registration_number || defaultData.registrationNumber,
+          examUnit: detailRecord.exam_unit || defaultData.examUnit,
+          department: detailRecord.department || defaultData.department,
+          major: detailRecord.major || defaultData.major,
+          researchDirection: detailRecord.research_direction || defaultData.researchDirection,
+          examType: detailRecord.exam_type || defaultData.examType,
+          specialProgram: detailRecord.special_program || defaultData.specialProgram,
+          politicsName: detailRecord.politics_name || defaultData.politicsName,
+          politicsScore: detailRecord.politics_score || defaultData.politicsScore,
+          foreignLanguageName: detailRecord.foreign_language_name || defaultData.foreignLanguageName,
+          foreignLanguageScore: detailRecord.foreign_language_score || defaultData.foreignLanguageScore,
+          businessCourse1Name: detailRecord.business_course1_name || defaultData.businessCourse1Name,
+          businessCourse1Score: detailRecord.business_course1_score || defaultData.businessCourse1Score,
+          businessCourse2Name: detailRecord.business_course2_name || defaultData.businessCourse2Name,
+          businessCourse2Score: detailRecord.business_course2_score || defaultData.businessCourse2Score,
+          totalScore: detailRecord.total_score || defaultData.totalScore,
+          admissionUnit: detailRecord.admission_unit || defaultData.admissionUnit,
+          admissionMajor: detailRecord.admission_major || defaultData.admissionMajor,
+          note: detailRecord.note || defaultData.note,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.exam?.find((r: any) => r.id === id);
@@ -120,7 +153,7 @@ const ExamDetail = () => {
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof ExamData, label: string) => {
@@ -187,7 +220,7 @@ const ExamDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2">
+          <button onClick={() => navigate('/')} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-base font-medium">考研信息</h1>

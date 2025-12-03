@@ -49,6 +49,26 @@ const DegreeDetail = () => {
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          gender: detailRecord.gender || defaultData.gender,
+          birthDate: detailRecord.birth_date || defaultData.birthDate,
+          school: detailRecord.school || defaultData.school,
+          degreeType: detailRecord.degree_type || defaultData.degreeType,
+          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
+          degreeDate: detailRecord.degree_date || defaultData.degreeDate,
+          major: detailRecord.major || defaultData.major,
+          certificateNumber: detailRecord.certificate_number || defaultData.certificateNumber,
+          photo: detailRecord.photo || defaultData.photo,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
+
       try {
         const result = await getUserData(userId);
         const record = result.degree?.find((r: any) => r.id === id);
@@ -78,7 +98,7 @@ const DegreeDetail = () => {
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof DegreeData; label: string } | null>(null);
 
   const handleFieldClick = (field: keyof DegreeData, label: string) => {
@@ -145,7 +165,7 @@ const DegreeDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate(-1)} className="p-2">
+          <button onClick={() => navigate('/')} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-base font-medium">学位</h1>

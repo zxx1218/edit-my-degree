@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     // 添加代理配置解决跨域问题
     proxy: {
       '/api': {
-        target: 'http://jk.fortunefreedom.top:10002',
+        target: 'http://localhost:10002',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }
