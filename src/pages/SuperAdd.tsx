@@ -402,138 +402,65 @@ const SuperAdd = () => {
           <p className="text-muted-foreground">管理用户登录次数与PDF积分</p>
         </div>
 
-        {/* 今日登录统计 */}
-        <Card className="mb-6 shadow-lg border-0 bg-gradient-to-r from-indigo-500 to-purple-600 text-white overflow-hidden">
-          <CardContent className="p-6">
+        {/* 今日登录统计卡片 */}
+        <Card className="mb-6 shadow-xl border-2 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 border-indigo-200 dark:border-indigo-800">
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <List className="h-6 w-6" />
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-indigo-600 dark:bg-indigo-500 rounded-lg shadow-lg">
+                  <List className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold">今日登录统计</h3>
-                  <p className="text-sm text-white/70">Today's Statistics</p>
+                  <CardTitle className="text-2xl text-indigo-900 dark:text-indigo-100">今日系统登录统计</CardTitle>
+                  <CardDescription className="text-indigo-600 dark:text-indigo-400 mt-1">
+                    Today's Login Statistics
+                  </CardDescription>
                 </div>
               </div>
               <Button
                 onClick={fetchTodayLoginCount}
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 disabled={isLoadingLoginCount}
-                className="bg-white/20 hover:bg-white/30 border-0 text-white"
+                className="border-2 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 h-10 px-4"
               >
                 {isLoadingLoginCount ? <Loader2 className="h-4 w-4 animate-spin" /> : "刷新"}
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm">
-                <div className="text-3xl font-bold tabular-nums">{distinctUsers ?? "-"}</div>
-                <div className="text-sm text-white/70 mt-1">不同用户数</div>
-              </div>
-              <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm">
-                <div className="text-3xl font-bold tabular-nums">{todayLoginCount ?? "-"}</div>
-                <div className="text-sm text-white/70 mt-1">总登录次数</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 用户列表（合并查询功能） */}
-        <Card className="mb-6 shadow-lg border-0">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl">
-                  <Users className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">用户列表</CardTitle>
-                  <CardDescription>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</CardDescription>
-                </div>
-              </div>
-              <Button onClick={fetchUsers} variant="outline" size="sm" disabled={isFetchingUsers}>
-                {isFetchingUsers ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                刷新列表
-              </Button>
-            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* 搜索框 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索用户名..."
-                className="pl-10 h-11 bg-muted/50"
-              />
-            </div>
-
-            {/* 用户列表 */}
-            {isFetchingUsers ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
-              </div>
-            ) : paginatedUsers.length > 0 ? (
-              <div className="space-y-2">
-                {paginatedUsers.map((user, index) => (
-                  <div
-                    key={user.id}
-                    className="flex justify-between items-center p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-xl hover:shadow-md transition-all border border-border/50 hover:border-primary/20"
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <span className="font-semibold text-base block truncate">{user.username}</span>
-                      <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
-                    </div>
-                    <div className="ml-4 flex flex-col sm:flex-row gap-2">
-                      <Badge className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
-                        <LogIn className="h-3.5 w-3.5" />
-                        <span className="font-medium">{user.remaining_logins}</span>
-                      </Badge>
-                      <Badge className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
-                        <CreditCard className="h-3.5 w-3.5" />
-                        <span className="font-medium">{user.pdf_limit}</span>
-                      </Badge>
-                    </div>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="px-6 py-4 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                {isLoadingLoginCount ? (
+                  <div className="animate-pulse">
+                    <div className="h-12 w-20 bg-indigo-300 dark:bg-indigo-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
                   </div>
-                ))}
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+                      {distinctUsers ?? "-"}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">不同用户数</div>
+                  </>
+                )}
               </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
+              <div className="px-6 py-4 bg-white dark:bg-indigo-900/50 rounded-xl shadow-lg border-2 border-indigo-300 dark:border-indigo-600">
+                {isLoadingLoginCount ? (
+                  <div className="animate-pulse">
+                    <div className="h-12 w-20 bg-indigo-300 dark:bg-indigo-700 rounded mb-2"></div>
+                    <div className="h-4 w-24 bg-indigo-200 dark:bg-indigo-800 rounded"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 tabular-nums mb-1">
+                      {todayLoginCount ?? "-"}
+                    </div>
+                    <div className="text-sm font-medium text-indigo-500 dark:text-indigo-400">总登录次数</div>
+                  </>
+                )}
               </div>
-            )}
-
-            {/* 分页控件 */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  第 {currentPage} / {totalPages} 页
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    上一页
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    下一页
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
@@ -629,7 +556,7 @@ const SuperAdd = () => {
         </Card>
 
         {/* PDF积分操作标签页 */}
-        <Card className="shadow-lg border-2">
+        <Card className="shadow-lg border-2 mb-6">
           <CardHeader>
             <CardTitle className="text-2xl">PDF积分操作</CardTitle>
             <CardDescription>添加、减少或重置用户PDF积分</CardDescription>
@@ -716,6 +643,109 @@ const SuperAdd = () => {
                 </div>
               </TabsContent>
             </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* 用户列表（合并查询功能） */}
+        <Card className="shadow-lg border-2">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <List className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">用户列表</CardTitle>
+                  <CardDescription>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</CardDescription>
+                </div>
+              </div>
+              <Button onClick={fetchUsers} variant="outline" size="sm" className="border-2" disabled={isFetchingUsers}>
+                {isFetchingUsers ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <List className="h-4 w-4 mr-2" />}
+                刷新列表
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 搜索框 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索用户名..."
+                className="pl-10 h-10"
+              />
+            </div>
+
+            {/* 用户列表 */}
+            {isFetchingUsers ? (
+              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
+                </div>
+              </div>
+            ) : paginatedUsers.length > 0 ? (
+              <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+                <div className="space-y-2">
+                  {paginatedUsers.map((user, index) => (
+                    <div
+                      key={user.id}
+                      className="flex justify-between items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <span className="font-bold text-lg block truncate">{user.username}</span>
+                        <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
+                      </div>
+                      <div className="ml-4 flex flex-col gap-2">
+                        <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                          <LogIn className="h-3.5 w-3.5" />
+                          <span className="font-medium">登录次数: {user.remaining_logins}</span>
+                        </Badge>
+                        <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                          <CreditCard className="h-3.5 w-3.5" />
+                          <span className="font-medium">PDF积分: {user.pdf_limit}</span>
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
+              </div>
+            )}
+
+            {/* 分页控件 */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  第 {currentPage} / {totalPages} 页
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    上一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    下一页
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
