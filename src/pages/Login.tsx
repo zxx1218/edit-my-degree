@@ -217,8 +217,8 @@ const Login = () => {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="button"
-                  variant="secondary"
-                  className="w-full h-11 hover:bg-secondary/80 transition-all"
+                  variant="outline"
+                  className="w-full h-11 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all"
                   onClick={() => navigate("/register")}
                 >
                   注册账号
@@ -226,7 +226,7 @@ const Login = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-11 hover:bg-accent/5 hover:border-accent/50 transition-all"
+                  className="w-full h-11 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 transition-all"
                   onClick={() => setIsRechargeOpen(true)}
                 >
                   卡密充值/续费
