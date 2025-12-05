@@ -433,7 +433,7 @@ const Login = () => {
           <Alert className="mt-6 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="ml-2 text-sm space-y-2">
-              <div className="font-semibold text-foreground">💡 使用提示</div>
+              <div className="font-semibold text-foreground">使用提示💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
                 <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
                 <div>• 关于系统定价、使用演示视频等请点击下方按钮</div>
