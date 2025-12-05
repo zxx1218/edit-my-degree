@@ -2,3 +2,6 @@ project_id = "lhxbjlmrivynikkwgmce"
 
 [functions.get-today-login-count]
 verify_jwt = false
+
+[functions.redeem-card]
+verify_jwt = false
