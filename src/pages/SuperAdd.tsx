@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, CreditCard, LogIn, Users, ChevronLeft, ChevronRight, Ticket, Copy, Check } from "lucide-react";
+import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, CreditCard, LogIn, Users, ChevronLeft, ChevronRight, Ticket, Copy, Check, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -235,6 +235,40 @@ const SuperAdd = () => {
     } catch (error) {
       toast({ variant: "destructive", title: "复制失败" });
     }
+  };
+
+  const exportCardsToCSV = (exportAll: boolean = true) => {
+    const cardsToExport = exportAll ? cards : cards.filter(c => !c.used);
+    if (cardsToExport.length === 0) {
+      toast({ variant: "destructive", title: "没有可导出的数据" });
+      return;
+    }
+
+    const headers = ["卡密ID", "类型", "充值数量", "状态", "使用者", "使用时间", "创建时间"];
+    const csvContent = [
+      headers.join(","),
+      ...cardsToExport.map(card => [
+        card.id,
+        card.type === 'login' ? '登录次数' : 'PDF积分',
+        card.values,
+        card.used ? '已使用' : '未使用',
+        card.used_by || '',
+        card.used_at || '',
+        card.created_at || ''
+      ].join(","))
+    ].join("\n");
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `充值卡_${exportAll ? '全部' : '未使用'}_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "导出成功", description: `已导出 ${cardsToExport.length} 张充值卡` });
   };
 
   const fetchUsers = async () => {
@@ -858,6 +892,18 @@ const SuperAdd = () => {
                     <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{cards.filter(c => c.used).length}</div>
                     <div className="text-xs text-muted-foreground">已使用</div>
                   </div>
+                </div>
+
+                {/* 导出按钮 */}
+                <div className="flex gap-2">
+                  <Button onClick={() => exportCardsToCSV(true)} variant="outline" size="sm" className="flex-1 border-2">
+                    <Download className="h-4 w-4 mr-2" />
+                    导出全部CSV
+                  </Button>
+                  <Button onClick={() => exportCardsToCSV(false)} variant="outline" size="sm" className="flex-1 border-2">
+                    <Download className="h-4 w-4 mr-2" />
+                    导出未使用CSV
+                  </Button>
                 </div>
 
                 {/* 卡片列表 */}
