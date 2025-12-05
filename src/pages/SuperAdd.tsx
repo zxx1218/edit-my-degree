@@ -462,41 +462,41 @@ const SuperAdd = () => {
 
   if (!isVerified) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/10 backdrop-blur-xl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+        <Card className="w-full max-w-md shadow-2xl border-2 border-indigo-100 bg-white">
           <CardHeader className="space-y-1 text-center pb-6">
             <div className="flex justify-center mb-4">
-              <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+              <div className="p-4 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl shadow-lg">
                 <Shield className="h-12 w-12 text-white" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-white">系统验证</CardTitle>
-            <CardDescription className="text-base text-white/70">请输入管理员凭据以继续</CardDescription>
+            <CardTitle className="text-3xl font-bold text-gray-800">系统验证</CardTitle>
+            <CardDescription className="text-base text-gray-500">请输入管理员凭据以继续</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="verify-username" className="text-white/90">用户名</Label>
+              <Label htmlFor="verify-username" className="text-gray-700">用户名</Label>
               <Input
                 id="verify-username"
                 type="text"
                 value={verifyUsername}
                 onChange={(e) => setVerifyUsername(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleVerify()}
-                className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                className="h-12 border-gray-200"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="verify-password" className="text-white/90">密码</Label>
+              <Label htmlFor="verify-password" className="text-gray-700">密码</Label>
               <Input
                 id="verify-password"
                 type="password"
                 value={verifyPassword}
                 onChange={(e) => setVerifyPassword(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleVerify()}
-                className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                className="h-12 border-gray-200"
               />
             </div>
-            <Button onClick={handleVerify} className="w-full h-12 text-base font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 border-0">
+            <Button onClick={handleVerify} className="w-full h-12 text-base font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-0">
               验证身份
             </Button>
           </CardContent>
@@ -765,111 +765,8 @@ const SuperAdd = () => {
           </CardContent>
         </Card>
 
-        {/* 用户列表（合并查询功能） */}
-        <Card className="shadow-lg border-2">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <List className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">用户列表</CardTitle>
-                  <CardDescription>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</CardDescription>
-                </div>
-              </div>
-              <Button onClick={fetchUsers} variant="outline" size="sm" className="border-2" disabled={isFetchingUsers}>
-                {isFetchingUsers ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <List className="h-4 w-4 mr-2" />}
-                刷新列表
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* 搜索框 */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索用户名..."
-                className="pl-10 h-10"
-              />
-            </div>
-
-            {/* 用户列表 */}
-            {isFetchingUsers ? (
-              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
-                <div className="flex flex-col items-center justify-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
-                </div>
-              </div>
-            ) : paginatedUsers.length > 0 ? (
-              <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
-                <div className="space-y-2">
-                  {paginatedUsers.map((user, index) => (
-                    <div
-                      key={user.id}
-                      className="flex justify-between items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in"
-                      style={{ animationDelay: `${index * 30}ms` }}
-                    >
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <span className="font-bold text-lg block truncate">{user.username}</span>
-                        <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
-                      </div>
-                      <div className="ml-4 flex flex-col gap-2">
-                        <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
-                          <LogIn className="h-3.5 w-3.5" />
-                          <span className="font-medium">登录次数: {user.remaining_logins}</span>
-                        </Badge>
-                        <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 justify-start">
-                          <CreditCard className="h-3.5 w-3.5" />
-                          <span className="font-medium">PDF积分: {user.pdf_limit}</span>
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
-                {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
-              </div>
-            )}
-
-            {/* 分页控件 */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  第 {currentPage} / {totalPages} 页
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    上一页
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    下一页
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* 充值卡管理 */}
-        <Card className="shadow-lg border-2 mt-6">
+        <Card className="shadow-lg border-2">
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-2">
@@ -1055,6 +952,109 @@ const SuperAdd = () => {
                 )}
               </TabsContent>
             </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* 用户列表（合并查询功能） */}
+        <Card className="shadow-lg border-2">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <List className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">用户列表</CardTitle>
+                  <CardDescription>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</CardDescription>
+                </div>
+              </div>
+              <Button onClick={fetchUsers} variant="outline" size="sm" className="border-2" disabled={isFetchingUsers}>
+                {isFetchingUsers ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <List className="h-4 w-4 mr-2" />}
+                刷新列表
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 搜索框 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索用户名..."
+                className="pl-10 h-10"
+              />
+            </div>
+
+            {/* 用户列表 */}
+            {isFetchingUsers ? (
+              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
+                </div>
+              </div>
+            ) : paginatedUsers.length > 0 ? (
+              <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+                <div className="space-y-2">
+                  {paginatedUsers.map((user, index) => (
+                    <div
+                      key={user.id}
+                      className="flex justify-between items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <span className="font-bold text-lg block truncate">{user.username}</span>
+                        <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
+                      </div>
+                      <div className="ml-4 flex flex-col gap-2">
+                        <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                          <LogIn className="h-3.5 w-3.5" />
+                          <span className="font-medium">登录次数: {user.remaining_logins}</span>
+                        </Badge>
+                        <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                          <CreditCard className="h-3.5 w-3.5" />
+                          <span className="font-medium">PDF积分: {user.pdf_limit}</span>
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
+              </div>
+            )}
+
+            {/* 分页控件 */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  第 {currentPage} / {totalPages} 页
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    上一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    下一页
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
