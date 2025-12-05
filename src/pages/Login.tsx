@@ -6,16 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { loginUser, changePassword } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [changePasswordData, setChangePasswordData] = useState({
     username: "",
     oldPassword: "",
@@ -23,6 +26,12 @@ const Login = () => {
     confirmPassword: ""
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  
+  // 充值相关状态
+  const [loginRechargeData, setLoginRechargeData] = useState({ username: "", cardId: "" });
+  const [pdfRechargeData, setPdfRechargeData] = useState({ username: "", cardId: "" });
+  const [isRecharging, setIsRecharging] = useState(false);
+  
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -34,21 +43,18 @@ const Login = () => {
       const result = await loginUser(username, password);
       
       if (result.error) {
-        // 显示后端返回的具体错误信息
         toast.error(result.error, { duration: 2000 });
         setIsLoading(false);
         return;
       }
 
       if (result.success && result.user) {
-        // 将用户信息存储到localStorage
         localStorage.setItem("currentUser", JSON.stringify(result.user));
         toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 1500 });
         login();
         navigate("/");
       }
     } catch (error) {
-      // 捕获网络错误或其他异常
       const errorMessage = error instanceof Error ? error.message : "网络连接失败，请检查网络后重试";
       toast.error(errorMessage, { duration: 2000 });
       console.error("Login error:", error);
@@ -99,6 +105,55 @@ const Login = () => {
     }
   };
 
+  const handleRecharge = async (type: 'login' | 'pdf') => {
+    const data = type === 'login' ? loginRechargeData : pdfRechargeData;
+    
+    if (!data.username.trim()) {
+      toast.error("请输入账号", { duration: 1500 });
+      return;
+    }
+    
+    if (!data.cardId.trim()) {
+      toast.error("请输入充值卡密", { duration: 1500 });
+      return;
+    }
+
+    setIsRecharging(true);
+
+    try {
+      const { data: result, error } = await supabase.functions.invoke('redeem-card', {
+        body: { cardId: data.cardId.trim(), username: data.username.trim(), type }
+      });
+
+      if (error) {
+        toast.error(error.message || "充值失败", { duration: 2000 });
+        return;
+      }
+
+      if (result.error) {
+        toast.error(result.error, { duration: 2000 });
+        return;
+      }
+
+      toast.success(result.message, { duration: 2000 });
+      
+      // 清空输入
+      if (type === 'login') {
+        setLoginRechargeData({ username: "", cardId: "" });
+      } else {
+        setPdfRechargeData({ username: "", cardId: "" });
+      }
+      
+      setIsRechargeOpen(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "充值失败，请重试";
+      toast.error(errorMessage, { duration: 2000 });
+      console.error("Recharge error:", error);
+    } finally {
+      setIsRecharging(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 relative overflow-hidden">
       {/* Decorative background elements */}
@@ -145,17 +200,28 @@ const Login = () => {
               >
                 {isLoading ? "登录中..." : "登录"}
               </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full h-11 hover:bg-secondary/80 transition-all"
-                onClick={() => navigate("/register")}
-              >
-                注册账号
-              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full h-11 hover:bg-secondary/80 transition-all"
+                  onClick={() => navigate("/register")}
+                >
+                  注册账号
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 hover:bg-accent/5 hover:border-accent/50 transition-all"
+                  onClick={() => setIsRechargeOpen(true)}
+                >
+                  充值/续费
+                </Button>
+              </div>
             </div>
           </form>
           
+          {/* 修改密码对话框 */}
           <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
             <DialogContent>
               <form onSubmit={handleChangePassword}>
@@ -229,6 +295,94 @@ const Login = () => {
                   </Button>
                 </DialogFooter>
               </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* 充值对话框 */}
+          <Dialog open={isRechargeOpen} onOpenChange={setIsRechargeOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>充值/续费</DialogTitle>
+                <DialogDescription>
+                  请选择充值类型并输入相关信息
+                </DialogDescription>
+              </DialogHeader>
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="login">登录次数充值</TabsTrigger>
+                  <TabsTrigger value="pdf">PDF积分充值</TabsTrigger>
+                </TabsList>
+                <TabsContent value="login" className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-username">已注册账号</Label>
+                    <Input
+                      id="login-username"
+                      type="text"
+                      placeholder="请输入已注册的账号"
+                      value={loginRechargeData.username}
+                      onChange={(e) => setLoginRechargeData({
+                        ...loginRechargeData,
+                        username: e.target.value
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-card">充值卡密</Label>
+                    <Input
+                      id="login-card"
+                      type="text"
+                      placeholder="请输入充值卡密"
+                      value={loginRechargeData.cardId}
+                      onChange={(e) => setLoginRechargeData({
+                        ...loginRechargeData,
+                        cardId: e.target.value
+                      })}
+                    />
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => handleRecharge('login')}
+                    disabled={isRecharging}
+                  >
+                    {isRecharging ? "充值中..." : "确认充值"}
+                  </Button>
+                </TabsContent>
+                <TabsContent value="pdf" className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="pdf-username">已注册账号</Label>
+                    <Input
+                      id="pdf-username"
+                      type="text"
+                      placeholder="请输入已注册的账号"
+                      value={pdfRechargeData.username}
+                      onChange={(e) => setPdfRechargeData({
+                        ...pdfRechargeData,
+                        username: e.target.value
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pdf-card">充值卡密</Label>
+                    <Input
+                      id="pdf-card"
+                      type="text"
+                      placeholder="请输入充值卡密"
+                      value={pdfRechargeData.cardId}
+                      onChange={(e) => setPdfRechargeData({
+                        ...pdfRechargeData,
+                        cardId: e.target.value
+                      })}
+                    />
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => handleRecharge('pdf')}
+                    disabled={isRecharging}
+                  >
+                    {isRecharging ? "充值中..." : "确认充值"}
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
 

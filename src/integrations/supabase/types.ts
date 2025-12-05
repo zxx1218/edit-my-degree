@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      cards: {
+        Row: {
+          created_at: string | null
+          id: string
+          type: string
+          used: boolean
+          used_at: string | null
+          used_by: string | null
+          values: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          type?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+          values: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          type?: string
+          used?: boolean
+          used_at?: string | null
+          used_by?: string | null
+          values?: number
+        }
+        Relationships: []
+      }
       degree: {
         Row: {
           birth_date: string | null
