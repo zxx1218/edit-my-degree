@@ -347,7 +347,7 @@ const Login = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-card">充值卡密</Label>
+                    <Label htmlFor="login-card">登录次数充值卡密</Label>
                     <Input
                       id="login-card"
                       type="text"
@@ -382,7 +382,7 @@ const Login = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pdf-card">充值卡密</Label>
+                    <Label htmlFor="pdf-card">PDF积分充值卡密</Label>
                     <Input
                       id="pdf-card"
                       type="text"
