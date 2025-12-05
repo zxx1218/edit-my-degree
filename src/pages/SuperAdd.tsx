@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, CreditCard, LogIn, Users, ChevronLeft, ChevronRight, Ticket, Copy, Check, Download } from "lucide-react";
+import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, CreditCard, LogIn, Users, ChevronLeft, ChevronRight, Ticket, Copy, Check, Download, BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 interface User {
   id: string;
@@ -74,6 +75,16 @@ const SuperAdd = () => {
   const [newCardCount, setNewCardCount] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // 每小时登录统计
+  interface HourlyStatItem {
+    hour: number;
+    hourLabel: string;
+    totalLogins: number;
+    uniqueUsers: number;
+  }
+  const [hourlyStats, setHourlyStats] = useState<HourlyStatItem[]>([]);
+  const [isLoadingHourlyStats, setIsLoadingHourlyStats] = useState(false);
+
   const { toast } = useToast();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
@@ -133,6 +144,24 @@ const SuperAdd = () => {
     }
   };
 
+  const fetchHourlyStats = async () => {
+    setIsLoadingHourlyStats(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/get-hourly-login-stats`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setHourlyStats(data.hourlyStats || []);
+      }
+    } catch (error) {
+      console.error("获取每小时登录统计时出错:", error);
+    } finally {
+      setIsLoadingHourlyStats(false);
+    }
+  };
+
   // 充值卡过滤和分页
   const filteredCards = useMemo(() => {
     if (!cardSearchQuery.trim()) return cards;
@@ -157,6 +186,7 @@ const SuperAdd = () => {
   useEffect(() => {
     if (isVerified) {
       fetchTodayLoginCount();
+      fetchHourlyStats();
       fetchUsers();
       fetchCards();
     }
@@ -1101,6 +1131,89 @@ const SuperAdd = () => {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 登录统计图表 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              今日登录统计图表
+            </CardTitle>
+            <CardDescription>
+              展示今日各时段的用户登录情况
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingHourlyStats ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : hourlyStats.length > 0 ? (
+              <div className="w-full h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={hourlyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="hourLabel" 
+                      tick={{ fontSize: 12 }}
+                      interval={1}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                      formatter={(value: number, name: string) => [
+                        value,
+                        name === 'totalLogins' ? '登录次数' : '独立用户数'
+                      ]}
+                      labelFormatter={(label) => `时间: ${label}`}
+                    />
+                    <Legend 
+                      formatter={(value) => value === 'totalLogins' ? '登录次数' : '独立用户数'}
+                    />
+                    <Bar 
+                      dataKey="totalLogins" 
+                      fill="hsl(var(--primary))" 
+                      radius={[4, 4, 0, 0]}
+                      name="totalLogins"
+                    />
+                    <Bar 
+                      dataKey="uniqueUsers" 
+                      fill="hsl(var(--accent))" 
+                      radius={[4, 4, 0, 0]}
+                      name="uniqueUsers"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无登录数据
+              </div>
+            )}
+            <div className="mt-4 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchHourlyStats}
+                disabled={isLoadingHourlyStats}
+              >
+                {isLoadingHourlyStats ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                )}
+                刷新数据
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
