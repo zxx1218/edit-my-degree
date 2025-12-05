@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.redeem-card]
 verify_jwt = false
+
+[functions.manage-cards]
+verify_jwt = false
