@@ -351,7 +351,7 @@ const Login = () => {
                     <Input
                       id="login-card"
                       type="text"
-                      placeholder="请输入充值卡密"
+                      placeholder="请输入登录次数充值卡密"
                       value={loginRechargeData.cardId}
                       onChange={(e) =>
                         setLoginRechargeData({
@@ -386,7 +386,7 @@ const Login = () => {
                     <Input
                       id="pdf-card"
                       type="text"
-                      placeholder="请输入充值卡密"
+                      placeholder="请输入PDF积分充值卡密"
                       value={pdfRechargeData.cardId}
                       onChange={(e) =>
                         setPdfRechargeData({
