@@ -435,14 +435,14 @@ const Login = () => {
             <AlertDescription className="ml-2 text-sm space-y-2">
               <div className="font-semibold text-foreground">💡 使用提示</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 长按学历卡可以修改或添加学历信息</div>
-                <div>• 所有数据都会加密保存，退出后不会丢失</div>
+                <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
+                <div>• 关于系统定价、使用演示视频等请点击下方按钮</div>
               </div>
             </AlertDescription>
           </Alert>
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V2.3.2 • 更新时间：2025.11</div>
+            <div>当前版本：V3.0.1 • 更新时间：2025.12</div>
           </div>
         </CardContent>
       </Card>
