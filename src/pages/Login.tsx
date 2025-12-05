@@ -145,24 +145,14 @@ const Login = () => {
               >
                 {isLoading ? "登录中..." : "登录"}
               </Button>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full h-11 hover:bg-secondary/80 transition-all"
-                  onClick={() => navigate("/register")}
-                >
-                  注册账号
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-11 hover:bg-accent/5 hover:border-accent/50 transition-all"
-                  onClick={() => navigate("/purchase")}
-                >
-                  购买/续费
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full h-11 hover:bg-secondary/80 transition-all"
+                onClick={() => navigate("/register")}
+              >
+                注册账号
+              </Button>
             </div>
           </form>
           
@@ -249,6 +239,14 @@ const Login = () => {
             >
               <span>🔑</span>
               <span>修改密码</span>
+            </button>
+            <span className="text-border">•</span>
+            <button 
+              onClick={() => navigate("/purchase")}
+              className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform"
+            >
+              <span>💰</span>
+              <span>定价说明</span>
             </button>
             <span className="text-border">•</span>
             <button 
