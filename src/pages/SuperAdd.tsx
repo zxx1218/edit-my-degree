@@ -4,6 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { zhCN } from "date-fns/locale";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   Shield,
   UserPlus,
@@ -22,6 +27,7 @@ import {
   Check,
   Download,
   BarChart3,
+  CalendarIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -113,6 +119,7 @@ const SuperAdd = () => {
   }
   const [hourlyStats, setHourlyStats] = useState<HourlyStatItem[]>([]);
   const [isLoadingHourlyStats, setIsLoadingHourlyStats] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const { toast } = useToast();
 
@@ -171,12 +178,16 @@ const SuperAdd = () => {
     }
   };
 
-  const fetchHourlyStats = async () => {
+  const fetchHourlyStats = async (date?: Date) => {
     setIsLoadingHourlyStats(true);
     try {
+      const targetDate = date || selectedDate;
+      const dateString = format(targetDate, "yyyy-MM-dd");
+      
       const response = await fetch(`${API_BASE_URL}/get-hourly-login-stats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateString }),
       });
       const data = await response.json();
       if (data.success) {
@@ -188,6 +199,13 @@ const SuperAdd = () => {
       setIsLoadingHourlyStats(false);
     }
   };
+
+  // 当选择日期变化时重新获取数据
+  useEffect(() => {
+    if (isVerified) {
+      fetchHourlyStats(selectedDate);
+    }
+  }, [selectedDate]);
 
   // 充值卡过滤和分页
   const filteredCards = useMemo(() => {
@@ -1377,11 +1395,40 @@ const SuperAdd = () => {
         {/* 登录统计图表 */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              今日登录统计图表
-            </CardTitle>
-            <CardDescription>展示今日各时段的用户登录情况</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  登录统计图表
+                </CardTitle>
+                <CardDescription>展示各时段的用户登录情况</CardDescription>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[200px] justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "选择日期"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => date && setSelectedDate(date)}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className="pointer-events-auto"
+                    locale={zhCN}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoadingHourlyStats ? (
@@ -1426,7 +1473,7 @@ const SuperAdd = () => {
               </div>
             )}
             <div className="mt-4 flex justify-end">
-              <Button variant="outline" size="sm" onClick={fetchHourlyStats} disabled={isLoadingHourlyStats}>
+              <Button variant="outline" size="sm" onClick={() => fetchHourlyStats()} disabled={isLoadingHourlyStats}>
                 {isLoadingHourlyStats ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (

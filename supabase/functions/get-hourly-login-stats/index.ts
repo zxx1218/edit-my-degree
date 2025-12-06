@@ -17,20 +17,43 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 获取今天的开始时间（中国时区 UTC+8）
-    const now = new Date();
+    // 解析请求体获取日期参数
+    let targetDate: Date;
     const chinaOffset = 8 * 60 * 60 * 1000;
-    const chinaTime = new Date(now.getTime() + chinaOffset);
-    const todayStart = new Date(chinaTime.getFullYear(), chinaTime.getMonth(), chinaTime.getDate());
-    todayStart.setTime(todayStart.getTime() - chinaOffset); // 转换回UTC
+    
+    try {
+      const body = await req.json();
+      if (body.date) {
+        // 使用传入的日期 (格式: YYYY-MM-DD)
+        const [year, month, day] = body.date.split('-').map(Number);
+        targetDate = new Date(year, month - 1, day);
+      } else {
+        // 默认使用今天（中国时区）
+        const now = new Date();
+        const chinaTime = new Date(now.getTime() + chinaOffset);
+        targetDate = new Date(chinaTime.getFullYear(), chinaTime.getMonth(), chinaTime.getDate());
+      }
+    } catch {
+      // 如果解析失败，使用今天
+      const now = new Date();
+      const chinaTime = new Date(now.getTime() + chinaOffset);
+      targetDate = new Date(chinaTime.getFullYear(), chinaTime.getMonth(), chinaTime.getDate());
+    }
 
-    console.log('Querying hourly login stats since:', todayStart.toISOString());
+    // 计算目标日期的开始和结束时间（UTC）
+    const dayStart = new Date(targetDate.getTime() - chinaOffset);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
-    // 查询今天的所有登录记录
+    console.log('Querying hourly login stats for date:', targetDate.toISOString().split('T')[0]);
+    console.log('Day start (UTC):', dayStart.toISOString());
+    console.log('Day end (UTC):', dayEnd.toISOString());
+
+    // 查询指定日期的所有登录记录
     const { data: loginLogs, error: queryError } = await supabase
       .from('login_logs')
       .select('login_time, user_id')
-      .gte('login_time', todayStart.toISOString())
+      .gte('login_time', dayStart.toISOString())
+      .lt('login_time', dayEnd.toISOString())
       .order('login_time', { ascending: true });
 
     if (queryError) {
@@ -68,13 +91,16 @@ Deno.serve(async (req) => {
       uniqueUsers: stats.users.size,
     }));
 
-    console.log('Hourly stats generated:', result.length, 'hours');
+    // 格式化返回的日期
+    const formattedDate = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+
+    console.log('Hourly stats generated for', formattedDate, ':', result.length, 'hours');
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         hourlyStats: result,
-        date: chinaTime.toISOString().split('T')[0]
+        date: formattedDate
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
