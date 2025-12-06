@@ -206,6 +206,18 @@ async function createTables() {
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS cards (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      \`values\` INT NOT NULL,
+      type ENUM('login', 'pdf') NOT NULL DEFAULT 'login',
+      used BOOLEAN NOT NULL DEFAULT FALSE,
+      used_by VARCHAR(36),
+      used_at TIMESTAMP NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (used_by) REFERENCES users(id) ON DELETE SET NULL
+    )
     `
   ];
 
@@ -235,6 +247,7 @@ async function createTables() {
   
   console.log('Database tables initialized');
 }
+// ... existing code ...
 
 // JWT 密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -1176,6 +1189,223 @@ app.post('/api/reset-pdf-limit', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加充值卡管理接口
+app.post('/api/manage-cards', async (req, res) => {
+  try {
+    const { action, type, values, count, cardId, username } = req.body;
+
+    switch (action) {
+      case 'create':
+        // 创建充值卡
+        if (!type || !values || !count) {
+          return res.status(400).json({
+            success: false,
+            error: '缺少必要的参数：type, values, count'
+          });
+        }
+
+        if (count > 100) {
+          return res.status(400).json({
+            success: false,
+            error: '单次创建数量不能超过100张'
+          });
+        }
+
+        const newCards = [];
+        for (let i = 0; i < count; i++) {
+          const cardId = uuidv4();
+          await db.execute(
+            'INSERT INTO cards (id, type, `values`) VALUES (?, ?, ?)',
+            [cardId, type, values]
+          );
+          newCards.push({
+            id: cardId,
+            type,
+            values
+          });
+        }
+
+        return res.json({
+          success: true,
+          cards: newCards
+        });
+
+      case 'list':
+        // 获取充值卡列表
+        const [cards] = await db.execute(
+          'SELECT id, type, `values`, used, used_by, used_at, created_at FROM cards ORDER BY created_at DESC'
+        );
+        
+        return res.json({
+          success: true,
+          cards: cards.map(card => ({
+            id: card.id,
+            type: card.type,
+            values: card.values,
+            used: card.used === 1,
+            used_by: card.used_by,
+            used_at: card.used_at,
+            created_at: card.created_at
+          }))
+        });
+
+      case 'use':
+        // 使用充值卡
+        if (!cardId || !username) {
+          return res.status(400).json({
+            success: false,
+            error: '缺少必要的参数：cardId, username'
+          });
+        }
+
+        // 检查充值卡是否存在且未被使用
+        const [cardsResult] = await db.execute(
+          'SELECT * FROM cards WHERE id = ? AND used = FALSE',
+          [cardId]
+        );
+
+        if (cardsResult.length === 0) {
+          return res.status(400).json({
+            success: false,
+            error: '充值卡不存在或已被使用'
+          });
+        }
+
+        const card = cardsResult[0];
+
+        // 查找用户
+        const [usersResult] = await db.execute(
+          'SELECT id FROM users WHERE username = ?',
+          [username]
+        );
+
+        if (usersResult.length === 0) {
+          return res.status(404).json({
+            success: false,
+            error: '用户不存在'
+          });
+        }
+
+        const user = usersResult[0];
+        
+        // 开始事务处理
+        await db.query('START TRANSACTION');
+        
+        try {
+          // 标记充值卡为已使用
+          await db.execute(
+            'UPDATE cards SET used = TRUE, used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [user.id, cardId]
+          );
+
+          // 根据充值卡类型更新用户相应资源
+          if (card.type === 'login') {
+            await db.execute(
+              'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
+              [card.values, user.id]
+            );
+          } else if (card.type === 'pdf') {
+            await db.execute(
+              'UPDATE users SET pdf_limit = pdf_limit + ? WHERE id = ?',
+              [card.values, user.id]
+            );
+          }
+
+          await db.query('COMMIT');
+
+          // 获取更新后的用户信息
+          const [updatedUserResult] = await db.execute(
+            'SELECT remaining_logins, pdf_limit FROM users WHERE id = ?',
+            [user.id]
+          );
+
+          return res.json({
+            success: true,
+            message: '充值卡使用成功',
+            card: {
+              id: card.id,
+              type: card.type,
+              values: card.values
+            },
+            user: updatedUserResult[0]
+          });
+        } catch (error) {
+          await db.execute('ROLLBACK');
+          throw error;
+        }
+
+      default:
+        return res.status(400).json({
+          success: false,
+          error: '无效的操作类型'
+        });
+    }
+  } catch (err) {
+    console.error('充值卡管理接口出错:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 获取每小时登录统计接口
+app.post('/api/get-hourly-login-stats', async (req, res) => {
+  try {
+    // 获取今天的开始和结束时间 (使用本地时间格式 YYYY-MM-DD)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // 格式化为 YYYY-MM-DD 字符串
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    const todayStr = formatDate(today);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = formatDate(tomorrow);
+
+    // 查询今日每小时登录统计数据
+    const [hourlyStatsResult] = await db.execute(`
+      SELECT 
+        HOUR(login_time) as hour,
+        COUNT(*) as total_logins,
+        COUNT(DISTINCT user_id) as unique_users
+      FROM login_logs 
+      WHERE DATE(login_time) = ?
+      GROUP BY HOUR(login_time)
+      ORDER BY hour
+    `, [todayStr]);
+
+    // 构建24小时的数据数组，确保每个小时都有数据点
+    const hourlyStats = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const hourData = hourlyStatsResult.find(row => row.hour === hour);
+      hourlyStats.push({
+        hour: hour,
+        hourLabel: `${hour.toString().padStart(2, '0')}:00`,
+        totalLogins: hourData ? hourData.total_logins : 0,
+        uniqueUsers: hourData ? hourData.unique_users : 0
+      });
+    }
+
+    res.json({
+      success: true,
+      hourlyStats
+    });
+  } catch (err) {
+    console.error('获取每小时登录统计失败:', err);
     res.status(500).json({
       success: false,
       error: '服务器内部错误'
