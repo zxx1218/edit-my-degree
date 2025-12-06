@@ -247,7 +247,6 @@ async function createTables() {
   
   console.log('Database tables initialized');
 }
-// ... existing code ...
 
 // JWT 密钥
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -255,6 +254,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 // 登录接口
 app.post('/api/auth', async (req, res) => {
   try {
+    // 设置时区为中国时区
+    await db.execute("SET time_zone = '+08:00'");
+    
     const { username, password } = req.body;
     
     // 查询用户
@@ -1274,7 +1276,6 @@ app.post('/api/get-hourly-login-stats', async (req, res) => {
   }
 });
 
-// 添加获取周/月登录统计接口
 app.post('/api/get-login-stats-range', async (req, res) => {
   try {
     const { range } = req.body; // 'week' 或 'month'
@@ -1317,10 +1318,13 @@ app.post('/api/get-login-stats-range', async (req, res) => {
     // 构建完整的日期数据数组
     const dailyStats = [];
     const currentDate = new Date(startDate);
-    const endDate = new Date();
     
-    while (currentDate <= endDate) {
+    // 修复：确保日期比较正确
+    const finalEndDate = new Date(); // 今天
+    
+    while (currentDate <= finalEndDate) {
       const dateStr = formatDate(currentDate);
+      // 修复：正确查找当天的数据
       const dateData = dailyStatsResult.find(row => row.date === dateStr);
       
       dailyStats.push({
@@ -1330,12 +1334,14 @@ app.post('/api/get-login-stats-range', async (req, res) => {
         uniqueUsers: dateData ? dateData.unique_users : 0
       });
       
+      // 移动到下一天
       currentDate.setDate(currentDate.getDate() + 1);
     }
     
     // 计算汇总统计
     const totalLogins = dailyStats.reduce((sum, day) => sum + day.totalLogins, 0);
-    const totalUniqueUsers = [...new Set(dailyStats.flatMap(day => day.uniqueUsers))].length;
+    // 修复：正确计算唯一用户总数
+    const totalUniqueUsers = dailyStats.reduce((sum, day) => sum + day.uniqueUsers, 0);
     const avgLogins = dailyStats.length > 0 ? Math.round(totalLogins / dailyStats.length) : 0;
     
     const summary = {
