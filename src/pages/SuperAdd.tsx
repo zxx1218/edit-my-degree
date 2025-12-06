@@ -354,12 +354,31 @@ const SuperAdd = () => {
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      // 优先使用 navigator.clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback: 使用传统的 execCommand 方法
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (!successful) {
+          throw new Error('execCommand copy failed');
+        }
+      }
       setCopiedId(text);
       setTimeout(() => setCopiedId(null), 2000);
       toast({ title: "已复制", description: "卡密已复制到剪贴板" });
     } catch (error) {
-      toast({ variant: "destructive", title: "复制失败" });
+      console.error('复制失败:', error);
+      toast({ variant: "destructive", title: "复制失败", description: "请手动复制卡密" });
     }
   };
 
