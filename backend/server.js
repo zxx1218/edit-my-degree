@@ -890,78 +890,6 @@ app.post('/api/decrease-pdf-limit', async (req, res) => {
   }
 });
 
-// 添加减少用户PDF积分接口
-app.post('/api/decrease-pdf-limit', async (req, res) => {
-  try {
-    const { username, decreaseAmount } = req.body;
-
-    if (!username) {
-      return res.status(400).json({
-        success: false,
-        error: '用户名不能为空'
-      });
-    }
-
-    if (typeof decreaseAmount !== 'number' || decreaseAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: '减少数量必须为正整数'
-      });
-    }
-
-    // 先查询用户当前的PDF积分
-    const [users] = await db.execute(
-      'SELECT id, pdf_limit FROM users WHERE username = ?',
-      [username]
-    );
-
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: '用户不存在'
-      });
-    }
-
-    const user = users[0];
-
-    // 检查是否有足够的PDF积分
-    if (user.pdf_limit < decreaseAmount) {
-      return res.status(400).json({
-        success: false,
-        error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
-      });
-    }
-
-    // 计算新的PDF积分
-    const newPdfLimit = user.pdf_limit - decreaseAmount;
-
-    // 更新用户的PDF积分
-    const [result] = await db.execute(
-      'UPDATE users SET pdf_limit = ? WHERE id = ?',
-      [newPdfLimit, user.id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        error: '用户未找到'
-      });
-    }
-
-    res.json({
-      success: true,
-      newPdfLimit,
-      decreased: decreaseAmount
-    });
-  } catch (err) {
-    console.error('Unexpected error:', err);
-    res.status(500).json({
-      success: false,
-      error: '服务器内部错误'
-    });
-  }
-});
-
 // 获取今日登录统计接口
 app.post('/api/get-today-login-count', async (req, res) => {
   try {
@@ -1015,78 +943,6 @@ app.post('/api/get-today-login-count', async (req, res) => {
     });
   } catch (err) {
     console.error('获取今日登录统计失败:', err);
-    res.status(500).json({
-      success: false,
-      error: '服务器内部错误'
-    });
-  }
-});
-
-// 添加减少用户PDF积分接口
-app.post('/api/decrease-pdf-limit', async (req, res) => {
-  try {
-    const { username, decreaseAmount } = req.body;
-
-    if (!username) {
-      return res.status(400).json({
-        success: false,
-        error: '用户名不能为空'
-      });
-    }
-
-    if (typeof decreaseAmount !== 'number' || decreaseAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: '减少数量必须为正整数'
-      });
-    }
-
-    // 先查询用户当前的PDF积分
-    const [users] = await db.execute(
-      'SELECT id, pdf_limit FROM users WHERE username = ?',
-      [username]
-    );
-
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: '用户不存在'
-      });
-    }
-
-    const user = users[0];
-
-    // 检查是否有足够的PDF积分
-    if (user.pdf_limit < decreaseAmount) {
-      return res.status(400).json({
-        success: false,
-        error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
-      });
-    }
-
-    // 计算新的PDF积分
-    const newPdfLimit = user.pdf_limit - decreaseAmount;
-
-    // 更新用户的PDF积分
-    const [result] = await db.execute(
-      'UPDATE users SET pdf_limit = ? WHERE id = ?',
-      [newPdfLimit, user.id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        error: '用户未找到'
-      });
-    }
-
-    res.json({
-      success: true,
-      newPdfLimit,
-      decreased: decreaseAmount
-    });
-  } catch (err) {
-    console.error('Unexpected error:', err);
     res.status(500).json({
       success: false,
       error: '服务器内部错误'
@@ -1359,9 +1215,17 @@ app.post('/api/manage-cards', async (req, res) => {
 // 获取每小时登录统计接口
 app.post('/api/get-hourly-login-stats', async (req, res) => {
   try {
-    // 获取今天的开始和结束时间 (使用本地时间格式 YYYY-MM-DD)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 获取请求中的日期或者使用今天
+    const { date } = req.body;
+    let targetDate;
+    
+    if (date) {
+      targetDate = new Date(date);
+    } else {
+      targetDate = new Date();
+    }
+    
+    targetDate.setHours(0, 0, 0, 0);
     
     // 格式化为 YYYY-MM-DD 字符串
     const formatDate = (date) => {
@@ -1371,12 +1235,9 @@ app.post('/api/get-hourly-login-stats', async (req, res) => {
       return `${year}-${month}-${day}`;
     };
     
-    const todayStr = formatDate(today);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = formatDate(tomorrow);
-
-    // 查询今日每小时登录统计数据
+    const targetDateStr = formatDate(targetDate);
+    
+    // 查询指定日期每小时登录统计数据
     const [hourlyStatsResult] = await db.execute(`
       SELECT 
         HOUR(login_time) as hour,
@@ -1386,7 +1247,7 @@ app.post('/api/get-hourly-login-stats', async (req, res) => {
       WHERE DATE(login_time) = ?
       GROUP BY HOUR(login_time)
       ORDER BY hour
-    `, [todayStr]);
+    `, [targetDateStr]);
 
     // 构建24小时的数据数组，确保每个小时都有数据点
     const hourlyStats = [];
@@ -1406,6 +1267,91 @@ app.post('/api/get-hourly-login-stats', async (req, res) => {
     });
   } catch (err) {
     console.error('获取每小时登录统计失败:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 添加获取周/月登录统计接口
+app.post('/api/get-login-stats-range', async (req, res) => {
+  try {
+    const { range } = req.body; // 'week' 或 'month'
+    
+    let startDate = new Date();
+    if (range === 'week') {
+      startDate.setDate(startDate.getDate() - 6); // 包括今天共7天
+    } else if (range === 'month') {
+      startDate.setDate(startDate.getDate() - 29); // 包括今天共30天
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: '无效的范围参数，应为 "week" 或 "month"'
+      });
+    }
+    
+    // 格式化日期为 YYYY-MM-DD 字符串
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    const startDateStr = formatDate(startDate);
+    const endDateStr = formatDate(new Date());
+    
+    // 查询日期范围内每天的登录统计数据
+    const [dailyStatsResult] = await db.execute(`
+      SELECT 
+        DATE(login_time) as date,
+        COUNT(*) as total_logins,
+        COUNT(DISTINCT user_id) as unique_users
+      FROM login_logs 
+      WHERE DATE(login_time) BETWEEN ? AND ?
+      GROUP BY DATE(login_time)
+      ORDER BY date
+    `, [startDateStr, endDateStr]);
+    
+    // 构建完整的日期数据数组
+    const dailyStats = [];
+    const currentDate = new Date(startDate);
+    const endDate = new Date();
+    
+    while (currentDate <= endDate) {
+      const dateStr = formatDate(currentDate);
+      const dateData = dailyStatsResult.find(row => row.date === dateStr);
+      
+      dailyStats.push({
+        date: dateStr,
+        dateLabel: dateStr,
+        totalLogins: dateData ? dateData.total_logins : 0,
+        uniqueUsers: dateData ? dateData.unique_users : 0
+      });
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // 计算汇总统计
+    const totalLogins = dailyStats.reduce((sum, day) => sum + day.totalLogins, 0);
+    const totalUniqueUsers = [...new Set(dailyStats.flatMap(day => day.uniqueUsers))].length;
+    const avgLogins = dailyStats.length > 0 ? Math.round(totalLogins / dailyStats.length) : 0;
+    
+    const summary = {
+      totalLogins,
+      avgLogins,
+      totalUniqueUsers,
+      days: dailyStats.length
+    };
+    
+    res.json({
+      success: true,
+      dailyStats,
+      summary
+    });
+  } catch (err) {
+    console.error('获取范围登录统计失败:', err);
     res.status(500).json({
       success: false,
       error: '服务器内部错误'
