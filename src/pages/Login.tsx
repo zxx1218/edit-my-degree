@@ -1,3 +1,4 @@
+// ... existing code ...
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { loginUser, changePassword } from "@/lib/api";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -128,12 +128,25 @@ const Login = () => {
     setIsRecharging(true);
 
     try {
-      const { data: result, error } = await supabase.functions.invoke("redeem-card", {
-        body: { cardId: data.cardId.trim(), username: data.username.trim(), type },
+      // 使用本地后端API替代Supabase函数调用
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+      const response = await fetch(`${API_BASE_URL}/manage-cards`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "use",
+          cardId: data.cardId.trim(),
+          username: data.username.trim(),
+          type,
+        }),
       });
 
-      if (error) {
-        toast.error(error.message || "充值失败", { duration: 2000 });
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || "充值失败", { duration: 2000 });
         return;
       }
 
@@ -142,7 +155,7 @@ const Login = () => {
         return;
       }
 
-      toast.success(result.message, { duration: 2000 });
+      toast.success(result.message || "充值成功", { duration: 2000 });
 
       // 清空输入
       if (type === "login") {
@@ -433,16 +446,16 @@ const Login = () => {
           <Alert className="mt-6 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="ml-2 text-sm space-y-2">
-              <div className="font-semibold text-foreground">使用提示💡</div>
+              <div className="font-semibold text-foreground">使用提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
                 <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
-                <div>• 关于系统定价、使用演示视频等请点击下方按钮</div>
+                <div>• 关于系统定价、使用演示视频等请点击上方按钮</div>
               </div>
             </AlertDescription>
           </Alert>
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.0.1 • 更新时间：2025.12</div>
+            <div>当前版本：V3.0.2 • 更新时间：2025.12</div>
           </div>
         </CardContent>
       </Card>
