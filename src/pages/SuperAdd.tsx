@@ -121,6 +121,24 @@ const SuperAdd = () => {
   const [isLoadingHourlyStats, setIsLoadingHourlyStats] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
+  // 周/月统计
+  interface DailyStatItem {
+    date: string;
+    dateLabel: string;
+    totalLogins: number;
+    uniqueUsers: number;
+  }
+  interface RangeSummary {
+    totalLogins: number;
+    avgLogins: number;
+    totalUniqueUsers: number;
+    days: number;
+  }
+  const [dailyStats, setDailyStats] = useState<DailyStatItem[]>([]);
+  const [rangeSummary, setRangeSummary] = useState<RangeSummary | null>(null);
+  const [isLoadingRangeStats, setIsLoadingRangeStats] = useState(false);
+  const [statsViewMode, setStatsViewMode] = useState<"day" | "week" | "month">("day");
+
   const { toast } = useToast();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
@@ -200,12 +218,44 @@ const SuperAdd = () => {
     }
   };
 
+  // 获取周/月统计数据
+  const fetchRangeStats = async (range: "week" | "month") => {
+    setIsLoadingRangeStats(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/get-login-stats-range`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ range }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDailyStats(data.dailyStats || []);
+        setRangeSummary(data.summary || null);
+      }
+    } catch (error) {
+      console.error("获取周/月登录统计时出错:", error);
+    } finally {
+      setIsLoadingRangeStats(false);
+    }
+  };
+
   // 当选择日期变化时重新获取数据
   useEffect(() => {
-    if (isVerified) {
+    if (isVerified && statsViewMode === "day") {
       fetchHourlyStats(selectedDate);
     }
-  }, [selectedDate]);
+  }, [selectedDate, statsViewMode]);
+
+  // 当视图模式变化时获取对应数据
+  useEffect(() => {
+    if (isVerified) {
+      if (statsViewMode === "day") {
+        fetchHourlyStats(selectedDate);
+      } else {
+        fetchRangeStats(statsViewMode);
+      }
+    }
+  }, [statsViewMode]);
 
   // 充值卡过滤和分页
   const filteredCards = useMemo(() => {
@@ -1395,86 +1445,208 @@ const SuperAdd = () => {
         {/* 登录统计图表 */}
         <Card className="border-2 shadow-lg">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  登录统计图表
-                </CardTitle>
-                <CardDescription>展示各时段的用户登录情况</CardDescription>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    登录统计图表
+                  </CardTitle>
+                  <CardDescription>
+                    {statsViewMode === "day" ? "展示当日各时段的用户登录情况" : 
+                     statsViewMode === "week" ? "展示过去7天的用户登录趋势" : 
+                     "展示过去30天的用户登录趋势"}
+                  </CardDescription>
+                </div>
+                {statsViewMode === "day" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[200px] justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "选择日期"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className="pointer-events-auto"
+                        locale={zhCN}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-[200px] justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "选择日期"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                    className="pointer-events-auto"
-                    locale={zhCN}
-                  />
-                </PopoverContent>
-              </Popover>
+              
+              {/* 视图切换按钮 */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={statsViewMode === "day" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatsViewMode("day")}
+                >
+                  日视图
+                </Button>
+                <Button
+                  variant={statsViewMode === "week" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatsViewMode("week")}
+                >
+                  周视图
+                </Button>
+                <Button
+                  variant={statsViewMode === "month" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatsViewMode("month")}
+                >
+                  月视图
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
-            {isLoadingHourlyStats ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : hourlyStats.length > 0 ? (
-              <div className="w-full h-[350px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={hourlyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis
-                      dataKey="hourLabel"
-                      tick={{ fontSize: 12 }}
-                      interval={1}
-                      angle={-45}
-                      textAnchor="end"
-                      height={60}
-                    />
-                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number, name: string) => [
-                        value,
-                        name === "totalLogins" ? "登录次数" : "独立用户数",
-                      ]}
-                      labelFormatter={(label) => `时间: ${label}`}
-                    />
-                    <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
-                    <Bar dataKey="totalLogins" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="totalLogins" />
-                    <Bar dataKey="uniqueUsers" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="uniqueUsers" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                暂无登录数据
+            {/* 汇总统计卡片 (周/月视图) */}
+            {statsViewMode !== "day" && rangeSummary && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-primary/10 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">总登录次数</p>
+                  <p className="text-2xl font-bold text-primary">{rangeSummary.totalLogins}</p>
+                </div>
+                <div className="bg-accent/10 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">独立用户数</p>
+                  <p className="text-2xl font-bold text-accent">{rangeSummary.totalUniqueUsers}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">日均登录</p>
+                  <p className="text-2xl font-bold">{rangeSummary.avgLogins}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">统计天数</p>
+                  <p className="text-2xl font-bold">{rangeSummary.days}天</p>
+                </div>
               </div>
             )}
+
+            {/* 图表区域 */}
+            {statsViewMode === "day" ? (
+              // 日视图 - 小时统计
+              isLoadingHourlyStats ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : hourlyStats.length > 0 ? (
+                <div className="w-full h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={hourlyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis
+                        dataKey="hourLabel"
+                        tick={{ fontSize: 12 }}
+                        interval={1}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                        formatter={(value: number, name: string) => [
+                          value,
+                          name === "totalLogins" ? "登录次数" : "独立用户数",
+                        ]}
+                        labelFormatter={(label) => `时间: ${label}`}
+                      />
+                      <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                      <Bar dataKey="totalLogins" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="totalLogins" />
+                      <Bar dataKey="uniqueUsers" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="uniqueUsers" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                  暂无登录数据
+                </div>
+              )
+            ) : (
+              // 周/月视图 - 每日统计
+              isLoadingRangeStats ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : dailyStats.length > 0 ? (
+                <div className="w-full h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis
+                        dataKey="dateLabel"
+                        tick={{ fontSize: 12 }}
+                        interval={statsViewMode === "month" ? 4 : 0}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                        formatter={(value: number, name: string) => [
+                          value,
+                          name === "totalLogins" ? "登录次数" : "独立用户数",
+                        ]}
+                        labelFormatter={(label) => `日期: ${label}`}
+                      />
+                      <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="totalLogins" 
+                        stroke="hsl(var(--primary))" 
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
+                        name="totalLogins"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="uniqueUsers" 
+                        stroke="hsl(var(--accent))" 
+                        strokeWidth={2}
+                        dot={{ fill: "hsl(var(--accent))", strokeWidth: 2 }}
+                        name="uniqueUsers"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                  暂无登录数据
+                </div>
+              )
+            )}
+            
             <div className="mt-4 flex justify-end">
-              <Button variant="outline" size="sm" onClick={() => fetchHourlyStats()} disabled={isLoadingHourlyStats}>
-                {isLoadingHourlyStats ? (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => statsViewMode === "day" ? fetchHourlyStats() : fetchRangeStats(statsViewMode)} 
+                disabled={isLoadingHourlyStats || isLoadingRangeStats}
+              >
+                {(isLoadingHourlyStats || isLoadingRangeStats) ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <RotateCcw className="h-4 w-4 mr-2" />

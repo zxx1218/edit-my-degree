@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.get-hourly-login-stats]
 verify_jwt = false
 
+[functions.get-login-stats-range]
+verify_jwt = false
+
 [functions.redeem-card]
 verify_jwt = false
 
