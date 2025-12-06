@@ -4,11 +4,40 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, UserPlus, List, Loader2, RotateCcw, Search, Minus, CreditCard, LogIn, Users, ChevronLeft, ChevronRight, Ticket, Copy, Check, Download, BarChart3 } from "lucide-react";
+import {
+  Shield,
+  UserPlus,
+  List,
+  Loader2,
+  RotateCcw,
+  Search,
+  Minus,
+  CreditCard,
+  LogIn,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+  Ticket,
+  Copy,
+  Check,
+  Download,
+  BarChart3,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
 
 interface User {
   id: string;
@@ -92,13 +121,11 @@ const SuperAdd = () => {
   // 过滤和分页逻辑
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
-    return users.filter(user => 
-      user.username.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return users.filter((user) => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [users, searchQuery]);
 
   const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
-  
+
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
@@ -165,14 +192,15 @@ const SuperAdd = () => {
   // 充值卡过滤和分页
   const filteredCards = useMemo(() => {
     if (!cardSearchQuery.trim()) return cards;
-    return cards.filter(card => 
-      card.id.toLowerCase().includes(cardSearchQuery.toLowerCase()) ||
-      card.used_by?.toLowerCase().includes(cardSearchQuery.toLowerCase())
+    return cards.filter(
+      (card) =>
+        card.id.toLowerCase().includes(cardSearchQuery.toLowerCase()) ||
+        card.used_by?.toLowerCase().includes(cardSearchQuery.toLowerCase()),
     );
   }, [cards, cardSearchQuery]);
 
   const cardTotalPages = Math.ceil(filteredCards.length / CARDS_PER_PAGE);
-  
+
   const paginatedCards = useMemo(() => {
     const startIndex = (cardCurrentPage - 1) * CARDS_PER_PAGE;
     return filteredCards.slice(startIndex, startIndex + CARDS_PER_PAGE);
@@ -268,7 +296,7 @@ const SuperAdd = () => {
   };
 
   const exportCardsToCSV = (exportAll: boolean = true) => {
-    const cardsToExport = exportAll ? cards : cards.filter(c => !c.used);
+    const cardsToExport = exportAll ? cards : cards.filter((c) => !c.used);
     if (cardsToExport.length === 0) {
       toast({ variant: "destructive", title: "没有可导出的数据" });
       return;
@@ -277,23 +305,25 @@ const SuperAdd = () => {
     const headers = ["卡密ID", "类型", "充值数量", "状态", "使用者", "使用时间", "创建时间"];
     const csvContent = [
       headers.join(","),
-      ...cardsToExport.map(card => [
-        card.id,
-        card.type === 'login' ? '登录次数' : 'PDF积分',
-        card.values,
-        card.used ? '已使用' : '未使用',
-        card.used_by || '',
-        card.used_at || '',
-        card.created_at || ''
-      ].join(","))
+      ...cardsToExport.map((card) =>
+        [
+          card.id,
+          card.type === "login" ? "登录次数" : "PDF积分",
+          card.values,
+          card.used ? "已使用" : "未使用",
+          card.used_by || "",
+          card.used_at || "",
+          card.created_at || "",
+        ].join(","),
+      ),
     ].join("\n");
 
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `充值卡_${exportAll ? '全部' : '未使用'}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `充值卡_${exportAll ? "全部" : "未使用"}_${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -384,7 +414,10 @@ const SuperAdd = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast({ title: "添加成功", description: `已为用户 ${targetUsername} 添加 ${loginsToAdd} 次登录，当前剩余 ${data.newLogins} 次` });
+        toast({
+          title: "添加成功",
+          description: `已为用户 ${targetUsername} 添加 ${loginsToAdd} 次登录，当前剩余 ${data.newLogins} 次`,
+        });
         setTargetUsername("");
         setAddLogins("");
         fetchUsers();
@@ -417,7 +450,10 @@ const SuperAdd = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast({ title: "减少成功", description: `已为用户 ${decreaseUsername} 减少 ${data.decreased} 次登录，当前剩余 ${data.newLogins} 次` });
+        toast({
+          title: "减少成功",
+          description: `已为用户 ${decreaseUsername} 减少 ${data.decreased} 次登录，当前剩余 ${data.newLogins} 次`,
+        });
         setDecreaseUsername("");
         setDecreaseLogins("");
         fetchUsers();
@@ -450,7 +486,10 @@ const SuperAdd = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast({ title: "添加成功", description: `已为用户 ${pdfUsername} 添加 ${amountToAdd} 积分，当前剩余 ${data.newPdfLimit} 积分` });
+        toast({
+          title: "添加成功",
+          description: `已为用户 ${pdfUsername} 添加 ${amountToAdd} 积分，当前剩余 ${data.newPdfLimit} 积分`,
+        });
         setPdfUsername("");
         setPdfAmount("");
         fetchUsers();
@@ -483,7 +522,10 @@ const SuperAdd = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast({ title: "减少成功", description: `已为用户 ${decreasePdfUsername} 减少 ${amountToDecrease} 积分，当前剩余 ${data.newPdfLimit} 积分` });
+        toast({
+          title: "减少成功",
+          description: `已为用户 ${decreasePdfUsername} 减少 ${amountToDecrease} 积分，当前剩余 ${data.newPdfLimit} 积分`,
+        });
         setDecreasePdfUsername("");
         setDecreasePdfAmount("");
         fetchUsers();
@@ -539,7 +581,9 @@ const SuperAdd = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="verify-username" className="text-gray-700">用户名</Label>
+              <Label htmlFor="verify-username" className="text-gray-700">
+                用户名
+              </Label>
               <Input
                 id="verify-username"
                 type="text"
@@ -550,7 +594,9 @@ const SuperAdd = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="verify-password" className="text-gray-700">密码</Label>
+              <Label htmlFor="verify-password" className="text-gray-700">
+                密码
+              </Label>
               <Input
                 id="verify-password"
                 type="password"
@@ -560,7 +606,10 @@ const SuperAdd = () => {
                 className="h-12 border-gray-200"
               />
             </div>
-            <Button onClick={handleVerify} className="w-full h-12 text-base font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-0">
+            <Button
+              onClick={handleVerify}
+              className="w-full h-12 text-base font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-0"
+            >
               验证身份
             </Button>
           </CardContent>
@@ -680,14 +729,39 @@ const SuperAdd = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="target-username">用户名</Label>
-                      <Input id="target-username" value={targetUsername} onChange={(e) => setTargetUsername(e.target.value)} placeholder="请输入用户名" className="h-10" />
+                      <Input
+                        id="target-username"
+                        value={targetUsername}
+                        onChange={(e) => setTargetUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="add-logins">添加登录次数</Label>
-                      <Input id="add-logins" type="number" min="1" value={addLogins} onChange={(e) => setAddLogins(e.target.value)} placeholder="请输入要添加的次数" className="h-10" />
+                      <Input
+                        id="add-logins"
+                        type="number"
+                        min="1"
+                        value={addLogins}
+                        onChange={(e) => setAddLogins(e.target.value)}
+                        placeholder="请输入要添加的次数"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleAddLogins} disabled={isAddingLogins} className="w-full h-11 text-base bg-green-600 hover:bg-green-700">
-                      {isAddingLogins ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />添加中...</> : "确认添加"}
+                    <Button
+                      onClick={handleAddLogins}
+                      disabled={isAddingLogins}
+                      className="w-full h-11 text-base bg-green-600 hover:bg-green-700"
+                    >
+                      {isAddingLogins ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          添加中...
+                        </>
+                      ) : (
+                        "确认添加"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -703,14 +777,39 @@ const SuperAdd = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="decrease-username">用户名</Label>
-                      <Input id="decrease-username" value={decreaseUsername} onChange={(e) => setDecreaseUsername(e.target.value)} placeholder="请输入用户名" className="h-10" />
+                      <Input
+                        id="decrease-username"
+                        value={decreaseUsername}
+                        onChange={(e) => setDecreaseUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="decrease-logins">减少登录次数</Label>
-                      <Input id="decrease-logins" type="number" min="1" value={decreaseLogins} onChange={(e) => setDecreaseLogins(e.target.value)} placeholder="请输入要减少的次数" className="h-10" />
+                      <Input
+                        id="decrease-logins"
+                        type="number"
+                        min="1"
+                        value={decreaseLogins}
+                        onChange={(e) => setDecreaseLogins(e.target.value)}
+                        placeholder="请输入要减少的次数"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleDecreaseLogins} disabled={isDecreasingLogins} className="w-full h-11 text-base bg-orange-600 hover:bg-orange-700">
-                      {isDecreasingLogins ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />减少中...</> : "确认减少"}
+                    <Button
+                      onClick={handleDecreaseLogins}
+                      disabled={isDecreasingLogins}
+                      className="w-full h-11 text-base bg-orange-600 hover:bg-orange-700"
+                    >
+                      {isDecreasingLogins ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          减少中...
+                        </>
+                      ) : (
+                        "确认减少"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -726,10 +825,28 @@ const SuperAdd = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="reset-username">用户名</Label>
-                      <Input id="reset-username" value={resetUsername} onChange={(e) => setResetUsername(e.target.value)} placeholder="请输入用户名" className="h-10" />
+                      <Input
+                        id="reset-username"
+                        value={resetUsername}
+                        onChange={(e) => setResetUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleResetLogins} disabled={isResetting} variant="destructive" className="w-full h-11 text-base">
-                      {isResetting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />重置中...</> : "确认重置为 0"}
+                    <Button
+                      onClick={handleResetLogins}
+                      disabled={isResetting}
+                      variant="destructive"
+                      className="w-full h-11 text-base"
+                    >
+                      {isResetting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          重置中...
+                        </>
+                      ) : (
+                        "确认重置为 0"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -771,14 +888,39 @@ const SuperAdd = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="pdf-username">用户名</Label>
-                      <Input id="pdf-username" value={pdfUsername} onChange={(e) => setPdfUsername(e.target.value)} placeholder="请输入用户名" className="h-10" />
+                      <Input
+                        id="pdf-username"
+                        value={pdfUsername}
+                        onChange={(e) => setPdfUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="pdf-amount">添加积分数量</Label>
-                      <Input id="pdf-amount" type="number" min="1" value={pdfAmount} onChange={(e) => setPdfAmount(e.target.value)} placeholder="请输入要添加的积分数量" className="h-10" />
+                      <Input
+                        id="pdf-amount"
+                        type="number"
+                        min="1"
+                        value={pdfAmount}
+                        onChange={(e) => setPdfAmount(e.target.value)}
+                        placeholder="请输入要添加的积分数量"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleAddPdfLimit} disabled={isAddingPdf} className="w-full h-11 text-base bg-purple-600 hover:bg-purple-700">
-                      {isAddingPdf ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />添加中...</> : "确认添加"}
+                    <Button
+                      onClick={handleAddPdfLimit}
+                      disabled={isAddingPdf}
+                      className="w-full h-11 text-base bg-purple-600 hover:bg-purple-700"
+                    >
+                      {isAddingPdf ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          添加中...
+                        </>
+                      ) : (
+                        "确认添加"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -794,14 +936,39 @@ const SuperAdd = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="decrease-pdf-username">用户名</Label>
-                      <Input id="decrease-pdf-username" value={decreasePdfUsername} onChange={(e) => setDecreasePdfUsername(e.target.value)} placeholder="请输入用户名" className="h-10" />
+                      <Input
+                        id="decrease-pdf-username"
+                        value={decreasePdfUsername}
+                        onChange={(e) => setDecreasePdfUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="decrease-pdf-amount">减少积分数量</Label>
-                      <Input id="decrease-pdf-amount" type="number" min="1" value={decreasePdfAmount} onChange={(e) => setDecreasePdfAmount(e.target.value)} placeholder="请输入要减少的积分数量" className="h-10" />
+                      <Input
+                        id="decrease-pdf-amount"
+                        type="number"
+                        min="1"
+                        value={decreasePdfAmount}
+                        onChange={(e) => setDecreasePdfAmount(e.target.value)}
+                        placeholder="请输入要减少的积分数量"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleDecreasePdfLimit} disabled={isDecreasingPdf} className="w-full h-11 text-base bg-orange-600 hover:bg-orange-700">
-                      {isDecreasingPdf ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />减少中...</> : "确认减少"}
+                    <Button
+                      onClick={handleDecreasePdfLimit}
+                      disabled={isDecreasingPdf}
+                      className="w-full h-11 text-base bg-orange-600 hover:bg-orange-700"
+                    >
+                      {isDecreasingPdf ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          减少中...
+                        </>
+                      ) : (
+                        "确认减少"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -817,10 +984,28 @@ const SuperAdd = () => {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="reset-pdf-username">用户名</Label>
-                      <Input id="reset-pdf-username" value={resetPdfUsername} onChange={(e) => setResetPdfUsername(e.target.value)} placeholder="请输入用户名" className="h-10" />
+                      <Input
+                        id="reset-pdf-username"
+                        value={resetPdfUsername}
+                        onChange={(e) => setResetPdfUsername(e.target.value)}
+                        placeholder="请输入用户名"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleResetPdfLimit} disabled={isResettingPdf} variant="destructive" className="w-full h-11 text-base">
-                      {isResettingPdf ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />重置中...</> : "确认重置为 0"}
+                    <Button
+                      onClick={handleResetPdfLimit}
+                      disabled={isResettingPdf}
+                      variant="destructive"
+                      className="w-full h-11 text-base"
+                    >
+                      {isResettingPdf ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          重置中...
+                        </>
+                      ) : (
+                        "确认重置为 0"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -843,7 +1028,11 @@ const SuperAdd = () => {
                 </div>
               </div>
               <Button onClick={fetchCards} variant="outline" size="sm" className="border-2" disabled={isFetchingCards}>
-                {isFetchingCards ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <List className="h-4 w-4 mr-2" />}
+                {isFetchingCards ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <List className="h-4 w-4 mr-2" />
+                )}
                 刷新列表
               </Button>
             </div>
@@ -883,14 +1072,42 @@ const SuperAdd = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="card-values">充值数量（每张卡）</Label>
-                      <Input id="card-values" type="number" min="1" value={newCardValues} onChange={(e) => setNewCardValues(e.target.value)} placeholder="请输入每张卡的充值数量" className="h-10" />
+                      <Input
+                        id="card-values"
+                        type="number"
+                        min="1"
+                        value={newCardValues}
+                        onChange={(e) => setNewCardValues(e.target.value)}
+                        placeholder="请输入每张卡的充值数量"
+                        className="h-10"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="card-count">生成张数</Label>
-                      <Input id="card-count" type="number" min="1" max="100" value={newCardCount} onChange={(e) => setNewCardCount(e.target.value)} placeholder="请输入要生成的张数（1-100）" className="h-10" />
+                      <Input
+                        id="card-count"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={newCardCount}
+                        onChange={(e) => setNewCardCount(e.target.value)}
+                        placeholder="请输入要生成的张数（1-100）"
+                        className="h-10"
+                      />
                     </div>
-                    <Button onClick={handleCreateCards} disabled={isCreatingCards} className="w-full h-11 text-base bg-teal-600 hover:bg-teal-700">
-                      {isCreatingCards ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />创建中...</> : "确认创建"}
+                    <Button
+                      onClick={handleCreateCards}
+                      disabled={isCreatingCards}
+                      className="w-full h-11 text-base bg-teal-600 hover:bg-teal-700"
+                    >
+                      {isCreatingCards ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          创建中...
+                        </>
+                      ) : (
+                        "确认创建"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -915,22 +1132,36 @@ const SuperAdd = () => {
                     <div className="text-xs text-muted-foreground">总数</div>
                   </div>
                   <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-center">
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{cards.filter(c => !c.used).length}</div>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {cards.filter((c) => !c.used).length}
+                    </div>
                     <div className="text-xs text-muted-foreground">未使用</div>
                   </div>
                   <div className="p-3 bg-gray-50 dark:bg-gray-950/30 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
-                    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{cards.filter(c => c.used).length}</div>
+                    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                      {cards.filter((c) => c.used).length}
+                    </div>
                     <div className="text-xs text-muted-foreground">已使用</div>
                   </div>
                 </div>
 
                 {/* 导出按钮 */}
                 <div className="flex gap-2">
-                  <Button onClick={() => exportCardsToCSV(true)} variant="outline" size="sm" className="flex-1 border-2">
+                  <Button
+                    onClick={() => exportCardsToCSV(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-2"
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     导出全部CSV
                   </Button>
-                  <Button onClick={() => exportCardsToCSV(false)} variant="outline" size="sm" className="flex-1 border-2">
+                  <Button
+                    onClick={() => exportCardsToCSV(false)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-2"
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     导出未使用CSV
                   </Button>
@@ -951,9 +1182,9 @@ const SuperAdd = () => {
                         <div
                           key={card.id}
                           className={`flex justify-between items-center p-4 rounded-lg hover:shadow-lg transition-all border-2 animate-scale-in ${
-                            card.used 
-                              ? 'bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800/50 dark:to-gray-900/50 border-gray-300 dark:border-gray-700' 
-                              : 'bg-gradient-to-r from-background to-muted/20 border-border/50 hover:border-teal-300'
+                            card.used
+                              ? "bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800/50 dark:to-gray-900/50 border-gray-300 dark:border-gray-700"
+                              : "bg-gradient-to-r from-background to-muted/20 border-border/50 hover:border-teal-300"
                           }`}
                           style={{ animationDelay: `${index * 30}ms` }}
                         >
@@ -974,7 +1205,7 @@ const SuperAdd = () => {
                               </Button>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{card.type === 'login' ? '登录次数' : 'PDF积分'}</span>
+                              <span>{card.type === "login" ? "登录次数" : "PDF积分"}</span>
                               <span>·</span>
                               <span>{card.values} 点</span>
                               {card.used && card.used_by && (
@@ -985,7 +1216,10 @@ const SuperAdd = () => {
                               )}
                             </div>
                           </div>
-                          <Badge variant={card.used ? "secondary" : "default"} className={card.used ? "" : "bg-teal-600"}>
+                          <Badge
+                            variant={card.used ? "secondary" : "default"}
+                            className={card.used ? "" : "bg-teal-600"}
+                          >
                             {card.used ? "已使用" : "未使用"}
                           </Badge>
                         </div>
@@ -1008,7 +1242,7 @@ const SuperAdd = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCardCurrentPage(p => Math.max(1, p - 1))}
+                        onClick={() => setCardCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={cardCurrentPage === 1}
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -1017,7 +1251,7 @@ const SuperAdd = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCardCurrentPage(p => Math.min(cardTotalPages, p + 1))}
+                        onClick={() => setCardCurrentPage((p) => Math.min(cardTotalPages, p + 1))}
                         disabled={cardCurrentPage === cardTotalPages}
                       >
                         下一页
@@ -1041,11 +1275,17 @@ const SuperAdd = () => {
                 </div>
                 <div>
                   <CardTitle className="text-xl">用户列表</CardTitle>
-                  <CardDescription>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</CardDescription>
+                  <CardDescription>
+                    共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}
+                  </CardDescription>
                 </div>
               </div>
               <Button onClick={fetchUsers} variant="outline" size="sm" className="border-2" disabled={isFetchingUsers}>
-                {isFetchingUsers ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <List className="h-4 w-4 mr-2" />}
+                {isFetchingUsers ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <List className="h-4 w-4 mr-2" />
+                )}
                 刷新列表
               </Button>
             </div>
@@ -1113,7 +1353,7 @@ const SuperAdd = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -1122,7 +1362,7 @@ const SuperAdd = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                   >
                     下一页
@@ -1141,9 +1381,7 @@ const SuperAdd = () => {
               <BarChart3 className="h-5 w-5 text-primary" />
               今日登录统计图表
             </CardTitle>
-            <CardDescription>
-              展示今日各时段的用户登录情况
-            </CardDescription>
+            <CardDescription>展示今日各时段的用户登录情况</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoadingHourlyStats ? (
@@ -1155,8 +1393,8 @@ const SuperAdd = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={hourlyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis 
-                      dataKey="hourLabel" 
+                    <XAxis
+                      dataKey="hourLabel"
                       tick={{ fontSize: 12 }}
                       interval={1}
                       angle={-45}
@@ -1164,33 +1402,21 @@ const SuperAdd = () => {
                       height={60}
                     />
                     <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
                       }}
                       formatter={(value: number, name: string) => [
                         value,
-                        name === 'totalLogins' ? '登录次数' : '独立用户数'
+                        name === "totalLogins" ? "登录次数" : "独立用户数",
                       ]}
                       labelFormatter={(label) => `时间: ${label}`}
                     />
-                    <Legend 
-                      formatter={(value) => value === 'totalLogins' ? '登录次数' : '独立用户数'}
-                    />
-                    <Bar 
-                      dataKey="totalLogins" 
-                      fill="hsl(var(--primary))" 
-                      radius={[4, 4, 0, 0]}
-                      name="totalLogins"
-                    />
-                    <Bar 
-                      dataKey="uniqueUsers" 
-                      fill="hsl(var(--accent))" 
-                      radius={[4, 4, 0, 0]}
-                      name="uniqueUsers"
-                    />
+                    <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                    <Bar dataKey="totalLogins" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="totalLogins" />
+                    <Bar dataKey="uniqueUsers" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="uniqueUsers" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1200,12 +1426,7 @@ const SuperAdd = () => {
               </div>
             )}
             <div className="mt-4 flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchHourlyStats}
-                disabled={isLoadingHourlyStats}
-              >
+              <Button variant="outline" size="sm" onClick={fetchHourlyStats} disabled={isLoadingHourlyStats}>
                 {isLoadingHourlyStats ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
