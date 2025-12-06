@@ -201,7 +201,7 @@ const SuperAdd = () => {
     try {
       const targetDate = date || selectedDate;
       const dateString = format(targetDate, "yyyy-MM-dd");
-      
+
       const response = await fetch(`${API_BASE_URL}/get-hourly-login-stats`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -359,25 +359,25 @@ const SuperAdd = () => {
         await navigator.clipboard.writeText(text);
       } else {
         // Fallback: 使用传统的 execCommand 方法
-        const textArea = document.createElement('textarea');
+        const textArea = document.createElement("textarea");
         textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        const successful = document.execCommand('copy');
+        const successful = document.execCommand("copy");
         document.body.removeChild(textArea);
         if (!successful) {
-          throw new Error('execCommand copy failed');
+          throw new Error("execCommand copy failed");
         }
       }
       setCopiedId(text);
       setTimeout(() => setCopiedId(null), 2000);
       toast({ title: "已复制", description: "卡密已复制到剪贴板" });
     } catch (error) {
-      console.error('复制失败:', error);
+      console.error("复制失败:", error);
       toast({ variant: "destructive", title: "复制失败", description: "请手动复制卡密" });
     }
   };
@@ -1483,9 +1483,11 @@ const SuperAdd = () => {
                     登录统计图表
                   </CardTitle>
                   <CardDescription>
-                    {statsViewMode === "day" ? "展示当日各时段的用户登录情况" : 
-                     statsViewMode === "week" ? "展示过去7天的用户登录趋势" : 
-                     "展示过去30天的用户登录趋势"}
+                    {statsViewMode === "day"
+                      ? "展示当日各时段的用户登录情况"
+                      : statsViewMode === "week"
+                        ? "展示过去7天的用户登录趋势"
+                        : "展示过去30天的用户登录趋势"}
                   </CardDescription>
                 </div>
                 {statsViewMode === "day" && (
@@ -1495,7 +1497,7 @@ const SuperAdd = () => {
                         variant="outline"
                         className={cn(
                           "w-[200px] justify-start text-left font-normal",
-                          !selectedDate && "text-muted-foreground"
+                          !selectedDate && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -1516,7 +1518,7 @@ const SuperAdd = () => {
                   </Popover>
                 )}
               </div>
-              
+
               {/* 视图切换按钮 */}
               <div className="flex items-center gap-2">
                 <Button
@@ -1610,73 +1612,71 @@ const SuperAdd = () => {
                   暂无登录数据
                 </div>
               )
+            ) : // 周/月视图 - 每日统计
+            isLoadingRangeStats ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : dailyStats.length > 0 ? (
+              <div className="w-full h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="dateLabel"
+                      tick={{ fontSize: 12 }}
+                      interval={statsViewMode === "month" ? 4 : 0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number, name: string) => [
+                        value,
+                        name === "totalLogins" ? "登录次数" : "独立用户数",
+                      ]}
+                      labelFormatter={(label) => `日期: ${label}`}
+                    />
+                    <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                    <Line
+                      type="monotone"
+                      dataKey="totalLogins"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
+                      name="totalLogins"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="uniqueUsers"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--accent))", strokeWidth: 2 }}
+                      name="uniqueUsers"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              // 周/月视图 - 每日统计
-              isLoadingRangeStats ? (
-                <div className="flex items-center justify-center h-[300px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : dailyStats.length > 0 ? (
-                <div className="w-full h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis
-                        dataKey="dateLabel"
-                        tick={{ fontSize: 12 }}
-                        interval={statsViewMode === "month" ? 4 : 0}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                        }}
-                        formatter={(value: number, name: string) => [
-                          value,
-                          name === "totalLogins" ? "登录次数" : "独立用户数",
-                        ]}
-                        labelFormatter={(label) => `日期: ${label}`}
-                      />
-                      <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="totalLogins" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
-                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
-                        name="totalLogins"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="uniqueUsers" 
-                        stroke="hsl(var(--accent))" 
-                        strokeWidth={2}
-                        dot={{ fill: "hsl(var(--accent))", strokeWidth: 2 }}
-                        name="uniqueUsers"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                  暂无登录数据
-                </div>
-              )
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无登录数据
+              </div>
             )}
-            
+
             <div className="mt-4 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => statsViewMode === "day" ? fetchHourlyStats() : fetchRangeStats(statsViewMode)} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => (statsViewMode === "day" ? fetchHourlyStats() : fetchRangeStats(statsViewMode))}
                 disabled={isLoadingHourlyStats || isLoadingRangeStats}
               >
-                {(isLoadingHourlyStats || isLoadingRangeStats) ? (
+                {isLoadingHourlyStats || isLoadingRangeStats ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <RotateCcw className="h-4 w-4 mr-2" />
