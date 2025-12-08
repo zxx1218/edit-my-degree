@@ -18,7 +18,8 @@ const VideoPlayer = () => {
         { number: "3", text: "系统没有登陆时间限制，能否登陆只看登录次数余额", isWarning: false },
         { number: "4", text: "第一次不会使用建议使用电脑登录，修改好全部信息后再使用手机登录查看", isWarning: false },
         { number: "4", text: "请勿将系统至于后台太久，时间太久会触发自动退出", isWarning: false },
-        { number: "5", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上", isWarning: true }
+        { number: "5", text: "如果您是第一次使用，建议您先使用电脑登录后将所有信息设置好，再使用手机登录查看", isWarning: true },
+        { number: "6", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上", isWarning: true }
       ]
     },
     demo2: {

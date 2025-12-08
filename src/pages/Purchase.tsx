@@ -126,7 +126,8 @@ const Purchase = () => {
           </div>
         </div>
 
-        <Card className="max-w-2xl mx-auto">
+        {/* 购买流程先注释掉 */}
+        {/* <Card className="max-w-2xl mx-auto">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">如何购买？</CardTitle>
             <CardDescription>通过闲鱼平台安全购买</CardDescription>
@@ -164,7 +165,7 @@ const Purchase = () => {
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="max-w-2xl mx-auto mt-6">
           <CardHeader className="text-center">

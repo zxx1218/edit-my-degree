@@ -448,7 +448,7 @@ const Login = () => {
               <div className="font-semibold text-foreground">使用提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
                 <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
-                <div>• 关于系统定价、使用演示视频等请点击上方按钮</div>
+                <div>• 第一次建议使用电脑登录设置好信息后再使用手机登录</div>
               </div>
             </AlertDescription>
           </Alert>
