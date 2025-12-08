@@ -10,13 +10,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LOGIN_TIMESTAMP_KEY = "auth_login_timestamp";
-const SESSION_DURATION = 5 * 60 * 1000; // 5分钟（毫秒）
+// 从环境变量获取会话持续时间，默认为10分钟(600000毫秒)
+const SESSION_DURATION = import.meta.env.VITE_SESSION_DURATION 
+  ? parseInt(import.meta.env.VITE_SESSION_DURATION as string, 10) 
+  : 10 * 60 * 1000;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // 检查登录状态是否在5分钟内
+  // 检查登录状态是否在指定时间内
   useEffect(() => {
     const loginTimestamp = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
     if (loginTimestamp) {
@@ -25,10 +28,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const timeDiff = currentTime - loginTime;
 
       if (timeDiff < SESSION_DURATION) {
-        // 在5分钟内，保持登录状态
+        // 在有效期内，保持登录状态
         setIsAuthenticated(true);
       } else {
-        // 超过5分钟，清除时间戳
+        // 超过有效期，清除时间戳
         localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
       }
     }
