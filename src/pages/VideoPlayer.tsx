@@ -13,7 +13,7 @@ const VideoPlayer = () => {
       title: "系统基础操作",
       description: "添加学籍、学历、学位、考研信息等基础功能演示",
       instructions: [
-        { number: "1", text: "点击或者长按任何卡片位都可以编辑当前卡片栏目内容，或者点击“尝试绑定”可以添加学籍学历学位", isWarning: false },
+        { number: "1", text: "长按任何卡片位都可以增删改当前卡片栏目内容，或者点击“尝试绑定”可以添加学籍学历学位", isWarning: false },
         { number: "2", text: "单机具体卡片进入详情页可以修改个人信息，但上传的照片保存会比较慢，请等待系统弹出保存成功的提示", isWarning: false },
         { number: "3", text: "系统没有登陆时间限制，能否登陆只看登录次数余额", isWarning: false },
         { number: "4", text: "上传照片请注意照片不要太大，过大的高清照片会导致您每次点击详情页面的等待加载时间延长", isWarning: false },
@@ -60,12 +60,12 @@ const VideoPlayer = () => {
             >
               系统基础操作
             </Button>
-            <Button
+            {/* <Button
               variant={selectedVideo === "demo2" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo2")}
             >
               在线验证报告生成
-            </Button>
+            </Button> */}
           </div>
           <div className="aspect-video w-full">
             <iframe
