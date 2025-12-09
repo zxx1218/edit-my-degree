@@ -1318,20 +1318,35 @@ app.post('/api/get-login-stats-range', async (req, res) => {
     // 构建完整的日期数据数组
     const dailyStats = [];
     const currentDate = new Date(startDate);
-    
-    // 修复：确保日期比较正确
     const finalEndDate = new Date(); // 今天
     
+    // 将查询结果转换为Map方便查找
+    const statsMap = new Map();
+    dailyStatsResult.forEach(row => {
+      // 处理日期格式，确保键是YYYY-MM-DD格式
+      let dateKey = row.date;
+      if (row.date instanceof Date) {
+        dateKey = formatDate(row.date);
+      } else if (typeof row.date === 'string' && row.date.includes('T')) {
+        // 如果是ISO格式的日期字符串，提取日期部分
+        dateKey = row.date.split('T')[0];
+      }
+      statsMap.set(dateKey, {
+        totalLogins: row.total_logins,
+        uniqueUsers: row.unique_users
+      });
+    });
+    
+    // 循环每一天，填充数据
     while (currentDate <= finalEndDate) {
       const dateStr = formatDate(currentDate);
-      // 修复：正确查找当天的数据
-      const dateData = dailyStatsResult.find(row => row.date === dateStr);
+      const dateData = statsMap.get(dateStr);
       
       dailyStats.push({
         date: dateStr,
         dateLabel: dateStr,
-        totalLogins: dateData ? dateData.total_logins : 0,
-        uniqueUsers: dateData ? dateData.unique_users : 0
+        totalLogins: dateData ? dateData.totalLogins : 0,
+        uniqueUsers: dateData ? dateData.uniqueUsers : 0
       });
       
       // 移动到下一天
@@ -1340,7 +1355,6 @@ app.post('/api/get-login-stats-range', async (req, res) => {
     
     // 计算汇总统计
     const totalLogins = dailyStats.reduce((sum, day) => sum + day.totalLogins, 0);
-    // 修复：正确计算唯一用户总数
     const totalUniqueUsers = dailyStats.reduce((sum, day) => sum + day.uniqueUsers, 0);
     const avgLogins = dailyStats.length > 0 ? Math.round(totalLogins / dailyStats.length) : 0;
     
