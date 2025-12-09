@@ -222,14 +222,12 @@ const SuperAdd = () => {
   const fetchRangeStats = async (range: "week" | "month") => {
     setIsLoadingRangeStats(true);
     try {
-      console.log("获取周/月登录统计参数:", { range });
       const response = await fetch(`${API_BASE_URL}/get-login-stats-range`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ range }),
       });
       const data = await response.json();
-      console.log("获取周/月登录统计数据:", data);
       if (data.success) {
         setDailyStats(data.dailyStats || []);
         setRangeSummary(data.summary || null);
