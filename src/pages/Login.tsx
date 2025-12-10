@@ -185,8 +185,8 @@ const Login = () => {
 
       <Card className="w-full max-w-md shadow-2xl border-primary/10 backdrop-blur-sm bg-card/95 relative z-10 animate-fade-in">
         <CardHeader className="space-y-2 text-center pb-6">
-          <CardTitle className="text-3xl font-bold">学信档案</CardTitle>
-          <CardDescription className="text-base">请登录以继续使用学信网系统</CardDescription>
+          <CardTitle className="text-3xl font-bold">模拟档案</CardTitle>
+          <CardDescription className="text-base">请登录以继续使用模拟系统</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleLogin} className="space-y-5">
