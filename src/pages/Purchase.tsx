@@ -57,7 +57,7 @@ const Purchase = () => {
 
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">选择您的套餐</h1>
-          <p className="text-muted-foreground text-lg">购买或续费学信档案账号，享受便捷的学历信息管理服务</p>
+          <p className="text-muted-foreground text-lg">购买或续费模拟档案账号，享受便捷的信息管理服务</p>
         </div>
 
         <div className="mb-12">
