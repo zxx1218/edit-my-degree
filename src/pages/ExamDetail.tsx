@@ -42,30 +42,30 @@ const ExamDetail = () => {
 
   // 默认值
   const defaultData: ExamData = {
-    name: "张三",
-    school: "示例大学",
-    year: "2024年",
+    name: "浆果儿",
+    school: "清华大学",
+    year: "2025年",
     photo: "",
-    examLocation: "北京市考试中心",
-    registrationNumber: "110101202400001",
-    examUnit: "示例大学",
-    department: "计算机学院",
-    major: "计算机科学与技术",
-    researchDirection: "人工智能",
+    examLocation: "1101",
+    registrationNumber: "110148372",
+    examUnit: "清华大学",
+    department: "管理科学与工程系",
+    major: "管理科学与工程",
+    researchDirection: "信息系统",
     examType: "全国统考",
     specialProgram: "无",
     politicsName: "思想政治理论",
-    politicsScore: "75",
+    politicsScore: "78",
     foreignLanguageName: "英语一",
     foreignLanguageScore: "80",
-    businessCourse1Name: "数学一",
-    businessCourse1Score: "120",
-    businessCourse2Name: "计算机学科专业基础综合",
-    businessCourse2Score: "130",
-    totalScore: "405",
-    admissionUnit: "示例大学",
-    admissionMajor: "计算机科学与技术",
-    note: "此为示例数据",
+    businessCourse1Name: "数学三",
+    businessCourse1Score: "137",
+    businessCourse2Name: "金融学综合",
+    businessCourse2Score: "139",
+    totalScore: "434",
+    admissionUnit: "清华大学",
+    admissionMajor: "管理科学与工程",
+    note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
   };
 
   const [data, setData] = useState<ExamData>(defaultData);
@@ -73,7 +73,7 @@ const ExamDetail = () => {
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
-      const currentUser = localStorage.getItem('currentUser');
+      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
@@ -113,7 +113,7 @@ const ExamDetail = () => {
       try {
         const result = await getUserData(userId);
         const record = result.exam?.find((r: any) => r.id === id);
-        
+
         if (record) {
           setData({
             name: record.name || defaultData.name,
@@ -143,7 +143,7 @@ const ExamDetail = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
         toast({
           title: "加载失败",
           description: "无法加载数据，使用默认值",
@@ -162,15 +162,18 @@ const ExamDetail = () => {
 
   const handleFieldSave = async (field: keyof ExamData, newValue: string) => {
     setData({ ...data, [field]: newValue });
-    
-    const currentUser = localStorage.getItem('currentUser');
+
+    const currentUser = localStorage.getItem("currentUser");
     if (!currentUser || !id) return;
     const userId = JSON.parse(currentUser).id;
-    
+
     try {
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-      await updateData('exam', 'update', userId, { [dbField]: newValue }, id);
-      
+      const dbField = field
+        .replace(/([A-Z])/g, "_$1")
+        .toLowerCase()
+        .replace(/^_/, "");
+      await updateData("exam", "update", userId, { [dbField]: newValue }, id);
+
       toast({
         title: "保存成功",
         description: "信息已更新并同步到数据库",
@@ -191,14 +194,14 @@ const ExamDetail = () => {
       reader.onloadend = async () => {
         const photoData = reader.result as string;
         setData({ ...data, photo: photoData });
-        
-        const currentUser = localStorage.getItem('currentUser');
+
+        const currentUser = localStorage.getItem("currentUser");
         if (!currentUser || !id) return;
         const userId = JSON.parse(currentUser).id;
-        
+
         try {
-          await updateData('exam', 'update', userId, { photo: photoData }, id);
-          
+          await updateData("exam", "update", userId, { photo: photoData }, id);
+
           toast({
             title: "上传成功",
             description: "照片已更新并同步到数据库",
@@ -220,7 +223,7 @@ const ExamDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate('/')} className="p-2">
+          <button onClick={() => navigate("/")} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-base font-medium">考研信息</h1>
@@ -235,15 +238,9 @@ const ExamDetail = () => {
           <div className="flex items-start gap-4 mb-4">
             {/* Photo */}
             <div className="text-center">
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[60px] h-20 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {data.photo ? (
@@ -258,7 +255,7 @@ const ExamDetail = () => {
             <div className="flex-1 pt-2">
               <div
                 onClick={() => handleFieldClick("name", "姓名")}
-                className="text-white text-xl cursor-pointer hover:opacity-80"
+                className="text-white text-xl font-medium cursor-pointer hover:opacity-80"
               >
                 {data.name}
               </div>
@@ -301,13 +298,8 @@ const ExamDetail = () => {
             { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
           ].map(({ field, label, value }) => (
             <div key={field} className="flex items-center gap-4 py-1 text-sm">
-              <span className="text-muted-foreground text-right w-32 flex-shrink-0">
-                {label}
-              </span>
-              <span
-                onClick={() => handleFieldClick(field, label)}
-                className="flex-1 cursor-pointer hover:text-primary"
-              >
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+              <span onClick={() => handleFieldClick(field, label)} className="flex-1 cursor-pointer hover:text-primary">
                 {value}
               </span>
             </div>
@@ -326,9 +318,7 @@ const ExamDetail = () => {
               { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
             ].map(({ field, label, value }) => (
               <div key={field} className="flex items-center gap-4 py-1 text-sm">
-                <span className="text-muted-foreground text-right w-32 flex-shrink-0">
-                  {label}
-                </span>
+                <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
                 <span
                   onClick={() => handleFieldClick(field, label)}
                   className="flex-1 cursor-pointer hover:text-primary"
@@ -349,9 +339,7 @@ const ExamDetail = () => {
               { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
             ].map(({ field, label, value }) => (
               <div key={field} className="flex items-center gap-4 py-1 text-sm">
-                <span className="text-muted-foreground text-right w-32 flex-shrink-0">
-                  {label}
-                </span>
+                <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
                 <span
                   onClick={() => handleFieldClick(field, label)}
                   className="flex-1 cursor-pointer hover:text-primary"
@@ -367,10 +355,7 @@ const ExamDetail = () => {
         <div className="pt-4 pb-8">
           <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
             <span className="font-medium">说明：</span>
-            <span
-              onClick={() => handleFieldClick("note", "说明")}
-              className="cursor-pointer hover:text-primary"
-            >
+            <span onClick={() => handleFieldClick("note", "说明")} className="cursor-pointer hover:text-primary">
               {data.note}
             </span>
           </div>
