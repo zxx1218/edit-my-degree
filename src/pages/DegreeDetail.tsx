@@ -185,7 +185,7 @@ const DegreeDetail = () => {
             <div className="text-center">
               <input type="file" ref={photoRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[54px] h-[72px] bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => photoRef.current?.click()}
               >
                 {data.photo ? (
@@ -199,7 +199,7 @@ const DegreeDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
