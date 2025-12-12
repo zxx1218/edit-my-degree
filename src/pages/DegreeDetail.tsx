@@ -30,13 +30,13 @@ const DegreeDetail = () => {
   const defaultData: DegreeData = {
     name: "浆果儿",
     gender: "女",
-    birthDate: "2002-12-09",
+    birthDate: "2002年12月17日",
     school: "清华大学",
     degreeType: "经济学学士学位",
     degreeLevel: "学士",
-    degreeDate: "2025-06-30",
+    degreeDate: "2025年06月30日",
     major: "经济与金融",
-    certificateNumber: "123456789012345678",
+    certificateNumber: "1000256789012345678",
     photo: "",
   };
 
@@ -45,7 +45,7 @@ const DegreeDetail = () => {
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
-      const currentUser = localStorage.getItem('currentUser');
+      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
@@ -72,7 +72,7 @@ const DegreeDetail = () => {
       try {
         const result = await getUserData(userId);
         const record = result.degree?.find((r: any) => r.id === id);
-        
+
         if (record) {
           setData({
             name: record.name || defaultData.name,
@@ -88,7 +88,7 @@ const DegreeDetail = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
         toast({
           title: "加载失败",
           description: "无法加载数据，使用默认值",
@@ -107,15 +107,18 @@ const DegreeDetail = () => {
 
   const handleFieldSave = async (field: keyof DegreeData, newValue: string) => {
     setData({ ...data, [field]: newValue });
-    
-    const currentUser = localStorage.getItem('currentUser');
+
+    const currentUser = localStorage.getItem("currentUser");
     if (!currentUser || !id) return;
     const userId = JSON.parse(currentUser).id;
-    
+
     try {
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-      await updateData('degree', 'update', userId, { [dbField]: newValue }, id);
-      
+      const dbField = field
+        .replace(/([A-Z])/g, "_$1")
+        .toLowerCase()
+        .replace(/^_/, "");
+      await updateData("degree", "update", userId, { [dbField]: newValue }, id);
+
       toast({
         title: "修改成功",
         description: "信息已更新并同步到数据库",
@@ -136,14 +139,14 @@ const DegreeDetail = () => {
       reader.onloadend = async () => {
         const photoData = reader.result as string;
         setData({ ...data, photo: photoData });
-        
-        const currentUser = localStorage.getItem('currentUser');
+
+        const currentUser = localStorage.getItem("currentUser");
         if (!currentUser || !id) return;
         const userId = JSON.parse(currentUser).id;
-        
+
         try {
-          await updateData('degree', 'update', userId, { photo: photoData }, id);
-          
+          await updateData("degree", "update", userId, { photo: photoData }, id);
+
           toast({
             title: "上传成功",
             description: "照片已更新并同步到数据库",
@@ -165,7 +168,7 @@ const DegreeDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate('/')} className="p-2">
+          <button onClick={() => navigate("/")} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-base font-medium">学位</h1>
@@ -180,15 +183,9 @@ const DegreeDetail = () => {
           <div className="flex items-start gap-4 mb-5">
             {/* Photo */}
             <div className="text-center">
-              <input
-                type="file"
-                ref={photoRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
+              <input type="file" ref={photoRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => photoRef.current?.click()}
               >
                 {data.photo ? (
@@ -202,16 +199,13 @@ const DegreeDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
               </h2>
               <div className="flex items-center gap-3 text-sm">
-                <span
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("gender", "性别")}
-                >
+                <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("gender", "性别")}>
                   {data.gender}
                 </span>
                 <span
@@ -233,18 +227,18 @@ const DegreeDetail = () => {
               >
                 {data.school}
               </h3>
-              <div className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("degreeLevel", "学位层次")}>
+              <div
+                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("degreeLevel", "学位层次")}
+              >
                 {data.degreeLevel}
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span
-                className="cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("major", "学科/专业")}
-              >
+              <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "学科/专业")}>
                 {data.major}
               </span>
-              <span className="text-white/60">|</span>
+              <span className="text-white/60" style={{ height: '1rem', borderLeft: '1px solid rgba(255, 255, 255, 0.6)' }}></span>
               <span
                 className="cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("degreeType", "学位类型")}
@@ -275,9 +269,9 @@ const DegreeDetail = () => {
         </div>
 
         {/* Button */}
-        <Button 
+        <Button
           className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
-          onClick={() => navigate('/verification-report')}
+          onClick={() => navigate("/verification-report")}
         >
           查看验证报告
         </Button>
@@ -293,7 +287,6 @@ const DegreeDetail = () => {
           onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
         />
       )}
-
     </div>
   );
 };

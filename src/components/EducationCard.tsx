@@ -200,16 +200,16 @@ const EducationCard = ({
       </div>
       {variant === "exam" ? (
         <div className="text-white/95">
-          <span className="text-base">{major}</span>
+          <span className="text-base font-times">{major}</span>
         </div>
       ) : (
         <div className="flex items-center gap-2 text-white/95">
-          {major && <span className="text-base" style={{ fontSize: '15px' }}>{major}</span>}
+          {major && <span className="text-base font-times" style={{ fontSize: '15px' }}>{major}</span>}
           {major && studyType && (
             <span className="text-white/60" style={{ fontSize: '15px' }}>|</span>
           )}
           {studyType && (
-            <span className="text-base" style={{ fontSize: '15px' }}>{studyType}</span>
+            <span className="text-base font-times" style={{ fontSize: '15px' }}>{studyType}</span>
           )}
         </div>
       )}

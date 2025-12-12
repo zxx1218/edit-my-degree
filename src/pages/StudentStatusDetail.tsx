@@ -255,7 +255,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("admissionPhoto", e)}
                 />
                 <div
-                  className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                   onClick={() => admissionPhotoRef.current?.click()}
                 >
                   {data.admissionPhoto ? (
@@ -275,7 +275,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-[72px] h-24 bg-gray-300 rounded-[5px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  className="w-[60px] h-[80px] bg-gray-300 rounded-[8px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
@@ -295,7 +295,7 @@ const StudentStatusDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
@@ -304,7 +304,7 @@ const StudentStatusDetail = () => {
                 className="text-sm cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("personalInfo", "个人信息")}
               >
-                {data.personalInfo.replace(/\s/g, '\u00A0')}
+                {data.personalInfo.replace(/\s/g, "\u00A0")}
               </div>
             </div>
           </div>
@@ -353,10 +353,10 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { 
-              field: "graduationDate", 
-              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期", 
-              value: data.graduationDate 
+            {
+              field: "graduationDate",
+              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期",
+              value: data.graduationDate,
             },
           ].map(({ field, label, value }) => (
             <div key={field} className="text-sm flex items-center gap-4 py-1">
