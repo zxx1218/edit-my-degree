@@ -359,7 +359,13 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { field: "graduationDate", label: "离校日期", value: data.graduationDate },
+            { field: "graduationDate", label: (() => {
+              if (!data.graduationDate) return "离校日期";
+              const graduationDate = new Date(data.graduationDate);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              return graduationDate > today ? "预计毕业日期" : "离校日期";
+            })(), value: data.graduationDate },
           ].map(({ field, label, value }) => (
             <div key={field} className="text-sm flex items-center gap-4 py-1">
               <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
