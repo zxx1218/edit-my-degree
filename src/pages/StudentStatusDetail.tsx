@@ -329,7 +329,7 @@ const StudentStatusDetail = () => {
               <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
-              <span className="text-white/60">|</span>
+              <span className="text-white/60" style={{ height: '1rem', borderLeft: '1px solid rgba(255, 255, 255, 0.6)' }}></span>
               <span
                 className="cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("studyType", "学习形式")}
