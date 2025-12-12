@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, FileText, Download, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
@@ -17,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const VerificationReport = () => {
@@ -43,7 +41,7 @@ const VerificationReport = () => {
 
       const currentUser = JSON.parse(currentUserStr);
       const username = currentUser.username;
-      
+
       if (!username) {
         toast.error("用户信息不完整，请重新登录");
         setIsLoadingData(false);
@@ -51,30 +49,36 @@ const VerificationReport = () => {
         return;
       }
 
-      // 调用 edge function 扣除登录次数
-      const { data, error } = await supabase.functions.invoke(
-        "decrease-user-logins",
+      // 调用本地 API 扣除登录次数
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"}/decrease-user-logins`,
         {
-          body: { username, decreaseLogins: 1 },
-        }
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, decreaseLogins: 1 }),
+        },
       );
+
+      const result = await response.json();
 
       setIsLoadingData(false);
 
-      if (error) {
-        toast.error("操作失败，请稍后重试");
+      if (!response.ok || !result.success) {
+        toast.error(result.error || "操作失败，请稍后重试");
         return;
       }
 
-      if (data.success) {
+      if (result.success) {
         // 更新本地存储的登录次数
-        if (data.newLogins !== undefined) {
-          localStorage.setItem("remainingLogins", data.newLogins.toString());
+        if (result.newLogins !== undefined) {
+          localStorage.setItem("remainingLogins", result.newLogins.toString());
         }
         // 跳转到学历学籍信息页面
         navigate("/educationBackground");
       } else {
-        toast.error(data.message || "登录次数不足，无法访问");
+        toast.error(result.message || "登录次数不足，无法访问");
       }
     } catch (error) {
       setIsLoadingData(false);
@@ -109,7 +113,7 @@ const VerificationReport = () => {
           <button onClick={() => navigate(-1)} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-medium">在线验证报告查看与下载</h1>
+          <h1 className="text-lg font-medium">在线验证报告生成与下载</h1>
           <div className="w-10"></div>
         </div>
       </div>
@@ -117,7 +121,7 @@ const VerificationReport = () => {
       {/* Content */}
       <div className="p-4 space-y-4">
         {/* Report Options */}
-        {reportOptions.map((option, index) => (
+        {/* {reportOptions.map((option, index) => (
           <Card
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
@@ -144,7 +148,7 @@ const VerificationReport = () => {
               <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             </div>
           </Card>
-        ))}
+        ))} */}
 
         {/* Education Background Link */}
         <Card className="mt-8 overflow-hidden">
@@ -154,12 +158,8 @@ const VerificationReport = () => {
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-white mb-1">
-                  查看网页版学历学籍信息页面
-                </h3>
-                <p className="text-white/80 text-sm">
-                  查看您的所有学历、学位和学籍信息
-                </p>
+                <h3 className="text-lg font-bold text-white mb-1">登录网页版学历学籍信息页面</h3>
+                <p className="text-white/80 text-sm">跳转到网页版学信信息查询页面，建议使用电脑端访问</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ml-4">
                 <ArrowRight className="w-5 h-5 text-white" />
@@ -184,12 +184,8 @@ const VerificationReport = () => {
         onOpenChange={setEducationDialogOpen}
         onLoadingChange={setIsLoadingData}
       />
-      
-      <LoadingDialog
-        open={isLoadingData}
-        message="正在加载数据"
-        description="请稍候..."
-      />
+
+      <LoadingDialog open={isLoadingData} message="正在加载数据" description="请稍候..." />
 
       <AlertDialog open={showAccessConfirm} onOpenChange={setShowAccessConfirm}>
         <AlertDialogContent>
@@ -204,9 +200,7 @@ const VerificationReport = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEducationBackgroundAccess}>
-              确认访问
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleEducationBackgroundAccess}>确认访问</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
