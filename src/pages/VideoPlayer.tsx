@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const VideoPlayer = () => {
   const navigate = useNavigate();
-  const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2">("demo1");
+const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">("demo1");
 
   const videoConfig = {
     demo1: {
@@ -15,7 +15,7 @@ const VideoPlayer = () => {
       instructions: [
         {
           number: "1",
-          text: "长按任何卡片位都可以增删改当前卡片栏目内容，或者点击“尝试绑定”可以添加学籍学历学位",
+          text: '长按任何卡片位都可以增删改当前卡片栏目内容，或者点击"尝试绑定"可以添加学籍学历学位',
           isWarning: false,
         },
         {
@@ -30,16 +30,16 @@ const VideoPlayer = () => {
           isWarning: false,
         },
         {
-          number: "3",
+          number: "5",
           text: "每生成一份报告需消耗30个PDF积分，永久版用户开通后会赠送30个积分，PDF积分充值请在闲鱼下单",
           isWarning: false,
         },
         {
-          number: "5",
+          number: "6",
           text: "如果您是第一次使用，建议您先使用电脑登录后将所有信息设置好，再使用手机登录查看",
           isWarning: true,
         },
-        { number: "6", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上", isWarning: true },
+        { number: "7", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上", isWarning: true },
       ],
     },
     demo2: {
@@ -70,6 +70,43 @@ const VideoPlayer = () => {
         { number: "5", text: "特别注意：低调使用！", isWarning: true },
       ],
     },
+    demo3: {
+      src: "ttt.mp4",
+      title: "账号注册与充值示范",
+      description: "演示如何在系统内注册账号，以及如何使用卡密为账号充值登录次数或PDF积分",
+      instructions: [
+        {
+          number: "1",
+          text: '在登录页面点击"注册"按钮，输入用户名和密码完成账号注册（用户名不能包含中文）',
+          isWarning: false,
+        },
+        {
+          number: "2",
+          text: "注册成功后，新账号的登录次数余额为0，需要使用充值卡密进行充值后才能登录",
+          isWarning: false,
+        },
+        {
+          number: "3",
+          text: '在登录页面点击"充值/续费"按钮，输入已注册的账号和从闲鱼购买的卡密进行充值',
+          isWarning: false,
+        },
+        {
+          number: "4",
+          text: "充值分为两种类型：登录次数充值（用于登录系统）和PDF积分充值（用于生成验证报告）",
+          isWarning: false,
+        },
+        {
+          number: "5",
+          text: "充值成功后，对应的登录次数或PDF积分会自动添加到您的账户中",
+          isWarning: false,
+        },
+        {
+          number: "6",
+          text: "购买卡密请前往闲鱼搜索，或联系客服微信：syx8172006",
+          isWarning: true,
+        },
+      ],
+    },
   };
 
   const currentVideo = videoConfig[selectedVideo];
@@ -85,19 +122,19 @@ const VideoPlayer = () => {
         </div>
 
         <div className="bg-card rounded-lg shadow-lg overflow-hidden">
-          <div className="p-4 border-b flex gap-2">
+          <div className="p-4 border-b flex gap-2 flex-wrap">
             <Button
               variant={selectedVideo === "demo1" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo1")}
             >
               系统基础操作
             </Button>
-            {/* <Button
-              variant={selectedVideo === "demo2" ? "default" : "outline"}
-              onClick={() => setSelectedVideo("demo2")}
+            <Button
+              variant={selectedVideo === "demo3" ? "default" : "outline"}
+              onClick={() => setSelectedVideo("demo3")}
             >
-              在线验证报告生成
-            </Button> */}
+              账号注册与充值示范
+            </Button>
           </div>
           <div className="aspect-video w-full">
             <iframe
