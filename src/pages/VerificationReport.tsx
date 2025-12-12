@@ -118,7 +118,7 @@ const VerificationReport = () => {
       {/* Content */}
       <div className="p-4 space-y-4">
         {/* Report Options */}
-        {/* {reportOptions.map((option, index) => (
+        {reportOptions.map((option, index) => (
           <Card
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
@@ -145,7 +145,7 @@ const VerificationReport = () => {
               <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             </div>
           </Card>
-        ))} */}
+        ))}
 
         {/* Education Background Link */}
         <Card className="mt-8 overflow-hidden">

@@ -5,13 +5,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 // =============pdf模块引入=================
-const { PDFDocument, rgb } = require('pdf-lib');
-const fontkit = require('@pdf-lib/fontkit');
-const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid'); // 添加UUID生成库
-const QRCode = require('qrcode');
-const { log } = require('console');
 
 // 引入PDF生成器模块
 const generateDegreePdf = require('./pdf-generators/degree-pdf-generator');
@@ -26,6 +21,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
+
+// 添加静态资源服务
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // 增加请求体大小限制以支持图片上传
 app.use(express.json({ limit: '50mb' }));

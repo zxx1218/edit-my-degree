@@ -266,7 +266,7 @@ const generateStudentStatusPdf = async (req, res) => {
         graduationDate: graduationDate || t,
         verificationCode: 'A4DV5W4DV20DV8S', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加miniio
+        photo: 'http://jk.fortunefreedom.top:10002/assets/images/sheng_ke.jpg' // 照片URL目前先写死，后续添加miniio
         // photo: degreePhoto || 'https://example.com/photo.jpg'
       };
 
@@ -276,27 +276,29 @@ const generateStudentStatusPdf = async (req, res) => {
         .join('&');
 
       // 二维码配置
-      // const qrCodeConfig = {
-      //   content: `${process.env.VERIFICATION_BASE_URL}/verification-studentStatus?${queryString}`, // 二维码内容
-      //   x: 76.5,                           // 二维码X坐标
-      //   y: 126,                            // 二维码Y坐标
-      //   size: 68.5,                        // 二维码大小(宽高)
-      //   quality: 'L'                       // 容错级别: L(7%), M(15%), Q(25%), H(30%)
-      // };
       const qrCodeConfig = {
-        content: "403 Forbidden 服务器正在维护中，请稍后再试、403 Forbidden 服务器正在维护中", // 临时屏蔽二维码功能
+        content: `${process.env.VERIFICATION_BASE_URL}/verification-studentStatus?${queryString}`, // 二维码内容
         x: 76.5,                           // 二维码X坐标
         y: 126,                            // 二维码Y坐标
         size: 68.5,                        // 二维码大小(宽高)
-        quality: 'H'                       // 容错级别: L(7%), M(15%), Q(25%), H(30%)
+        quality: 'L'                       // 容错级别: L(7%), M(15%), Q(25%), H(30%)
       };
+
+      // const qrCodeConfig = {
+      //   content: "403 Forbidden 服务器正在维护中，请稍后再试、403 Forbidden 服务器正在维护中", // 临时屏蔽二维码功能
+      //   x: 76.5,                           // 二维码X坐标
+      //   y: 126,                            // 二维码Y坐标
+      //   size: 68.5,                        // 二维码大小(宽高)
+      //   quality: 'H'                       // 容错级别: L(7%), M(15%), Q(25%), H(30%)
+      // };
+      
       // 使用更高的分辨率生成二维码（10倍于目标尺寸）
-      const highResolution = qrCodeConfig.size * 10;
+      const highResolution = qrCodeConfig.size * 1;
       const qrCodeDataUrl = await QRCode.toDataURL(qrCodeConfig.content, {
         width: highResolution,  // 提高分辨率
         margin: 0,
         errorCorrectionLevel: qrCodeConfig.quality,
-        quality: 1,  // 质量 0-1.0
+        quality: 0.5,  // 质量 0-1.0
         type: 'image/png'
       });
 
