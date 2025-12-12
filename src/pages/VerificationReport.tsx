@@ -25,6 +25,25 @@ const VerificationReport = () => {
   const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [showAccessConfirm, setShowAccessConfirm] = useState(false);
+  const [showPdfCreditConfirm, setShowPdfCreditConfirm] = useState(false);
+  const [pendingReportType, setPendingReportType] = useState<'studentStatus' | 'degree' | 'education' | null>(null);
+
+  const handleReportClick = (type: 'studentStatus' | 'degree' | 'education') => {
+    setPendingReportType(type);
+    setShowPdfCreditConfirm(true);
+  };
+
+  const handlePdfCreditConfirm = () => {
+    setShowPdfCreditConfirm(false);
+    if (pendingReportType === 'studentStatus') {
+      setStudentStatusDialogOpen(true);
+    } else if (pendingReportType === 'degree') {
+      setDegreeDialogOpen(true);
+    } else if (pendingReportType === 'education') {
+      setEducationDialogOpen(true);
+    }
+    setPendingReportType(null);
+  };
 
   const handleEducationBackgroundAccess = async () => {
     setShowAccessConfirm(false);
@@ -121,18 +140,17 @@ const VerificationReport = () => {
       {/* Content */}
       <div className="p-4 space-y-4">
         {/* Report Options */}
-        {/* {reportOptions.map((option, index) => (
+        {reportOptions.map((option, index) => (
           <Card
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              setIsLoadingData(true);
               if (index === 0) {
-                setStudentStatusDialogOpen(true);
+                handleReportClick('studentStatus');
               } else if (index === 1) {
-                setDegreeDialogOpen(true);
+                handleReportClick('degree');
               } else if (index === 2) {
-                setEducationDialogOpen(true);
+                handleReportClick('education');
               }
             }}
           >
@@ -148,7 +166,7 @@ const VerificationReport = () => {
               <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             </div>
           </Card>
-        ))} */}
+        ))}
 
         {/* Education Background Link */}
         <Card className="mt-8 overflow-hidden">
@@ -201,6 +219,23 @@ const VerificationReport = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={handleEducationBackgroundAccess}>确认访问</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showPdfCreditConfirm} onOpenChange={setShowPdfCreditConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>PDF积分提示</AlertDialogTitle>
+            <AlertDialogDescription>
+              生成该报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span>，如果不足将无法生成。
+              <br />
+              <br />
+              PDF积分可以在闲鱼下单购买。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePdfCreditConfirm}>我知道了，继续</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
