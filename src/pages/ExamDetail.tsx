@@ -240,7 +240,7 @@ const ExamDetail = () => {
             <div className="text-center">
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[54px] h-[72px] bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {data.photo ? (
@@ -255,7 +255,7 @@ const ExamDetail = () => {
             <div className="flex-1 pt-2">
               <div
                 onClick={() => handleFieldClick("name", "姓名")}
-                className="text-white text-xl font-medium cursor-pointer hover:opacity-80"
+                className="text-white text-xl cursor-pointer hover:opacity-80"
               >
                 {data.name}
               </div>
