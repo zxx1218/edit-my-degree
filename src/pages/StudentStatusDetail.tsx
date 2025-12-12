@@ -5,15 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface StudentData {
   name: string;
@@ -49,25 +40,25 @@ const StudentStatusDetail = () => {
 
   // 默认值
   const defaultData: StudentData = {
-    name: "张三",
-    personalInfo: "男 | 1995年6月",
-    gender: "男",
-    birthDate: "1995-06-15",
-    school: "示例大学",
-    major: "计算机科学与技术",
+    name: "浆果儿",
+    personalInfo: "女 | 2002年12月",
+    gender: "女",
+    birthDate: "2002-12-09",
+    school: "清华大学",
+    major: "经济与金融",
     studyType: "普通全日制",
     degreeLevel: "本科",
     status: "在读",
     nationality: "汉族",
-    idNumber: "110101199506150000",
-    enrollmentDate: "2020-09-01",
-    graduationDate: "2024-06-30",
+    idNumber: "110101200212090000",
+    enrollmentDate: "2021-09-01",
+    graduationDate: "2025-06-30",
     duration: "4年",
-    educationType: "普通",
-    branch: "信息学院",
-    department: "计算机系",
-    class: "2020级1班",
-    studentId: "2020001001",
+    educationType: "普通高等教育",
+    branch: "经济管理学院",
+    department: "经济系",
+    class: "20214102",
+    studentId: "2021320413",
     admissionPhoto: "",
     degreePhoto: "",
   };
@@ -77,7 +68,7 @@ const StudentStatusDetail = () => {
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
-      const currentUser = localStorage.getItem('currentUser');
+      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
@@ -114,7 +105,7 @@ const StudentStatusDetail = () => {
       try {
         const result = await getUserData(userId);
         const record = result.studentStatus?.find((r: any) => r.id === id);
-        
+
         if (record) {
           setData({
             name: record.name || defaultData.name,
@@ -141,7 +132,7 @@ const StudentStatusDetail = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
         toast({
           title: "加载失败",
           description: "无法加载数据，使用默认值",
@@ -160,30 +151,33 @@ const StudentStatusDetail = () => {
 
   const handleFieldSave = async (field: keyof StudentData, newValue: string) => {
     setData({ ...data, [field]: newValue });
-    
-    const currentUser = localStorage.getItem('currentUser');
+
+    const currentUser = localStorage.getItem("currentUser");
     if (!currentUser || !id) return;
     const userId = JSON.parse(currentUser).id;
-    
+
     try {
       // Convert camelCase to snake_case for database
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-      
+      const dbField = field
+        .replace(/([A-Z])/g, "_$1")
+        .toLowerCase()
+        .replace(/^_/, "");
+
       // Prepare update data
       let updatePayload: any = { [dbField]: newValue };
-      
+
       // Special handling for personalInfo field
-      if (field === 'personalInfo') {
+      if (field === "personalInfo") {
         // Parse personalInfo to extract gender and birth_date
-        const parts = newValue.split(' | ');
+        const parts = newValue.split(" | ");
         if (parts.length >= 2) {
           updatePayload.gender = parts[0].trim();
           updatePayload.birth_date = parts[1].trim();
         }
       }
-      
-      await updateData('student_status', 'update', userId, updatePayload, id);
-      
+
+      await updateData("student_status", "update", userId, updatePayload, id);
+
       toast({
         title: "修改成功",
         description: "信息已更新并同步到数据库",
@@ -204,15 +198,18 @@ const StudentStatusDetail = () => {
       reader.onloadend = async () => {
         const photoData = reader.result as string;
         setData({ ...data, [type]: photoData });
-        
-        const currentUser = localStorage.getItem('currentUser');
+
+        const currentUser = localStorage.getItem("currentUser");
         if (!currentUser || !id) return;
         const userId = JSON.parse(currentUser).id;
-        
+
         try {
-          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-          await updateData('student_status', 'update', userId, { [dbField]: photoData }, id);
-          
+          const dbField = type
+            .replace(/([A-Z])/g, "_$1")
+            .toLowerCase()
+            .replace(/^_/, "");
+          await updateData("student_status", "update", userId, { [dbField]: photoData }, id);
+
           toast({
             title: "上传成功",
             description: "照片已更新并同步到数据库",
@@ -234,10 +231,10 @@ const StudentStatusDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate('/')} className="p-2">
+          <button onClick={() => navigate("/")} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-base font-medium">学籍信息</h1>
+          <h1 className="text-lg font-medium">高等学籍</h1>
           <div className="w-10"></div>
         </div>
       </div>
@@ -321,7 +318,7 @@ const StudentStatusDetail = () => {
               >
                 {data.school}
               </h3>
-              <div 
+              <div
                 className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("degreeLevel", "学位层次")}
               >
@@ -329,10 +326,7 @@ const StudentStatusDetail = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span
-                className="cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("major", "专业")}
-              >
+              <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
               <span className="text-white/60">|</span>
@@ -359,13 +353,7 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { field: "graduationDate", label: (() => {
-              if (!data.graduationDate) return "离校日期";
-              const graduationDate = new Date(data.graduationDate);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              return graduationDate > today ? "预计毕业日期" : "离校日期";
-            })(), value: data.graduationDate },
+            { field: "graduationDate", label: "离校日期", value: data.graduationDate },
           ].map(({ field, label, value }) => (
             <div key={field} className="text-sm flex items-center gap-4 py-1">
               <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
@@ -380,9 +368,9 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Button */}
-        <Button 
+        <Button
           className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
-          onClick={() => navigate('/verification-report')}
+          onClick={() => navigate("/verification-report")}
         >
           查看验证报告
         </Button>
@@ -398,7 +386,6 @@ const StudentStatusDetail = () => {
           onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
         />
       )}
-
     </div>
   );
 };
