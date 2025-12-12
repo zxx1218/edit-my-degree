@@ -68,7 +68,7 @@ const StudentStatusDetail = () => {
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
-      const currentUser = localStorage.getItem('currentUser');
+      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
@@ -105,7 +105,7 @@ const StudentStatusDetail = () => {
       try {
         const result = await getUserData(userId);
         const record = result.studentStatus?.find((r: any) => r.id === id);
-        
+
         if (record) {
           setData({
             name: record.name || defaultData.name,
@@ -132,7 +132,7 @@ const StudentStatusDetail = () => {
           });
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error("Error loading data:", error);
         toast({
           title: "加载失败",
           description: "无法加载数据，使用默认值",
@@ -151,30 +151,33 @@ const StudentStatusDetail = () => {
 
   const handleFieldSave = async (field: keyof StudentData, newValue: string) => {
     setData({ ...data, [field]: newValue });
-    
-    const currentUser = localStorage.getItem('currentUser');
+
+    const currentUser = localStorage.getItem("currentUser");
     if (!currentUser || !id) return;
     const userId = JSON.parse(currentUser).id;
-    
+
     try {
       // Convert camelCase to snake_case for database
-      const dbField = field.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-      
+      const dbField = field
+        .replace(/([A-Z])/g, "_$1")
+        .toLowerCase()
+        .replace(/^_/, "");
+
       // Prepare update data
       let updatePayload: any = { [dbField]: newValue };
-      
+
       // Special handling for personalInfo field
-      if (field === 'personalInfo') {
+      if (field === "personalInfo") {
         // Parse personalInfo to extract gender and birth_date
-        const parts = newValue.split(' | ');
+        const parts = newValue.split(" | ");
         if (parts.length >= 2) {
           updatePayload.gender = parts[0].trim();
           updatePayload.birth_date = parts[1].trim();
         }
       }
-      
-      await updateData('student_status', 'update', userId, updatePayload, id);
-      
+
+      await updateData("student_status", "update", userId, updatePayload, id);
+
       toast({
         title: "修改成功",
         description: "信息已更新并同步到数据库",
@@ -195,15 +198,18 @@ const StudentStatusDetail = () => {
       reader.onloadend = async () => {
         const photoData = reader.result as string;
         setData({ ...data, [type]: photoData });
-        
-        const currentUser = localStorage.getItem('currentUser');
+
+        const currentUser = localStorage.getItem("currentUser");
         if (!currentUser || !id) return;
         const userId = JSON.parse(currentUser).id;
-        
+
         try {
-          const dbField = type.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
-          await updateData('student_status', 'update', userId, { [dbField]: photoData }, id);
-          
+          const dbField = type
+            .replace(/([A-Z])/g, "_$1")
+            .toLowerCase()
+            .replace(/^_/, "");
+          await updateData("student_status", "update", userId, { [dbField]: photoData }, id);
+
           toast({
             title: "上传成功",
             description: "照片已更新并同步到数据库",
@@ -225,7 +231,7 @@ const StudentStatusDetail = () => {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex items-center justify-between px-4 py-3">
-          <button onClick={() => navigate('/')} className="p-2">
+          <button onClick={() => navigate("/")} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
           <h1 className="text-lg font-medium">高等学籍</h1>
@@ -312,7 +318,7 @@ const StudentStatusDetail = () => {
               >
                 {data.school}
               </h3>
-              <div 
+              <div
                 className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("degreeLevel", "学位层次")}
               >
@@ -320,10 +326,7 @@ const StudentStatusDetail = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span
-                className="cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("major", "专业")}
-              >
+              <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
               <span className="text-white/60">|</span>
@@ -350,7 +353,11 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { field: "graduationDate", label: "离校日期", value: data.graduationDate },
+            { 
+              field: "graduationDate", 
+              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期", 
+              value: data.graduationDate 
+            },
           ].map(({ field, label, value }) => (
             <div key={field} className="text-sm flex items-center gap-4 py-1">
               <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
@@ -365,9 +372,9 @@ const StudentStatusDetail = () => {
         </div>
 
         {/* Button */}
-        <Button 
+        <Button
           className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
-          onClick={() => navigate('/verification-report')}
+          onClick={() => navigate("/verification-report")}
         >
           查看验证报告
         </Button>
@@ -383,7 +390,6 @@ const StudentStatusDetail = () => {
           onSave={(newValue) => handleFieldSave(editingField.field, newValue)}
         />
       )}
-
     </div>
   );
 };

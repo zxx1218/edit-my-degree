@@ -25,6 +25,25 @@ const VerificationReport = () => {
   const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [showAccessConfirm, setShowAccessConfirm] = useState(false);
+  const [showPdfCreditConfirm, setShowPdfCreditConfirm] = useState(false);
+  const [pendingReportType, setPendingReportType] = useState<'studentStatus' | 'degree' | 'education' | null>(null);
+
+  const handleReportClick = (type: 'studentStatus' | 'degree' | 'education') => {
+    setPendingReportType(type);
+    setShowPdfCreditConfirm(true);
+  };
+
+  const handlePdfCreditConfirm = () => {
+    setShowPdfCreditConfirm(false);
+    if (pendingReportType === 'studentStatus') {
+      setStudentStatusDialogOpen(true);
+    } else if (pendingReportType === 'degree') {
+      setDegreeDialogOpen(true);
+    } else if (pendingReportType === 'education') {
+      setEducationDialogOpen(true);
+    }
+    setPendingReportType(null);
+  };
 
   const handleEducationBackgroundAccess = async () => {
     setShowAccessConfirm(false);
@@ -41,7 +60,7 @@ const VerificationReport = () => {
 
       const currentUser = JSON.parse(currentUserStr);
       const username = currentUser.username;
-      
+
       if (!username) {
         toast.error("用户信息不完整，请重新登录");
         setIsLoadingData(false);
@@ -50,16 +69,19 @@ const VerificationReport = () => {
       }
 
       // 调用本地 API 扣除登录次数
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api'}/decrease-user-logins`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"}/decrease-user-logins`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, decreaseLogins: 1 }),
         },
-        body: JSON.stringify({ username, decreaseLogins: 1 }),
-      });
+      );
 
       const result = await response.json();
-      
+
       setIsLoadingData(false);
 
       if (!response.ok || !result.success) {
@@ -118,18 +140,17 @@ const VerificationReport = () => {
       {/* Content */}
       <div className="p-4 space-y-4">
         {/* Report Options */}
-        {/* {reportOptions.map((option, index) => (
+        {reportOptions.map((option, index) => (
           <Card
             key={index}
             className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={() => {
-              setIsLoadingData(true);
               if (index === 0) {
-                setStudentStatusDialogOpen(true);
+                handleReportClick('studentStatus');
               } else if (index === 1) {
-                setDegreeDialogOpen(true);
+                handleReportClick('degree');
               } else if (index === 2) {
-                setEducationDialogOpen(true);
+                handleReportClick('education');
               }
             }}
           >
@@ -145,7 +166,7 @@ const VerificationReport = () => {
               <Download className="w-5 h-5 text-muted-foreground flex-shrink-0" />
             </div>
           </Card>
-        ))} */}
+        ))}
 
         {/* Education Background Link */}
         <Card className="mt-8 overflow-hidden">
@@ -155,12 +176,8 @@ const VerificationReport = () => {
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-white mb-1">
-                  登录网页版学历学籍信息页面
-                </h3>
-                <p className="text-white/80 text-sm">
-                  跳转到网页版学信信息查询页面，建议使用电脑端访问
-                </p>
+                <h3 className="text-lg font-bold text-white mb-1">登录网页版学历学籍信息页面</h3>
+                <p className="text-white/80 text-sm">跳转到网页版学信信息查询页面，建议您在主页设置好您的所有信息后使用电脑端访问</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ml-4">
                 <ArrowRight className="w-5 h-5 text-white" />
@@ -185,29 +202,42 @@ const VerificationReport = () => {
         onOpenChange={setEducationDialogOpen}
         onLoadingChange={setIsLoadingData}
       />
-      
-      <LoadingDialog
-        open={isLoadingData}
-        message="正在加载数据"
-        description="请稍候..."
-      />
+
+      <LoadingDialog open={isLoadingData} message="正在加载数据" description="请稍候..." />
 
       <AlertDialog open={showAccessConfirm} onOpenChange={setShowAccessConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>访问确认</AlertDialogTitle>
             <AlertDialogDescription>
-              建议使用电脑访问该页面以获得更好的浏览体验。
+              1. 建议使用电脑访问该页面以获得更好的浏览体验。
               <br />
+              2. 注意这里页面内容取决于您在系统主页设置的学籍学历学位以及考研信息，请确保信息准确填写再访问该页面。
               <br />
-              访问该页面需要消耗 <span className="font-semibold text-foreground">1次登录次数</span>，是否确认访问？
+              3. 访问该页面需要消耗 <span className="font-semibold text-foreground">1次登录次数</span>，是否确认访问？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEducationBackgroundAccess}>
-              确认访问
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleEducationBackgroundAccess}>确认访问</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showPdfCreditConfirm} onOpenChange={setShowPdfCreditConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>PDF积分提示</AlertDialogTitle>
+            <AlertDialogDescription>
+              1. 生成该报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span>，如果不足将无法生成。
+              <br />
+              2. 如果您是永久版用户，您会自动获得30个PDF积分，其余用户默认积分数为0
+              <br />
+              3. PDF积分可以在闲鱼下单购买。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePdfCreditConfirm}>我知道了，继续</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
