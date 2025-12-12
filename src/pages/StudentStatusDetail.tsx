@@ -353,7 +353,11 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { field: "graduationDate", label: "离校日期", value: data.graduationDate },
+            { 
+              field: "graduationDate", 
+              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期", 
+              value: data.graduationDate 
+            },
           ].map(({ field, label, value }) => (
             <div key={field} className="text-sm flex items-center gap-4 py-1">
               <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
