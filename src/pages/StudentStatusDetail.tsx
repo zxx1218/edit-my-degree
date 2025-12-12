@@ -255,7 +255,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("admissionPhoto", e)}
                 />
                 <div
-                  className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-[60px] h-20 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                   onClick={() => admissionPhotoRef.current?.click()}
                 >
                   {data.admissionPhoto ? (
@@ -275,7 +275,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-[72px] h-24 bg-gray-300 rounded-[5px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  className="w-[60px] h-20 bg-gray-300 rounded-[5px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
@@ -295,7 +295,7 @@ const StudentStatusDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
