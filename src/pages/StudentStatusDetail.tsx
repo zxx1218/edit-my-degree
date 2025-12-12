@@ -41,19 +41,19 @@ const StudentStatusDetail = () => {
   // 默认值
   const defaultData: StudentData = {
     name: "浆果儿",
-    personalInfo: "女 | 2002年12月",
+    personalInfo: "女    2002年12月17日",
     gender: "女",
-    birthDate: "2002-12-09",
+    birthDate: "2002年12月17日",
     school: "清华大学",
     major: "经济与金融",
     studyType: "普通全日制",
     degreeLevel: "本科",
-    status: "在读",
+    status: "在集（注册学籍）",
     nationality: "汉族",
     idNumber: "110101200212090000",
-    enrollmentDate: "2021-09-01",
-    graduationDate: "2025-06-30",
-    duration: "4年",
+    enrollmentDate: "2021年09月01日",
+    graduationDate: "2025年06月30日",
+    duration: "4 年",
     educationType: "普通高等教育",
     branch: "经济管理学院",
     department: "经济系",
@@ -304,7 +304,7 @@ const StudentStatusDetail = () => {
                 className="text-sm cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("personalInfo", "个人信息")}
               >
-                {data.personalInfo}
+                {data.personalInfo.replace(/\s/g, "\u00A0")}
               </div>
             </div>
           </div>
@@ -353,10 +353,10 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { 
-              field: "graduationDate", 
-              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期", 
-              value: data.graduationDate 
+            {
+              field: "graduationDate",
+              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期",
+              value: data.graduationDate,
             },
           ].map(({ field, label, value }) => (
             <div key={field} className="text-sm flex items-center gap-4 py-1">
