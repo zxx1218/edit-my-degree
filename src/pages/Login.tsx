@@ -339,14 +339,14 @@ const Login = () => {
               </DialogHeader>
               <Tabs defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-lg">
-                  <TabsTrigger 
-                    value="login" 
+                  <TabsTrigger
+                    value="login"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
                   >
                     🔑 登录次数充值
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="pdf" 
+                  <TabsTrigger
+                    value="pdf"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
                   >
                     📑 PDF积分充值
@@ -464,7 +464,7 @@ const Login = () => {
           </Alert>
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.0.2 • 更新时间：2025.12</div>
+            <div>当前版本：V3.1.0 • 更新时间：2025.12</div>
           </div>
         </CardContent>
       </Card>
