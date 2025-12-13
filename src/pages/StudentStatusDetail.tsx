@@ -74,7 +74,7 @@ const StudentStatusDetail = () => {
     major: "经济与金融",
     studyType: "普通全日制",
     degreeLevel: "本科",
-    status: "在集（注册学籍）",
+    status: "在籍（注册学籍）",
     nationality: "汉族",
     idNumber: "110101200212090000",
     enrollmentDate: "2021年09月01日",
