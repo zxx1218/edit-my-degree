@@ -338,21 +338,21 @@ const Login = () => {
                 <DialogDescription>请选择充值类型并输入相关信息</DialogDescription>
               </DialogHeader>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50">
+                <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-lg">
                   <TabsTrigger 
                     value="login" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-medium"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
                   >
                     🔑 登录次数充值
                   </TabsTrigger>
                   <TabsTrigger 
                     value="pdf" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-medium"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
                   >
-                    📄 PDF积分充值
+                    📑 PDF积分充值
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="login" className="space-y-4 pt-4">
+                <TabsContent value="login" className="space-y-4 pt-4 animate-fade-in">
                   <div className="space-y-2">
                     <Label htmlFor="login-username">已注册账号</Label>
                     <Input
@@ -387,7 +387,7 @@ const Login = () => {
                     {isRecharging ? "充值中..." : "确认充值"}
                   </Button>
                 </TabsContent>
-                <TabsContent value="pdf" className="space-y-4 pt-4">
+                <TabsContent value="pdf" className="space-y-4 pt-4 animate-fade-in">
                   <div className="space-y-2">
                     <Label htmlFor="pdf-username">已注册账号</Label>
                     <Input
