@@ -128,17 +128,17 @@ const Login = () => {
 
     try {
       // 使用本地后端API替代Supabase函数调用
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
       const response = await fetch(`${API_BASE_URL}/manage-cards`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          action: 'use',
-          cardId: data.cardId.trim(), 
-          username: data.username.trim(), 
-          type 
+        body: JSON.stringify({
+          action: "use",
+          cardId: data.cardId.trim(),
+          username: data.username.trim(),
+          type,
         }),
       });
 
@@ -338,11 +338,21 @@ const Login = () => {
                 <DialogDescription>请选择充值类型并输入相关信息</DialogDescription>
               </DialogHeader>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">登录次数充值</TabsTrigger>
-                  <TabsTrigger value="pdf">PDF积分充值</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-lg">
+                  <TabsTrigger 
+                    value="login" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
+                  >
+                    🔑 登录次数充值
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="pdf" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
+                  >
+                    📑 PDF积分充值
+                  </TabsTrigger>
                 </TabsList>
-                <TabsContent value="login" className="space-y-4 pt-4">
+                <TabsContent value="login" className="space-y-4 pt-4 animate-fade-in">
                   <div className="space-y-2">
                     <Label htmlFor="login-username">已注册账号</Label>
                     <Input
@@ -377,7 +387,7 @@ const Login = () => {
                     {isRecharging ? "充值中..." : "确认充值"}
                   </Button>
                 </TabsContent>
-                <TabsContent value="pdf" className="space-y-4 pt-4">
+                <TabsContent value="pdf" className="space-y-4 pt-4 animate-fade-in">
                   <div className="space-y-2">
                     <Label htmlFor="pdf-username">已注册账号</Label>
                     <Input
@@ -454,7 +464,7 @@ const Login = () => {
           </Alert>
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.0.2 • 更新时间：2025.12</div>
+            <div>当前版本：V3.1.0 • 更新时间：2025.12</div>
           </div>
         </CardContent>
       </Card>
