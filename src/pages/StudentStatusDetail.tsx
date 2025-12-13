@@ -255,7 +255,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("admissionPhoto", e)}
                 />
                 <div
-                  className="w-[54px] h-[72px] bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                   onClick={() => admissionPhotoRef.current?.click()}
                 >
                   {data.admissionPhoto ? (
@@ -275,7 +275,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-[54px] h-[72px] bg-gray-300 rounded-[5px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  className="w-[60px] h-[80px] bg-gray-300 rounded-[8px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
