@@ -1,4 +1,3 @@
-// ... existing code ...
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -186,8 +185,8 @@ const Login = () => {
 
       <Card className="w-full max-w-md shadow-2xl border-primary/10 backdrop-blur-sm bg-card/95 relative z-10 animate-fade-in">
         <CardHeader className="space-y-2 text-center pb-6">
-          <CardTitle className="text-3xl font-bold">学信档案</CardTitle>
-          <CardDescription className="text-base">请登录以继续使用学信网系统</CardDescription>
+          <CardTitle className="text-3xl font-bold">模拟档案</CardTitle>
+          <CardDescription className="text-base">请登录以继续使用模拟系统</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleLogin} className="space-y-5">
@@ -449,7 +448,7 @@ const Login = () => {
               <div className="font-semibold text-foreground">使用提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
                 <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
-                <div>• 关于系统定价、使用演示视频等请点击上方按钮</div>
+                <div>• 第一次建议使用电脑登录设置好后再使用手机登录</div>
               </div>
             </AlertDescription>
           </Alert>
