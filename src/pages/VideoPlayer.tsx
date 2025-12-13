@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const VideoPlayer = () => {
   const navigate = useNavigate();
-const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">("demo1");
+  const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">("demo1");
 
   const videoConfig = {
     demo1: {
@@ -15,7 +15,7 @@ const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">(
       instructions: [
         {
           number: "1",
-          text: '长按任何卡片位都可以增删改当前卡片栏目内容，或者点击"尝试绑定"可以添加学籍学历学位',
+          text: '主页面所有卡片（包括学籍、学历、学位、考研信息）的新增、删除和修改都需要长按卡片进行操作。如果只是新增信息，也可以点击右上角"尝试绑定"按钮',
           isWarning: false,
         },
         {
@@ -118,7 +118,6 @@ const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">(
 
         <div className="bg-card rounded-lg shadow-lg overflow-hidden">
           <div className="p-4 border-b flex gap-2 flex-wrap">
-
             <Button
               variant={selectedVideo === "demo1" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo1")}

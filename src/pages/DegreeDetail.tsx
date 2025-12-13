@@ -228,8 +228,7 @@ const DegreeDetail = () => {
                 {data.school}
               </h3>
               <div
-                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("degreeLevel", "学位层次")}
+                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0"
               >
                 {data.degreeLevel}
               </div>
@@ -238,7 +237,10 @@ const DegreeDetail = () => {
               <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "学科/专业")}>
                 {data.major}
               </span>
-              <span className="text-white/60" style={{ height: '1rem', borderLeft: '1px solid rgba(255, 255, 255, 0.6)' }}></span>
+              <span
+                className="text-white/60"
+                style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
+              ></span>
               <span
                 className="cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("degreeType", "学位类型")}

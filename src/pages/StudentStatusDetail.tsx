@@ -30,6 +30,32 @@ interface StudentData {
   degreePhoto: string;
 }
 
+const parseDateString = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+
+  const match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const normalized = dateStr.replace(/-/g, "/");
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getGraduationLabel = (graduationDateStr: string): string => {
+  const graduationDate = parseDateString(graduationDateStr);
+  if (!graduationDate) {
+    return "离校日期";
+  }
+
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return graduationDate.getTime() > todayDateOnly.getTime() ? "预计毕业日期" : "离校日期";
+};
+
 const StudentStatusDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -48,7 +74,7 @@ const StudentStatusDetail = () => {
     major: "经济与金融",
     studyType: "普通全日制",
     degreeLevel: "本科",
-    status: "在集（注册学籍）",
+    status: "在籍（注册学籍）",
     nationality: "汉族",
     idNumber: "110101200212090000",
     enrollmentDate: "2021年09月01日",
@@ -319,8 +345,7 @@ const StudentStatusDetail = () => {
                 {data.school}
               </h3>
               <div
-                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("degreeLevel", "学位层次")}
+                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0"
               >
                 {data.degreeLevel}
               </div>
@@ -329,7 +354,10 @@ const StudentStatusDetail = () => {
               <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
-              <span className="text-white/60" style={{ height: '1rem', borderLeft: '1px solid rgba(255, 255, 255, 0.6)' }}></span>
+              <span
+                className="text-white/60"
+                style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
+              ></span>
               <span
                 className="cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("studyType", "学习形式")}
@@ -355,7 +383,7 @@ const StudentStatusDetail = () => {
             { field: "status", label: "学籍状态", value: data.status },
             {
               field: "graduationDate",
-              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期",
+              label: getGraduationLabel(data.graduationDate),
               value: data.graduationDate,
             },
           ].map(({ field, label, value }) => (

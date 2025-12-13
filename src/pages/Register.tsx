@@ -48,7 +48,7 @@ const Register = () => {
 
     try {
       const result = await registerUser(username, password);
-      
+
       // 如果有错误信息，显示具体的错误
       if (result.error) {
         toast.error(result.error, { duration: 1500 });
@@ -74,12 +74,7 @@ const Register = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2">
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/login")}
-              className="h-8 w-8"
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate("/login")} className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <CardTitle className="text-3xl font-bold">注册账号</CardTitle>
@@ -132,12 +127,7 @@ const Register = () => {
               </Button>
               <div className="text-center text-sm text-muted-foreground">
                 已有账号？
-                <Button
-                  type="button"
-                  variant="link"
-                  className="px-1 h-auto"
-                  onClick={() => navigate("/login")}
-                >
+                <Button type="button" variant="link" className="px-1 h-auto" onClick={() => navigate("/login")}>
                   立即登录
                 </Button>
               </div>
@@ -149,9 +139,20 @@ const Register = () => {
       <AlertDialog open={showRegisterSuccess} onOpenChange={setShowRegisterSuccess}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>注册成功</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              注册成功！目前登陆次数余量为0，请点击去购买购买登录次数，并在购买后将注册账号发送给闲鱼卖家，即可开通登陆权限
+            <AlertDialogTitle>注册成功 🎉</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>恭喜您注册成功！您的账号当前登录次数余额为 <span className="font-semibold text-destructive">0</span>，需要充值后才能登录系统。</p>
+                <div className="bg-muted/50 p-3 rounded-md space-y-2">
+                  <p className="font-medium text-foreground">充值步骤：</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>前往购买充值卡密</li>
+                    <li>返回登录页面，点击"卡密充值/续费"按钮</li>
+                    <li>输入您刚注册的账号和购买到的卡密</li>
+                    <li>充值成功后即可登录使用</li>
+                  </ol>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
@@ -172,7 +173,7 @@ const Register = () => {
               }}
               className="w-full sm:w-auto"
             >
-              去购买
+              查看系统定价说明
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
