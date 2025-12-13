@@ -338,9 +338,19 @@ const Login = () => {
                 <DialogDescription>请选择充值类型并输入相关信息</DialogDescription>
               </DialogHeader>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">登录次数充值</TabsTrigger>
-                  <TabsTrigger value="pdf">PDF积分充值</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50">
+                  <TabsTrigger 
+                    value="login" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-medium"
+                  >
+                    🔑 登录次数充值
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="pdf" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all font-medium"
+                  >
+                    📄 PDF积分充值
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="login" className="space-y-4 pt-4">
                   <div className="space-y-2">
