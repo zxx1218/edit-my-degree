@@ -5,7 +5,7 @@ import { useState } from "react";
 
 const VideoPlayer = () => {
   const navigate = useNavigate();
-const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">("demo1");
+  const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">("demo1");
 
   const videoConfig = {
     demo1: {
@@ -87,7 +87,7 @@ const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">(
         },
         {
           number: "3",
-          text: '在登录页面点击"充值/续费"按钮，输入已注册的账号和从闲鱼购买的卡密进行充值',
+          text: '在登录页面点击"充值/续费"按钮，输入已注册的账号和购买的卡密进行充值',
           isWarning: false,
         },
         {
@@ -99,11 +99,6 @@ const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">(
           number: "5",
           text: "充值成功后，对应的登录次数或PDF积分会自动添加到您的账户中",
           isWarning: false,
-        },
-        {
-          number: "6",
-          text: "购买卡密请前往闲鱼搜索，或联系客服微信：syx8172006",
-          isWarning: true,
         },
       ],
     },
@@ -129,6 +124,14 @@ const [selectedVideo, setSelectedVideo] = useState<"demo1" | "demo2" | "demo3">(
             >
               系统基础操作
             </Button>
+
+            {/* <Button
+              variant={selectedVideo === "demo2" ? "default" : "outline"}
+              onClick={() => setSelectedVideo("demo2")}
+            >
+              在线验证报告生成
+            </Button> */}
+
             <Button
               variant={selectedVideo === "demo3" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo3")}
