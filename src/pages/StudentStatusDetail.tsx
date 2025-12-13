@@ -30,6 +30,32 @@ interface StudentData {
   degreePhoto: string;
 }
 
+const parseDateString = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+
+  const match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const normalized = dateStr.replace(/-/g, "/");
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getGraduationLabel = (graduationDateStr: string): string => {
+  const graduationDate = parseDateString(graduationDateStr);
+  if (!graduationDate) {
+    return "离校日期";
+  }
+
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return graduationDate.getTime() > todayDateOnly.getTime() ? "预计毕业日期" : "离校日期";
+};
+
 const StudentStatusDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -358,7 +384,7 @@ const StudentStatusDetail = () => {
             { field: "status", label: "学籍状态", value: data.status },
             {
               field: "graduationDate",
-              label: data.graduationDate && new Date(data.graduationDate) > new Date() ? "预计毕业日期" : "离校日期",
+              label: getGraduationLabel(data.graduationDate),
               value: data.graduationDate,
             },
           ].map(({ field, label, value }) => (
