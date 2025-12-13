@@ -15,7 +15,7 @@ const Purchase = () => {
       price: "¥9",
       description: "为您的个人账号充值5次登录次数",
       popular: false,
-      features: ["数据加密存储", "支持学历信息修改"],
+      features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "标准版",
@@ -23,7 +23,7 @@ const Purchase = () => {
       price: "¥29",
       description: "为您的个人账号充值50次登录次数",
       popular: true,
-      features: ["数据加密存储", "支持学历信息修改"],
+      features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "永久版",
@@ -31,21 +31,21 @@ const Purchase = () => {
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
-      features: ["赠送30个PDF下载积分", "数据加密存储", "支持学历信息修改"],
+      features: ["赠送30个PDF下载积分", "数据加密存储", "支持信息任意修改"],
     },
     {
       name: "PDF积分包",
       logins: "PDF积分",
-      price: "¥1/积分",
-      description: "购买PDF报告积分，1元1个积分，积分永不过期",
-      popular: false,
-      features: ["积分永不过期", "支持生成三种类型报告"],
+      price: "¥30元30个积分",
+      description: "购买PDF积分包，可获得30个PDF下载积分，积分不使用永不过期",
+      popular: true,
+      features: ["一份PDF消耗30积分", "支持生成三种类型PDF"],
     },
   ];
 
-  const handlePurchase = () => {
-    window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
-  };
+  // const handlePurchase = () => {
+  //   window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
+  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
