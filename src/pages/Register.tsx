@@ -139,9 +139,20 @@ const Register = () => {
       <AlertDialog open={showRegisterSuccess} onOpenChange={setShowRegisterSuccess}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>注册成功</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              注册成功！目前登陆次数余量为0，请点击去购买购买登录次数，并在购买后将注册账号发送给闲鱼卖家，即可开通登陆权限
+            <AlertDialogTitle>注册成功 🎉</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>恭喜您注册成功！您的账号当前登录次数余额为 <span className="font-semibold text-destructive">0</span>，需要充值后才能登录系统。</p>
+                <div className="bg-muted/50 p-3 rounded-md space-y-2">
+                  <p className="font-medium text-foreground">充值步骤：</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>前往闲鱼购买充值卡密</li>
+                    <li>返回登录页面，点击"卡密充值/续费"按钮</li>
+                    <li>输入您刚注册的账号和购买到的卡密</li>
+                    <li>充值成功后即可登录使用</li>
+                  </ol>
+                </div>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
