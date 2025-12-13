@@ -35,8 +35,8 @@ const Purchase = () => {
     },
     {
       name: "PDF积分包",
-      logins: "PDF积分",
-      price: "¥30元30个积分",
+      logins: "30个PDF积分",
+      price: "¥30",
       description: "购买PDF积分包，可获得30个PDF下载积分，积分不使用永不过期",
       popular: true,
       features: ["一份PDF消耗30积分", "支持生成三种类型PDF"],
