@@ -27,7 +27,7 @@ const Purchase = () => {
     },
     {
       name: "永久版",
-      logins: "无限次",
+      logins: "无限",
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
