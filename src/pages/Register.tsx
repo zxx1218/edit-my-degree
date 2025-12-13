@@ -48,7 +48,7 @@ const Register = () => {
 
     try {
       const result = await registerUser(username, password);
-      
+
       // 如果有错误信息，显示具体的错误
       if (result.error) {
         toast.error(result.error, { duration: 1500 });
@@ -74,12 +74,7 @@ const Register = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-2">
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/login")}
-              className="h-8 w-8"
-            >
+            <Button variant="ghost" size="icon" onClick={() => navigate("/login")} className="h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <CardTitle className="text-3xl font-bold">注册账号</CardTitle>
@@ -132,12 +127,7 @@ const Register = () => {
               </Button>
               <div className="text-center text-sm text-muted-foreground">
                 已有账号？
-                <Button
-                  type="button"
-                  variant="link"
-                  className="px-1 h-auto"
-                  onClick={() => navigate("/login")}
-                >
+                <Button type="button" variant="link" className="px-1 h-auto" onClick={() => navigate("/login")}>
                   立即登录
                 </Button>
               </div>
@@ -151,7 +141,7 @@ const Register = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>注册成功</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>新账号默认登陆次数余量为0，请在闲鱼购买次数后将该账号留言给客服，即可续费登录次数</p>
+              注册成功！目前登陆次数余量为0，请点击去购买购买登录次数，并在购买后将注册账号发送给闲鱼卖家，即可开通登陆权限
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
