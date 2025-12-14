@@ -268,7 +268,7 @@ const StudentStatusDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[5px] p-4 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
           <div className="flex items-start gap-4 mb-3">
             {/* Photos */}
             <div className="flex gap-3">
@@ -339,7 +339,7 @@ const StudentStatusDetail = () => {
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-3">
               <h3
-                className="text-2xl cursor-pointer hover:opacity-80"
+                className="text-[1.375rem] cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
