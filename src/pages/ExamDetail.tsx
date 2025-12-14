@@ -266,7 +266,7 @@ const ExamDetail = () => {
           <div className="text-white">
             <div
               onClick={() => handleFieldClick("school", "学校名称")}
-              className="text-xl font-bold mb-3 cursor-pointer hover:opacity-80"
+              className="text-[1.3rem] mb-3 cursor-pointer hover:opacity-80"
             >
               {data.school}
             </div>

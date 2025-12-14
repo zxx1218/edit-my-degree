@@ -185,7 +185,7 @@ const DegreeDetail = () => {
             <div className="text-center">
               <input type="file" ref={photoRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => photoRef.current?.click()}
               >
                 {data.photo ? (
@@ -220,32 +220,20 @@ const DegreeDetail = () => {
 
           {/* School Info */}
           <div className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-xl font-bold cursor-pointer hover:opacity-80"
+                className="text-[1.35rem] cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
-              <div
-                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0"
-              >
+              <div className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
                 {data.degreeLevel}
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
               <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "学科/专业")}>
                 {data.major}
-              </span>
-              <span
-                className="text-white/60"
-                style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
-              ></span>
-              <span
-                className="cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("degreeType", "学位类型")}
-              >
-                {data.degreeType}
               </span>
             </div>
           </div>

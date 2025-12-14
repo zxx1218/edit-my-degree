@@ -268,8 +268,8 @@ const StudentStatusDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[5px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
-          <div className="flex items-start gap-4 mb-5">
+        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-3">
             {/* Photos */}
             <div className="flex gap-3">
               <div className="text-center">
@@ -281,7 +281,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("admissionPhoto", e)}
                 />
                 <div
-                  className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-1 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                   onClick={() => admissionPhotoRef.current?.click()}
                 >
                   {data.admissionPhoto ? (
@@ -301,7 +301,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-[60px] h-[80px] bg-gray-300 rounded-[8px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  className="w-[55px] h-[73px] bg-gray-300 rounded-[8px] mb-1 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
@@ -337,16 +337,14 @@ const StudentStatusDetail = () => {
 
           {/* School Info */}
           <div className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-xl font-bold cursor-pointer hover:opacity-80"
+                className="text-[1.3rem] cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
-              <div
-                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0"
-              >
+              <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
                 {data.degreeLevel}
               </div>
             </div>
