@@ -344,9 +344,7 @@ const StudentStatusDetail = () => {
               >
                 {data.school}
               </h3>
-              <div
-                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0"
-              >
+              <div className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
                 {data.degreeLevel}
               </div>
             </div>
