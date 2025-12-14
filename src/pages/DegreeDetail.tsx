@@ -179,13 +179,13 @@ const DegreeDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-b from-[rgb(56,80,218)] to-[rgb(86,126,231)] rounded-[5px] p-5 text-white mb-6 relative shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
-          <div className="flex items-start gap-4 mb-5">
+        <div className="bg-gradient-to-b from-[rgb(56,80,218)] to-[rgb(86,126,231)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-3">
             {/* Photo */}
             <div className="text-center">
               <input type="file" ref={photoRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-1 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => photoRef.current?.click()}
               >
                 {data.photo ? (
@@ -220,14 +220,14 @@ const DegreeDetail = () => {
 
           {/* School Info */}
           <div className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-xl font-bold cursor-pointer hover:opacity-80"
+                className="text-[1.3rem] cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
-              <div className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
+              <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
                 {data.degreeLevel}
               </div>
             </div>
@@ -256,10 +256,10 @@ const DegreeDetail = () => {
             { field: "major", label: "学科/专业", value: data.major },
             { field: "certificateNumber", label: "学位证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center gap-4 py-1 text-sm">
+            <div key={field} className="text-sm flex items-center gap-4 py-1">
               <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
               <span
-                className="font-medium cursor-pointer hover:text-primary flex-1"
+                className="flex-1 cursor-pointer hover:text-primary"
                 onClick={() => handleFieldClick(field as keyof DegreeData, label)}
               >
                 {value || "-"}
