@@ -339,7 +339,7 @@ const StudentStatusDetail = () => {
           <div className="space-y-2">
             <div className="flex items-start justify-between gap-3">
               <h3
-                className="text-xl font-bold cursor-pointer hover:opacity-80"
+                className="text-2xl font-bold cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
