@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,76 @@ interface ExamData {
   admissionMajor: string;
   note: string;
 }
+
+// Long press hook
+const useLongPress = (onLongPress: () => void, delay = 500) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const start = useCallback(() => {
+    timerRef.current = setTimeout(() => {
+      onLongPress();
+    }, delay);
+  }, [onLongPress, delay]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return {
+    onMouseDown: start,
+    onMouseUp: clear,
+    onMouseLeave: clear,
+    onTouchStart: start,
+    onTouchEnd: clear,
+    onTouchMove: clear,
+  };
+};
+
+// Long press field component for detail list items
+interface LongPressFieldProps {
+  field: keyof ExamData;
+  label: string;
+  value: string;
+  onLongPress: (field: keyof ExamData, label: string) => void;
+}
+
+const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const start = useCallback(() => {
+    timerRef.current = setTimeout(() => {
+      onLongPress(field, label);
+    }, 500);
+  }, [field, label, onLongPress]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return (
+    <div className="flex items-center gap-4 py-0.5 text-base">
+      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
+      <span
+        className="flex-1 cursor-pointer hover:text-primary select-none"
+        style={{ color: 'rgb(52, 51, 51)' }}
+        onMouseDown={start}
+        onMouseUp={clear}
+        onMouseLeave={clear}
+        onTouchStart={start}
+        onTouchEnd={clear}
+        onTouchMove={clear}
+      >
+        {value}
+      </span>
+    </div>
+  );
+};
 
 const ExamDetail = () => {
   const navigate = useNavigate();
@@ -156,9 +226,15 @@ const ExamDetail = () => {
   }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
-  const handleFieldClick = (field: keyof ExamData, label: string) => {
+  const handleFieldClick = useCallback((field: keyof ExamData, label: string) => {
     setEditingField({ field, label });
-  };
+  }, []);
+
+  // Long press handlers for card fields
+  const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
+  const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
+  const yearLongPress = useLongPress(() => handleFieldClick("year", "年份"));
+  const noteLongPress = useLongPress(() => handleFieldClick("note", "说明"));
 
   const handleFieldSave = async (field: keyof ExamData, newValue: string) => {
     setData({ ...data, [field]: newValue });
@@ -254,8 +330,8 @@ const ExamDetail = () => {
             {/* Name */}
             <div className="flex-1 pt-2">
               <div
-                onClick={() => handleFieldClick("name", "姓名")}
-                className="text-white text-xl cursor-pointer hover:opacity-80"
+                className="text-white text-xl cursor-pointer hover:opacity-80 select-none"
+                {...nameLongPress}
               >
                 {data.name}
               </div>
@@ -265,8 +341,8 @@ const ExamDetail = () => {
           {/* School */}
           <div className="text-white">
             <div
-              onClick={() => handleFieldClick("school", "学校名称")}
-              className="text-[1.3rem] mb-3 cursor-pointer hover:opacity-80"
+              className="text-[1.3rem] mb-3 cursor-pointer hover:opacity-80 select-none"
+              {...schoolLongPress}
             >
               {data.school}
             </div>
@@ -274,8 +350,8 @@ const ExamDetail = () => {
 
           {/* Year */}
           <div
-            onClick={() => handleFieldClick("year", "年份")}
-            className="text-sm font-normal text-white cursor-pointer hover:opacity-80"
+            className="text-sm font-normal text-white cursor-pointer hover:opacity-80 select-none"
+            {...yearLongPress}
           >
             {data.year}
           </div>
@@ -297,12 +373,13 @@ const ExamDetail = () => {
             { field: "businessCourse1Name" as keyof ExamData, label: "业务课一名称", value: data.businessCourse1Name },
             { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-              <span onClick={() => handleFieldClick(field, label)} className="flex-1 cursor-pointer hover:text-primary" style={{ color: 'rgb(52, 51, 51)' }}>
-                {value}
-              </span>
-            </div>
+            <LongPressField
+              key={field}
+              field={field}
+              label={label}
+              value={value}
+              onLongPress={handleFieldClick}
+            />
           ))}
         </div>
 
@@ -317,16 +394,13 @@ const ExamDetail = () => {
               { field: "businessCourse2Score" as keyof ExamData, label: "业务课二", value: data.businessCourse2Score },
               { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
             ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-                <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-                <span
-                  onClick={() => handleFieldClick(field, label)}
-                  className="flex-1 cursor-pointer hover:text-primary"
-                  style={{ color: 'rgb(52, 51, 51)' }}
-                >
-                  {value}
-                </span>
-              </div>
+              <LongPressField
+                key={field}
+                field={field}
+                label={label}
+                value={value}
+                onLongPress={handleFieldClick}
+              />
             ))}
           </div>
         </div>
@@ -339,16 +413,13 @@ const ExamDetail = () => {
               { field: "admissionUnit" as keyof ExamData, label: "录取单位", value: data.admissionUnit },
               { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
             ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-                <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-                <span
-                  onClick={() => handleFieldClick(field, label)}
-                  className="flex-1 cursor-pointer hover:text-primary"
-                  style={{ color: 'rgb(52, 51, 51)' }}
-                >
-                  {value}
-                </span>
-              </div>
+              <LongPressField
+                key={field}
+                field={field}
+                label={label}
+                value={value}
+                onLongPress={handleFieldClick}
+              />
             ))}
           </div>
         </div>
@@ -357,7 +428,7 @@ const ExamDetail = () => {
         <div className="pt-4 pb-8">
           <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
             <span className="font-medium">说明：</span>
-            <span onClick={() => handleFieldClick("note", "说明")} className="cursor-pointer hover:text-primary">
+            <span className="cursor-pointer hover:text-primary select-none" {...noteLongPress}>
               {data.note}
             </span>
           </div>
