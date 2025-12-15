@@ -385,10 +385,11 @@ const StudentStatusDetail = () => {
               value: data.graduationDate,
             },
           ].map(({ field, label, value }) => (
-            <div key={field} className="text-sm flex items-center gap-4 py-1">
-              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+            <div key={field} className="text-base flex items-center gap-4 py-0.5">
+              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
               <span
-                className="flex-1 cursor-pointer hover:text-primary"
+                className="flex-1 cursor-pointer hover:opacity-80"
+                style={{ color: 'rgb(52, 51, 51)' }}
                 onClick={() => handleFieldClick(field as keyof StudentData, label)}
               >
                 {value || "-"}
