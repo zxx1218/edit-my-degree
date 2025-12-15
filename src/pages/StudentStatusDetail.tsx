@@ -30,6 +30,32 @@ interface StudentData {
   degreePhoto: string;
 }
 
+const parseDateString = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+
+  const match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const normalized = dateStr.replace(/-/g, "/");
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getGraduationLabel = (graduationDateStr: string): string => {
+  const graduationDate = parseDateString(graduationDateStr);
+  if (!graduationDate) {
+    return "离校日期";
+  }
+
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return graduationDate.getTime() > todayDateOnly.getTime() ? "预计毕业日期" : "离校日期";
+};
+
 const StudentStatusDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -41,19 +67,19 @@ const StudentStatusDetail = () => {
   // 默认值
   const defaultData: StudentData = {
     name: "浆果儿",
-    personalInfo: "女 | 2002年12月",
+    personalInfo: "女    2002年12月17日",
     gender: "女",
-    birthDate: "2002-12-09",
+    birthDate: "2002年12月17日",
     school: "清华大学",
     major: "经济与金融",
     studyType: "普通全日制",
     degreeLevel: "本科",
-    status: "在读",
+    status: "在籍（注册学籍）",
     nationality: "汉族",
     idNumber: "110101200212090000",
-    enrollmentDate: "2021-09-01",
-    graduationDate: "2025-06-30",
-    duration: "4年",
+    enrollmentDate: "2021年09月01日",
+    graduationDate: "2025年06月30日",
+    duration: "4 年",
     educationType: "普通高等教育",
     branch: "经济管理学院",
     department: "经济系",
@@ -242,8 +268,8 @@ const StudentStatusDetail = () => {
       {/* Content */}
       <div className="p-4 bg-white min-h-screen">
         {/* Student Info Card */}
-        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[5px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
-          <div className="flex items-start gap-4 mb-5">
+        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-3">
             {/* Photos */}
             <div className="flex gap-3">
               <div className="text-center">
@@ -255,7 +281,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("admissionPhoto", e)}
                 />
                 <div
-                  className="w-[72px] h-24 bg-white/20 rounded-[5px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-1 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                   onClick={() => admissionPhotoRef.current?.click()}
                 >
                   {data.admissionPhoto ? (
@@ -275,7 +301,7 @@ const StudentStatusDetail = () => {
                   onChange={(e) => handleImageUpload("degreePhoto", e)}
                 />
                 <div
-                  className="w-[72px] h-24 bg-gray-300 rounded-[5px] mb-2 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  className="w-[55px] h-[73px] bg-gray-300 rounded-[8px] mb-1 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
                   onClick={() => degreePhotoRef.current?.click()}
                 >
                   {data.degreePhoto ? (
@@ -295,7 +321,7 @@ const StudentStatusDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl font-bold mb-2 cursor-pointer hover:opacity-80"
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
@@ -304,24 +330,21 @@ const StudentStatusDetail = () => {
                 className="text-sm cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("personalInfo", "个人信息")}
               >
-                {data.personalInfo}
+                {data.personalInfo.replace(/\s/g, "\u00A0")}
               </div>
             </div>
           </div>
 
           {/* School Info */}
           <div className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-xl font-bold cursor-pointer hover:opacity-80"
+                className="text-[1.3rem] cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
-              <div
-                className="bg-black/20 backdrop-blur-sm px-3 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("degreeLevel", "学位层次")}
-              >
+              <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
                 {data.degreeLevel}
               </div>
             </div>
@@ -329,7 +352,10 @@ const StudentStatusDetail = () => {
               <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
-              <span className="text-white/60">|</span>
+              <span
+                className="text-white/60"
+                style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
+              ></span>
               <span
                 className="cursor-pointer hover:opacity-80"
                 onClick={() => handleFieldClick("studyType", "学习形式")}
@@ -353,13 +379,16 @@ const StudentStatusDetail = () => {
             { field: "studentId", label: "学号", value: data.studentId },
             { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
             { field: "status", label: "学籍状态", value: data.status },
-            { field: "graduationDate", label: "离校日期", value: data.graduationDate },
+            {
+              field: "graduationDate",
+              label: getGraduationLabel(data.graduationDate),
+              value: data.graduationDate,
+            },
           ].map(({ field, label, value }) => (
-            <div key={field} className="text-base flex items-center gap-4 py-1">
-              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
+            <div key={field} className="text-sm flex items-center gap-4 py-1">
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
               <span
-                className="flex-1 cursor-pointer hover:opacity-80"
-                style={{ color: 'rgb(52, 51, 51)' }}
+                className="flex-1 cursor-pointer hover:text-primary"
                 onClick={() => handleFieldClick(field as keyof StudentData, label)}
               >
                 {value || "-"}
