@@ -246,10 +246,11 @@ const DegreeDetail = () => {
             { field: "major", label: "学科/专业", value: data.major },
             { field: "certificateNumber", label: "学位证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center gap-4 py-1 text-sm">
-              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+            <div key={field} className="flex items-center gap-4 py-0.5 text-base">
+              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
               <span
-                className="font-medium cursor-pointer hover:text-primary flex-1"
+                className="cursor-pointer hover:text-primary flex-1"
+                style={{ color: 'rgb(52, 51, 51)' }}
                 onClick={() => handleFieldClick(field as keyof DegreeData, label)}
               >
                 {value || "-"}
