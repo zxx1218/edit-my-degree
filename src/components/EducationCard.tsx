@@ -175,8 +175,8 @@ const EducationCard = ({
 
   return (
     <div 
-      className={`${getVariantClasses()} rounded-[7px] p-[1.1rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
-      style={getVariantStyle()}
+      className={`${getVariantClasses()} rounded-[7px] p-[1.1rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group select-none`}
+      style={{ ...getVariantStyle(), WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -189,6 +189,7 @@ const EducationCard = ({
         }
         setShowEditIcon(false);
       }}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-xl font-songti font-normal">{school}</h3>
