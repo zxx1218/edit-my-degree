@@ -232,15 +232,15 @@ const ExamDetail = () => {
       </div>
 
       {/* Content */}
-      <div className="p-4 bg-white min-h-screen">
+      <div className="px-4 py-6 space-y-6">
         {/* Photo and Name Card */}
-        <div className="bg-gradient-to-b from-[rgb(54,177,197)] to-[rgb(93,200,218)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
-          <div className="flex items-start gap-4 mb-3">
+        <div className="bg-gradient-to-b from-[rgb(54,177,197)] to-[rgb(93,200,218)] rounded-[5px] p-5 mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-4">
             {/* Photo */}
             <div className="text-center">
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-1 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {data.photo ? (
@@ -252,29 +252,32 @@ const ExamDetail = () => {
             </div>
 
             {/* Name */}
-            <div className="flex-1">
-              <h2
+            <div className="flex-1 pt-2">
+              <div
                 onClick={() => handleFieldClick("name", "姓名")}
-                className="text-xl mb-2 cursor-pointer hover:opacity-80"
+                className="text-white text-xl cursor-pointer hover:opacity-80"
               >
                 {data.name}
-              </h2>
+              </div>
             </div>
           </div>
 
-          {/* School Info */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <h3
-                onClick={() => handleFieldClick("school", "学校名称")}
-                className="text-[1.3rem] cursor-pointer hover:opacity-80"
-              >
-                {data.school}
-              </h3>
-              <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
-                {data.year}
-              </div>
+          {/* School */}
+          <div className="text-white">
+            <div
+              onClick={() => handleFieldClick("school", "学校名称")}
+              className="text-[1.3rem] mb-3 cursor-pointer hover:opacity-80"
+            >
+              {data.school}
             </div>
+          </div>
+
+          {/* Year */}
+          <div
+            onClick={() => handleFieldClick("year", "年份")}
+            className="text-sm font-normal text-white cursor-pointer hover:opacity-80"
+          >
+            {data.year}
           </div>
         </div>
 
