@@ -125,12 +125,12 @@ const VideoPlayer = () => {
               系统基础操作
             </Button>
 
-            {/* <Button
+            <Button
               variant={selectedVideo === "demo2" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo2")}
             >
               在线验证报告生成
-            </Button> */}
+            </Button>
 
             <Button
               variant={selectedVideo === "demo3" ? "default" : "outline"}

@@ -88,7 +88,7 @@ const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProp
     <div className="text-base flex items-center gap-4 py-0.5">
       <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
       <span
-        className="flex-1 cursor-pointer hover:opacity-80 select-none"
+        className="flex-1 select-none"
         style={{ color: 'rgb(52, 51, 51)' }}
         onMouseDown={start}
         onMouseUp={clear}
