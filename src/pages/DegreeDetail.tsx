@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
@@ -18,6 +18,76 @@ interface DegreeData {
   certificateNumber: string;
   photo: string;
 }
+
+// Long press hook
+const useLongPress = (onLongPress: () => void, delay = 500) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const start = useCallback(() => {
+    timerRef.current = setTimeout(() => {
+      onLongPress();
+    }, delay);
+  }, [onLongPress, delay]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return {
+    onMouseDown: start,
+    onMouseUp: clear,
+    onMouseLeave: clear,
+    onTouchStart: start,
+    onTouchEnd: clear,
+    onTouchMove: clear,
+  };
+};
+
+// Long press field component for detail list items
+interface LongPressFieldProps {
+  field: keyof DegreeData;
+  label: string;
+  value: string;
+  onLongPress: (field: keyof DegreeData, label: string) => void;
+}
+
+const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const start = useCallback(() => {
+    timerRef.current = setTimeout(() => {
+      onLongPress(field, label);
+    }, 500);
+  }, [field, label, onLongPress]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return (
+    <div className="flex items-center gap-4 py-0.5 text-base">
+      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
+      <span
+        className="cursor-pointer hover:text-primary flex-1 select-none"
+        style={{ color: 'rgb(52, 51, 51)' }}
+        onMouseDown={start}
+        onMouseUp={clear}
+        onMouseLeave={clear}
+        onTouchStart={start}
+        onTouchEnd={clear}
+        onTouchMove={clear}
+      >
+        {value}
+      </span>
+    </div>
+  );
+};
 
 const DegreeDetail = () => {
   const navigate = useNavigate();
@@ -101,9 +171,16 @@ const DegreeDetail = () => {
   }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof DegreeData; label: string } | null>(null);
 
-  const handleFieldClick = (field: keyof DegreeData, label: string) => {
+  const handleFieldClick = useCallback((field: keyof DegreeData, label: string) => {
     setEditingField({ field, label });
-  };
+  }, []);
+
+  // Long press handlers for each editable field
+  const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
+  const genderLongPress = useLongPress(() => handleFieldClick("gender", "性别"));
+  const birthDateLongPress = useLongPress(() => handleFieldClick("birthDate", "出生日期"));
+  const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
+  const majorLongPress = useLongPress(() => handleFieldClick("major", "学科/专业"));
 
   const handleFieldSave = async (field: keyof DegreeData, newValue: string) => {
     setData({ ...data, [field]: newValue });
@@ -199,18 +276,18 @@ const DegreeDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl mb-2 cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("name", "姓名")}
+                className="text-xl mb-2 cursor-pointer hover:opacity-80 select-none"
+                {...nameLongPress}
               >
                 {data.name}
               </h2>
               <div className="flex items-center gap-3 text-sm">
-                <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("gender", "性别")}>
+                <span className="cursor-pointer hover:opacity-80 select-none" {...genderLongPress}>
                   {data.gender}
                 </span>
                 <span
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => handleFieldClick("birthDate", "出生日期")}
+                  className="cursor-pointer hover:opacity-80 select-none"
+                  {...birthDateLongPress}
                 >
                   {data.birthDate}
                 </span>
@@ -222,8 +299,8 @@ const DegreeDetail = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-[1.35rem] cursor-pointer hover:opacity-80"
-                onClick={() => handleFieldClick("school", "学校名称")}
+                className="text-[1.35rem] cursor-pointer hover:opacity-80 select-none"
+                {...schoolLongPress}
               >
                 {data.school}
               </h3>
@@ -232,7 +309,7 @@ const DegreeDetail = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "学科/专业")}>
+              <span className="cursor-pointer hover:opacity-80 select-none" {...majorLongPress}>
                 {data.major}
               </span>
             </div>
@@ -246,16 +323,13 @@ const DegreeDetail = () => {
             { field: "major", label: "学科/专业", value: data.major },
             { field: "certificateNumber", label: "学位证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-              <span
-                className="cursor-pointer hover:text-primary flex-1"
-                style={{ color: 'rgb(52, 51, 51)' }}
-                onClick={() => handleFieldClick(field as keyof DegreeData, label)}
-              >
-                {value || "-"}
-              </span>
-            </div>
+            <LongPressField
+              key={field}
+              field={field as keyof DegreeData}
+              label={label}
+              value={value || "-"}
+              onLongPress={handleFieldClick}
+            />
           ))}
         </div>
 

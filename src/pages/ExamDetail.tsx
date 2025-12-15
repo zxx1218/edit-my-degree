@@ -1,74 +1,168 @@
-import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
 
-interface ExamData {
+// Long press hook
+const useLongPress = (onLongPress: () => void, delay = 500) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = useRef(false);
+
+  const start = useCallback(() => {
+    isLongPressRef.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      onLongPress();
+    }, delay);
+  }, [onLongPress, delay]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return {
+    onMouseDown: start,
+    onMouseUp: clear,
+    onMouseLeave: clear,
+    onTouchStart: start,
+    onTouchEnd: clear,
+    onTouchMove: clear,
+  };
+};
+
+interface StudentData {
   name: string;
+  personalInfo: string;
+  gender: string;
+  birthDate: string;
   school: string;
-  year: string;
-  photo: string;
-  examLocation: string;
-  registrationNumber: string;
-  examUnit: string;
-  department: string;
   major: string;
-  researchDirection: string;
-  examType: string;
-  specialProgram: string;
-  politicsName: string;
-  foreignLanguageName: string;
-  businessCourse1Name: string;
-  businessCourse2Name: string;
-  politicsScore: string;
-  foreignLanguageScore: string;
-  businessCourse1Score: string;
-  businessCourse2Score: string;
-  totalScore: string;
-  admissionUnit: string;
-  admissionMajor: string;
-  note: string;
+  studyType: string;
+  degreeLevel: string;
+  nationality: string;
+  idNumber: string;
+  duration: string;
+  educationType: string;
+  branch: string;
+  department: string;
+  class: string;
+  studentId: string;
+  enrollmentDate: string;
+  status: string;
+  graduationDate: string;
+  admissionPhoto: string;
+  degreePhoto: string;
 }
 
-const ExamDetail = () => {
+// Long press field component for detail list items
+interface LongPressFieldProps {
+  field: keyof StudentData;
+  label: string;
+  value: string;
+  onLongPress: (field: keyof StudentData, label: string) => void;
+}
+
+const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const start = useCallback(() => {
+    timerRef.current = setTimeout(() => {
+      onLongPress(field, label);
+    }, 500);
+  }, [field, label, onLongPress]);
+
+  const clear = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return (
+    <div className="text-base flex items-center gap-4 py-0.5">
+      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
+      <span
+        className="flex-1 cursor-pointer hover:opacity-80 select-none"
+        style={{ color: 'rgb(52, 51, 51)' }}
+        onMouseDown={start}
+        onMouseUp={clear}
+        onMouseLeave={clear}
+        onTouchStart={start}
+        onTouchEnd={clear}
+        onTouchMove={clear}
+      >
+        {value}
+      </span>
+    </div>
+  );
+};
+
+const parseDateString = (dateStr: string): Date | null => {
+  if (!dateStr) return null;
+
+  const match = dateStr.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+  if (match) {
+    const [, year, month, day] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const normalized = dateStr.replace(/-/g, "/");
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const getGraduationLabel = (graduationDateStr: string): string => {
+  const graduationDate = parseDateString(graduationDateStr);
+  if (!graduationDate) {
+    return "离校日期";
+  }
+
+  const today = new Date();
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return graduationDate.getTime() > todayDateOnly.getTime() ? "预计毕业日期" : "离校日期";
+};
+
+const StudentStatusDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const admissionPhotoRef = useRef<HTMLInputElement>(null);
+  const degreePhotoRef = useRef<HTMLInputElement>(null);
 
   // 默认值
-  const defaultData: ExamData = {
+  const defaultData: StudentData = {
     name: "浆果儿",
+    personalInfo: "女    2002年12月17日",
+    gender: "女",
+    birthDate: "2002年12月17日",
     school: "清华大学",
-    year: "2025年",
-    photo: "",
-    examLocation: "1101",
-    registrationNumber: "110148372",
-    examUnit: "清华大学",
-    department: "管理科学与工程系",
-    major: "管理科学与工程",
-    researchDirection: "信息系统",
-    examType: "全国统考",
-    specialProgram: "无",
-    politicsName: "思想政治理论",
-    politicsScore: "78",
-    foreignLanguageName: "英语一",
-    foreignLanguageScore: "80",
-    businessCourse1Name: "数学三",
-    businessCourse1Score: "137",
-    businessCourse2Name: "金融学综合",
-    businessCourse2Score: "139",
-    totalScore: "434",
-    admissionUnit: "清华大学",
-    admissionMajor: "管理科学与工程",
-    note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
+    major: "经济与金融",
+    studyType: "普通全日制",
+    degreeLevel: "本科",
+    status: "在籍（注册学籍）",
+    nationality: "汉族",
+    idNumber: "110101200212090000",
+    enrollmentDate: "2021年09月01日",
+    graduationDate: "2025年06月30日",
+    duration: "4 年",
+    educationType: "普通高等教育",
+    branch: "经济管理学院",
+    department: "经济系",
+    class: "20214102",
+    studentId: "2021320413",
+    admissionPhoto: "",
+    degreePhoto: "",
   };
 
-  const [data, setData] = useState<ExamData>(defaultData);
+  const [data, setData] = useState<StudentData>(defaultData);
 
   // 从数据库加载数据
   useEffect(() => {
@@ -82,29 +176,26 @@ const ExamDetail = () => {
       if (detailRecord) {
         setData({
           name: detailRecord.name || defaultData.name,
+          personalInfo: detailRecord.personal_info || defaultData.personalInfo,
+          gender: detailRecord.gender || defaultData.gender,
+          birthDate: detailRecord.birth_date || defaultData.birthDate,
           school: detailRecord.school || defaultData.school,
-          year: detailRecord.year || defaultData.year,
-          photo: detailRecord.photo || defaultData.photo,
-          examLocation: detailRecord.exam_location || defaultData.examLocation,
-          registrationNumber: detailRecord.registration_number || defaultData.registrationNumber,
-          examUnit: detailRecord.exam_unit || defaultData.examUnit,
-          department: detailRecord.department || defaultData.department,
           major: detailRecord.major || defaultData.major,
-          researchDirection: detailRecord.research_direction || defaultData.researchDirection,
-          examType: detailRecord.exam_type || defaultData.examType,
-          specialProgram: detailRecord.special_program || defaultData.specialProgram,
-          politicsName: detailRecord.politics_name || defaultData.politicsName,
-          politicsScore: detailRecord.politics_score || defaultData.politicsScore,
-          foreignLanguageName: detailRecord.foreign_language_name || defaultData.foreignLanguageName,
-          foreignLanguageScore: detailRecord.foreign_language_score || defaultData.foreignLanguageScore,
-          businessCourse1Name: detailRecord.business_course1_name || defaultData.businessCourse1Name,
-          businessCourse1Score: detailRecord.business_course1_score || defaultData.businessCourse1Score,
-          businessCourse2Name: detailRecord.business_course2_name || defaultData.businessCourse2Name,
-          businessCourse2Score: detailRecord.business_course2_score || defaultData.businessCourse2Score,
-          totalScore: detailRecord.total_score || defaultData.totalScore,
-          admissionUnit: detailRecord.admission_unit || defaultData.admissionUnit,
-          admissionMajor: detailRecord.admission_major || defaultData.admissionMajor,
-          note: detailRecord.note || defaultData.note,
+          studyType: detailRecord.study_type || defaultData.studyType,
+          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
+          status: detailRecord.status || defaultData.status,
+          nationality: detailRecord.nationality || defaultData.nationality,
+          idNumber: detailRecord.id_number || defaultData.idNumber,
+          enrollmentDate: detailRecord.enrollment_date || defaultData.enrollmentDate,
+          graduationDate: detailRecord.graduation_date || defaultData.graduationDate,
+          duration: detailRecord.duration || defaultData.duration,
+          educationType: detailRecord.education_type || defaultData.educationType,
+          branch: detailRecord.branch || defaultData.branch,
+          department: detailRecord.department || defaultData.department,
+          class: detailRecord.class || defaultData.class,
+          studentId: detailRecord.student_id || defaultData.studentId,
+          admissionPhoto: detailRecord.admission_photo || defaultData.admissionPhoto,
+          degreePhoto: detailRecord.degree_photo || defaultData.degreePhoto,
         });
         return;
       }
@@ -112,34 +203,31 @@ const ExamDetail = () => {
       // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
-        const record = result.exam?.find((r: any) => r.id === id);
+        const record = result.studentStatus?.find((r: any) => r.id === id);
 
         if (record) {
           setData({
             name: record.name || defaultData.name,
+            personalInfo: record.personal_info || defaultData.personalInfo,
+            gender: record.gender || defaultData.gender,
+            birthDate: record.birth_date || defaultData.birthDate,
             school: record.school || defaultData.school,
-            year: record.year || defaultData.year,
-            photo: record.photo || defaultData.photo,
-            examLocation: record.exam_location || defaultData.examLocation,
-            registrationNumber: record.registration_number || defaultData.registrationNumber,
-            examUnit: record.exam_unit || defaultData.examUnit,
-            department: record.department || defaultData.department,
             major: record.major || defaultData.major,
-            researchDirection: record.research_direction || defaultData.researchDirection,
-            examType: record.exam_type || defaultData.examType,
-            specialProgram: record.special_program || defaultData.specialProgram,
-            politicsName: record.politics_name || defaultData.politicsName,
-            politicsScore: record.politics_score || defaultData.politicsScore,
-            foreignLanguageName: record.foreign_language_name || defaultData.foreignLanguageName,
-            foreignLanguageScore: record.foreign_language_score || defaultData.foreignLanguageScore,
-            businessCourse1Name: record.business_course1_name || defaultData.businessCourse1Name,
-            businessCourse1Score: record.business_course1_score || defaultData.businessCourse1Score,
-            businessCourse2Name: record.business_course2_name || defaultData.businessCourse2Name,
-            businessCourse2Score: record.business_course2_score || defaultData.businessCourse2Score,
-            totalScore: record.total_score || defaultData.totalScore,
-            admissionUnit: record.admission_unit || defaultData.admissionUnit,
-            admissionMajor: record.admission_major || defaultData.admissionMajor,
-            note: record.note || defaultData.note,
+            studyType: record.study_type || defaultData.studyType,
+            degreeLevel: record.degree_level || defaultData.degreeLevel,
+            status: record.status || defaultData.status,
+            nationality: record.nationality || defaultData.nationality,
+            idNumber: record.id_number || defaultData.idNumber,
+            enrollmentDate: record.enrollment_date || defaultData.enrollmentDate,
+            graduationDate: record.graduation_date || defaultData.graduationDate,
+            duration: record.duration || defaultData.duration,
+            educationType: record.education_type || defaultData.educationType,
+            branch: record.branch || defaultData.branch,
+            department: record.department || defaultData.department,
+            class: record.class || defaultData.class,
+            studentId: record.student_id || defaultData.studentId,
+            admissionPhoto: record.admission_photo || defaultData.admissionPhoto,
+            degreePhoto: record.degree_photo || defaultData.degreePhoto,
           });
         }
       } catch (error) {
@@ -154,13 +242,20 @@ const ExamDetail = () => {
 
     loadData();
   }, [id, toast, location.state]);
-  const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
+  const [editingField, setEditingField] = useState<{ field: keyof StudentData; label: string } | null>(null);
 
-  const handleFieldClick = (field: keyof ExamData, label: string) => {
+  const handleFieldClick = useCallback((field: keyof StudentData, label: string) => {
     setEditingField({ field, label });
-  };
+  }, []);
 
-  const handleFieldSave = async (field: keyof ExamData, newValue: string) => {
+  // Long press handlers for each editable field
+  const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
+  const personalInfoLongPress = useLongPress(() => handleFieldClick("personalInfo", "个人信息"));
+  const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
+  const majorLongPress = useLongPress(() => handleFieldClick("major", "专业"));
+  const studyTypeLongPress = useLongPress(() => handleFieldClick("studyType", "学习形式"));
+
+  const handleFieldSave = async (field: keyof StudentData, newValue: string) => {
     setData({ ...data, [field]: newValue });
 
     const currentUser = localStorage.getItem("currentUser");
@@ -168,14 +263,29 @@ const ExamDetail = () => {
     const userId = JSON.parse(currentUser).id;
 
     try {
+      // Convert camelCase to snake_case for database
       const dbField = field
         .replace(/([A-Z])/g, "_$1")
         .toLowerCase()
         .replace(/^_/, "");
-      await updateData("exam", "update", userId, { [dbField]: newValue }, id);
+
+      // Prepare update data
+      let updatePayload: any = { [dbField]: newValue };
+
+      // Special handling for personalInfo field
+      if (field === "personalInfo") {
+        // Parse personalInfo to extract gender and birth_date
+        const parts = newValue.split(" | ");
+        if (parts.length >= 2) {
+          updatePayload.gender = parts[0].trim();
+          updatePayload.birth_date = parts[1].trim();
+        }
+      }
+
+      await updateData("student_status", "update", userId, updatePayload, id);
 
       toast({
-        title: "保存成功",
+        title: "修改成功",
         description: "信息已更新并同步到数据库",
       });
     } catch (error) {
@@ -187,20 +297,24 @@ const ExamDetail = () => {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageUpload = async (type: "admissionPhoto" | "degreePhoto", e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const photoData = reader.result as string;
-        setData({ ...data, photo: photoData });
+        setData({ ...data, [type]: photoData });
 
         const currentUser = localStorage.getItem("currentUser");
         if (!currentUser || !id) return;
         const userId = JSON.parse(currentUser).id;
 
         try {
-          await updateData("exam", "update", userId, { photo: photoData }, id);
+          const dbField = type
+            .replace(/([A-Z])/g, "_$1")
+            .toLowerCase()
+            .replace(/^_/, "");
+          await updateData("student_status", "update", userId, { [dbField]: photoData }, id);
 
           toast({
             title: "上传成功",
@@ -226,142 +340,148 @@ const ExamDetail = () => {
           <button onClick={() => navigate("/")} className="p-2">
             <ChevronLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-base font-medium">考研信息</h1>
+          <h1 className="text-lg font-medium">高等学籍</h1>
           <div className="w-10"></div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6 space-y-6">
-        {/* Photo and Name Card */}
-        <div className="bg-gradient-to-b from-[rgb(54,177,197)] to-[rgb(93,200,218)] rounded-[5px] p-5 mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
-          <div className="flex items-start gap-4 mb-4">
-            {/* Photo */}
-            <div className="text-center">
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
-              <div
-                className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {data.photo ? (
-                  <img src={data.photo} alt="照片" className="w-full h-full object-cover" />
-                ) : (
-                  <Upload className="w-6 h-6 text-white/60" />
-                )}
+      <div className="p-4 bg-white min-h-screen">
+        {/* Student Info Card */}
+        <div className="bg-gradient-to-b from-[rgb(31,174,127)] to-[rgb(61,203,145)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-3">
+            {/* Photos */}
+            <div className="flex gap-3">
+              <div className="text-center">
+                <input
+                  type="file"
+                  ref={admissionPhotoRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload("admissionPhoto", e)}
+                />
+                <div
+                  className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-1 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                  onClick={() => admissionPhotoRef.current?.click()}
+                >
+                  {data.admissionPhoto ? (
+                    <img src={data.admissionPhoto} alt="录取照片" className="w-full h-full object-cover" />
+                  ) : (
+                    <Upload className="w-6 h-6 text-white/60" />
+                  )}
+                </div>
+                <span className="text-xs">录取照片</span>
+              </div>
+              <div className="text-center">
+                <input
+                  type="file"
+                  ref={degreePhotoRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload("degreePhoto", e)}
+                />
+                <div
+                  className="w-[55px] h-[73px] bg-gray-300 rounded-[8px] mb-1 cursor-pointer hover:bg-gray-400 transition-colors flex items-center justify-center overflow-hidden relative"
+                  onClick={() => degreePhotoRef.current?.click()}
+                >
+                  {data.degreePhoto ? (
+                    <img src={data.degreePhoto} alt="学历照片" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <div className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">?</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <span className="text-xs">学历照片</span>
               </div>
             </div>
 
-            {/* Name */}
-            <div className="flex-1 pt-2">
-              <div
-                onClick={() => handleFieldClick("name", "姓名")}
-                className="text-white text-xl cursor-pointer hover:opacity-80"
+            {/* Basic Info - Name and Personal Info */}
+            <div className="flex-1">
+              <h2
+                className="text-xl mb-2 cursor-pointer hover:opacity-80 select-none"
+                {...nameLongPress}
               >
                 {data.name}
+              </h2>
+              <div
+                className="text-sm cursor-pointer hover:opacity-80 select-none"
+                {...personalInfoLongPress}
+              >
+                {data.personalInfo.replace(/\s/g, "\u00A0")}
               </div>
             </div>
           </div>
 
-          {/* School */}
-          <div className="text-white">
-            <div
-              onClick={() => handleFieldClick("school", "学校名称")}
-              className="text-[1.3rem] mb-3 cursor-pointer hover:opacity-80"
-            >
-              {data.school}
+          {/* School Info */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                className="text-[1.3rem] cursor-pointer hover:opacity-80 select-none"
+                {...schoolLongPress}
+              >
+                {data.school}
+              </h3>
+              <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
+                {data.degreeLevel}
+              </div>
             </div>
-          </div>
-
-          {/* Year */}
-          <div
-            onClick={() => handleFieldClick("year", "年份")}
-            className="text-sm font-normal text-white cursor-pointer hover:opacity-80"
-          >
-            {data.year}
+            <div className="flex items-center gap-4 text-sm">
+              <span className="cursor-pointer hover:opacity-80 select-none" {...majorLongPress}>
+                {data.major}
+              </span>
+              <span
+                className="text-white/60"
+                style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
+              ></span>
+              <span
+                className="cursor-pointer hover:opacity-80 select-none"
+                {...studyTypeLongPress}
+              >
+                {data.studyType}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Detail Info */}
         <div className="space-y-3">
           {[
-            { field: "examLocation" as keyof ExamData, label: "报考点", value: data.examLocation },
-            { field: "registrationNumber" as keyof ExamData, label: "报名号", value: data.registrationNumber },
-            { field: "examUnit" as keyof ExamData, label: "报考单位", value: data.examUnit },
-            { field: "department" as keyof ExamData, label: "报考院系所", value: data.department },
-            { field: "major" as keyof ExamData, label: "报考专业", value: data.major },
-            { field: "researchDirection" as keyof ExamData, label: "研究方向", value: data.researchDirection },
-            { field: "examType" as keyof ExamData, label: "考试方式", value: data.examType },
-            { field: "specialProgram" as keyof ExamData, label: "专项计划", value: data.specialProgram },
-            { field: "politicsName" as keyof ExamData, label: "政治理论名称", value: data.politicsName },
-            { field: "foreignLanguageName" as keyof ExamData, label: "外国语名称", value: data.foreignLanguageName },
-            { field: "businessCourse1Name" as keyof ExamData, label: "业务课一名称", value: data.businessCourse1Name },
-            { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
+            { field: "nationality", label: "民族", value: data.nationality },
+            { field: "idNumber", label: "证件号码", value: data.idNumber },
+            { field: "duration", label: "学制", value: data.duration },
+            { field: "educationType", label: "学历类别", value: data.educationType },
+            { field: "branch", label: "分院", value: data.branch },
+            { field: "department", label: "系所", value: data.department },
+            { field: "class", label: "班级", value: data.class },
+            { field: "studentId", label: "学号", value: data.studentId },
+            { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
+            { field: "status", label: "学籍状态", value: data.status },
+            {
+              field: "graduationDate",
+              label: getGraduationLabel(data.graduationDate),
+              value: data.graduationDate,
+            },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-              <span onClick={() => handleFieldClick(field, label)} className="flex-1 cursor-pointer hover:text-primary" style={{ color: 'rgb(52, 51, 51)' }}>
-                {value}
-              </span>
-            </div>
+            <LongPressField
+              key={field}
+              field={field as keyof StudentData}
+              label={label}
+              value={value || "-"}
+              onLongPress={handleFieldClick}
+            />
           ))}
         </div>
 
-        {/* Scores Section */}
-        <div className="pt-4">
-          <h2 className="text-lg font-semibold mb-4">成绩信息</h2>
-          <div className="space-y-3">
-            {[
-              { field: "politicsScore" as keyof ExamData, label: "政治理论", value: data.politicsScore },
-              { field: "foreignLanguageScore" as keyof ExamData, label: "外国语", value: data.foreignLanguageScore },
-              { field: "businessCourse1Score" as keyof ExamData, label: "业务课一", value: data.businessCourse1Score },
-              { field: "businessCourse2Score" as keyof ExamData, label: "业务课二", value: data.businessCourse2Score },
-              { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
-            ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-                <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-                <span
-                  onClick={() => handleFieldClick(field, label)}
-                  className="flex-1 cursor-pointer hover:text-primary"
-                  style={{ color: 'rgb(52, 51, 51)' }}
-                >
-                  {value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Admission Section */}
-        <div className="pt-4">
-          <h2 className="text-lg font-semibold mb-4">录取信息</h2>
-          <div className="space-y-3">
-            {[
-              { field: "admissionUnit" as keyof ExamData, label: "录取单位", value: data.admissionUnit },
-              { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
-            ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center gap-4 py-0.5 text-base">
-                <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-                <span
-                  onClick={() => handleFieldClick(field, label)}
-                  className="flex-1 cursor-pointer hover:text-primary"
-                  style={{ color: 'rgb(52, 51, 51)' }}
-                >
-                  {value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Note */}
-        <div className="pt-4 pb-8">
-          <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
-            <span className="font-medium">说明：</span>
-            <span onClick={() => handleFieldClick("note", "说明")} className="cursor-pointer hover:text-primary">
-              {data.note}
-            </span>
-          </div>
-        </div>
+        {/* Button */}
+        <Button
+          className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
+          onClick={() => navigate("/verification-report")}
+        >
+          查看验证报告
+        </Button>
       </div>
 
       {/* Edit Dialog */}
@@ -378,4 +498,4 @@ const ExamDetail = () => {
   );
 };
 
-export default ExamDetail;
+export default StudentStatusDetail;
