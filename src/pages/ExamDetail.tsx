@@ -297,9 +297,9 @@ const ExamDetail = () => {
             { field: "businessCourse1Name" as keyof ExamData, label: "业务课一名称", value: data.businessCourse1Name },
             { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
           ].map(({ field, label, value }) => (
-            <div key={field} className="flex items-center gap-4 py-1 text-sm">
-              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
-              <span onClick={() => handleFieldClick(field, label)} className="flex-1 cursor-pointer hover:text-primary">
+            <div key={field} className="flex items-center gap-4 py-0.5 text-base">
+              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
+              <span onClick={() => handleFieldClick(field, label)} className="flex-1 cursor-pointer hover:text-primary" style={{ color: 'rgb(52, 51, 51)' }}>
                 {value}
               </span>
             </div>
@@ -317,11 +317,12 @@ const ExamDetail = () => {
               { field: "businessCourse2Score" as keyof ExamData, label: "业务课二", value: data.businessCourse2Score },
               { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
             ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center gap-4 py-1 text-sm">
-                <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+              <div key={field} className="flex items-center gap-4 py-0.5 text-base">
+                <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
                 <span
                   onClick={() => handleFieldClick(field, label)}
                   className="flex-1 cursor-pointer hover:text-primary"
+                  style={{ color: 'rgb(52, 51, 51)' }}
                 >
                   {value}
                 </span>
@@ -338,11 +339,12 @@ const ExamDetail = () => {
               { field: "admissionUnit" as keyof ExamData, label: "录取单位", value: data.admissionUnit },
               { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
             ].map(({ field, label, value }) => (
-              <div key={field} className="flex items-center gap-4 py-1 text-sm">
-                <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+              <div key={field} className="flex items-center gap-4 py-0.5 text-base">
+                <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
                 <span
                   onClick={() => handleFieldClick(field, label)}
                   className="flex-1 cursor-pointer hover:text-primary"
+                  style={{ color: 'rgb(52, 51, 51)' }}
                 >
                   {value}
                 </span>
