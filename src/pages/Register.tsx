@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,20 +12,58 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { registerUser } from "@/lib/api";
+
+const generateMathCaptcha = () => {
+  const num1 = Math.floor(Math.random() * 10) + 1;
+  const num2 = Math.floor(Math.random() * 10) + 1;
+  const operators = ['+', '-', '×'];
+  const operator = operators[Math.floor(Math.random() * operators.length)];
+  
+  let answer: number;
+  switch (operator) {
+    case '+':
+      answer = num1 + num2;
+      break;
+    case '-':
+      answer = num1 - num2;
+      break;
+    case '×':
+      answer = num1 * num2;
+      break;
+    default:
+      answer = num1 + num2;
+  }
+  
+  return { question: `${num1} ${operator} ${num2} = ?`, answer };
+};
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [captcha, setCaptcha] = useState(generateMathCaptcha);
   const [isLoading, setIsLoading] = useState(false);
   const [showRegisterSuccess, setShowRegisterSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const refreshCaptcha = useCallback(() => {
+    setCaptcha(generateMathCaptcha());
+    setCaptchaAnswer("");
+  }, []);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 验证码校验
+    if (parseInt(captchaAnswer) !== captcha.answer) {
+      toast.error("验证码错误，请重新输入", { duration: 1500 });
+      refreshCaptcha();
+      return;
+    }
 
     // 检查用户名是否包含中文
     const chineseRegex = /[\u4e00-\u9fa5]/;
@@ -52,6 +90,7 @@ const Register = () => {
       // 如果有错误信息，显示具体的错误
       if (result.error) {
         toast.error(result.error, { duration: 1500 });
+        refreshCaptcha();
         return;
       }
 
@@ -63,6 +102,7 @@ const Register = () => {
       // 捕获网络错误或其他未预期的错误
       const errorMessage = error instanceof Error ? error.message : "注册失败，请重试";
       toast.error(errorMessage, { duration: 1500 });
+      refreshCaptcha();
       console.error("Register error:", error);
     } finally {
       setIsLoading(false);
@@ -121,6 +161,34 @@ const Register = () => {
                 minLength={6}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="captcha">验证码</Label>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="text-lg font-medium text-foreground whitespace-nowrap">
+                    {captcha.question}
+                  </span>
+                  <Input
+                    id="captcha"
+                    type="number"
+                    placeholder="请输入答案"
+                    value={captchaAnswer}
+                    onChange={(e) => setCaptchaAnswer(e.target.value)}
+                    required
+                    className="flex-1"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={refreshCaptcha}
+                  className="flex-shrink-0"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             <div className="space-y-3 pt-2">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "注册中..." : "注册"}
@@ -142,7 +210,10 @@ const Register = () => {
             <AlertDialogTitle>注册成功 🎉</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-sm">
-                <p>恭喜您注册成功！您的账号当前登录次数余额为 <span className="font-semibold text-destructive">0</span>，需要充值后才能登录系统。</p>
+                <p>
+                  恭喜您注册成功！您的账号当前登录次数余额为 <span className="font-semibold text-destructive">0</span>
+                  ，需要充值后才能登录系统。
+                </p>
                 <div className="bg-muted/50 p-3 rounded-md space-y-2">
                   <p className="font-medium text-foreground">充值步骤：</p>
                   <ol className="list-decimal list-inside space-y-1 text-muted-foreground">

@@ -11,15 +11,7 @@ interface EducationCardProps {
   onClick?: () => void;
 }
 
-const EducationCard = ({ 
-  school, 
-  major, 
-  studyType, 
-  degreeLevel, 
-  variant,
-  onEdit,
-  onClick
-}: EducationCardProps) => {
+const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit, onClick }: EducationCardProps) => {
   const [showEditIcon, setShowEditIcon] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const isLongPress = useRef(false);
@@ -29,7 +21,7 @@ const EducationCard = ({
     isLongPress.current = false;
     touchStartPos.current = {
       x: e.touches[0].clientX,
-      y: e.touches[0].clientY
+      y: e.touches[0].clientY,
     };
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
@@ -47,7 +39,7 @@ const EducationCard = ({
       const touchY = e.touches[0].clientY;
       const deltaX = Math.abs(touchX - touchStartPos.current.x);
       const deltaY = Math.abs(touchY - touchStartPos.current.y);
-      
+
       // If moved more than 10px, cancel long press
       if (deltaX > 10 || deltaY > 10) {
         clearTimeout(longPressTimer.current);
@@ -60,14 +52,14 @@ const EducationCard = ({
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
-    
+
     // Check if this was a swipe/scroll gesture
     if (touchStartPos.current) {
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
       const deltaX = Math.abs(touchEndX - touchStartPos.current.x);
       const deltaY = Math.abs(touchEndY - touchStartPos.current.y);
-      
+
       // If moved more than 10px, consider it a swipe/scroll
       if (deltaX > 10 || deltaY > 10) {
         touchStartPos.current = null;
@@ -75,7 +67,7 @@ const EducationCard = ({
         return;
       }
     }
-    
+
     if (!isLongPress.current && onClick) {
       onClick();
     }
@@ -87,7 +79,7 @@ const EducationCard = ({
     isLongPress.current = false;
     touchStartPos.current = {
       x: e.clientX,
-      y: e.clientY
+      y: e.clientY,
     };
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
@@ -102,14 +94,14 @@ const EducationCard = ({
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
-    
+
     // Check if this was a drag gesture
     if (touchStartPos.current) {
       const mouseEndX = e.clientX;
       const mouseEndY = e.clientY;
       const deltaX = Math.abs(mouseEndX - touchStartPos.current.x);
       const deltaY = Math.abs(mouseEndY - touchStartPos.current.y);
-      
+
       // If moved more than 10px, consider it a drag
       if (deltaX > 10 || deltaY > 10) {
         touchStartPos.current = null;
@@ -117,7 +109,7 @@ const EducationCard = ({
         return;
       }
     }
-    
+
     if (!isLongPress.current && onClick) {
       onClick();
     }
@@ -148,22 +140,22 @@ const EducationCard = ({
   const getVariantStyle = () => {
     if (variant === "student-status") {
       return {
-        background: "linear-gradient(to bottom right, rgb(31, 174, 127), rgb(61, 203, 145))"
+        background: "linear-gradient(to bottom right, rgb(31, 174, 127), rgb(61, 203, 145))",
       };
     }
     if (variant === "education") {
       return {
-        background: "linear-gradient(to bottom right, rgb(55, 134, 243), rgb(92, 168, 247))"
+        background: "linear-gradient(to bottom right, rgb(55, 134, 243), rgb(92, 168, 247))",
       };
     }
     if (variant === "degree") {
       return {
-        background: "linear-gradient(to bottom right, rgb(56, 80, 218), rgb(86, 126, 231))"
+        background: "linear-gradient(to bottom right, rgb(56, 80, 218), rgb(86, 126, 231))",
       };
     }
     if (variant === "exam") {
       return {
-        background: "linear-gradient(to bottom right, rgb(54, 177, 197), rgb(93, 200, 218))"
+        background: "linear-gradient(to bottom right, rgb(54, 177, 197), rgb(93, 200, 218))",
       };
     }
     return {};
@@ -174,9 +166,14 @@ const EducationCard = ({
   };
 
   return (
-    <div 
-      className={`${getVariantClasses()} rounded-[7px] p-[1.05rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group`}
-      style={getVariantStyle()}
+    <div
+      className={`${getVariantClasses()} rounded-[7px] p-[1.05rem] shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)] cursor-pointer relative group select-none`}
+      style={{
+        ...getVariantStyle(),
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+      }}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -189,9 +186,12 @@ const EducationCard = ({
         }
         setShowEditIcon(false);
       }}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-xl font-yahei" style={{ fontSize: '20.5px' }}>{school}</h3>
+        <h3 className="text-xl font-yahei" style={{ fontSize: "20.5px" }}>
+          {school}
+        </h3>
         {variant !== "exam" && (
           <div className={`${getBadgeClasses()} px-2 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
             {degreeLevel}
@@ -204,12 +204,20 @@ const EducationCard = ({
         </div>
       ) : (
         <div className="flex items-center gap-2 text-white/95">
-          {major && <span className="text-base font-times" style={{ fontSize: '15px' }}>{major}</span>}
+          {major && (
+            <span className="text-base font-times" style={{ fontSize: "15px" }}>
+              {major}
+            </span>
+          )}
           {major && studyType && (
-            <span className="text-white/60" style={{ fontSize: '15px' }}>|</span>
+            <span className="text-white/60" style={{ fontSize: "15px" }}>
+              |
+            </span>
           )}
           {studyType && (
-            <span className="text-base font-times" style={{ fontSize: '15px' }}>{studyType}</span>
+            <span className="text-base font-times" style={{ fontSize: "15px" }}>
+              {studyType}
+            </span>
           )}
         </div>
       )}

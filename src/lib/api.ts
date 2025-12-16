@@ -22,6 +22,8 @@ export interface UserData {
 // 设置API基础URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
+// const API_REGISTER_ = import.meta.env.VITE_API_REGISTER_URL;
+
 // 登录API
 export const loginUser = async (username: string, password: string): Promise<LoginResponse> => {
   const response = await fetch(`${API_BASE_URL}/auth`, {
@@ -47,6 +49,7 @@ export const registerUser = async (username: string, password: string): Promise<
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'AppKey': `${import.meta.env.VITE_APP_KEY}`
     },
     body: JSON.stringify({ username, password }),
   });

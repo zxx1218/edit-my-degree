@@ -4,13 +4,10 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 // =============pdf模块引入=================
-const { PDFDocument, rgb } = require('pdf-lib');
-const fontkit = require('@pdf-lib/fontkit');
 const fs = require('fs').promises;
-const path = require('path');
 const { v4: uuidv4 } = require('uuid'); // 添加UUID生成库
-const QRCode = require('qrcode');
 const { log } = require('console');
 
 // 引入PDF生成器模块
@@ -26,6 +23,30 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
+
+// 为注册接口设置限流规则 - 每个IP每60分钟最多10次注册尝试（方便测试）
+const registrationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1小时
+  max: 10, // 限制每个IP在窗口期内最多发送10个请求
+  message: {
+    success: false,
+    error: '注册请求过于频繁，请稍后再试'
+  },
+  standardHeaders: true, // 返回标准的RateLimit-*头部
+  legacyHeaders: false, // 不返回X-RateLimit-*头部
+});
+
+// 为一般API设置全局限流规则 - 每个IP每分钟最多100次请求
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1分钟
+  max: 100,
+  message: {
+    success: false,
+    error: '请求过于频繁，请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // 增加请求体大小限制以支持图片上传
 app.use(express.json({ limit: '50mb' }));
@@ -252,7 +273,7 @@ async function createTables() {
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // 登录接口
-app.post('/api/auth', async (req, res) => {
+app.post('/api/auth', generalLimiter, async (req, res) => {
   try {
     // 设置时区为中国时区
     await db.execute("SET time_zone = '+08:00'");
@@ -330,7 +351,7 @@ app.post('/api/auth', async (req, res) => {
 });
 
 // 注册接口
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', registrationLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -392,7 +413,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // 获取用户数据接口
-app.post('/api/get-user-data', async (req, res) => {
+app.post('/api/get-user-data', generalLimiter, async (req, res) => {
   try {
     const { userId } = req.body;
     
@@ -419,7 +440,7 @@ app.post('/api/get-user-data', async (req, res) => {
 });
 
 // 更新数据接口
-app.post('/api/update-data', async (req, res) => {
+app.post('/api/update-data', generalLimiter, async (req, res) => {
   try {
     const { table, action, data, id, userId } = req.body;
     
@@ -526,7 +547,7 @@ app.post('/api/update-data', async (req, res) => {
 });
 
 // 更新用户登录次数接口
-app.post('/api/update-user-logins', async (req, res) => {
+app.post('/api/update-user-logins', generalLimiter, async (req, res) => {
   try {
     const { userId, username, addLogins } = req.body; // 支持通过userId或username
     
@@ -600,7 +621,7 @@ app.post('/api/update-user-logins', async (req, res) => {
 });
 
 // 修改密码接口
-app.post('/api/change-password', async (req, res) => {
+app.post('/api/change-password', generalLimiter, async (req, res) => {
   try {
     const { username, oldPassword, newPassword } = req.body;
 
@@ -644,7 +665,7 @@ app.post('/api/change-password', async (req, res) => {
 });
 
 // 重置用户登录次数接口
-app.post('/api/reset-user-logins', async (req, res) => {
+app.post('/api/reset-user-logins', generalLimiter, async (req, res) => {
   try {
     const { username } = req.body;
     
@@ -682,7 +703,7 @@ app.post('/api/reset-user-logins', async (req, res) => {
 });
 
 // 添加减少用户登录次数接口
-app.post('/api/decrease-user-logins', async (req, res) => {
+app.post('/api/decrease-user-logins', generalLimiter, async (req, res) => {
   try {
     const { username, decreaseLogins } = req.body;
 
@@ -750,7 +771,7 @@ app.post('/api/decrease-user-logins', async (req, res) => {
 });
 
 // 获取所有用户接口
-app.post('/api/get-all-users', async (req, res) => {
+app.post('/api/get-all-users', generalLimiter, async (req, res) => {
   try {
     // 查询所有用户，包括密码字段
     const [users] = await db.execute(
@@ -777,7 +798,7 @@ app.post('/api/get-all-users', async (req, res) => {
 });
 
 // 查询特定用户接口
-app.post('/api/query-user', async (req, res) => {
+app.post('/api/query-user', generalLimiter, async (req, res) => {
   try {
     const { username } = req.body;
     
@@ -821,7 +842,7 @@ app.post('/api/query-user', async (req, res) => {
 });
 
 // 添加减少用户PDF积分接口
-app.post('/api/decrease-pdf-limit', async (req, res) => {
+app.post('/api/decrease-pdf-limit', generalLimiter, async (req, res) => {
   try {
     const { username, decreaseAmount } = req.body;
 
@@ -893,7 +914,7 @@ app.post('/api/decrease-pdf-limit', async (req, res) => {
 });
 
 // 获取今日登录统计接口
-app.post('/api/get-today-login-count', async (req, res) => {
+app.post('/api/get-today-login-count', generalLimiter, async (req, res) => {
   try {
     // 获取今天的开始和结束时间 (使用本地时间格式 YYYY-MM-DD)
     const today = new Date();
@@ -953,7 +974,7 @@ app.post('/api/get-today-login-count', async (req, res) => {
 });
 
 // 添加增加用户PDF积分接口
-app.post('/api/increase-pdf-limit', async (req, res) => {
+app.post('/api/increase-pdf-limit', generalLimiter, async (req, res) => {
   try {
     const { username, increaseAmount } = req.body;
 
@@ -1017,7 +1038,7 @@ app.post('/api/increase-pdf-limit', async (req, res) => {
 });
 
 // 添加重置用户PDF积分接口
-app.post('/api/reset-pdf-limit', async (req, res) => {
+app.post('/api/reset-pdf-limit', generalLimiter, async (req, res) => {
   try {
     const { username } = req.body;
     
@@ -1055,7 +1076,7 @@ app.post('/api/reset-pdf-limit', async (req, res) => {
 });
 
 // 添加充值卡管理接口
-app.post('/api/manage-cards', async (req, res) => {
+app.post('/api/manage-cards', generalLimiter, async (req, res) => {
   try {
     const { action, type, values, count, cardId, username } = req.body;
 
@@ -1215,7 +1236,7 @@ app.post('/api/manage-cards', async (req, res) => {
 });
 
 // 获取每小时登录统计接口
-app.post('/api/get-hourly-login-stats', async (req, res) => {
+app.post('/api/get-hourly-login-stats', generalLimiter, async (req, res) => {
   try {
     // 获取请求中的日期或者使用今天
     const { date } = req.body;
@@ -1276,7 +1297,7 @@ app.post('/api/get-hourly-login-stats', async (req, res) => {
   }
 });
 
-app.post('/api/get-login-stats-range', async (req, res) => {
+app.post('/api/get-login-stats-range', generalLimiter, async (req, res) => {
   try {
     const { range } = req.body; // 'week' 或 'month'
     
@@ -1380,13 +1401,13 @@ app.post('/api/get-login-stats-range', async (req, res) => {
 });
 
 // 生成学位验证报告PDF接口
-app.post('/api/generate-degree-pdf', generateDegreePdf);
+app.post('/api/generate-degree-pdf', generalLimiter, generateDegreePdf);
 
 // 生成学历PDF接口
-app.post('/api/generate-education-pdf', generateEducationPdf);
+app.post('/api/generate-education-pdf', generalLimiter, generateEducationPdf);
 
 // 教育部学籍在线验证报告pdf生成接口
-app.post('/api/generate-student-status-pdf', generateStudentStatusPdf);
+app.post('/api/generate-student-status-pdf', generalLimiter, generateStudentStatusPdf);
 
 // 启动服务器
 initDB().then(() => {
