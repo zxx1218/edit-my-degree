@@ -457,8 +457,8 @@ const Login = () => {
             <AlertDescription className="ml-2 text-sm space-y-2">
               <div className="font-semibold text-foreground">使用提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
-                <div>• 第一次建议使用电脑登录设置好后再使用手机登录</div>
+                <div>• 主页面所有卡片的新增、删除和修改请长按卡片进行操作</div>
+                <div>• 第一次建议使用电脑登录设置好后再使用手机登录查看</div>
               </div>
             </AlertDescription>
           </Alert>
