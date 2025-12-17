@@ -443,7 +443,7 @@ const SuperAdd = () => {
   };
 
   const handleVerify = () => {
-    if (verifyUsername === "zxx" && verifyPassword === "991218aa") {
+    if (verifyUsername === "zxx" && verifyPassword === "991218zxnmA-") {
       localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
       setIsVerified(true);
     } else {
