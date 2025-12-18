@@ -21,7 +21,6 @@ export interface UserData {
 
 // 设置API基础URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
-
 // 生成签名的辅助函数
 function generateSignature(
   method: string,
@@ -32,8 +31,12 @@ function generateSignature(
   // 获取密钥（在实际应用中应该更安全地存储）
   const secretKey = import.meta.env.VITE_API_SECRET_KEY || 'default_secret_key';
   
-  // 将参数按字典序排序并拼接成字符串
-  const sortedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
+  // 将参数按字典序排序并拼接成字符串（过滤掉undefined值）
+  const sortedParams = Object.keys(params)
+    .filter(key => params[key] !== undefined)
+    .sort()
+    .map(key => `${key}=${params[key]}`)
+    .join('&');
   
   // 构造待签名字符串
   const signString = `${method.toUpperCase()}${url}${sortedParams}${timestamp}`;
@@ -55,7 +58,6 @@ function generateSignature(
   
   return Math.abs(hash).toString(16);
 }
-
 // 创建带签名的请求选项
 function createSignedRequestOptions(method: string, url: string, body?: any) {
   const timestamp = Date.now();
