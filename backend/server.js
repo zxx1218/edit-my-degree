@@ -57,7 +57,14 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // 签名验证中间件
 const signatureValidationMiddleware = (req, res, next) => {
   // 免签接口白名单
-  const whitelist = ['/api/auth'];
+  const whitelist = [
+    '/api/auth',
+    '/api/get-today-login-count',
+    '/api/get-hourly-login-stats',
+    '/api/get-login-stats-range',
+    '/api/manage-cards',
+    '/api/get-all-users'
+  ];
   
   // 检查是否在白名单中
   if (whitelist.includes(req.path)) {
