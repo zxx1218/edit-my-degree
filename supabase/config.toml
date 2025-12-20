@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.manage-cards]
 verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = false

@@ -73,6 +73,7 @@ const SuperAdd = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [verifyUsername, setVerifyUsername] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -442,16 +443,47 @@ const SuperAdd = () => {
     }
   };
 
-  const handleVerify = () => {
-    if (verifyUsername === "zxx" && verifyPassword === "991218zxnmA-") {
-      localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
-      setIsVerified(true);
-    } else {
+  const handleVerify = async () => {
+    if (!verifyUsername.trim() || !verifyPassword.trim()) {
       toast({
         variant: "destructive",
         title: "验证失败",
-        description: "用户名或密码错误",
+        description: "请输入用户名和密码",
       });
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/verify-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: verifyUsername, password: verifyPassword }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
+        setIsVerified(true);
+        toast({
+          title: "验证成功",
+          description: `欢迎，${data.admin.username}`,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "验证失败",
+          description: data.error || "用户名或密码错误",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "验证失败",
+        description: error.message || "网络错误，请重试",
+      });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -695,9 +727,17 @@ const SuperAdd = () => {
             </div>
             <Button
               onClick={handleVerify}
+              disabled={isVerifying}
               className="w-full h-12 text-base font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-0"
             >
-              验证身份
+              {isVerifying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  验证中...
+                </>
+              ) : (
+                "验证身份"
+              )}
             </Button>
           </CardContent>
         </Card>
