@@ -22,7 +22,7 @@ export interface UserData {
 // 设置API基础URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 // 生成签名的辅助函数
-function generateSignature(
+export function generateSignature(
   method: string,
   url: string,
   params: Record<string, any>,

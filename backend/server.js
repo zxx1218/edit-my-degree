@@ -59,13 +59,16 @@ const signatureValidationMiddleware = (req, res, next) => {
   // 免签接口白名单
   const whitelist = [
     '/api/auth',
+    '/api/admin-auth',
     '/api/get-today-login-count',
     '/api/get-hourly-login-stats',
     '/api/get-login-stats-range',
     '/api/generate-degree-pdf',
     '/api/generate-education-pdf',
-    '/api/generate-student-status-pdf'
-    // '/api/manage-cards',
+    '/api/generate-student-status-pdf',
+    '/api/decrease-pdf-limit',
+    '/api/manage-cards'
+    // 管理接口需要签名验证，不再豁免
     // '/api/get-all-users'
   ];
   
@@ -343,6 +346,15 @@ async function createTables() {
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (used_by) REFERENCES users(id) ON DELETE SET NULL
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS admins (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
     `
   ];
 
@@ -371,6 +383,21 @@ async function createTables() {
   }
   
   console.log('Database tables initialized');
+  
+  // 插入初始管理员账户（如果不存在）
+  const [adminExists] = await db.execute(
+    'SELECT id FROM admins WHERE username = ?',
+    ['zxx']
+  );
+  
+  if (adminExists.length === 0) {
+    // 注意：在实际应用中，应该使用 bcrypt 对密码进行加密
+    await db.execute(
+      'INSERT INTO admins (username, password) VALUES (?, ?)',
+      ['zxx', '991218zxnmA-']
+    );
+    console.log('Initial admin user created');
+  }
 }
 
 // JWT 密钥
@@ -442,6 +469,63 @@ app.post('/api/auth', generalLimiter, async (req, res) => {
         id: user.id,
         username: user.username,
         remaining_logins: user.remaining_logins - 1
+      },
+      token
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
+
+// 管理员登录接口
+app.post('/api/admin-auth', generalLimiter, async (req, res) => {
+  try {
+    // 设置时区为中国时区
+    await db.execute("SET time_zone = '+08:00'");
+    
+    const { username, password } = req.body;
+    
+    // 查询管理员
+    const [rows] = await db.execute(
+      'SELECT * FROM admins WHERE username = ?',
+      [username]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        error: '用户名或密码错误'
+      });
+    }
+    
+    const admin = rows[0];
+    
+    // 检查密码（实际应该使用 bcrypt）
+    const isPasswordValid = password === admin.password;
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        error: '用户名或密码错误'
+      });
+    }
+    
+    // 生成 JWT token
+    const token = jwt.sign(
+      { id: admin.id, username: admin.username, role: 'admin' },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    res.json({
+      success: true,
+      admin: {
+        id: admin.id,
+        username: admin.username
       },
       token
     });
@@ -650,256 +734,289 @@ app.post('/api/update-data', generalLimiter, async (req, res) => {
   }
 });
 
-// // 更新用户登录次数接口
-// app.post('/api/update-user-logins', generalLimiter, async (req, res) => {
-//   try {
-//     const { userId, username, addLogins } = req.body; // 支持通过userId或username
+// 更新用户登录次数接口
+app.post('/api/update-user-logins', generalLimiter, async (req, res) => {
+  try {
+    const { userId, username, addLogins } = req.body; // 支持通过userId或username
     
-//     if (!userId && !username) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '缺少用户ID或用户名参数'
-//       });
-//     }
+    if (!userId && !username) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户ID或用户名参数'
+      });
+    }
     
-//     if (addLogins === undefined) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '缺少addLogins参数'
-//       });
-//     }
+    if (addLogins === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少addLogins参数'
+      });
+    }
     
-//     // 查找用户
-//     let user;
-//     if (userId) {
-//       const [users] = await db.execute(
-//         'SELECT id FROM users WHERE id = ?',
-//         [userId]
-//       );
-//       user = users[0];
-//     } else if (username) {
-//       const [users] = await db.execute(
-//         'SELECT id FROM users WHERE username = ?',
-//         [username]
-//       );
-//       user = users[0];
-//     }
+    // 查找用户
+    let user;
+    if (userId) {
+      const [users] = await db.execute(
+        'SELECT id FROM users WHERE id = ?',
+        [userId]
+      );
+      user = users[0];
+    } else if (username) {
+      const [users] = await db.execute(
+        'SELECT id FROM users WHERE username = ?',
+        [username]
+      );
+      user = users[0];
+    }
     
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
     
-//     // 更新用户登录次数
-//     const [result] = await db.execute(
-//       'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
-//       [addLogins, user.id]
-//     );
+    // 更新用户登录次数
+    const [result] = await db.execute(
+      'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
+      [addLogins, user.id]
+    );
     
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
     
-//     // 获取更新后的用户信息
-//     const [users] = await db.execute(
-//       'SELECT remaining_logins FROM users WHERE id = ?',
-//       [user.id]
-//     );
+    // 获取更新后的用户信息
+    const [users] = await db.execute(
+      'SELECT remaining_logins FROM users WHERE id = ?',
+      [user.id]
+    );
     
-//     res.json({
-//       success: true,
-//       newLogins: users[0].remaining_logins
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      newLogins: users[0].remaining_logins
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 修改密码接口
-// app.post('/api/change-password', generalLimiter, async (req, res) => {
-//   try {
-//     const { username, oldPassword, newPassword } = req.body;
+app.post('/api/change-password', generalLimiter, async (req, res) => {
+  try {
+    const { username, oldPassword, newPassword } = req.body;
 
-//     if (!username || !oldPassword || !newPassword) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '请提供完整的信息'
-//       });
-//     }
+    if (!username || !oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: '请提供完整的信息'
+      });
+    }
 
-//     // 验证原密码是否正确
-//     const [users] = await db.execute(
-//       'SELECT * FROM users WHERE username = ? AND password = ?',
-//       [username, oldPassword]
-//     );
+    // 验证原密码是否正确
+    const [users] = await db.execute(
+      'SELECT * FROM users WHERE username = ? AND password = ?',
+      [username, oldPassword]
+    );
 
-//     if (users.length === 0) {
-//       return res.status(401).json({
-//         success: false,
-//         error: '用户名或原密码错误'
-//       });
-//     }
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        error: '用户名或原密码错误'
+      });
+    }
 
-//     // 更新密码
-//     await db.execute(
-//       'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-//       [newPassword, users[0].id]
-//     );
+    // 更新密码
+    await db.execute(
+      'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [newPassword, users[0].id]
+    );
 
-//     res.json({
-//       success: true,
-//       message: '密码修改成功'
-//     });
-//   } catch (err) {
-//     console.error('Error changing password:', err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      message: '密码修改成功'
+    });
+  } catch (err) {
+    console.error('Error changing password:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 重置用户登录次数接口
-// app.post('/api/reset-user-logins', generalLimiter, async (req, res) => {
-//   try {
-//     const { username } = req.body;
+app.post('/api/reset-user-logins', generalLimiter, async (req, res) => {
+  try {
+    const { username } = req.body;
     
-//     if (!username) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '缺少用户名参数'
-//       });
-//     }
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户名参数'
+      });
+    }
     
-//     // 更新用户登录次数为0
-//     const [result] = await db.execute(
-//       'UPDATE users SET remaining_logins = 0 WHERE username = ?',
-//       [username]
-//     );
+    // 更新用户登录次数为0
+    const [result] = await db.execute(
+      'UPDATE users SET remaining_logins = 0 WHERE username = ?',
+      [username]
+    );
     
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
     
-//     res.json({
-//       success: true,
-//       message: '登录次数已重置'
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      message: '登录次数已重置'
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 添加减少用户登录次数接口
-// app.post('/api/decrease-user-logins', generalLimiter, async (req, res) => {
-//   try {
-//     const { username, decreaseLogins } = req.body;
+app.post('/api/decrease-user-logins', generalLimiter, async (req, res) => {
+  try {
+    const { username, decreaseLogins } = req.body;
 
-//     if (!username) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '用户名不能为空'
-//       });
-//     }
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
 
-//     if (typeof decreaseLogins !== 'number' || decreaseLogins <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '减少次数必须为正整数'
-//       });
-//     }
+    if (typeof decreaseLogins !== 'number' || decreaseLogins <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '减少次数必须为正整数'
+      });
+    }
 
-    // console.log(`Decreasing logins for user: ${username} by ${decreaseLogins}`);
+    console.log(`Decreasing logins for user: ${username} by ${decreaseLogins}`);
 
-    // 先查询用户当前的登录次数
-//     const [users] = await db.execute(
-//       'SELECT id, remaining_logins FROM users WHERE username = ?',
-//       [username]
-//     );
+    先查询用户当前的登录次数
+    const [users] = await db.execute(
+      'SELECT id, remaining_logins FROM users WHERE username = ?',
+      [username]
+    );
 
-//     if (users.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户不存在'
-//       });
-//     }
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
 
-//     const user = users[0];
+    const user = users[0];
 
-//     // 计算新的登录次数，不能小于0
-//     const newLogins = Math.max(0, user.remaining_logins - decreaseLogins);
+    // 计算新的登录次数，不能小于0
+    const newLogins = Math.max(0, user.remaining_logins - decreaseLogins);
 
-//     // 更新用户的登录次数
-//     const [result] = await db.execute(
-//       'UPDATE users SET remaining_logins = ? WHERE id = ?',
-//       [newLogins, user.id]
-//     );
+    // 更新用户的登录次数
+    const [result] = await db.execute(
+      'UPDATE users SET remaining_logins = ? WHERE id = ?',
+      [newLogins, user.id]
+    );
 
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
 
-//     // console.log(`Successfully decreased logins for user: ${username}, new remaining: ${newLogins}`);
+    // console.log(`Successfully decreased logins for user: ${username}, new remaining: ${newLogins}`);
 
-//     res.json({
-//       success: true,
-//       newLogins,
-//       decreased: user.remaining_logins - newLogins
-//     });
-//   } catch (err) {
-//     console.error('Unexpected error:', err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      newLogins,
+      decreased: user.remaining_logins - newLogins
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 获取所有用户接口
-// app.post('/api/get-all-users', generalLimiter, async (req, res) => {
-//   try {
-//     // 查询所有用户，包括密码字段
-//     const [users] = await db.execute(
-//       'SELECT id, username, password, remaining_logins, pdf_limit FROM users ORDER BY created_at DESC'
-//     );
+app.post('/api/get-all-users', generalLimiter, async (req, res) => {
+  try {
+    // 从请求头获取token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: '未提供访问令牌'
+      });
+    }
+    const token = authHeader.substring(7);
     
-//     res.json({
-//       success: true,
-//       users: users.map(user => ({
-//         id: user.id.toString(),
-//         username: user.username,
-//         password: user.password,
-//         remaining_logins: user.remaining_logins,
-//         pdf_limit: user.pdf_limit
-//       }))
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    // 验证JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret');
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        error: '无效的访问令牌'
+      });
+    }
+    
+    // 检查用户是否为管理员
+    const [users] = await db.execute(
+      'SELECT username FROM admins WHERE id = ?', [decoded.id]
+    );
+    
+    if (users.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: '权限不足'
+      });
+    }
+    
+    // 查询所有用户，包括密码字段
+    const [results] = await db.execute(
+      'SELECT id, username, password, remaining_logins, pdf_limit FROM users ORDER BY created_at DESC'
+    );
+    
+    res.json({
+      success: true,
+      users: results.map(user => ({
+        id: user.id.toString(),
+        username: user.username,
+        password: user.password,
+        remaining_logins: user.remaining_logins,
+        pdf_limit: user.pdf_limit
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 查询特定用户接口
 app.post('/api/query-user', generalLimiter, async (req, res) => {
@@ -946,76 +1063,76 @@ app.post('/api/query-user', generalLimiter, async (req, res) => {
 });
 
 // 添加减少用户PDF积分接口
-// app.post('/api/decrease-pdf-limit', generalLimiter, async (req, res) => {
-//   try {
-//     const { username, decreaseAmount } = req.body;
+app.post('/api/decrease-pdf-limit', generalLimiter, async (req, res) => {
+  try {
+    const { username, decreaseAmount } = req.body;
 
-//     if (!username) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '用户名不能为空'
-//       });
-//     }
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
 
-//     if (typeof decreaseAmount !== 'number' || decreaseAmount <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '减少数量必须为正整数'
-//       });
-//     }
+    if (typeof decreaseAmount !== 'number' || decreaseAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '减少数量必须为正整数'
+      });
+    }
 
-//     // 先查询用户当前的PDF积分
-//     const [users] = await db.execute(
-//       'SELECT id, pdf_limit FROM users WHERE username = ?',
-//       [username]
-//     );
+    // 先查询用户当前的PDF积分
+    const [users] = await db.execute(
+      'SELECT id, pdf_limit FROM users WHERE username = ?',
+      [username]
+    );
 
-//     if (users.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户不存在'
-//       });
-//     }
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
 
-//     const user = users[0];
+    const user = users[0];
 
-//     // 检查是否有足够的PDF积分
-//     if (user.pdf_limit < decreaseAmount) {
-//       return res.status(400).json({
-//         success: false,
-//         error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
-//       });
-//     }
+    // 检查是否有足够的PDF积分
+    if (user.pdf_limit < decreaseAmount) {
+      return res.status(400).json({
+        success: false,
+        error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
+      });
+    }
 
-//     // 计算新的PDF积分
-//     const newPdfLimit = user.pdf_limit - decreaseAmount;
+    // 计算新的PDF积分
+    const newPdfLimit = user.pdf_limit - decreaseAmount;
 
-//     // 更新用户的PDF积分
-//     const [result] = await db.execute(
-//       'UPDATE users SET pdf_limit = ? WHERE id = ?',
-//       [newPdfLimit, user.id]
-//     );
+    // 更新用户的PDF积分
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = ? WHERE id = ?',
+      [newPdfLimit, user.id]
+    );
 
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
 
-//     res.json({
-//       success: true,
-//       newPdfLimit,
-//       decreased: decreaseAmount
-//     });
-//   } catch (err) {
-//     console.error('Unexpected error:', err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      newPdfLimit,
+      decreased: decreaseAmount
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 获取今日登录统计接口
 app.post('/api/get-today-login-count', generalLimiter, async (req, res) => {
@@ -1078,106 +1195,106 @@ app.post('/api/get-today-login-count', generalLimiter, async (req, res) => {
 });
 
 // 添加增加用户PDF积分接口
-// app.post('/api/increase-pdf-limit', generalLimiter, async (req, res) => {
-//   try {
-//     const { username, increaseAmount } = req.body;
+app.post('/api/increase-pdf-limit', generalLimiter, async (req, res) => {
+  try {
+    const { username, increaseAmount } = req.body;
 
-//     if (!username) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '用户名不能为空'
-//       });
-//     }
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '用户名不能为空'
+      });
+    }
 
-//     if (typeof increaseAmount !== 'number' || increaseAmount <= 0) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '增加数量必须为正整数'
-//       });
-//     }
+    if (typeof increaseAmount !== 'number' || increaseAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: '增加数量必须为正整数'
+      });
+    }
 
-//     // 先查询用户
-//     const [users] = await db.execute(
-//       'SELECT id, pdf_limit FROM users WHERE username = ?',
-//       [username]
-//     );
+    // 先查询用户
+    const [users] = await db.execute(
+      'SELECT id, pdf_limit FROM users WHERE username = ?',
+      [username]
+    );
 
-//     if (users.length === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户不存在'
-//       });
-//     }
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户不存在'
+      });
+    }
 
-//     const user = users[0];
+    const user = users[0];
 
-//     // 计算新的PDF积分
-//     const newPdfLimit = user.pdf_limit + increaseAmount;
+    // 计算新的PDF积分
+    const newPdfLimit = user.pdf_limit + increaseAmount;
 
-//     // 更新用户的PDF积分
-//     const [result] = await db.execute(
-//       'UPDATE users SET pdf_limit = ? WHERE id = ?',
-//       [newPdfLimit, user.id]
-//     );
+    // 更新用户的PDF积分
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = ? WHERE id = ?',
+      [newPdfLimit, user.id]
+    );
 
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
 
-//     res.json({
-//       success: true,
-//       newPdfLimit,
-//       increased: increaseAmount
-//     });
-//   } catch (err) {
-//     console.error('Unexpected error:', err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      newPdfLimit,
+      increased: increaseAmount
+    });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 添加重置用户PDF积分接口
-// app.post('/api/reset-pdf-limit', generalLimiter, async (req, res) => {
-//   try {
-//     const { username } = req.body;
+app.post('/api/reset-pdf-limit', generalLimiter, async (req, res) => {
+  try {
+    const { username } = req.body;
     
-//     if (!username) {
-//       return res.status(400).json({
-//         success: false,
-//         error: '缺少用户名参数'
-//       });
-//     }
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少用户名参数'
+      });
+    }
     
-//     // 更新用户PDF积分为0
-//     const [result] = await db.execute(
-//       'UPDATE users SET pdf_limit = 0 WHERE username = ?',
-//       [username]
-//     );
+    // 更新用户PDF积分为0
+    const [result] = await db.execute(
+      'UPDATE users SET pdf_limit = 0 WHERE username = ?',
+      [username]
+    );
     
-//     if (result.affectedRows === 0) {
-//       return res.status(404).json({
-//         success: false,
-//         error: '用户未找到'
-//       });
-//     }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        error: '用户未找到'
+      });
+    }
     
-//     res.json({
-//       success: true,
-//       message: 'PDF积分已重置'
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({
-//       success: false,
-//       error: '服务器内部错误'
-//     });
-//   }
-// });
+    res.json({
+      success: true,
+      message: 'PDF积分已重置'
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      error: '服务器内部错误'
+    });
+  }
+});
 
 // 添加充值卡管理接口
 app.post('/api/manage-cards', generalLimiter, async (req, res) => {

@@ -44,6 +44,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import * as adminApi from "@/lib/adminApi";
 
 interface User {
   id: string;
@@ -65,12 +66,14 @@ interface CardItem {
 
 // 设置一次登录后72小时内无需重新验证
 const SUPERADD_LOGIN_KEY = "superadd_login_timestamp";
+const SUPERADD_TOKEN_KEY = "superadd_token";
 const SUPERADD_SESSION_DURATION = 72 * 60 * 60 * 1000; // 72小时（毫秒）
 const USERS_PER_PAGE = 10;
 const CARDS_PER_PAGE = 10;
 
 const SuperAdd = () => {
   const [isVerified, setIsVerified] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const [verifyUsername, setVerifyUsername] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -164,27 +167,28 @@ const SuperAdd = () => {
   // 检查登录状态是否在72小时内
   useEffect(() => {
     const loginTimestamp = localStorage.getItem(SUPERADD_LOGIN_KEY);
-    if (loginTimestamp) {
+    const storedToken = localStorage.getItem(SUPERADD_TOKEN_KEY);
+    if (loginTimestamp && storedToken) {
       const loginTime = parseInt(loginTimestamp, 10);
       const currentTime = Date.now();
       const timeDiff = currentTime - loginTime;
 
       if (timeDiff < SUPERADD_SESSION_DURATION) {
+        setToken(storedToken);
         setIsVerified(true);
       } else {
         localStorage.removeItem(SUPERADD_LOGIN_KEY);
+        localStorage.removeItem(SUPERADD_TOKEN_KEY);
       }
     }
   }, []);
 
   const fetchTodayLoginCount = async () => {
+    if (!token) return;
+    
     setIsLoadingLoginCount(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/get-today-login-count`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await response.json();
+      const data = await adminApi.getTodayLoginCount(token);
       if (data.success) {
         setTodayLoginCount(data.total_logins);
         setDistinctUsers(data.distinct_users);
@@ -197,17 +201,14 @@ const SuperAdd = () => {
   };
 
   const fetchHourlyStats = async (date?: Date) => {
+    if (!token) return;
+    
     setIsLoadingHourlyStats(true);
     try {
       const targetDate = date || selectedDate;
       const dateString = format(targetDate, "yyyy-MM-dd");
       
-      const response = await fetch(`${API_BASE_URL}/get-hourly-login-stats`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: dateString }),
-      });
-      const data = await response.json();
+      const data = await adminApi.getHourlyLoginStats(token, { date: dateString });
       if (data.success) {
         setHourlyStats(data.hourlyStats || []);
       }
@@ -220,20 +221,28 @@ const SuperAdd = () => {
 
   // 获取周/月统计数据
   const fetchRangeStats = async (range: "week" | "month") => {
+    if (!token) return;
+    
     setIsLoadingRangeStats(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/get-login-stats-range`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ range }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setDailyStats(data.dailyStats || []);
-        setRangeSummary(data.summary || null);
+      const data = await adminApi.getLoginStatsRange(token, { range });
+      if (data?.success) {
+        // 确保数据格式正确
+        const dailyStatsData = Array.isArray(data.dailyStats) ? data.dailyStats : [];
+        const summaryData = data.summary && typeof data.summary === 'object' ? data.summary : null;
+        
+        setDailyStats(dailyStatsData);
+        setRangeSummary(summaryData);
+      } else {
+        throw new Error(data?.error || "获取周/月登录统计失败");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("获取周/月登录统计时出错:", error);
+      toast({
+        variant: "destructive",
+        title: "获取统计失败",
+        description: error.message || "请重试",
+      });
     } finally {
       setIsLoadingRangeStats(false);
     }
@@ -289,14 +298,11 @@ const SuperAdd = () => {
   }, [isVerified]);
 
   const fetchCards = async () => {
+    if (!token) return;
+    
     setIsFetchingCards(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/manage-cards`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "list" }),
-      });
-      const data = await response.json();
+      const data = await adminApi.manageCards(token, { action: "list" });
       if (data.success) {
         setCards(data.cards || []);
       } else {
@@ -314,6 +320,8 @@ const SuperAdd = () => {
   };
 
   const handleCreateCards = async () => {
+    if (!token) return;
+    
     const values = parseInt(newCardValues);
     const count = parseInt(newCardCount);
     if (!newCardType) {
@@ -331,12 +339,7 @@ const SuperAdd = () => {
 
     setIsCreatingCards(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/manage-cards`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create", type: newCardType, values, count }),
-      });
-      const data = await response.json();
+      const data = await adminApi.manageCards(token, { action: "create", type: newCardType, values, count });
       if (data.success) {
         toast({ title: "创建成功", description: `已成功创建 ${data.cards.length} 张充值卡` });
         setNewCardValues("");
@@ -359,25 +362,25 @@ const SuperAdd = () => {
         await navigator.clipboard.writeText(text);
       } else {
         // Fallback: 使用传统的 execCommand 方法
-        const textArea = document.createElement('textarea');
+        const textArea = document.createElement("textarea");
         textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        const successful = document.execCommand('copy');
+        const successful = document.execCommand("copy");
         document.body.removeChild(textArea);
         if (!successful) {
-          throw new Error('execCommand copy failed');
+          throw new Error("execCommand copy failed");
         }
       }
       setCopiedId(text);
       setTimeout(() => setCopiedId(null), 2000);
       toast({ title: "已复制", description: "卡密已复制到剪贴板" });
     } catch (error) {
-      console.error('复制失败:', error);
+      console.error("复制失败:", error);
       toast({ variant: "destructive", title: "复制失败", description: "请手动复制卡密" });
     }
   };
@@ -419,13 +422,11 @@ const SuperAdd = () => {
   };
 
   const fetchUsers = async () => {
+    if (!token) return;
+    
     setIsFetchingUsers(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/get-all-users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await response.json();
+      const data = await adminApi.getAllUsers(token);
       if (data.success) {
         setUsers(data.users || []);
       } else {
@@ -442,32 +443,40 @@ const SuperAdd = () => {
     }
   };
 
-  const handleVerify = () => {
-    if (verifyUsername === "zxx" && verifyPassword === "991218zxnmA-") {
-      localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
-      setIsVerified(true);
-    } else {
+  const handleVerify = async () => {
+    try {
+      const data = await adminApi.adminLogin(verifyUsername, verifyPassword);
+      if (data.success) {
+        localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
+        localStorage.setItem(SUPERADD_TOKEN_KEY, data.token);
+        setToken(data.token);
+        setIsVerified(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "验证失败",
+          description: data.error || "用户名或密码错误",
+        });
+      }
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "验证失败",
-        description: "用户名或密码错误",
+        description: "登录过程中发生错误",
       });
     }
   };
 
   const handleResetLogins = async () => {
+    if (!token) return;
+    
     if (!resetUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
     }
     setIsResetting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/reset-user-logins`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: resetUsername }),
-      });
-      const data = await response.json();
+      const data = await adminApi.resetUserLogins(token, { username: resetUsername });
       if (data.success) {
         toast({ title: "重置成功", description: `已将用户 ${resetUsername} 的登录次数重置为 0` });
         setResetUsername("");
@@ -483,6 +492,8 @@ const SuperAdd = () => {
   };
 
   const handleAddLogins = async () => {
+    if (!token) return;
+    
     if (!targetUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -494,12 +505,7 @@ const SuperAdd = () => {
     }
     setIsAddingLogins(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: targetUsername, addLogins: loginsToAdd }),
-      });
-      const data = await response.json();
+      const data = await adminApi.updateUserLogins(token, { username: targetUsername, addLogins: loginsToAdd });
       if (data.success) {
         toast({
           title: "添加成功",
@@ -519,6 +525,8 @@ const SuperAdd = () => {
   };
 
   const handleDecreaseLogins = async () => {
+    if (!token) return;
+    
     if (!decreaseUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -530,12 +538,7 @@ const SuperAdd = () => {
     }
     setIsDecreasingLogins(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/decrease-user-logins`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: decreaseUsername, decreaseLogins: loginsToDecrease }),
-      });
-      const data = await response.json();
+      const data = await adminApi.decreaseUserLogins(token, { username: decreaseUsername, decreaseLogins: loginsToDecrease });
       if (data.success) {
         toast({
           title: "减少成功",
@@ -555,6 +558,8 @@ const SuperAdd = () => {
   };
 
   const handleAddPdfLimit = async () => {
+    if (!token) return;
+    
     if (!pdfUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -566,12 +571,7 @@ const SuperAdd = () => {
     }
     setIsAddingPdf(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/increase-pdf-limit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: pdfUsername, increaseAmount: amountToAdd }),
-      });
-      const data = await response.json();
+      const data = await adminApi.increasePdfLimit(token, { username: pdfUsername, increaseAmount: amountToAdd });
       if (data.success) {
         toast({
           title: "添加成功",
@@ -591,6 +591,8 @@ const SuperAdd = () => {
   };
 
   const handleDecreasePdfLimit = async () => {
+    if (!token) return;
+    
     if (!decreasePdfUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -602,12 +604,7 @@ const SuperAdd = () => {
     }
     setIsDecreasingPdf(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: decreasePdfUsername, decreaseAmount: amountToDecrease }),
-      });
-      const data = await response.json();
+      const data = await adminApi.decreasePdfLimit(token, { username: decreasePdfUsername, decreaseAmount: amountToDecrease });
       if (data.success) {
         toast({
           title: "减少成功",
@@ -627,18 +624,15 @@ const SuperAdd = () => {
   };
 
   const handleResetPdfLimit = async () => {
+    if (!token) return;
+    
     if (!resetPdfUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
     }
     setIsResettingPdf(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/reset-pdf-limit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: resetPdfUsername }),
-      });
-      const data = await response.json();
+      const data = await adminApi.resetPdfLimit(token, { username: resetPdfUsername });
       if (data.success) {
         toast({ title: "重置成功", description: `已将用户 ${resetPdfUsername} 的PDF积分重置为 0` });
         setResetPdfUsername("");
@@ -1483,9 +1477,11 @@ const SuperAdd = () => {
                     登录统计图表
                   </CardTitle>
                   <CardDescription>
-                    {statsViewMode === "day" ? "展示当日各时段的用户登录情况" : 
-                     statsViewMode === "week" ? "展示过去7天的用户登录趋势" : 
-                     "展示过去30天的用户登录趋势"}
+                    {statsViewMode === "day"
+                      ? "展示当日各时段的用户登录情况"
+                      : statsViewMode === "week"
+                        ? "展示过去7天的用户登录趋势"
+                        : "展示过去30天的用户登录趋势"}
                   </CardDescription>
                 </div>
                 {statsViewMode === "day" && (
@@ -1495,7 +1491,7 @@ const SuperAdd = () => {
                         variant="outline"
                         className={cn(
                           "w-[200px] justify-start text-left font-normal",
-                          !selectedDate && "text-muted-foreground"
+                          !selectedDate && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -1516,7 +1512,7 @@ const SuperAdd = () => {
                   </Popover>
                 )}
               </div>
-              
+
               {/* 视图切换按钮 */}
               <div className="flex items-center gap-2">
                 <Button
@@ -1610,73 +1606,71 @@ const SuperAdd = () => {
                   暂无登录数据
                 </div>
               )
+            ) : // 周/月视图 - 每日统计
+            isLoadingRangeStats ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : dailyStats.length > 0 ? (
+              <div className="w-full h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="dateLabel"
+                      tick={{ fontSize: 12 }}
+                      interval={statsViewMode === "month" ? 4 : 0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number, name: string) => [
+                        value,
+                        name === "totalLogins" ? "登录次数" : "独立用户数",
+                      ]}
+                      labelFormatter={(label) => `日期: ${label}`}
+                    />
+                    <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                    <Line
+                      type="monotone"
+                      dataKey="totalLogins"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
+                      name="totalLogins"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="uniqueUsers"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--accent))", strokeWidth: 2 }}
+                      name="uniqueUsers"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
-              // 周/月视图 - 每日统计
-              isLoadingRangeStats ? (
-                <div className="flex items-center justify-center h-[300px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : dailyStats.length > 0 ? (
-                <div className="w-full h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis
-                        dataKey="dateLabel"
-                        tick={{ fontSize: 12 }}
-                        interval={statsViewMode === "month" ? 4 : 0}
-                        angle={-45}
-                        textAnchor="end"
-                        height={60}
-                      />
-                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                        }}
-                        formatter={(value: number, name: string) => [
-                          value,
-                          name === "totalLogins" ? "登录次数" : "独立用户数",
-                        ]}
-                        labelFormatter={(label) => `日期: ${label}`}
-                      />
-                      <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
-                      <Line 
-                        type="monotone" 
-                        dataKey="totalLogins" 
-                        stroke="hsl(var(--primary))" 
-                        strokeWidth={2}
-                        dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
-                        name="totalLogins"
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="uniqueUsers" 
-                        stroke="hsl(var(--accent))" 
-                        strokeWidth={2}
-                        dot={{ fill: "hsl(var(--accent))", strokeWidth: 2 }}
-                        name="uniqueUsers"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                  暂无登录数据
-                </div>
-              )
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无登录数据
+              </div>
             )}
-            
+
             <div className="mt-4 flex justify-end">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => statsViewMode === "day" ? fetchHourlyStats() : fetchRangeStats(statsViewMode)} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => (statsViewMode === "day" ? fetchHourlyStats() : fetchRangeStats(statsViewMode))}
                 disabled={isLoadingHourlyStats || isLoadingRangeStats}
               >
-                {(isLoadingHourlyStats || isLoadingRangeStats) ? (
+                {isLoadingHourlyStats || isLoadingRangeStats ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <RotateCcw className="h-4 w-4 mr-2" />
