@@ -141,7 +141,7 @@ const SuperAdd = () => {
 
   const { toast } = useToast();
 
-  const API_BASE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
 
   // 过滤和分页逻辑
   const filteredUsers = useMemo(() => {
@@ -443,7 +443,7 @@ const SuperAdd = () => {
   };
 
   const handleVerify = () => {
-    if (verifyUsername === "zxx" && verifyPassword === "991218aa") {
+    if (verifyUsername === "zxx" && verifyPassword === "991218zxnmA-") {
       localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
       setIsVerified(true);
     } else {
