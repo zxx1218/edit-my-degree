@@ -28,6 +28,11 @@ import {
   Download,
   BarChart3,
   CalendarIcon,
+  FileText,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  Bug,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -141,6 +146,19 @@ const SuperAdd = () => {
   const [rangeSummary, setRangeSummary] = useState<RangeSummary | null>(null);
   const [isLoadingRangeStats, setIsLoadingRangeStats] = useState(false);
   const [statsViewMode, setStatsViewMode] = useState<"day" | "week" | "month">("day");
+
+  // 系统日志相关状态
+  interface LogItem {
+    id: string;
+    level: string;
+    message: string;
+    source: string | null;
+    details: string | null;
+    created_at: string;
+  }
+  const [logs, setLogs] = useState<LogItem[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [logSearchQuery, setLogSearchQuery] = useState("");
 
   const { toast } = useToast();
 
@@ -294,8 +312,49 @@ const SuperAdd = () => {
       fetchHourlyStats();
       fetchUsers();
       fetchCards();
+      fetchLogs();
     }
   }, [isVerified]);
+
+  // 获取系统日志
+  const fetchLogs = async (searchTerm?: string) => {
+    if (!token) return;
+
+    setIsLoadingLogs(true);
+    try {
+      const data = await adminApi.getSystemLogs(token, { 
+        limit: 200, 
+        search: searchTerm || logSearchQuery || undefined 
+      });
+      if (data.success) {
+        setLogs(data.logs || []);
+      } else {
+        throw new Error(data.error || "获取日志失败");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "获取日志失败",
+        description: error.message,
+      });
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  // 获取日志级别对应的样式
+  const getLogLevelStyle = (level: string) => {
+    switch (level.toLowerCase()) {
+      case 'error':
+        return { icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-200 dark:border-red-800' };
+      case 'warn':
+        return { icon: AlertTriangle, color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-950/30', border: 'border-yellow-200 dark:border-yellow-800' };
+      case 'debug':
+        return { icon: Bug, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-950/30', border: 'border-purple-200 dark:border-purple-800' };
+      default:
+        return { icon: Info, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-200 dark:border-blue-800' };
+    }
+  };
 
   const fetchCards = async () => {
     if (!token) return;
@@ -1682,6 +1741,110 @@ const SuperAdd = () => {
                   <RotateCcw className="h-4 w-4 mr-2" />
                 )}
                 刷新数据
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 系统日志 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <FileText className="h-5 w-5 text-primary" />
+                  系统日志
+                </CardTitle>
+                <CardDescription>显示最近200条系统运行日志</CardDescription>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="搜索日志..."
+                    value={logSearchQuery}
+                    onChange={(e) => setLogSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && fetchLogs()}
+                    className="pl-9 h-10"
+                  />
+                </div>
+                <Button
+                  onClick={() => fetchLogs()}
+                  variant="outline"
+                  size="sm"
+                  disabled={isLoadingLogs}
+                  className="h-10 px-4"
+                >
+                  {isLoadingLogs ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingLogs ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : logs.length > 0 ? (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="max-h-[500px] overflow-y-auto font-mono text-sm">
+                  {logs.map((log) => {
+                    const style = getLogLevelStyle(log.level);
+                    const LogIcon = style.icon;
+                    return (
+                      <div
+                        key={log.id}
+                        className={`flex items-start gap-3 px-4 py-3 border-b last:border-b-0 ${style.bg} ${style.border}`}
+                      >
+                        <LogIcon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${style.color}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <Badge
+                              variant="outline"
+                              className={`text-xs uppercase ${style.color} border-current`}
+                            >
+                              {log.level}
+                            </Badge>
+                            {log.source && (
+                              <Badge variant="secondary" className="text-xs">
+                                {log.source}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss", { locale: zhCN })}
+                            </span>
+                          </div>
+                          <div className="text-foreground break-words">{log.message}</div>
+                          {log.details && (
+                            <div className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap break-words bg-background/50 p-2 rounded">
+                              {log.details}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>暂无日志记录</p>
+                <p className="text-sm mt-2">系统日志将在这里显示</p>
+              </div>
+            )}
+            <div className="mt-4 flex justify-between items-center text-sm text-muted-foreground">
+              <span>共 {logs.length} 条日志</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setLogSearchQuery("");
+                  fetchLogs("");
+                }}
+                disabled={isLoadingLogs}
+              >
+                清除筛选
               </Button>
             </div>
           </CardContent>
