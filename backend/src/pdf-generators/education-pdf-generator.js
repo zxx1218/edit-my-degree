@@ -56,7 +56,7 @@ const generateEducationPdf = async (req, res) => {
     }
 
     // 模板路径
-    const templatePath = path.join(__dirname, '../assets', 'xueli_tmp.pdf');
+    const templatePath = path.join(__dirname, '../../assets', 'xueli_tmp.pdf');
     console.log('PDF模板路径:', templatePath);
     
     // 检查模板文件是否存在
@@ -89,8 +89,8 @@ const generateEducationPdf = async (req, res) => {
     let defaultFont, sourceHanFont;
     try {
       console.log('尝试加载自定义中文字体...');
-      const defaultFontPath = path.join(__dirname, '../fonts', 'msyh.ttf');
-      const sourceHanFontPath = path.join(__dirname, '../fonts', 'SourceHanSansK-Regular.TTF');
+      const defaultFontPath = path.join(__dirname, '../../fonts', 'msyh.ttf');
+      const sourceHanFontPath = path.join(__dirname, '../../fonts', 'SourceHanSansK-Regular.TTF');
       
       console.log('字体路径:', { defaultFontPath, sourceHanFontPath });
       
