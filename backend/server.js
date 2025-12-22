@@ -7,6 +7,9 @@ require('dotenv').config({ path: '../.env' }); // 修改这里，指向项目根
 const { initializeDatabaseConnection, createTables } = require('./src/database/init');
 const { setupRoutes } = require('./src/routes');
 
+// 引入日志模块
+require('./src/logger');
+
 const app = express();
 app.set('trust proxy', 1); // 添加这一行以信任代理
 const PORT = process.env.PORT || 3001;
