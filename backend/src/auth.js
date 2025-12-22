@@ -1,8 +1,4 @@
 const jwt = require('jsonwebtoken');
-
-// JWT 密钥
-const JWT_SECRET = process.env.JWT_SECRET;
-
 /**
  * 初始化认证模块
  * @param {Object} db - 数据库连接实例
@@ -72,7 +68,7 @@ function initialize(db, jwtSecret) {
       const token = jwt.sign(
         { id: user.id, username: user.username },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
       );
       
       res.json({
@@ -134,7 +130,7 @@ function initialize(db, jwtSecret) {
       const token = jwt.sign(
         { id: admin.id, username: admin.username, isAdmin: true },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: process.env.SUPERADD_JWT_EXPIRES_IN || '72h' }
       );
       
       res.json({

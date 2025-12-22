@@ -36,7 +36,7 @@ const registrationLimiter = rateLimit({
   max: 2, // 限制每个IP在窗口期内最多发送10个请求
   message: {
     success: false,
-    error: '注册请求过于频繁'
+    error: '傻逼，注册这来快，你IP被封了！'
   },
   standardHeaders: true, // 返回标准的RateLimit-*头部
   legacyHeaders: false, // 不返回X-RateLimit-*头部
@@ -48,7 +48,7 @@ const generalLimiter = rateLimit({
   max: 100,
   message: {
     success: false,
-    error: '请求过于频繁'
+    error: '傻逼，请求这来多干啥？你IP被封了！'
   },
   standardHeaders: true,
   legacyHeaders: false,
