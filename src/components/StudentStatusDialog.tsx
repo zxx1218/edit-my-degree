@@ -258,21 +258,16 @@ const handleConfirmGenerate = async () => {
       const user = JSON.parse(currentUser);
       console.log("Current user:", user);
 
-      // 调用后端接口扣除PDF积分
-      const pdfLimitResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/decrease-pdf-limit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: user.username, decreaseAmount: 30 }),
-      });
+      // 导入API函数
+      const { decreasePdfLimit } = await import('@/lib/api');
 
-      const pdfLimitData = await pdfLimitResponse.json();
+      // 调用后端API扣除PDF积分
+      const pdfLimitData = await decreasePdfLimit(user.username, 30);
 
       console.log("PDF limit result:", pdfLimitData);
 
-      if (!pdfLimitResponse.ok || !pdfLimitData.success) {
-        const errorMsg = pdfLimitData.error || "扣除PDF下载积分失败";
+      if (!pdfLimitData?.success) {
+        const errorMsg = pdfLimitData?.message || pdfLimitData?.error || "扣除PDF下载积分失败";
         toast.error(errorMsg);
         return;
       }
@@ -304,11 +299,41 @@ const handleConfirmGenerate = async () => {
         degreePhoto: formData.degreePhoto,
       };
 
+      // 准备签名参数
+      const timestamp = Date.now().toString();
+      const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
+      
+      // 生成签名
+      const method = 'POST';
+      const requestUrl = '/api/generate-student-status-pdf';
+      const sortedParams = Object.keys(pdfData).sort().map(key => `${key}=${pdfData[key as keyof typeof pdfData]}`).join('&');
+      const signString = `${method.toUpperCase()}${requestUrl}${sortedParams}${timestamp}`;
+      
+      let hash = 0;
+      for (let i = 0; i < signString.length; i++) {
+        const char = signString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      // 使用从环境变量获取的密钥影响哈希值
+      const secretKey = import.meta.env.VITE_API_SECRET_KEY || 'edit_my_degree_api_secret_key';
+      for (let i = 0; i < secretKey.length; i++) {
+        const char = secretKey.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      const signature = Math.abs(hash).toString(16);
+
       // 调用后端接口生成学籍验证报告PDF
       const generateResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/generate-student-status-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Timestamp': timestamp,
+          'X-App-Key': appKey,
+          'X-Signature': signature,
         },
         body: JSON.stringify(pdfData),
       });

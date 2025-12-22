@@ -59,18 +59,7 @@ const signatureValidationMiddleware = (req, res, next) => {
   // 免签接口白名单
   const whitelist = [
     '/api/auth',
-    '/api/admin-auth',
-    '/api/get-today-login-count',
-    '/api/get-hourly-login-stats',
-    '/api/get-login-stats-range',
-    '/api/generate-degree-pdf',
-    '/api/generate-education-pdf',
-    '/api/generate-student-status-pdf',
-    // 不会影响安全性，因为decrease-pdf-limit接口本身已经有逻辑验证用户身份
-    // （通过username参数），并且只会在用户确实拥有足够积分时才进行扣除操作。
-    // '/api/decrease-pdf-limit', 
-    '/api/manage-cards',
-    '/api/decrease-user-logins'
+    '/api/admin-auth'
   ];
   
   // 检查是否在白名单中
@@ -197,14 +186,14 @@ function setupRoutes(app, db, JWT_SECRET) {
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));
 
-  // 生成学位验证报告PDF接口 (不需要签名验证)
-  app.post('/api/generate-degree-pdf', generalLimiter, generateDegreePdf);
+  // 生成学位验证报告PDF接口 (需要签名验证)
+  app.post('/api/generate-degree-pdf', generalLimiter, signatureValidationMiddleware, generateDegreePdf);
 
-  // 生成学历PDF接口 (不需要签名验证)
-  app.post('/api/generate-education-pdf', generalLimiter, generateEducationPdf);
+  // 生成学历PDF接口 (需要签名验证)
+  app.post('/api/generate-education-pdf', generalLimiter, signatureValidationMiddleware, generateEducationPdf);
 
-  // 教育部学籍在线验证报告pdf生成接口 (不需要签名验证)
-  app.post('/api/generate-student-status-pdf', generalLimiter, generateStudentStatusPdf);
+  // 教育部学籍在线验证报告pdf生成接口 (需要签名验证)
+  app.post('/api/generate-student-status-pdf', generalLimiter, signatureValidationMiddleware, generateStudentStatusPdf);
 }
 
 module.exports = {

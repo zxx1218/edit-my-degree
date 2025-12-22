@@ -153,3 +153,17 @@ export const changePassword = async (username: string, oldPassword: string, newP
 
   return data;
 };
+
+// 减少PDF积分API
+export const decreasePdfLimit = async (username: string, decreaseAmount: number) => {
+  const options = createSignedRequestOptions('POST', '/api/decrease-pdf-limit', { username, decreaseAmount });
+  const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, options);
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || '减少PDF积分失败');
+  }
+
+  return data;
+};

@@ -197,21 +197,13 @@ const handleConfirmGenerate = async () => {
       const user = JSON.parse(currentUser);
       console.log("Current user:", user);
 
+      // 导入API函数
+      const { decreasePdfLimit } = await import('@/lib/api');
+
       // 调用后端API扣除PDF积分
-      const pdfLimitResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/decrease-pdf-limit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: user.username,
-          decreaseAmount: 30,
-        }),
-      });
+      const pdfLimitData = await decreasePdfLimit(user.username, 30);
 
-      const pdfLimitData = await pdfLimitResponse.json();
-
-      if (!pdfLimitResponse.ok || !pdfLimitData?.success) {
+      if (!pdfLimitData?.success) {
         const errorMsg = pdfLimitData?.message || pdfLimitData?.error || "扣除PDF下载积分失败";
         toast.error(errorMsg);
         return;
@@ -226,6 +218,45 @@ const handleConfirmGenerate = async () => {
       setShowLoadingDialog(true);
       setIsGenerating(true);
 
+      const pdfData = {
+        name: formData.name,
+        gender: formData.gender,
+        birthDate: formatDateToChinese(formData.birthDate),
+        degreeDate: formatDateToChinese(formData.degreeDate),
+        university: formData.university,
+        degreeType: formData.degreeType,
+        major: formData.major,
+        certificateNumber: formData.certificateNumber,
+        photo: formData.photo,
+      };
+
+      // 准备签名参数
+      const timestamp = Date.now().toString();
+      const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
+      
+      // 生成签名
+      const method = 'POST';
+      const apiUrl = '/api/generate-degree-pdf';
+      const sortedParams = Object.keys(pdfData).sort().map(key => `${key}=${pdfData[key as keyof typeof pdfData]}`).join('&');
+      const signString = `${method.toUpperCase()}${apiUrl}${sortedParams}${timestamp}`;
+      
+      let hash = 0;
+      for (let i = 0; i < signString.length; i++) {
+        const char = signString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      // 使用从环境变量获取的密钥影响哈希值
+      const secretKey = import.meta.env.VITE_API_SECRET_KEY || 'edit_my_degree_api_secret_key';
+      for (let i = 0; i < secretKey.length; i++) {
+        const char = secretKey.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      const signature = Math.abs(hash).toString(16);
+
       // Call the PDF generation API
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/generate-degree-pdf`,
@@ -233,18 +264,11 @@ const handleConfirmGenerate = async () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-Timestamp": timestamp,
+            "X-App-Key": appKey,
+            "X-Signature": signature,
           },
-          body: JSON.stringify({
-            name: formData.name,
-            gender: formData.gender,
-            birthDate: formatDateToChinese(formData.birthDate),
-            degreeDate: formatDateToChinese(formData.degreeDate),
-            university: formData.university,
-            degreeType: formData.degreeType,
-            major: formData.major,
-            certificateNumber: formData.certificateNumber,
-            photo: formData.photo,
-          }),
+          body: JSON.stringify(pdfData),
         }
       );
 
