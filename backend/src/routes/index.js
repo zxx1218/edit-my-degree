@@ -186,13 +186,13 @@ function setupRoutes(app, db, JWT_SECRET) {
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));
 
-  // 生成学位验证报告PDF接口 (需要签名验证)
+  // 生成学位验证报告PDF接口
   app.post('/api/generate-degree-pdf', generalLimiter, signatureValidationMiddleware, generateDegreePdf);
 
-  // 生成学历PDF接口 (需要签名验证)
+  // 生成学历PDF接口
   app.post('/api/generate-education-pdf', generalLimiter, signatureValidationMiddleware, generateEducationPdf);
 
-  // 教育部学籍在线验证报告pdf生成接口 (需要签名验证)
+  // 教育部学籍在线验证报告pdf生成接口
   app.post('/api/generate-student-status-pdf', generalLimiter, signatureValidationMiddleware, generateStudentStatusPdf);
 }
 
