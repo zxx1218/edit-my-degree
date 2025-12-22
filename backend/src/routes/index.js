@@ -58,8 +58,8 @@ const generalLimiter = rateLimit({
 const signatureValidationMiddleware = (req, res, next) => {
   // 免签接口白名单
   const whitelist = [
-    '/api/auth',
-    '/api/admin-auth'
+    '/api/auth', // 登录接口
+    '/api/admin-auth' // 管理员登录接口
   ];
   
   // 检查是否在白名单中
@@ -67,12 +67,28 @@ const signatureValidationMiddleware = (req, res, next) => {
     return next();
   }
   
+  // 获取客户端IP地址
+  const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                  (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
+                  req.headers['x-real-ip'] || 'unknown';
+  
   const timestamp = req.headers['x-timestamp'];
   const signature = req.headers['x-signature'];
   const appKey = req.headers['x-app-key'];
   
   // 检查必要头部是否存在
   if (!timestamp || !signature || !appKey) {
+    console.warn('签名验证失败: 缺少必要的认证信息', {
+      url: req.path,
+      method: req.method,
+      headers: {
+        timestamp: !!timestamp,
+        signature: !!signature,
+        appKey: !!appKey
+      },
+      userAgent: req.get('User-Agent'),
+      ip: clientIp
+    });
     return res.status(401).json({
       success: false,
       error: '缺少必要的认证信息'
@@ -83,18 +99,35 @@ const signatureValidationMiddleware = (req, res, next) => {
   const requestTime = parseInt(timestamp);
   const currentTime = Date.now();
   if (Math.abs(currentTime - requestTime) > 5 * 60 * 1000) {
+    console.warn('签名验证失败: 请求已过期', {
+      url: req.path,
+      method: req.method,
+      requestTime,
+      currentTime,
+      diff: Math.abs(currentTime - requestTime),
+      userAgent: req.get('User-Agent'),
+      ip: clientIp
+    });
     return res.status(401).json({
       success: false,
-      error: '请求已过期'
+      error: '傻逼，你这请求他妈过期了！'
     });
   }
   
   // 验证App Key（在实际应用中应从数据库或配置文件中获取）
   const validAppKeys = process.env.VALID_APP_KEYS ? process.env.VALID_APP_KEYS.split(',') : ['default_app_key'];
   if (!validAppKeys.includes(appKey)) {
+    console.warn('签名验证失败: 无效的App Key', {
+      url: req.path,
+      method: req.method,
+      appKey,
+      validAppKeys,
+      userAgent: req.get('User-Agent'),
+      ip: clientIp
+    });
     return res.status(401).json({
       success: false,
-      error: '无效的App Key'
+      error: '傻逼，你他妈这是无效的Key，你他妈的再检查检查！'
     });
   }
   
@@ -136,13 +169,29 @@ const signatureValidationMiddleware = (req, res, next) => {
   
   // 验证签名
   if (signature !== expectedSignature) {
+    console.warn('签名验证失败: 签名不匹配', {
+      url: req.path,
+      method: req.method,
+      receivedSignature: signature,
+      expectedSignature,
+      signString,
+      userAgent: req.get('User-Agent'),
+      ip: clientIp
+    });
     return res.status(401).json({
       success: false,
-      error: '傻逼，签名验证失败了，听见了没？'
+      error: '傻逼，失败了，听见了没？'
     });
   }
   
   // 签名验证通过
+  console.info('签名验证通过', {
+    url: req.path,
+    method: req.method,
+    appKey,
+    userAgent: req.get('User-Agent'),
+    ip: clientIp
+  });
   next();
 };
 
@@ -167,20 +216,34 @@ function setupRoutes(app, db, JWT_SECRET) {
     }
   });
   
-  // 初始化各接口模块 (需要签名验证的接口)
+  // 初始化各接口模块
+  // 获取用户数据接口 - 用于获取指定用户的所有相关数据
   app.post('/api/get-user-data', generalLimiter, signatureValidationMiddleware, getUserDataModule.initialize(db));
+  // 更新数据接口 - 用于对指定表执行插入、更新或删除操作
   app.post('/api/update-data', generalLimiter, signatureValidationMiddleware, updateDataModule.initialize(db));
+  // 更新用户登录次数接口 - 用于增加或减少用户剩余登录次数
   app.post('/api/update-user-logins', generalLimiter, signatureValidationMiddleware, updateUserLoginsModule.initialize(db));
+  // 修改密码接口 - 用于用户更改自己的账户密码
   app.post('/api/change-password', generalLimiter, signatureValidationMiddleware, changePasswordModule.initialize(db));
+  // 重置用户登录次数接口 - 用于将用户剩余登录次数重置为0
   app.post('/api/reset-user-logins', generalLimiter, signatureValidationMiddleware, resetUserLoginsModule.initialize(db));
+  // 减少用户登录次数接口 - 用于减少指定用户的登录次数
   app.post('/api/decrease-user-logins', generalLimiter, signatureValidationMiddleware, decreaseUserLoginsModule.initialize(db));
+  // 获取所有用户接口 - 用于管理员获取系统中的所有用户信息
   app.post('/api/get-all-users', generalLimiter, signatureValidationMiddleware, getAllUsersModule.initialize(db, JWT_SECRET));
+  // 查询用户接口 - 用于根据条件查询特定用户信息
   app.post('/api/query-user', generalLimiter, signatureValidationMiddleware, queryUserModule.initialize(db));
+  // 减少PDF限制接口 - 用于减少用户PDF下载积分
   app.post('/api/decrease-pdf-limit', generalLimiter, signatureValidationMiddleware, decreasePdfLimitModule.initialize(db));
+  // 获取今日登录统计接口 - 用于获取当天系统的登录统计数据
   app.post('/api/get-today-login-count', generalLimiter, signatureValidationMiddleware, getTodayLoginCountModule.initialize(db));
+  // 增加PDF限制接口 - 用于增加用户PDF下载积分
   app.post('/api/increase-pdf-limit', generalLimiter, signatureValidationMiddleware, increasePdfLimitModule.initialize(db));
+  // 重置PDF限制接口 - 用于重置用户PDF下载积分为默认值
   app.post('/api/reset-pdf-limit', generalLimiter, signatureValidationMiddleware, resetPdfLimitModule.initialize(db));
+  // 获取每小时登录统计接口 - 用于获取指定日期每小时的登录统计数据
   app.post('/api/get-hourly-login-stats', generalLimiter, signatureValidationMiddleware, getHourlyLoginStatsModule.initialize(db));
+  // 获取登录统计范围接口 - 用于获取一周或一月内的登录统计数据
   app.post('/api/get-login-stats-range', generalLimiter, signatureValidationMiddleware, getLoginStatsRangeModule.initialize(db));
   
   // 添加充值卡管理接口
