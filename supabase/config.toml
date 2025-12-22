@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.verify-admin]
 verify_jwt = false
+
+[functions.get-system-logs]
+verify_jwt = false
+
+[functions.add-system-log]
+verify_jwt = false
