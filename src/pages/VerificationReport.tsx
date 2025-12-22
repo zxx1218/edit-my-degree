@@ -68,6 +68,33 @@ const VerificationReport = () => {
         return;
       }
 
+      // 生成签名所需参数
+      const timestamp = Date.now().toString();
+      const params = { username, decreaseLogins: 1 };
+      
+      // 生成签名
+      const method = 'POST';
+      const url = '/api/decrease-user-logins';
+      const sortedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
+      const signString = `${method.toUpperCase()}${url}${sortedParams}${timestamp}`;
+      
+      let hash = 0;
+      for (let i = 0; i < signString.length; i++) {
+        const char = signString.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      const secretKey = import.meta.env.VITE_API_SECRET_KEY || 'default_secret_key';
+      for (let i = 0; i < secretKey.length; i++) {
+        const char = secretKey.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      const signature = Math.abs(hash).toString(16);
+      const appKey = import.meta.env.VITE_APP_KEY || 'default_app_key';
+
       // 调用本地 API 扣除登录次数
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"}/decrease-user-logins`,
@@ -75,6 +102,9 @@ const VerificationReport = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-Timestamp": timestamp,
+            "X-Signature": signature,
+            "X-App-Key": appKey,
           },
           body: JSON.stringify({ username, decreaseLogins: 1 }),
         },
