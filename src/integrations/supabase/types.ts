@@ -463,33 +463,6 @@ export type Database = {
           },
         ]
       }
-      system_logs: {
-        Row: {
-          created_at: string
-          details: string | null
-          id: string
-          level: string
-          message: string
-          source: string | null
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          level?: string
-          message: string
-          source?: string | null
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          level?: string
-          message?: string
-          source?: string | null
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           created_at: string | null
