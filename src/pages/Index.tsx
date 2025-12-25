@@ -9,14 +9,14 @@ import ActionMenuDialog from "@/components/ActionMenuDialog";
 import AddRecordDialog from "@/components/AddRecordDialog";
 import { toast } from "sonner";
 import { getUserData, updateData } from "@/lib/api";
-import { 
-  sortByDegreeLevel, 
-  sortByDegreeType, 
-  insertRecordAtCorrectPosition, 
+import {
+  sortByDegreeLevel,
+  sortByDegreeType,
+  insertRecordAtCorrectPosition,
   insertDegreeRecordAtCorrectPosition,
   extractDegreeType,
   DegreeLevel,
-  DegreeType 
+  DegreeType,
 } from "@/lib/educationSort";
 
 interface EducationRecord {
@@ -39,7 +39,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  
+
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
@@ -59,7 +59,7 @@ const Index = () => {
         setCurrentUserId(user.id);
 
         const data = await getUserData(user.id);
-        
+
         // 转换数据格式以匹配前端接口
         const convertToEducationRecord = (item: any, type: string): EducationRecord => ({
           id: item.id,
@@ -76,15 +76,15 @@ const Index = () => {
         if (data.studentStatus.length === 0) {
           try {
             const defaultData = {
-              name: "新用户",
+              name: "浆果儿",
               school: "清华大学",
-              major: "汉语言文学",
+              major: "经济与金融",
               study_type: "全日制",
               degree_level: "本科",
             };
-            
+
             const result = await updateData("student_status", "insert", user.id, defaultData);
-            
+
             if (result.success && result.data) {
               data.studentStatus = result.data;
             }
@@ -94,8 +94,12 @@ const Index = () => {
         }
 
         // 排序后设置数据
-        setStudentStatus(sortByDegreeLevel(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
-        setEducationRecords(sortByDegreeLevel(data.education.map((item: any) => convertToEducationRecord(item, "education"))));
+        setStudentStatus(
+          sortByDegreeLevel(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))),
+        );
+        setEducationRecords(
+          sortByDegreeLevel(data.education.map((item: any) => convertToEducationRecord(item, "education"))),
+        );
         setDegreeRecords(sortByDegreeType(data.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
         setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
       } catch (error) {
@@ -120,7 +124,7 @@ const Index = () => {
 
   const handleAdd = () => {
     if (!selectedRecord) return;
-    
+
     // 考研信息不需要选择学历层次
     if (selectedRecord.type === "exam") {
       handleAddWithLevel("本科"); // 考研默认使用本科
@@ -135,19 +139,19 @@ const Index = () => {
     try {
       const tableMap: Record<string, string> = {
         "student-status": "student_status",
-        "education": "education",
-        "degree": "degree",
-        "exam": "exam",
+        education: "education",
+        degree: "degree",
+        exam: "exam",
       };
 
       const table = tableMap[selectedRecord.type];
-      
+
       // 根据类型构建不同的数据
       let newData;
-      
+
       if (selectedRecord.type === "degree") {
         newData = {
-          name: "新用户",
+          name: "浆果儿",
           school: "新学校",
           degree_type: level, // 学位使用 degree_type
           degree_level: "", // 学位的 degree_level 可以为空
@@ -157,7 +161,7 @@ const Index = () => {
         // 考研信息不需要 degree_level 字段，使用当前年份作为默认值
         const currentYear = new Date().getFullYear();
         newData = {
-          name: "新用户",
+          name: "浆果儿",
           school: "新学校",
           year: currentYear.toString(),
           note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
@@ -165,7 +169,7 @@ const Index = () => {
       } else {
         // 学历/学籍使用 degree_level
         newData = {
-          name: "新用户",
+          name: "浆果儿",
           school: "新学校",
           major: "新专业",
           study_type: "全日制",
@@ -174,12 +178,12 @@ const Index = () => {
       }
 
       const result = await updateData(table, "insert", currentUserId, newData);
-      
+
       if (result.success && result.data) {
         const newRecord: EducationRecord = {
           id: result.data[0].id,
           school: result.data[0].school,
-          major: selectedRecord.type === "exam" ? "" : (result.data[0].major || ""),
+          major: selectedRecord.type === "exam" ? "" : result.data[0].major || "",
           studyType: result.data[0].study_type || "",
           degreeLevel: result.data[0].degree_level || "",
           degreeType: result.data[0].degree_type || "",
@@ -217,16 +221,15 @@ const Index = () => {
     try {
       const tableMap: Record<string, string> = {
         "student-status": "student_status",
-        "education": "education",
-        "degree": "degree",
-        "exam": "exam",
+        education: "education",
+        degree: "degree",
+        exam: "exam",
       };
 
       const table = tableMap[selectedRecord.type];
       await updateData(table, "delete", currentUserId, undefined, selectedRecord.id);
 
-      const deleteFromList = (list: EducationRecord[]) =>
-        list.filter((r) => r.id !== selectedRecord.id);
+      const deleteFromList = (list: EducationRecord[]) => list.filter((r) => r.id !== selectedRecord.id);
 
       switch (selectedRecord.type) {
         case "student-status":
@@ -252,11 +255,11 @@ const Index = () => {
 
   const handleCardClick = async (record: EducationRecord) => {
     setLoadingDetail(true);
-    
+
     try {
       // 先加载详细数据
       const data = await getUserData(currentUserId);
-      
+
       // 根据类型找到对应的详细记录
       let detailRecord = null;
       if (record.type === "student-status") {
@@ -268,7 +271,7 @@ const Index = () => {
       } else if (record.type === "exam") {
         detailRecord = data.exam.find((r: any) => r.id === record.id);
       }
-      
+
       // 数据加载完成后再跳转
       if (record.type === "student-status") {
         navigate(`/student-status/${record.id}`, { state: { record, detailRecord } });
@@ -291,13 +294,13 @@ const Index = () => {
     try {
       const tableMap: Record<string, string> = {
         "student-status": "student_status",
-        "education": "education",
-        "degree": "degree",
-        "exam": "exam",
+        education: "education",
+        degree: "degree",
+        exam: "exam",
       };
 
       const table = tableMap[updatedRecord.type];
-      
+
       // 构建数据库更新数据，将前端字段名映射到数据库字段名
       const updatePayload: any = {
         school: updatedRecord.school,
@@ -320,8 +323,7 @@ const Index = () => {
 
       await updateData(table, "update", currentUserId, updatePayload, updatedRecord.id);
 
-      const updateList = (list: EducationRecord[]) =>
-        list.map((r) => (r.id === updatedRecord.id ? updatedRecord : r));
+      const updateList = (list: EducationRecord[]) => list.map((r) => (r.id === updatedRecord.id ? updatedRecord : r));
 
       switch (updatedRecord.type) {
         case "student-status":
@@ -334,11 +336,9 @@ const Index = () => {
           setDegreeRecords(sortByDegreeType(updateList(degreeRecords)));
           break;
         case "exam":
-          setExamRecords(examRecords.map((r) => 
-            r.id === updatedRecord.id 
-              ? { ...updatedRecord, year: updatedRecord.major } 
-              : r
-          ));
+          setExamRecords(
+            examRecords.map((r) => (r.id === updatedRecord.id ? { ...updatedRecord, year: updatedRecord.major } : r)),
+          );
           break;
       }
 
@@ -361,7 +361,7 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-8">
       <EducationHeader />
 
-      <div className="space-y-4 mt-4">
+      <div className="space-y-2 mt-4">
         <section>
           <SectionHeader
             title="学籍信息"
@@ -369,13 +369,13 @@ const Index = () => {
             promptText="还有学籍没有显示出来？"
             actionText="尝试绑定"
             onAction={() => {
-              setSelectedRecord({ 
-                id: '', 
-                school: '', 
-                major: '', 
-                studyType: '', 
-                degreeLevel: '', 
-                type: 'student-status' 
+              setSelectedRecord({
+                id: "",
+                school: "",
+                major: "",
+                studyType: "",
+                degreeLevel: "",
+                type: "student-status",
               });
               setIsAddDialogOpen(true);
             }}
@@ -403,13 +403,13 @@ const Index = () => {
             promptText="还有学历没有显示出来？"
             actionText="尝试绑定"
             onAction={() => {
-              setSelectedRecord({ 
-                id: '', 
-                school: '', 
-                major: '', 
-                studyType: '', 
-                degreeLevel: '', 
-                type: 'education' 
+              setSelectedRecord({
+                id: "",
+                school: "",
+                major: "",
+                studyType: "",
+                degreeLevel: "",
+                type: "education",
               });
               setIsAddDialogOpen(true);
             }}
@@ -429,16 +429,18 @@ const Index = () => {
                 />
               ))
             ) : (
-              <EmptyStateCard 
-                variant="education" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'education' 
-                })}
+              <EmptyStateCard
+                variant="education"
+                onEdit={() =>
+                  handleLongPress({
+                    id: "temp",
+                    school: "",
+                    major: "",
+                    studyType: "",
+                    degreeLevel: "",
+                    type: "education",
+                  })
+                }
               />
             )}
           </div>
@@ -451,13 +453,13 @@ const Index = () => {
             promptText="还有学位没有显示出来？"
             actionText="尝试绑定"
             onAction={() => {
-              setSelectedRecord({ 
-                id: '', 
-                school: '', 
-                major: '', 
-                studyType: '', 
-                degreeLevel: '', 
-                type: 'degree' 
+              setSelectedRecord({
+                id: "",
+                school: "",
+                major: "",
+                studyType: "",
+                degreeLevel: "",
+                type: "degree",
               });
               setIsAddDialogOpen(true);
             }}
@@ -477,16 +479,18 @@ const Index = () => {
                 />
               ))
             ) : (
-              <EmptyStateCard 
-                variant="degree" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'degree' 
-                })}
+              <EmptyStateCard
+                variant="degree"
+                onEdit={() =>
+                  handleLongPress({
+                    id: "temp",
+                    school: "",
+                    major: "",
+                    studyType: "",
+                    degreeLevel: "",
+                    type: "degree",
+                  })
+                }
               />
             )}
           </div>
@@ -509,16 +513,18 @@ const Index = () => {
                 />
               ))
             ) : (
-              <EmptyStateCard 
-                variant="exam" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'exam' 
-                })}
+              <EmptyStateCard
+                variant="exam"
+                onEdit={() =>
+                  handleLongPress({
+                    id: "temp",
+                    school: "",
+                    major: "",
+                    studyType: "",
+                    degreeLevel: "",
+                    type: "exam",
+                  })
+                }
               />
             )}
           </div>
@@ -534,10 +540,9 @@ const Index = () => {
             onAdd={handleAdd}
             onDelete={handleDelete}
             recordType={selectedRecord.type}
-            showEdit={selectedRecord.id !== 'temp'}
+            showEdit={selectedRecord.id !== "temp"}
             showDelete={
-              selectedRecord.id !== 'temp' && 
-              !(selectedRecord.type === 'student-status' && studentStatus.length === 1)
+              selectedRecord.id !== "temp" && !(selectedRecord.type === "student-status" && studentStatus.length === 1)
             }
           />
           <EditEducationDialog
