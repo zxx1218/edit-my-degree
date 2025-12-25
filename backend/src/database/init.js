@@ -53,7 +53,8 @@ async function createTables(db) {
       remaining_logins INT NOT NULL DEFAULT 0,
       pdf_limit INT NOT NULL DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT chk_pdf_limit CHECK (pdf_limit <= 90)
     )
     `,
     `
