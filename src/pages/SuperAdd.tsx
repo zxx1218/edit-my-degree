@@ -44,7 +44,6 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import * as adminApi from "@/lib/adminApi";
 
 interface User {
   id: string;
@@ -66,16 +65,15 @@ interface CardItem {
 
 // 设置一次登录后72小时内无需重新验证
 const SUPERADD_LOGIN_KEY = "superadd_login_timestamp";
-const SUPERADD_TOKEN_KEY = "superadd_token";
 const SUPERADD_SESSION_DURATION = 72 * 60 * 60 * 1000; // 72小时（毫秒）
 const USERS_PER_PAGE = 10;
 const CARDS_PER_PAGE = 10;
 
 const SuperAdd = () => {
   const [isVerified, setIsVerified] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
   const [verifyUsername, setVerifyUsername] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -167,28 +165,27 @@ const SuperAdd = () => {
   // 检查登录状态是否在72小时内
   useEffect(() => {
     const loginTimestamp = localStorage.getItem(SUPERADD_LOGIN_KEY);
-    const storedToken = localStorage.getItem(SUPERADD_TOKEN_KEY);
-    if (loginTimestamp && storedToken) {
+    if (loginTimestamp) {
       const loginTime = parseInt(loginTimestamp, 10);
       const currentTime = Date.now();
       const timeDiff = currentTime - loginTime;
 
       if (timeDiff < SUPERADD_SESSION_DURATION) {
-        setToken(storedToken);
         setIsVerified(true);
       } else {
         localStorage.removeItem(SUPERADD_LOGIN_KEY);
-        localStorage.removeItem(SUPERADD_TOKEN_KEY);
       }
     }
   }, []);
 
   const fetchTodayLoginCount = async () => {
-    if (!token) return;
-
     setIsLoadingLoginCount(true);
     try {
-      const data = await adminApi.getTodayLoginCount(token);
+      const response = await fetch(`${API_BASE_URL}/get-today-login-count`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
       if (data.success) {
         setTodayLoginCount(data.total_logins);
         setDistinctUsers(data.distinct_users);
@@ -201,14 +198,17 @@ const SuperAdd = () => {
   };
 
   const fetchHourlyStats = async (date?: Date) => {
-    if (!token) return;
-
     setIsLoadingHourlyStats(true);
     try {
       const targetDate = date || selectedDate;
       const dateString = format(targetDate, "yyyy-MM-dd");
 
-      const data = await adminApi.getHourlyLoginStats(token, { date: dateString });
+      const response = await fetch(`${API_BASE_URL}/get-hourly-login-stats`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: dateString }),
+      });
+      const data = await response.json();
       if (data.success) {
         setHourlyStats(data.hourlyStats || []);
       }
@@ -221,28 +221,20 @@ const SuperAdd = () => {
 
   // 获取周/月统计数据
   const fetchRangeStats = async (range: "week" | "month") => {
-    if (!token) return;
-
     setIsLoadingRangeStats(true);
     try {
-      const data = await adminApi.getLoginStatsRange(token, { range });
-      if (data?.success) {
-        // 确保数据格式正确
-        const dailyStatsData = Array.isArray(data.dailyStats) ? data.dailyStats : [];
-        const summaryData = data.summary && typeof data.summary === "object" ? data.summary : null;
-
-        setDailyStats(dailyStatsData);
-        setRangeSummary(summaryData);
-      } else {
-        throw new Error(data?.error || "获取周/月登录统计失败");
-      }
-    } catch (error: any) {
-      console.error("获取周/月登录统计时出错:", error);
-      toast({
-        variant: "destructive",
-        title: "获取统计失败",
-        description: error.message || "请重试",
+      const response = await fetch(`${API_BASE_URL}/get-login-stats-range`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ range }),
       });
+      const data = await response.json();
+      if (data.success) {
+        setDailyStats(data.dailyStats || []);
+        setRangeSummary(data.summary || null);
+      }
+    } catch (error) {
+      console.error("获取周/月登录统计时出错:", error);
     } finally {
       setIsLoadingRangeStats(false);
     }
@@ -298,11 +290,14 @@ const SuperAdd = () => {
   }, [isVerified]);
 
   const fetchCards = async () => {
-    if (!token) return;
-
     setIsFetchingCards(true);
     try {
-      const data = await adminApi.manageCards(token, { action: "list" });
+      const response = await fetch(`${API_BASE_URL}/manage-cards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "list" }),
+      });
+      const data = await response.json();
       if (data.success) {
         setCards(data.cards || []);
       } else {
@@ -320,8 +315,6 @@ const SuperAdd = () => {
   };
 
   const handleCreateCards = async () => {
-    if (!token) return;
-
     const values = parseInt(newCardValues);
     const count = parseInt(newCardCount);
     if (!newCardType) {
@@ -339,7 +332,12 @@ const SuperAdd = () => {
 
     setIsCreatingCards(true);
     try {
-      const data = await adminApi.manageCards(token, { action: "create", type: newCardType, values, count });
+      const response = await fetch(`${API_BASE_URL}/manage-cards`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", type: newCardType, values, count }),
+      });
+      const data = await response.json();
       if (data.success) {
         toast({ title: "创建成功", description: `已成功创建 ${data.cards.length} 张充值卡` });
         setNewCardValues("");
@@ -422,11 +420,13 @@ const SuperAdd = () => {
   };
 
   const fetchUsers = async () => {
-    if (!token) return;
-
     setIsFetchingUsers(true);
     try {
-      const data = await adminApi.getAllUsers(token);
+      const response = await fetch(`${API_BASE_URL}/get-all-users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
       if (data.success) {
         setUsers(data.users || []);
       } else {
@@ -444,13 +444,31 @@ const SuperAdd = () => {
   };
 
   const handleVerify = async () => {
+    if (!verifyUsername.trim() || !verifyPassword.trim()) {
+      toast({
+        variant: "destructive",
+        title: "验证失败",
+        description: "请输入用户名和密码",
+      });
+      return;
+    }
+
+    setIsVerifying(true);
     try {
-      const data = await adminApi.adminLogin(verifyUsername, verifyPassword);
+      const response = await fetch(`${API_BASE_URL}/verify-admin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: verifyUsername, password: verifyPassword }),
+      });
+      const data = await response.json();
+      
       if (data.success) {
         localStorage.setItem(SUPERADD_LOGIN_KEY, Date.now().toString());
-        localStorage.setItem(SUPERADD_TOKEN_KEY, data.token);
-        setToken(data.token);
         setIsVerified(true);
+        toast({
+          title: "验证成功",
+          description: `欢迎，${data.admin.username}`,
+        });
       } else {
         toast({
           variant: "destructive",
@@ -458,25 +476,30 @@ const SuperAdd = () => {
           description: data.error || "用户名或密码错误",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "验证失败",
-        description: "登录过程中发生错误",
+        description: error.message || "网络错误，请重试",
       });
+    } finally {
+      setIsVerifying(false);
     }
   };
 
   const handleResetLogins = async () => {
-    if (!token) return;
-
     if (!resetUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
     }
     setIsResetting(true);
     try {
-      const data = await adminApi.resetUserLogins(token, { username: resetUsername });
+      const response = await fetch(`${API_BASE_URL}/reset-user-logins`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: resetUsername }),
+      });
+      const data = await response.json();
       if (data.success) {
         toast({ title: "重置成功", description: `已将用户 ${resetUsername} 的登录次数重置为 0` });
         setResetUsername("");
@@ -492,8 +515,6 @@ const SuperAdd = () => {
   };
 
   const handleAddLogins = async () => {
-    if (!token) return;
-
     if (!targetUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -505,7 +526,12 @@ const SuperAdd = () => {
     }
     setIsAddingLogins(true);
     try {
-      const data = await adminApi.updateUserLogins(token, { username: targetUsername, addLogins: loginsToAdd });
+      const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: targetUsername, addLogins: loginsToAdd }),
+      });
+      const data = await response.json();
       if (data.success) {
         toast({
           title: "添加成功",
@@ -525,8 +551,6 @@ const SuperAdd = () => {
   };
 
   const handleDecreaseLogins = async () => {
-    if (!token) return;
-
     if (!decreaseUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -538,10 +562,12 @@ const SuperAdd = () => {
     }
     setIsDecreasingLogins(true);
     try {
-      const data = await adminApi.decreaseUserLogins(token, {
-        username: decreaseUsername,
-        decreaseLogins: loginsToDecrease,
+      const response = await fetch(`${API_BASE_URL}/decrease-user-logins`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: decreaseUsername, decreaseLogins: loginsToDecrease }),
       });
+      const data = await response.json();
       if (data.success) {
         toast({
           title: "减少成功",
@@ -561,8 +587,6 @@ const SuperAdd = () => {
   };
 
   const handleAddPdfLimit = async () => {
-    if (!token) return;
-
     if (!pdfUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -574,7 +598,12 @@ const SuperAdd = () => {
     }
     setIsAddingPdf(true);
     try {
-      const data = await adminApi.increasePdfLimit(token, { username: pdfUsername, increaseAmount: amountToAdd });
+      const response = await fetch(`${API_BASE_URL}/increase-pdf-limit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: pdfUsername, increaseAmount: amountToAdd }),
+      });
+      const data = await response.json();
       if (data.success) {
         toast({
           title: "添加成功",
@@ -594,8 +623,6 @@ const SuperAdd = () => {
   };
 
   const handleDecreasePdfLimit = async () => {
-    if (!token) return;
-
     if (!decreasePdfUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
@@ -607,10 +634,12 @@ const SuperAdd = () => {
     }
     setIsDecreasingPdf(true);
     try {
-      const data = await adminApi.decreasePdfLimit(token, {
-        username: decreasePdfUsername,
-        decreaseAmount: amountToDecrease,
+      const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: decreasePdfUsername, decreaseAmount: amountToDecrease }),
       });
+      const data = await response.json();
       if (data.success) {
         toast({
           title: "减少成功",
@@ -630,15 +659,18 @@ const SuperAdd = () => {
   };
 
   const handleResetPdfLimit = async () => {
-    if (!token) return;
-
     if (!resetPdfUsername.trim()) {
       toast({ variant: "destructive", title: "请输入用户名" });
       return;
     }
     setIsResettingPdf(true);
     try {
-      const data = await adminApi.resetPdfLimit(token, { username: resetPdfUsername });
+      const response = await fetch(`${API_BASE_URL}/reset-pdf-limit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: resetPdfUsername }),
+      });
+      const data = await response.json();
       if (data.success) {
         toast({ title: "重置成功", description: `已将用户 ${resetPdfUsername} 的PDF积分重置为 0` });
         setResetPdfUsername("");
@@ -695,9 +727,17 @@ const SuperAdd = () => {
             </div>
             <Button
               onClick={handleVerify}
+              disabled={isVerifying}
               className="w-full h-12 text-base font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-0"
             >
-              验证身份
+              {isVerifying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  验证中...
+                </>
+              ) : (
+                "验证身份"
+              )}
             </Button>
           </CardContent>
         </Card>
