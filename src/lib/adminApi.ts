@@ -210,3 +210,54 @@ export const resetPdfLimit = async (token: string, params: { username: string })
 
   return data as ApiResponse;
 };
+
+// 日志相关接口
+interface LogResponse {
+  success: boolean;
+  logs?: string[];
+  fileName?: string;
+  lastModified?: string | null;
+  totalLines?: number;
+  error?: string;
+  message?: string;
+}
+
+interface LogUpdateCheckResponse {
+  success: boolean;
+  hasUpdate?: boolean;
+  currentModified?: string | null;
+  error?: string;
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
+// 获取今日日志
+export const getTodayLogs = async (lines: number = 100): Promise<LogResponse> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/logs/today?lines=${lines}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Get today logs error:', error);
+    return { success: false, error: '获取日志失败' };
+  }
+};
+
+// 检查日志更新
+export const checkLogUpdate = async (lastModified: string | null): Promise<LogUpdateCheckResponse> => {
+  try {
+    const url = lastModified 
+      ? `${API_BASE_URL}/logs/check-update?lastModified=${encodeURIComponent(lastModified)}`
+      : `${API_BASE_URL}/logs/check-update`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Check log update error:', error);
+    return { success: false, error: '检查日志更新失败' };
+  }
+};

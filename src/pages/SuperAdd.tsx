@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,10 +28,16 @@ import {
   Download,
   BarChart3,
   CalendarIcon,
+  FileText,
+  RefreshCw,
+  Pause,
+  Play,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import {
   LineChart,
   Line,
@@ -141,6 +147,16 @@ const SuperAdd = () => {
   const [rangeSummary, setRangeSummary] = useState<RangeSummary | null>(null);
   const [isLoadingRangeStats, setIsLoadingRangeStats] = useState(false);
   const [statsViewMode, setStatsViewMode] = useState<"day" | "week" | "month">("day");
+
+  // 日志查看相关状态
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [logFileName, setLogFileName] = useState<string>("");
+  const [logLastModified, setLogLastModified] = useState<string | null>(null);
+  const [autoRefreshLogs, setAutoRefreshLogs] = useState(true);
+  const [logRefreshInterval, setLogRefreshInterval] = useState(3000); // 3秒刷新一次
+  const logContainerRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef(true);
 
   const { toast } = useToast();
 
@@ -287,6 +303,44 @@ const SuperAdd = () => {
     setCardCurrentPage(1);
   }, [cardSearchQuery]);
 
+  // 获取日志
+  const fetchLogs = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoadingLogs(true);
+    try {
+      const data = await adminApi.getTodayLogs(100);
+      if (data.success) {
+        setLogs(data.logs || []);
+        setLogFileName(data.fileName || "");
+        setLogLastModified(data.lastModified || null);
+        
+        // 自动滚动到底部
+        if (autoScrollRef.current && logContainerRef.current) {
+          setTimeout(() => {
+            if (logContainerRef.current) {
+              logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+            }
+          }, 100);
+        }
+      }
+    } catch (error) {
+      console.error("获取日志时出错:", error);
+    } finally {
+      if (showLoading) setIsLoadingLogs(false);
+    }
+  }, []);
+
+  // 检查日志更新并刷新
+  const checkAndRefreshLogs = useCallback(async () => {
+    try {
+      const checkResult = await adminApi.checkLogUpdate(logLastModified);
+      if (checkResult.success && checkResult.hasUpdate) {
+        await fetchLogs(false);
+      }
+    } catch (error) {
+      console.error("检查日志更新时出错:", error);
+    }
+  }, [logLastModified, fetchLogs]);
+
   // 登录验证成功后获取数据
   useEffect(() => {
     if (isVerified) {
@@ -294,8 +348,20 @@ const SuperAdd = () => {
       fetchHourlyStats();
       fetchUsers();
       fetchCards();
+      fetchLogs();
     }
   }, [isVerified]);
+
+  // 自动刷新日志
+  useEffect(() => {
+    if (!isVerified || !autoRefreshLogs) return;
+
+    const intervalId = setInterval(() => {
+      checkAndRefreshLogs();
+    }, logRefreshInterval);
+
+    return () => clearInterval(intervalId);
+  }, [isVerified, autoRefreshLogs, logRefreshInterval, checkAndRefreshLogs]);
 
   const fetchCards = async () => {
     if (!token) return;
@@ -1684,6 +1750,121 @@ const SuperAdd = () => {
                 刷新数据
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* 实时日志查看 */}
+        <Card className="border-2 shadow-lg mt-6">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg shadow-lg">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    实时日志查看
+                    {autoRefreshLogs && (
+                      <Badge variant="secondary" className="animate-pulse">
+                        实时监控中
+                      </Badge>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {logFileName ? `当前文件: ${logFileName}` : "显示当天最新100行日志"}
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="auto-refresh" className="text-sm text-muted-foreground">
+                    自动刷新
+                  </Label>
+                  <Switch
+                    id="auto-refresh"
+                    checked={autoRefreshLogs}
+                    onCheckedChange={setAutoRefreshLogs}
+                  />
+                  {autoRefreshLogs ? (
+                    <Play className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Pause className="h-4 w-4 text-orange-500" />
+                  )}
+                </div>
+                <Select
+                  value={logRefreshInterval.toString()}
+                  onValueChange={(v) => setLogRefreshInterval(parseInt(v))}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1000">1秒</SelectItem>
+                    <SelectItem value="3000">3秒</SelectItem>
+                    <SelectItem value="5000">5秒</SelectItem>
+                    <SelectItem value="10000">10秒</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchLogs(true)}
+                  disabled={isLoadingLogs}
+                >
+                  {isLoadingLogs ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  <span className="ml-2">刷新</span>
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingLogs && logs.length === 0 ? (
+              <div className="flex items-center justify-center h-[400px] border-2 border-dashed rounded-lg">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : logs.length > 0 ? (
+              <div
+                ref={logContainerRef}
+                className="h-[400px] overflow-auto bg-slate-900 dark:bg-slate-950 rounded-lg p-4 font-mono text-sm"
+                onScroll={(e) => {
+                  const target = e.currentTarget;
+                  const isAtBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 50;
+                  autoScrollRef.current = isAtBottom;
+                }}
+              >
+                {logs.map((line, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "py-0.5 border-b border-slate-800 last:border-0 whitespace-pre-wrap break-all",
+                      line.includes("ERROR") && "text-red-400",
+                      line.includes("WARN") && "text-yellow-400",
+                      line.includes("INFO") && "text-green-400",
+                      line.includes("DEBUG") && "text-blue-400",
+                      !line.includes("ERROR") && !line.includes("WARN") && !line.includes("INFO") && !line.includes("DEBUG") && "text-slate-300"
+                    )}
+                  >
+                    <span className="text-slate-500 mr-2 select-none">{(index + 1).toString().padStart(3, '0')}</span>
+                    {line}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>暂无日志数据</p>
+                <p className="text-sm mt-2">请确保后端日志API已配置</p>
+              </div>
+            )}
+            {logLastModified && (
+              <div className="mt-3 text-xs text-muted-foreground text-right">
+                最后更新: {new Date(logLastModified).toLocaleString("zh-CN")}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
