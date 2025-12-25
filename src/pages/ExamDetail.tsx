@@ -139,47 +139,18 @@ const ExamDetail = () => {
   };
 
   const [data, setData] = useState<ExamData>(defaultData);
+  const [loading, setLoading] = useState(true);
 
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
       const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser || !id) return;
-      const userId = JSON.parse(currentUser).id;
-
-      // 优先使用从 Index 页面传递的 detailRecord
-      const detailRecord = location.state?.detailRecord;
-      if (detailRecord) {
-        setData({
-          name: detailRecord.name || defaultData.name,
-          school: detailRecord.school || defaultData.school,
-          year: detailRecord.year || defaultData.year,
-          photo: detailRecord.photo || defaultData.photo,
-          examLocation: detailRecord.exam_location || defaultData.examLocation,
-          registrationNumber: detailRecord.registration_number || defaultData.registrationNumber,
-          examUnit: detailRecord.exam_unit || defaultData.examUnit,
-          department: detailRecord.department || defaultData.department,
-          major: detailRecord.major || defaultData.major,
-          researchDirection: detailRecord.research_direction || defaultData.researchDirection,
-          examType: detailRecord.exam_type || defaultData.examType,
-          specialProgram: detailRecord.special_program || defaultData.specialProgram,
-          politicsName: detailRecord.politics_name || defaultData.politicsName,
-          politicsScore: detailRecord.politics_score || defaultData.politicsScore,
-          foreignLanguageName: detailRecord.foreign_language_name || defaultData.foreignLanguageName,
-          foreignLanguageScore: detailRecord.foreign_language_score || defaultData.foreignLanguageScore,
-          businessCourse1Name: detailRecord.business_course1_name || defaultData.businessCourse1Name,
-          businessCourse1Score: detailRecord.business_course1_score || defaultData.businessCourse1Score,
-          businessCourse2Name: detailRecord.business_course2_name || defaultData.businessCourse2Name,
-          businessCourse2Score: detailRecord.business_course2_score || defaultData.businessCourse2Score,
-          totalScore: detailRecord.total_score || defaultData.totalScore,
-          admissionUnit: detailRecord.admission_unit || defaultData.admissionUnit,
-          admissionMajor: detailRecord.admission_major || defaultData.admissionMajor,
-          note: detailRecord.note || defaultData.note,
-        });
+      if (!currentUser || !id) {
+        setLoading(false);
         return;
       }
+      const userId = JSON.parse(currentUser).id;
 
-      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.exam?.find((r: any) => r.id === id);
@@ -219,11 +190,13 @@ const ExamDetail = () => {
           description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast, location.state]);
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
   const handleFieldClick = useCallback((field: keyof ExamData, label: string) => {
@@ -293,6 +266,25 @@ const ExamDetail = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-10 bg-background border-b">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button onClick={() => navigate("/")} className="p-2">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-base font-medium">考研信息</h1>
+            <div className="w-10"></div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-muted-foreground">加载中...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

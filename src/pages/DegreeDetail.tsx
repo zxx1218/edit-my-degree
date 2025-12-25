@@ -111,33 +111,17 @@ const DegreeDetail = () => {
   };
 
   const [data, setData] = useState<DegreeData>(defaultData);
+  const [loading, setLoading] = useState(true);
 
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
       const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser || !id) return;
-      const userId = JSON.parse(currentUser).id;
-
-      // 优先使用从 Index 页面传递的 detailRecord
-      const detailRecord = location.state?.detailRecord;
-      if (detailRecord) {
-        setData({
-          name: detailRecord.name || defaultData.name,
-          gender: detailRecord.gender || defaultData.gender,
-          birthDate: detailRecord.birth_date || defaultData.birthDate,
-          school: detailRecord.school || defaultData.school,
-          degreeType: detailRecord.degree_type || defaultData.degreeType,
-          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
-          degreeDate: detailRecord.degree_date || defaultData.degreeDate,
-          major: detailRecord.major || defaultData.major,
-          certificateNumber: detailRecord.certificate_number || defaultData.certificateNumber,
-          photo: detailRecord.photo || defaultData.photo,
-        });
+      if (!currentUser || !id) {
+        setLoading(false);
         return;
       }
-
-      // 如果没有传递 detailRecord，则从数据库加载
+      const userId = JSON.parse(currentUser).id;
 
       try {
         const result = await getUserData(userId);
@@ -164,11 +148,13 @@ const DegreeDetail = () => {
           description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast, location.state]);
+  }, [id, toast]);
   const [editingField, setEditingField] = useState<{ field: keyof DegreeData; label: string } | null>(null);
 
   const handleFieldClick = useCallback((field: keyof DegreeData, label: string) => {
@@ -239,6 +225,25 @@ const DegreeDetail = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="sticky top-0 z-10 bg-background border-b">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button onClick={() => navigate("/")} className="p-2">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-base font-medium">学位</h1>
+            <div className="w-10"></div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center h-[60vh]">
+          <div className="text-muted-foreground">加载中...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
