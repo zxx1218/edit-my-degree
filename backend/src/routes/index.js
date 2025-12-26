@@ -30,13 +30,45 @@ const resetPdfLimitModule = require('../reset-pdf-limit');
 const getHourlyLoginStatsModule = require('../get-hourly-login-stats');
 const getLoginStatsRangeModule = require('../get-login-stats-range');
 
+// IP黑名单 - 在这里添加需要封禁的IP地址
+const IP_BLACKLIST = [
+  '103.151.173.208',
+  '183.6.9.103'
+
+];
+
+// IP封禁中间件
+const ipBlacklistMiddleware = (req, res, next) => {
+  // 获取客户端IP地址
+  const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                  (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
+                  req.headers['x-real-ip'] || 'unknown';
+  
+  // 检查IP是否在黑名单中
+  if (IP_BLACKLIST.includes(clientIp)) {
+    console.warn('被封禁的IP地址发来请求', {
+      ip: clientIp,
+      url: req.path,
+      method: req.method,
+      userAgent: req.get('User-Agent')
+    });
+    
+    return res.status(403).json({
+      success: false,
+      error: 'AI风控检测到行为异常！拒绝请求！'
+    });
+  }
+  
+  next();
+};
+
 // 为注册接口设置限流规则 - 每个IP每60分钟最多10次注册尝试（方便测试）
 const registrationLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 1小时
-  max: 2, // 限制每个IP在窗口期内最多发送10个请求
+  max: 10, // 限制每个IP在窗口期内最多发送10个请求
   message: {
     success: false,
-    error: '傻逼，注册这来快，你IP被封了！'
+    error: '注册次数太多了，请一小时后再试！'
   },
   standardHeaders: true, // 返回标准的RateLimit-*头部
   legacyHeaders: false, // 不返回X-RateLimit-*头部
@@ -196,6 +228,9 @@ const signatureValidationMiddleware = (req, res, next) => {
 };
 
 function setupRoutes(app, db, JWT_SECRET) {
+  // 应用IP黑名单中间件
+  app.use(ipBlacklistMiddleware);
+  
   // 初始化认证模块
   const { login, adminLogin } = authModule.initialize(db, JWT_SECRET);
   

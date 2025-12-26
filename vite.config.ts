@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
         }
       },
       // 添加允许的主机列表，包含需要放行的所有域名
-      allowedHosts: ['cheerout.cn','jk.fortunefreedom.top', 'localhost', 'chsiii.cn']
+      allowedHosts: true
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
     resolve: {

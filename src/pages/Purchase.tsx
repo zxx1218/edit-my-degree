@@ -170,18 +170,18 @@ const Purchase = () => {
         <Card className="max-w-2xl mx-auto mt-6">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">客服联系方式</CardTitle>
-            <CardDescription>如遇问题或需要微信下单，请联系我们</CardDescription>
+            <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <MessageCircle className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">客服微信</h3>
-                <p className="text-2xl font-bold text-primary mb-2">Accddvva</p>
+                <h3 className="font-semibold text-lg mb-2">客服QQ</h3>
+                <p className="text-2xl font-bold text-primary mb-2">1144968929</p>
                 <p className="text-sm text-muted-foreground text-center">
                   如果闲鱼不方便购买
                   <br />
-                  联系客服微信同样可以下单
+                  联系客服QQ同样可以下单
                 </p>
               </div>
 
