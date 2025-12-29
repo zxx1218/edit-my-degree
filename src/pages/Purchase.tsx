@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users, Copy, Check } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Users, Copy, Check, Sparkles, Zap, Crown, FileText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import xianyuImage from "@/assets/xianyu.png";
 
 const Purchase = () => {
   const navigate = useNavigate();
@@ -14,205 +12,230 @@ const Purchase = () => {
   const handleCopyQQ = () => {
     navigator.clipboard.writeText("1034981273");
     setCopied(true);
-    toast.success("QQ群号已复制");
+    toast.success("QQ群号已复制到剪贴板");
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const plans = [
+  const mainPlans = [
     {
       name: "体验版",
       logins: "5次",
-      price: "¥9",
+      price: 9,
       description: "为您的个人账号充值5次登录次数",
       popular: false,
+      icon: Zap,
+      gradient: "from-emerald-400 to-teal-500",
       features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "标准版",
       logins: "50次",
-      price: "¥29",
+      price: 29,
       description: "为您的个人账号充值50次登录次数",
       popular: true,
+      icon: Sparkles,
+      gradient: "from-blue-500 to-indigo-600",
       features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "永久版",
       logins: "无限",
-      price: "¥99",
+      price: 99,
       description: "永久使用，不限制登录次数",
       popular: false,
+      icon: Crown,
+      gradient: "from-amber-500 to-orange-600",
       features: ["赠送30个PDF下载积分", "数据加密存储", "支持信息任意修改"],
-    },
-    {
-      name: "PDF积分包",
-      logins: "30个PDF积分",
-      price: "¥30",
-      description: "30个PDF下载积分，积分不使用永不过期",
-      popular: true,
-      features: ["制作一份PDF消耗30积分", "积分对三种PDF均可通用"],
     },
   ];
 
-  // const handlePurchase = () => {
-  //   window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
-  // };
+  const addonPlan = {
+    name: "PDF积分包",
+    logins: "30个PDF积分",
+    price: 30,
+    description: "30个PDF下载积分，积分不使用永不过期",
+    icon: FileText,
+    gradient: "from-violet-500 to-purple-600",
+    features: ["制作一份PDF消耗30积分", "积分对三种PDF均可通用"],
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <Button variant="ghost" onClick={() => navigate("/login")} className="mb-6">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          返回登录
-        </Button>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="container mx-auto px-4 py-3 flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate("/login")} 
+            className="text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            返回
+          </Button>
+        </div>
+      </header>
 
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">选择您的套餐</h1>
-          <p className="text-muted-foreground text-lg">购买或续费模拟档案账号，享受便捷的信息管理服务</p>
+      <main className="container mx-auto px-4 py-6 md:py-12 max-w-5xl">
+        {/* Hero Section */}
+        <div className="text-center mb-10 md:mb-14">
+          <h1 className="text-2xl md:text-4xl font-bold text-slate-900 mb-3">
+            选择适合您的套餐
+          </h1>
+          <p className="text-slate-500 text-sm md:text-base max-w-md mx-auto">
+            购买或续费模拟档案账号，享受便捷的信息管理服务
+          </p>
         </div>
 
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-center mb-6">主要套餐</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {plans.slice(0, 3).map((plan, index) => (
-              <Card
-                key={index}
-                className={`relative transition-all hover:shadow-lg ${
-                  plan.popular ? "border-primary shadow-lg scale-105" : ""
-                }`}
-              >
-                {plan.popular && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">推荐</Badge>}
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                  </div>
-                  <CardDescription className="mt-2 text-lg font-medium">{plan.logins}登录次数</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                      <p className="text-sm text-muted-foreground">{plan.description}</p>
+        {/* Main Plans */}
+        <section className="mb-12">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="h-px w-8 bg-slate-200" />
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">主要套餐</h2>
+            <div className="h-px w-8 bg-slate-200" />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {mainPlans.map((plan, index) => {
+              const IconComponent = plan.icon;
+              return (
+                <div
+                  key={index}
+                  className={`relative group rounded-2xl bg-white border transition-all duration-300 hover:shadow-xl ${
+                    plan.popular 
+                      ? "border-primary shadow-lg md:scale-105 md:-translate-y-1" 
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-primary text-white shadow-md px-3 py-1">
+                        最受欢迎
+                      </Badge>
                     </div>
-                    {plan.features.map((feature, featureIndex) => (
-                      <div key={featureIndex} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                        <p className="text-sm text-muted-foreground">{feature}</p>
+                  )}
+                  
+                  {/* Card Header with Gradient */}
+                  <div className={`p-5 md:p-6 rounded-t-2xl bg-gradient-to-br ${plan.gradient} text-white`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                        <IconComponent className="h-5 w-5" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-center mb-6">附加产品</h2>
-          <div className="max-w-md mx-auto">
-            <Card className="relative transition-all hover:shadow-lg">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl">{plans[3].name}</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">{plans[3].price}</span>
-                </div>
-                <CardDescription className="mt-2 text-lg font-medium">{plans[3].logins}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                    <p className="text-sm text-muted-foreground">{plans[3].description}</p>
-                  </div>
-                  {plans[3].features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                      <p className="text-sm text-muted-foreground">{feature}</p>
+                      <span className="text-white/90 text-sm font-medium">
+                        {plan.logins}登录
+                      </span>
                     </div>
-                  ))}
+                    <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl md:text-4xl font-bold">¥{plan.price}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Card Body */}
+                  <div className="p-5 md:p-6">
+                    <p className="text-slate-500 text-sm mb-4 leading-relaxed">
+                      {plan.description}
+                    </p>
+                    <ul className="space-y-3">
+                      {plan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5">
+                          <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                          <span className="text-slate-600 text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              );
+            })}
           </div>
-        </div>
+        </section>
 
-        {/* 购买流程先注释掉 */}
-        {/* <Card className="max-w-2xl mx-auto">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">如何购买？</CardTitle>
-            <CardDescription>通过闲鱼平台安全购买</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-center">
-              <img src={xianyuImage} alt="闲鱼购买" className="max-w-sm h-auto rounded-lg shadow-md" />
-            </div>
-
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">①</span>
-                <span>在系统注册页注册一个个人账号</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">②</span>
-                <span>点击下方"前往购买"按钮跳转到闲鱼商品页面</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">③</span>
-                <span>在闲鱼APP中选择您需要的套餐并完成支付</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家(无需密码)</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">⑤</span>
-                <span>稍等片刻，商品发货即代表开通成功</span>
-              </div>
-            </div>
-
-            <Button onClick={handlePurchase} className="w-full h-12 text-lg" size="lg">
-              前往购买
-              <ExternalLink className="ml-2 h-5 w-5" />
-            </Button>
-          </CardContent>
-        </Card> */}
-
-        <Card className="max-w-2xl mx-auto mt-6">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">客服联系方式</CardTitle>
-            <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="max-w-md mx-auto">
-              <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                <Users className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-2xl font-bold text-primary">1034981273</p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={handleCopyQQ}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
+        {/* Addon Product */}
+        <section className="mb-12">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="h-px w-8 bg-slate-200" />
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">附加产品</h2>
+            <div className="h-px w-8 bg-slate-200" />
+          </div>
+          
+          <div className="max-w-sm mx-auto">
+            <div className="relative rounded-2xl bg-white border border-slate-200 overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-slate-300">
+              {/* Card Header with Gradient */}
+              <div className={`p-5 md:p-6 bg-gradient-to-br ${addonPlan.gradient} text-white`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <addonPlan.icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-white/90 text-sm font-medium">
+                    {addonPlan.logins}
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground text-center">
+                <h3 className="text-xl font-bold mb-1">{addonPlan.name}</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl md:text-4xl font-bold">¥{addonPlan.price}</span>
+                </div>
+              </div>
+              
+              {/* Card Body */}
+              <div className="p-5 md:p-6">
+                <p className="text-slate-500 text-sm mb-4 leading-relaxed">
+                  {addonPlan.description}
+                </p>
+                <ul className="space-y-3">
+                  {addonPlan.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span className="text-slate-600 text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Section */}
+        <section className="mb-8">
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <div className="h-px w-8 bg-slate-200" />
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">联系客服</h2>
+            <div className="h-px w-8 bg-slate-200" />
+          </div>
+          
+          <div className="max-w-sm mx-auto">
+            <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              
+              <h3 className="font-semibold text-slate-900 mb-1">QQ售后群</h3>
+              <p className="text-slate-500 text-xs mb-4">版本更新及售后通知</p>
+              
+              <button
+                onClick={handleCopyQQ}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 group"
+              >
+                <span className="text-lg font-bold text-slate-900">1034981273</span>
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Copy className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
+                )}
+              </button>
+              
+              <div className="mt-4 space-y-1.5">
+                <p className="text-xs text-slate-400">
                   售后1群已满，二群建立于2025年11月
                 </p>
-                <p className="text-sm text-muted-foreground text-center mt-3">
-                  闲鱼不方便下单的客户，联系群主即可
+                <p className="text-xs text-primary font-medium">
+                  闲鱼不方便下单？联系群主即可
                 </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 };
