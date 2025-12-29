@@ -127,19 +127,52 @@ const Login = () => {
     setIsRecharging(true);
 
     try {
+      // 生成签名所需参数
+      const timestamp = Date.now().toString();
+      const params = {
+        action: "use",
+        cardId: data.cardId.trim(),
+        username: data.username.trim(),
+        type,
+      };
+
+      // 生成签名
+      const method = "POST";
+      const url = "/api/manage-cards";
+      const sortedParams = Object.keys(params)
+        .sort()
+        .map((key) => `${key}=${params[key]}`)
+        .join("&");
+      const signString = `${method.toUpperCase()}${url}${sortedParams}${timestamp}`;
+
+      let hash = 0;
+      for (let i = 0; i < signString.length; i++) {
+        const char = signString.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash;
+      }
+
+      // 从环境变量获取密钥，如果没有则使用默认值
+      const secretKey = import.meta.env.VITE_API_SECRET_KEY || "default_secret_key";
+      for (let i = 0; i < secretKey.length; i++) {
+        const char = secretKey.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash;
+      }
+
+      const signature = Math.abs(hash).toString(16);
+
       // 使用本地后端API替代Supabase函数调用
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
       const response = await fetch(`${API_BASE_URL}/manage-cards`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Timestamp": timestamp,
+          "X-Signature": signature,
+          "X-App-Key": import.meta.env.VITE_APP_KEY || "default_app_key",
         },
-        body: JSON.stringify({
-          action: "use",
-          cardId: data.cardId.trim(),
-          username: data.username.trim(),
-          type,
-        }),
+        body: JSON.stringify(params),
       });
 
       const result = await response.json();
@@ -457,14 +490,14 @@ const Login = () => {
             <AlertDescription className="ml-2 text-sm space-y-2">
               <div className="font-semibold text-foreground">使用提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 长按任意卡片区域可以添加修改或删除卡片信息</div>
-                <div>• 第一次建议使用电脑登录设置好后再使用手机登录</div>
+                <div>• 主页面所有卡片的新增、删除和修改请长按卡片进行操作</div>
+                <div>• 第一次建议使用电脑登录设置好后再使用手机登录查看</div>
               </div>
             </AlertDescription>
           </Alert>
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.1.0 • 更新时间：2025.12</div>
+            <div>当前版本：V3.3.0 • 更新时间：2025.12</div>
           </div>
         </CardContent>
       </Card>
