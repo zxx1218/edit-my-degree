@@ -173,26 +173,16 @@ const Purchase = () => {
             <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                <MessageCircle className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">客服QQ</h3>
-                <p className="text-2xl font-bold text-primary mb-2">1144968929</p>
-                <p className="text-sm text-muted-foreground text-center">
-                  如果闲鱼不方便购买
-                  <br />
-                  联系客服QQ同样可以下单
-                </p>
-              </div>
-
+            <div className="max-w-md mx-auto">
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <Users className="h-8 w-8 text-primary mb-3" />
                 <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
                 <p className="text-2xl font-bold text-primary mb-2">1034981273</p>
                 <p className="text-sm text-muted-foreground text-center">
-                  售后1群已满
-                  <br />
-                  二群建立于2025年11月
+                  售后1群已满，二群建立于2025年11月
+                </p>
+                <p className="text-sm text-muted-foreground text-center mt-3">
+                  闲鱼不方便下单的客户，联系群主即可
                 </p>
               </div>
             </div>
