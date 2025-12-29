@@ -17,10 +17,15 @@ import { toast } from "sonner";
 import { registerUser } from "@/lib/api";
 
 const generateMathCaptcha = () => {
-  const num1 = Math.floor(Math.random() * 10) + 1;
-  const num2 = Math.floor(Math.random() * 10) + 1;
+  let num1 = Math.floor(Math.random() * 10) + 1;
+  let num2 = Math.floor(Math.random() * 10) + 1;
   const operators = ["+", "-", "×"];
   const operator = operators[Math.floor(Math.random() * operators.length)];
+
+  // 确保减法不会产生负数，让大数在前
+  if (operator === "-" && num1 < num2) {
+    [num1, num2] = [num2, num1];
+  }
 
   let answer: number;
   switch (operator) {
