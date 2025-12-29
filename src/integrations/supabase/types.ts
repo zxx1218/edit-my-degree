@@ -14,30 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      admins: {
-        Row: {
-          created_at: string | null
-          id: string
-          password: string
-          updated_at: string | null
-          username: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          password: string
-          updated_at?: string | null
-          username: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          password?: string
-          updated_at?: string | null
-          username?: string
-        }
-        Relationships: []
-      }
       cards: {
         Row: {
           created_at: string | null
@@ -462,33 +438,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      system_logs: {
-        Row: {
-          created_at: string
-          details: string | null
-          id: string
-          level: string
-          message: string
-          source: string | null
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          level?: string
-          message: string
-          source?: string | null
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          level?: string
-          message?: string
-          source?: string | null
-        }
-        Relationships: []
       }
       users: {
         Row: {

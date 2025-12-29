@@ -1,40 +1,10 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
-
-// Long press hook
-const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const isLongPressRef = useRef(false);
-
-  const start = useCallback(() => {
-    isLongPressRef.current = false;
-    timerRef.current = setTimeout(() => {
-      isLongPressRef.current = true;
-      onLongPress();
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: clear,
-    onMouseLeave: clear,
-    onTouchStart: start,
-    onTouchEnd: clear,
-    onTouchMove: clear,
-  };
-};
 
 interface StudentData {
   name: string;
@@ -59,49 +29,6 @@ interface StudentData {
   admissionPhoto: string;
   degreePhoto: string;
 }
-
-// Long press field component for detail list items
-interface LongPressFieldProps {
-  field: keyof StudentData;
-  label: string;
-  value: string;
-  onLongPress: (field: keyof StudentData, label: string) => void;
-}
-
-const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress(field, label);
-    }, 500);
-  }, [field, label, onLongPress]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return (
-    <div className="text-base flex items-center gap-4 py-0.5">
-      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-      <span
-        className="flex-1 select-none"
-        style={{ color: 'rgb(52, 51, 51)' }}
-        onMouseDown={start}
-        onMouseUp={clear}
-        onMouseLeave={clear}
-        onTouchStart={start}
-        onTouchEnd={clear}
-        onTouchMove={clear}
-      >
-        {value}
-      </span>
-    </div>
-  );
-};
 
 const parseDateString = (dateStr: string): Date | null => {
   if (!dateStr) return null;
@@ -163,18 +90,44 @@ const StudentStatusDetail = () => {
   };
 
   const [data, setData] = useState<StudentData>(defaultData);
-  const [loading, setLoading] = useState(true);
 
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
       const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser || !id) {
-        setLoading(false);
-        return;
-      }
+      if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          personalInfo: detailRecord.personal_info || defaultData.personalInfo,
+          gender: detailRecord.gender || defaultData.gender,
+          birthDate: detailRecord.birth_date || defaultData.birthDate,
+          school: detailRecord.school || defaultData.school,
+          major: detailRecord.major || defaultData.major,
+          studyType: detailRecord.study_type || defaultData.studyType,
+          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
+          status: detailRecord.status || defaultData.status,
+          nationality: detailRecord.nationality || defaultData.nationality,
+          idNumber: detailRecord.id_number || defaultData.idNumber,
+          enrollmentDate: detailRecord.enrollment_date || defaultData.enrollmentDate,
+          graduationDate: detailRecord.graduation_date || defaultData.graduationDate,
+          duration: detailRecord.duration || defaultData.duration,
+          educationType: detailRecord.education_type || defaultData.educationType,
+          branch: detailRecord.branch || defaultData.branch,
+          department: detailRecord.department || defaultData.department,
+          class: detailRecord.class || defaultData.class,
+          studentId: detailRecord.student_id || defaultData.studentId,
+          admissionPhoto: detailRecord.admission_photo || defaultData.admissionPhoto,
+          degreePhoto: detailRecord.degree_photo || defaultData.degreePhoto,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.studentStatus?.find((r: any) => r.id === id);
@@ -211,25 +164,16 @@ const StudentStatusDetail = () => {
           description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof StudentData; label: string } | null>(null);
 
-  const handleFieldClick = useCallback((field: keyof StudentData, label: string) => {
+  const handleFieldClick = (field: keyof StudentData, label: string) => {
     setEditingField({ field, label });
-  }, []);
-
-  // Long press handlers for each editable field
-  const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
-  const personalInfoLongPress = useLongPress(() => handleFieldClick("personalInfo", "个人信息"));
-  const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
-  const majorLongPress = useLongPress(() => handleFieldClick("major", "专业"));
-  const studyTypeLongPress = useLongPress(() => handleFieldClick("studyType", "学习形式"));
+  };
 
   const handleFieldSave = async (field: keyof StudentData, newValue: string) => {
     setData({ ...data, [field]: newValue });
@@ -308,25 +252,6 @@ const StudentStatusDetail = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="flex items-center justify-between px-4 py-3">
-            <button onClick={() => navigate("/")} className="p-2">
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-lg font-medium">高等学籍</h1>
-            <div className="w-10"></div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center h-[60vh]">
-          <div className="text-muted-foreground">加载中...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -396,14 +321,14 @@ const StudentStatusDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl mb-2 cursor-pointer hover:opacity-80 select-none"
-                {...nameLongPress}
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
               </h2>
               <div
-                className="text-sm cursor-pointer hover:opacity-80 select-none"
-                {...personalInfoLongPress}
+                className="text-sm cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("personalInfo", "个人信息")}
               >
                 {data.personalInfo.replace(/\s/g, "\u00A0")}
               </div>
@@ -414,8 +339,8 @@ const StudentStatusDetail = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-[1.3rem] cursor-pointer hover:opacity-80 select-none"
-                {...schoolLongPress}
+                className="text-[1.3rem] cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
@@ -424,7 +349,7 @@ const StudentStatusDetail = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span className="cursor-pointer hover:opacity-80 select-none" {...majorLongPress}>
+              <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
               <span
@@ -432,8 +357,8 @@ const StudentStatusDetail = () => {
                 style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
               ></span>
               <span
-                className="cursor-pointer hover:opacity-80 select-none"
-                {...studyTypeLongPress}
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("studyType", "学习形式")}
               >
                 {data.studyType}
               </span>
@@ -460,13 +385,16 @@ const StudentStatusDetail = () => {
               value: data.graduationDate,
             },
           ].map(({ field, label, value }) => (
-            <LongPressField
-              key={field}
-              field={field as keyof StudentData}
-              label={label}
-              value={value || "-"}
-              onLongPress={handleFieldClick}
-            />
+            <div key={field} className="text-base flex items-center gap-4 py-0.5">
+              <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
+              <span
+                className="flex-1 cursor-pointer hover:opacity-80"
+                style={{ color: 'rgb(52, 51, 51)' }}
+                onClick={() => handleFieldClick(field as keyof StudentData, label)}
+              >
+                {value || "-"}
+              </span>
+            </div>
           ))}
         </div>
 

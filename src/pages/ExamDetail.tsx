@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,76 +32,6 @@ interface ExamData {
   admissionMajor: string;
   note: string;
 }
-
-// Long press hook
-const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress();
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: clear,
-    onMouseLeave: clear,
-    onTouchStart: start,
-    onTouchEnd: clear,
-    onTouchMove: clear,
-  };
-};
-
-// Long press field component for detail list items
-interface LongPressFieldProps {
-  field: keyof ExamData;
-  label: string;
-  value: string;
-  onLongPress: (field: keyof ExamData, label: string) => void;
-}
-
-const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress(field, label);
-    }, 500);
-  }, [field, label, onLongPress]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return (
-    <div className="flex items-center gap-4 py-0.5 text-base">
-      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-      <span
-        className="flex-1 cursor-pointer hover:text-primary select-none"
-        style={{ color: 'rgb(52, 51, 51)' }}
-        onMouseDown={start}
-        onMouseUp={clear}
-        onMouseLeave={clear}
-        onTouchStart={start}
-        onTouchEnd={clear}
-        onTouchMove={clear}
-      >
-        {value}
-      </span>
-    </div>
-  );
-};
 
 const ExamDetail = () => {
   const navigate = useNavigate();
@@ -139,18 +69,47 @@ const ExamDetail = () => {
   };
 
   const [data, setData] = useState<ExamData>(defaultData);
-  const [loading, setLoading] = useState(true);
 
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
       const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser || !id) {
-        setLoading(false);
-        return;
-      }
+      if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          school: detailRecord.school || defaultData.school,
+          year: detailRecord.year || defaultData.year,
+          photo: detailRecord.photo || defaultData.photo,
+          examLocation: detailRecord.exam_location || defaultData.examLocation,
+          registrationNumber: detailRecord.registration_number || defaultData.registrationNumber,
+          examUnit: detailRecord.exam_unit || defaultData.examUnit,
+          department: detailRecord.department || defaultData.department,
+          major: detailRecord.major || defaultData.major,
+          researchDirection: detailRecord.research_direction || defaultData.researchDirection,
+          examType: detailRecord.exam_type || defaultData.examType,
+          specialProgram: detailRecord.special_program || defaultData.specialProgram,
+          politicsName: detailRecord.politics_name || defaultData.politicsName,
+          politicsScore: detailRecord.politics_score || defaultData.politicsScore,
+          foreignLanguageName: detailRecord.foreign_language_name || defaultData.foreignLanguageName,
+          foreignLanguageScore: detailRecord.foreign_language_score || defaultData.foreignLanguageScore,
+          businessCourse1Name: detailRecord.business_course1_name || defaultData.businessCourse1Name,
+          businessCourse1Score: detailRecord.business_course1_score || defaultData.businessCourse1Score,
+          businessCourse2Name: detailRecord.business_course2_name || defaultData.businessCourse2Name,
+          businessCourse2Score: detailRecord.business_course2_score || defaultData.businessCourse2Score,
+          totalScore: detailRecord.total_score || defaultData.totalScore,
+          admissionUnit: detailRecord.admission_unit || defaultData.admissionUnit,
+          admissionMajor: detailRecord.admission_major || defaultData.admissionMajor,
+          note: detailRecord.note || defaultData.note,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.exam?.find((r: any) => r.id === id);
@@ -190,24 +149,16 @@ const ExamDetail = () => {
           description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
-  const handleFieldClick = useCallback((field: keyof ExamData, label: string) => {
+  const handleFieldClick = (field: keyof ExamData, label: string) => {
     setEditingField({ field, label });
-  }, []);
-
-  // Long press handlers for card fields
-  const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
-  const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
-  const yearLongPress = useLongPress(() => handleFieldClick("year", "年份"));
-  const noteLongPress = useLongPress(() => handleFieldClick("note", "说明"));
+  };
 
   const handleFieldSave = async (field: keyof ExamData, newValue: string) => {
     setData({ ...data, [field]: newValue });
@@ -267,25 +218,6 @@ const ExamDetail = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="flex items-center justify-between px-4 py-3">
-            <button onClick={() => navigate("/")} className="p-2">
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-base font-medium">考研信息</h1>
-            <div className="w-10"></div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center h-[60vh]">
-          <div className="text-muted-foreground">加载中...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -300,15 +232,15 @@ const ExamDetail = () => {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6 space-y-6">
+      <div className="p-4 bg-white min-h-screen">
         {/* Photo and Name Card */}
-        <div className="bg-gradient-to-b from-[rgb(54,177,197)] to-[rgb(93,200,218)] rounded-[5px] p-5 mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
-          <div className="flex items-start gap-4 mb-4">
+        <div className="bg-gradient-to-b from-[rgb(54,177,197)] to-[rgb(93,200,218)] rounded-[7px] p-5 text-white mb-6 shadow-[0px_4px_4px_3px_rgba(98,191,207,0.2)]">
+          <div className="flex items-start gap-4 mb-3">
             {/* Photo */}
             <div className="text-center">
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
               <div
-                className="w-[60px] h-[80px] bg-white/20 rounded-[8px] mb-2 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
+                className="w-[55px] h-[73px] bg-white/20 rounded-[8px] mb-1 cursor-pointer hover:bg-white/30 transition-colors flex items-center justify-center overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {data.photo ? (
@@ -320,32 +252,29 @@ const ExamDetail = () => {
             </div>
 
             {/* Name */}
-            <div className="flex-1 pt-2">
-              <div
-                className="text-white text-xl cursor-pointer hover:opacity-80 select-none"
-                {...nameLongPress}
+            <div className="flex-1">
+              <h2
+                onClick={() => handleFieldClick("name", "姓名")}
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
               >
                 {data.name}
+              </h2>
+            </div>
+          </div>
+
+          {/* School Info */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                onClick={() => handleFieldClick("school", "学校名称")}
+                className="text-[1.3rem] cursor-pointer hover:opacity-80"
+              >
+                {data.school}
+              </h3>
+              <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
+                {data.year}
               </div>
             </div>
-          </div>
-
-          {/* School */}
-          <div className="text-white">
-            <div
-              className="text-[1.3rem] mb-3 cursor-pointer hover:opacity-80 select-none"
-              {...schoolLongPress}
-            >
-              {data.school}
-            </div>
-          </div>
-
-          {/* Year */}
-          <div
-            className="text-sm font-normal text-white cursor-pointer hover:opacity-80 select-none"
-            {...yearLongPress}
-          >
-            {data.year}
           </div>
         </div>
 
@@ -365,13 +294,12 @@ const ExamDetail = () => {
             { field: "businessCourse1Name" as keyof ExamData, label: "业务课一名称", value: data.businessCourse1Name },
             { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
           ].map(({ field, label, value }) => (
-            <LongPressField
-              key={field}
-              field={field}
-              label={label}
-              value={value}
-              onLongPress={handleFieldClick}
-            />
+            <div key={field} className="flex items-center gap-4 py-1 text-sm">
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+              <span onClick={() => handleFieldClick(field, label)} className="flex-1 cursor-pointer hover:text-primary">
+                {value}
+              </span>
+            </div>
           ))}
         </div>
 
@@ -386,13 +314,15 @@ const ExamDetail = () => {
               { field: "businessCourse2Score" as keyof ExamData, label: "业务课二", value: data.businessCourse2Score },
               { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
             ].map(({ field, label, value }) => (
-              <LongPressField
-                key={field}
-                field={field}
-                label={label}
-                value={value}
-                onLongPress={handleFieldClick}
-              />
+              <div key={field} className="flex items-center gap-4 py-1 text-sm">
+                <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+                <span
+                  onClick={() => handleFieldClick(field, label)}
+                  className="flex-1 cursor-pointer hover:text-primary"
+                >
+                  {value}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -405,13 +335,15 @@ const ExamDetail = () => {
               { field: "admissionUnit" as keyof ExamData, label: "录取单位", value: data.admissionUnit },
               { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
             ].map(({ field, label, value }) => (
-              <LongPressField
-                key={field}
-                field={field}
-                label={label}
-                value={value}
-                onLongPress={handleFieldClick}
-              />
+              <div key={field} className="flex items-center gap-4 py-1 text-sm">
+                <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+                <span
+                  onClick={() => handleFieldClick(field, label)}
+                  className="flex-1 cursor-pointer hover:text-primary"
+                >
+                  {value}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -420,7 +352,7 @@ const ExamDetail = () => {
         <div className="pt-4 pb-8">
           <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
             <span className="font-medium">说明：</span>
-            <span className="cursor-pointer hover:text-primary select-none" {...noteLongPress}>
+            <span onClick={() => handleFieldClick("note", "说明")} className="cursor-pointer hover:text-primary">
               {data.note}
             </span>
           </div>

@@ -1,7 +1,7 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ChevronLeft, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
@@ -23,76 +23,6 @@ interface EducationData {
   certificateNumber: string;
   photo: string;
 }
-
-// Long press hook
-const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress();
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: clear,
-    onMouseLeave: clear,
-    onTouchStart: start,
-    onTouchEnd: clear,
-    onTouchMove: clear,
-  };
-};
-
-// Long press field component for detail list items
-interface LongPressFieldProps {
-  field: keyof EducationData;
-  label: string;
-  value: string;
-  onLongPress: (field: keyof EducationData, label: string) => void;
-}
-
-const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress(field, label);
-    }, 500);
-  }, [field, label, onLongPress]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return (
-    <div className="text-base flex items-center gap-4 py-0.5">
-      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-      <span
-        className="flex-1 cursor-pointer hover:text-primary select-none"
-        style={{ color: 'rgb(52, 51, 51)' }}
-        onMouseDown={start}
-        onMouseUp={clear}
-        onMouseLeave={clear}
-        onTouchStart={start}
-        onTouchEnd={clear}
-        onTouchMove={clear}
-      >
-        {value}
-      </span>
-    </div>
-  );
-};
 
 const EducationDetail = () => {
   const navigate = useNavigate();
@@ -121,18 +51,38 @@ const EducationDetail = () => {
   };
 
   const [data, setData] = useState<EducationData>(defaultData);
-  const [loading, setLoading] = useState(true);
 
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
       const currentUser = localStorage.getItem("currentUser");
-      if (!currentUser || !id) {
-        setLoading(false);
-        return;
-      }
+      if (!currentUser || !id) return;
       const userId = JSON.parse(currentUser).id;
 
+      // 优先使用从 Index 页面传递的 detailRecord
+      const detailRecord = location.state?.detailRecord;
+      if (detailRecord) {
+        setData({
+          name: detailRecord.name || defaultData.name,
+          gender: detailRecord.gender || defaultData.gender,
+          birthDate: detailRecord.birth_date || defaultData.birthDate,
+          school: detailRecord.school || defaultData.school,
+          major: detailRecord.major || defaultData.major,
+          studyType: detailRecord.study_type || defaultData.studyType,
+          degreeLevel: detailRecord.degree_level || defaultData.degreeLevel,
+          enrollmentDate: detailRecord.enrollment_date || defaultData.enrollmentDate,
+          graduationDate: detailRecord.graduation_date || defaultData.graduationDate,
+          educationType: detailRecord.education_type || defaultData.educationType,
+          duration: detailRecord.duration || defaultData.duration,
+          graduationStatus: detailRecord.graduation_status || defaultData.graduationStatus,
+          principalName: detailRecord.principal_name || defaultData.principalName,
+          certificateNumber: detailRecord.certificate_number || defaultData.certificateNumber,
+          photo: detailRecord.photo || defaultData.photo,
+        });
+        return;
+      }
+
+      // 如果没有传递 detailRecord，则从数据库加载
       try {
         const result = await getUserData(userId);
         const record = result.education?.find((r: any) => r.id === id);
@@ -163,26 +113,16 @@ const EducationDetail = () => {
           description: "无法加载数据，使用默认值",
           variant: "destructive",
         });
-      } finally {
-        setLoading(false);
       }
     };
 
     loadData();
-  }, [id, toast]);
+  }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof EducationData; label: string } | null>(null);
 
-  const handleFieldClick = useCallback((field: keyof EducationData, label: string) => {
+  const handleFieldClick = (field: keyof EducationData, label: string) => {
     setEditingField({ field, label });
-  }, []);
-
-  // Long press handlers for each editable field
-  const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
-  const genderLongPress = useLongPress(() => handleFieldClick("gender", "性别"));
-  const birthDateLongPress = useLongPress(() => handleFieldClick("birthDate", "出生日期"));
-  const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
-  const majorLongPress = useLongPress(() => handleFieldClick("major", "专业"));
-  const studyTypeLongPress = useLongPress(() => handleFieldClick("studyType", "学习形式"));
+  };
 
   const handleFieldSave = async (field: keyof EducationData, newValue: string) => {
     setData({ ...data, [field]: newValue });
@@ -242,25 +182,6 @@ const EducationDetail = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="flex items-center justify-between px-4 py-3">
-            <button onClick={() => navigate("/")} className="p-2">
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <h1 className="text-base font-medium">高等学历</h1>
-            <div className="w-10"></div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center h-[60vh]">
-          <div className="text-muted-foreground">加载中...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -297,18 +218,18 @@ const EducationDetail = () => {
             {/* Basic Info - Name and Personal Info */}
             <div className="flex-1">
               <h2
-                className="text-xl mb-2 cursor-pointer hover:opacity-80 select-none"
-                {...nameLongPress}
+                className="text-xl mb-2 cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("name", "姓名")}
               >
                 {data.name}
               </h2>
               <div className="flex items-center gap-3 text-sm">
-                <span className="cursor-pointer hover:opacity-80 select-none" {...genderLongPress}>
+                <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("gender", "性别")}>
                   {data.gender}
                 </span>
                 <span
-                  className="cursor-pointer hover:opacity-80 select-none"
-                  {...birthDateLongPress}
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={() => handleFieldClick("birthDate", "出生日期")}
                 >
                   {data.birthDate}
                 </span>
@@ -320,8 +241,8 @@ const EducationDetail = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <h3
-                className="text-[1.3rem] cursor-pointer hover:opacity-80 select-none"
-                {...schoolLongPress}
+                className="text-[1.3rem] cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("school", "学校名称")}
               >
                 {data.school}
               </h3>
@@ -330,7 +251,7 @@ const EducationDetail = () => {
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <span className="cursor-pointer hover:opacity-80 select-none" {...majorLongPress}>
+              <span className="cursor-pointer hover:opacity-80" onClick={() => handleFieldClick("major", "专业")}>
                 {data.major}
               </span>
               <span
@@ -338,8 +259,8 @@ const EducationDetail = () => {
                 style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
               ></span>
               <span
-                className="cursor-pointer hover:opacity-80 select-none"
-                {...studyTypeLongPress}
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFieldClick("studyType", "学习形式")}
               >
                 {data.studyType}
               </span>
@@ -358,13 +279,15 @@ const EducationDetail = () => {
             { field: "principalName", label: "校（院）长姓名", value: data.principalName },
             { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
           ].map(({ field, label, value }) => (
-            <LongPressField
-              key={field}
-              field={field as keyof EducationData}
-              label={label}
-              value={value || "-"}
-              onLongPress={handleFieldClick}
-            />
+            <div key={field} className="text-sm flex items-center gap-4 py-1">
+              <span className="text-muted-foreground text-right w-32 flex-shrink-0">{label}</span>
+              <span
+                className="flex-1 cursor-pointer hover:text-primary"
+                onClick={() => handleFieldClick(field as keyof EducationData, label)}
+              >
+                {value || "-"}
+              </span>
+            </div>
           ))}
         </div>
 
