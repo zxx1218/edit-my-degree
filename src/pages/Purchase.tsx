@@ -180,7 +180,7 @@ const Purchase = () => {
         <Card className="max-w-2xl mx-auto mt-6">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">客服联系方式</CardTitle>
-            <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
+            <CardDescription>如有疑问或售后问题，欢迎加群咨询</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="max-w-md mx-auto">
