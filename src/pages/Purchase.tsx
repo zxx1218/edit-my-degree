@@ -15,7 +15,7 @@ const Purchase = () => {
       price: "¥9",
       description: "为您的个人账号充值5次登录次数",
       popular: false,
-      features: ["数据加密存储", "支持学历信息修改"],
+      features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "标准版",
@@ -23,29 +23,29 @@ const Purchase = () => {
       price: "¥29",
       description: "为您的个人账号充值50次登录次数",
       popular: true,
-      features: ["数据加密存储", "支持学历信息修改"],
+      features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "永久版",
-      logins: "永久",
+      logins: "无限",
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
-      features: ["赠送30个PDF下载积分", "数据加密存储", "支持学历信息修改"],
+      features: ["赠送30个PDF下载积分", "数据加密存储", "支持信息任意修改"],
     },
     {
       name: "PDF积分包",
-      logins: "PDF积分",
-      price: "¥1/积分",
-      description: "购买PDF报告积分，1元1个积分，积分永不过期",
-      popular: false,
-      features: ["积分永不过期", "支持生成三种类型报告"],
+      logins: "30个PDF积分",
+      price: "¥30",
+      description: "30个PDF下载积分，积分不使用永不过期",
+      popular: true,
+      features: ["制作一份PDF消耗30积分", "积分对三种PDF均可通用"],
     },
   ];
 
-  const handlePurchase = () => {
-    window.open("https://m.tb.cn/h.Sn7Xrtk?tk=jTiAffAGIsg", "_blank");
-  };
+  // const handlePurchase = () => {
+  //   window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
+  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
@@ -57,7 +57,7 @@ const Purchase = () => {
 
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">选择您的套餐</h1>
-          <p className="text-muted-foreground text-lg">购买或续费学信档案账号，享受便捷的学历信息管理服务</p>
+          <p className="text-muted-foreground text-lg">购买或续费模拟档案账号，享受便捷的信息管理服务</p>
         </div>
 
         <div className="mb-12">
@@ -126,7 +126,8 @@ const Purchase = () => {
           </div>
         </div>
 
-        <Card className="max-w-2xl mx-auto">
+        {/* 购买流程先注释掉 */}
+        {/* <Card className="max-w-2xl mx-auto">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">如何购买？</CardTitle>
             <CardDescription>通过闲鱼平台安全购买</CardDescription>
@@ -164,23 +165,23 @@ const Purchase = () => {
               <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="max-w-2xl mx-auto mt-6">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">客服联系方式</CardTitle>
-            <CardDescription>如遇问题或需要微信下单，请联系我们</CardDescription>
+            <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <MessageCircle className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">客服微信</h3>
-                <p className="text-2xl font-bold text-primary mb-2">Accddvva</p>
+                <h3 className="font-semibold text-lg mb-2">客服QQ</h3>
+                <p className="text-2xl font-bold text-primary mb-2">1144968929</p>
                 <p className="text-sm text-muted-foreground text-center">
                   如果闲鱼不方便购买
                   <br />
-                  联系客服微信同样可以下单
+                  联系客服QQ同样可以下单
                 </p>
               </div>
 
