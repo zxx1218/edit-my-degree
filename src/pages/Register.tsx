@@ -163,23 +163,31 @@ const Register = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="captcha">验证码</Label>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="text-lg font-medium text-foreground whitespace-nowrap">{captcha.question}</span>
-                  <Input
-                    id="captcha"
-                    type="number"
-                    placeholder="请输入答案"
-                    value={captchaAnswer}
-                    onChange={(e) => setCaptchaAnswer(e.target.value)}
-                    required
-                    className="flex-1"
-                  />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center bg-gradient-to-r from-primary/10 to-secondary/10 border border-border rounded-md px-4 py-2.5 min-w-[120px]">
+                  <span className="text-lg font-bold text-primary tracking-wider select-none">{captcha.question}</span>
                 </div>
-                <Button type="button" variant="outline" size="icon" onClick={refreshCaptcha} className="flex-shrink-0">
+                <Input
+                  id="captcha"
+                  type="number"
+                  placeholder="答案"
+                  value={captchaAnswer}
+                  onChange={(e) => setCaptchaAnswer(e.target.value)}
+                  required
+                  className="w-24 text-center font-medium"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={refreshCaptcha} 
+                  className="flex-shrink-0 hover:bg-primary/10 transition-colors"
+                  title="换一题"
+                >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">请计算上方算式并填写结果</p>
             </div>
             <div className="space-y-3 pt-2">
               <Button type="submit" className="w-full" disabled={isLoading}>
