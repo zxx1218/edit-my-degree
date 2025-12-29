@@ -2,11 +2,21 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users, Copy, Check } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import xianyuImage from "@/assets/xianyu.png";
 
 const Purchase = () => {
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyQQ = () => {
+    navigator.clipboard.writeText("1034981273");
+    setCopied(true);
+    toast.success("QQ群号已复制");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const plans = [
     {
@@ -177,7 +187,21 @@ const Purchase = () => {
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <Users className="h-8 w-8 text-primary mb-3" />
                 <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
-                <p className="text-2xl font-bold text-primary mb-2">1034981273</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-2xl font-bold text-primary">1034981273</p>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleCopyQQ}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
                 <p className="text-sm text-muted-foreground text-center">
                   售后1群已满，二群建立于2025年11月
                 </p>
