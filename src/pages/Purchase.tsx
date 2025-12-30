@@ -11,11 +11,28 @@ const Purchase = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
-  const handleCopyQQ = () => {
-    navigator.clipboard.writeText("1034981273");
-    setCopied(true);
-    toast.success("QQ群号已复制");
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyQQ = async () => {
+    const qqNumber = "1034981273";
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(qqNumber);
+      } else {
+        // 备用方案：使用临时 textarea
+        const textarea = document.createElement("textarea");
+        textarea.value = qqNumber;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      toast.success("QQ群号已复制");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast.error("复制失败，请手动复制");
+    }
   };
 
   const plans = [
