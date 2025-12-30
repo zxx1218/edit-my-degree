@@ -146,7 +146,7 @@ const Register = () => {
                 <div className="bg-muted/50 p-3 rounded-md space-y-2">
                   <p className="font-medium text-foreground">充值步骤：</p>
                   <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                    <li>前往闲鱼购买充值卡密</li>
+                    <li>购买充值卡密</li>
                     <li>返回登录页面，点击"卡密充值/续费"按钮</li>
                     <li>输入您刚注册的账号和购买到的卡密</li>
                     <li>充值成功后即可登录使用</li>
@@ -173,7 +173,7 @@ const Register = () => {
               }}
               className="w-full sm:w-auto"
             >
-              去购买
+              查看登录套餐与定价
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
