@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users } from "lucide-react";
-import xianyuImage from "@/assets/xianyu.png";
 
 const Purchase = () => {
   const navigate = useNavigate();
@@ -31,7 +30,7 @@ const Purchase = () => {
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
-      features: ["赠送30个PDF下载积分", "数据加密存储", "支持信息任意修改"],
+      features: ["赠送30个PDF积分", "数据加密存储", "支持信息任意修改"],
     },
     {
       name: "PDF积分包",
