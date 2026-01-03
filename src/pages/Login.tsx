@@ -487,14 +487,14 @@ const Login = () => {
             <AlertDescription className="ml-2 text-sm space-y-2">
               <div className="font-semibold text-foreground">使用提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 所有增删改都请长按卡片进行操作</div>
+                <div>• 所有修改都请长按！长按！长按！</div>
                 <div>• 第一次建议使用电脑登录设置好后再使用手机登录查看</div>
               </div>
             </AlertDescription>
-          </Alert>
+          </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.3.0 • 更新时间：2025.12</div>
+            <div>当前版本：V3.4.0 • 更新时间：2026.01</div>
           </div>
         </CardContent>
       </Card>
