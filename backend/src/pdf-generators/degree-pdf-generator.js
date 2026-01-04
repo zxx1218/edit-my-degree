@@ -6,7 +6,7 @@ const QRCode = require('qrcode');
 
 const generateDegreePdf = async (req, res) => {
   try {
-    console.log('开始生成学位验证报告PDF...');
+    console.log('开始生成学位在线验证报告PDF...');
     const {
       name,
       gender,
@@ -232,7 +232,7 @@ const generateDegreePdf = async (req, res) => {
         degreeName: degreeType || t,
         major: major || t,
         certificateNumber: certificateNumber || t,
-        verificationCode: 'A4DV5W4DV20DV8S', // 在线验证码，目前先写死
+        verificationCode: 'X2KY9H6CU48KL6B', // 在线验证码，目前先写死
         updateDate: currentDate,
         photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加minio
       };

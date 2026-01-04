@@ -6,7 +6,7 @@ const QRCode = require('qrcode');
 
 const generateStudentStatusPdf = async (req, res) => {
   try {
-    console.log('开始生成学籍状态PDF...');
+    console.log('开始生成学籍在线验证PDF...');
     // 从请求中获取数据
     const {
       name,
@@ -264,7 +264,7 @@ const generateStudentStatusPdf = async (req, res) => {
         enrollmentDate: enrollmentDate || t,
         status: status || t,
         graduationDate: graduationDate || t,
-        verificationCode: 'A4DV5W4DV20DV8S', // 在线验证码，目前先写死
+        verificationCode: 'L31N9H2JS18JK3U', // 在线验证码，目前先写死
         updateDate: currentDate,
         photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加miniio
         // photo: degreePhoto || 'https://example.com/photo.jpg'
