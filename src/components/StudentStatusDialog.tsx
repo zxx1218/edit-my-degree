@@ -627,7 +627,7 @@ const handleConfirmGenerate = async () => {
                     onChange={(e) =>
                       setFormData({ ...formData, department: e.target.value })
                     }
-                    placeholder="校区名或院系名称（可留空）"
+                    placeholder="校区或院系名称（可留空）"
                   />
                 </div>
 
@@ -759,7 +759,7 @@ const handleConfirmGenerate = async () => {
           <AlertDialogHeader>
           <AlertDialogTitle>确认生成报告</AlertDialogTitle>
           <AlertDialogDescription>
-            生成学籍在线验证报告PDF<span className="text-destructive">需要消耗30个PDF下载积分</span>，是否确认生成？
+            生成学籍在线验证报告PDF<span className="text-destructive">需要消耗30个PDF积分</span>，是否确认生成？
           </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
