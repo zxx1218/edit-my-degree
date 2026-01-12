@@ -260,9 +260,9 @@ const VerificationReport = () => {
             <AlertDialogDescription>
               1. 生成该报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span>，如果不足将无法生成。
               <br />
-              2. 如果您是永久版用户，您会自动获得30个PDF积分，其余用户默认积分数为0，PDF积分可以在闲鱼下单购买。
+              2. 如果您是永久版用户，您会自动获得30个PDF积分，其余用户默认积分数为0，PDF积分需购买
               <br />
-              3. 务必使用电脑操作PDF生成！手机操作会导致无法下载！
+              3. <span className="font-semibold text-foreground">务必使用电脑操作PDF生成！手机操作会导致无法下载！</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
