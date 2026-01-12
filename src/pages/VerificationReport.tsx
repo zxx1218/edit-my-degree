@@ -262,7 +262,7 @@ const VerificationReport = () => {
               <br />
               2. 如果您是永久版用户，您会自动获得30个PDF积分，其余用户默认积分数为0，PDF积分可以在闲鱼下单购买。
               <br />
-              3. <span className="font-semibold text-foreground">务必使用电脑操作PDF生成，手机操作会导致无法下载！</span>
+              3. 务必使用电脑操作PDF生成！手机操作会导致无法下载！
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

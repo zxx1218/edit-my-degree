@@ -194,6 +194,7 @@ const Purchase = () => {
           </CardContent>
         </Card> */}
 
+        {/* 
         <Card className="max-w-2xl mx-auto mt-6">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">客服联系方式</CardTitle>
@@ -228,7 +229,7 @@ const Purchase = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card>*/}
       </div>
     </div>
   );
