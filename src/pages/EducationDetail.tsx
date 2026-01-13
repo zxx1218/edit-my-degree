@@ -370,7 +370,7 @@ const EducationDetail = () => {
         {/* Button */}
         <Button
           className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
-          // onClick={() => navigate("/verification-report")} 注释掉即可不开放
+          onClick={() => navigate("/verification-report")}
         >
           查看验证报告
         </Button>
