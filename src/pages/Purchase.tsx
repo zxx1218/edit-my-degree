@@ -2,38 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users, Copy, Check } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare } from "lucide-react";
 import xianyuImage from "@/assets/xianyu.png";
 
 const Purchase = () => {
   const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyQQ = async () => {
-    const qqNumber = "1034981273";
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(qqNumber);
-      } else {
-        // 备用方案：使用临时 textarea
-        const textarea = document.createElement("textarea");
-        textarea.value = qqNumber;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
-      setCopied(true);
-      toast.success("QQ群号已复制");
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast.error("复制失败，请手动复制");
-    }
-  };
 
   const plans = [
     {
@@ -196,35 +169,24 @@ const Purchase = () => {
 
         <Card className="max-w-2xl mx-auto mt-6">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">客服联系方式</CardTitle>
-            <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
+            <CardTitle className="text-2xl">意见反馈</CardTitle>
+            <CardDescription>如有任何问题、建议或遇到Bug，欢迎在留言板留言</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="max-w-md mx-auto">
               <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                <Users className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-2xl font-bold text-primary">1034981273</p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={handleCopyQQ}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  售后1群已满，二群建立于2025年11月
+                <MessageSquare className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold text-lg mb-2">在线留言板</h3>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  您的每一条留言都会有专人查看和处理
                 </p>
-                <p className="text-sm text-muted-foreground text-center mt-3">
-                  闲鱼不方便下单的客户，联系群主即可
-                </p>
+                <Button
+                  onClick={() => window.open("http://cheerout.cn:40000", "_blank")}
+                  className="w-full"
+                >
+                  前往留言板
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
           </CardContent>
