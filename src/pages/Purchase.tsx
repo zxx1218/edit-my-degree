@@ -2,8 +2,36 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle } from "lucide-react";
 import xianyuImage from "@/assets/xianyu.png";
+
+const faqItems = [
+  {
+    question: "如何购买套餐？",
+    answer: "目前支持通过闲鱼平台购买，搜索相关商品下单后，将您注册的账号发送给卖家即可开通。如闲鱼不方便，可通过留言板联系我们使用微信/支付宝付款。"
+  },
+  {
+    question: "登录次数是什么意思？",
+    answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。永久版不限制登录次数。"
+  },
+  {
+    question: "PDF积分是什么？",
+    answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗30积分，积分不使用永不过期。"
+  },
+  {
+    question: "数据安全吗？",
+    answer: "所有数据均采用加密存储，仅您本人可见。我们不会向任何第三方提供您的信息。"
+  },
+  {
+    question: "忘记密码怎么办？",
+    answer: "请通过留言板联系我们，提供您的注册账号，我们会协助您重置密码。"
+  },
+  {
+    question: "可以退款吗？",
+    answer: "虚拟商品一经售出概不退款，请在购买前确认您的需求。如有疑问可先咨询后再购买。"
+  }
+];
 
 const Purchase = () => {
   const navigate = useNavigate();
@@ -167,16 +195,40 @@ const Purchase = () => {
           </CardContent>
         </Card> */}
 
-        <Card className="max-w-2xl mx-auto mt-6">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">意见反馈</CardTitle>
-            <CardDescription>如有任何问题、建议或遇到Bug，欢迎在留言板留言</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="max-w-md mx-auto">
-              <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                <MessageSquare className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">在线留言板</h3>
+        <div className="max-w-2xl mx-auto mt-6 grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl flex items-center justify-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                常见问题
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                {faqItems.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger className="text-left text-sm">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl flex items-center justify-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                意见反馈
+              </CardTitle>
+              <CardDescription>问题、建议或Bug反馈</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center p-4 border rounded-lg bg-card hover:shadow-md transition-shadow">
                 <p className="text-sm text-muted-foreground text-center mb-4">
                   您的每一条留言都会有专人查看和处理
                 </p>
@@ -188,9 +240,9 @@ const Purchase = () => {
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
