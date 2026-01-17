@@ -1,6 +1,11 @@
 /**
  * PM2 应用程序生态系统配置文件
  * 用于管理 edit_my_degree_backend 应用的部署和运行
+ * 启动方法：
+ * pm2 start ecosystem.config.js --env production  在生产环境下启动
+ * pm2 save   保存当前进程列表
+ * pm2 startup systemd -u $USER --hp /home/$USER  生成启动脚本
+ * pm2 save   保存当前进程列表以便开机自启
  */
 module.exports = {
   /**
