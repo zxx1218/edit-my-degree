@@ -2,38 +2,38 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageCircle, Users, Copy, Check } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
-import xianyuImage from "@/assets/xianyu.png";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle } from "lucide-react";
+
+const faqItems = [
+  {
+    question: "如何购买套餐？",
+    answer: "目前支持通过闲鱼或者微信支付宝购买，搜索相关商品下单后您会得到充值卡密。如闲鱼不方便，可通过留言板联系我们使用微信/支付宝付款。"
+  },
+  {
+    question: "登录次数是什么意思？",
+    answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。永久版不限制登录次数。"
+  },
+  {
+    question: "PDF积分是什么？",
+    answer: "PDF积分用于生成三种报告的PDF文件。每制作一份PDF需要消耗30个PDF积分（积分不使用永不过期）。"
+  },
+  {
+    question: "数据安全吗？",
+    answer: "所有数据均采用加密存储，仅您本人可见。"
+  },
+  {
+    question: "忘记密码怎么办？",
+    answer: "由于所有数据均加密存储，所以请牢记您注册的账号和密码，一旦丢失无法找回。"
+  },
+  {
+    question: "可以退款吗？",
+    answer: "虚拟商品一经售出概不退款，请在购买前确认您的需求。如有疑问可先咨询后再购买。"
+  }
+];
 
 const Purchase = () => {
   const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyQQ = async () => {
-    const qqNumber = "1034981273";
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(qqNumber);
-      } else {
-        // 备用方案：使用临时 textarea
-        const textarea = document.createElement("textarea");
-        textarea.value = qqNumber;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
-      setCopied(true);
-      toast.success("QQ群号已复制");
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast.error("复制失败，请手动复制");
-    }
-  };
 
   const plans = [
     {
@@ -42,7 +42,7 @@ const Purchase = () => {
       price: "¥9",
       description: "为您的个人账号充值5次登录次数",
       popular: false,
-      features: ["数据加密存储", "支持信息任意修改"],
+      features: ["数据加密存储", "支持内容任意修改"],
     },
     {
       name: "标准版",
@@ -50,7 +50,7 @@ const Purchase = () => {
       price: "¥29",
       description: "为您的个人账号充值50次登录次数",
       popular: true,
-      features: ["数据加密存储", "支持信息任意修改"],
+      features: ["数据加密存储", "支持内容任意修改"],
     },
     {
       name: "永久版",
@@ -58,7 +58,7 @@ const Purchase = () => {
       price: "¥99",
       description: "永久使用，不限制登录次数",
       popular: false,
-      features: ["赠送30个PDF下载积分", "数据加密存储", "支持信息任意修改"],
+      features: ["赠送30个PDF下载积分", "数据加密存储", "支持内容任意修改"],
     },
     {
       name: "PDF积分包",
@@ -66,13 +66,9 @@ const Purchase = () => {
       price: "¥30",
       description: "30个PDF下载积分，积分不使用永不过期",
       popular: true,
-      features: ["制作一份PDF消耗30积分", "积分对三种PDF均可通用"],
+      features: ["制作一份PDF都需消耗30积分", "积分对三种PDF均可通用"],
     },
   ];
-
-  // const handlePurchase = () => {
-  //   window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
-  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
@@ -153,83 +149,91 @@ const Purchase = () => {
           </div>
         </div>
 
-        {/* 购买流程先注释掉 */}
-        {/* <Card className="max-w-2xl mx-auto">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">如何购买？</CardTitle>
-            <CardDescription>通过闲鱼平台安全购买</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-center">
-              <img src={xianyuImage} alt="闲鱼购买" className="max-w-sm h-auto rounded-lg shadow-md" />
-            </div>
+        <div className="max-w-2xl mx-auto mt-6 grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl flex items-center justify-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                常见问题
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                {faqItems.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger className="text-left text-sm">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">①</span>
-                <span>在系统注册页注册一个个人账号</span>
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="text-xl flex items-center justify-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                意见反馈
+              </CardTitle>
+              <CardDescription>问题、建议或Bug反馈</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center p-4 border rounded-lg bg-card hover:shadow-md transition-shadow">
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  您的每一条留言都会有专人查看和处理
+                </p>
+                <Button
+                  onClick={() => window.open("http://cheerout.cn:40000", "_blank")}
+                  className="w-full"
+                >
+                  前往留言板
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">②</span>
-                <span>点击下方"前往购买"按钮跳转到闲鱼商品页面</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">③</span>
-                <span>在闲鱼APP中选择您需要的套餐并完成支付</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家(无需密码)</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">⑤</span>
-                <span>稍等片刻，商品发货即代表开通成功</span>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <Button onClick={handlePurchase} className="w-full h-12 text-lg" size="lg">
-              前往购买
-              <ExternalLink className="ml-2 h-5 w-5" />
-            </Button>
-          </CardContent>
-        </Card> */}
-
-        {/* 
-        <Card className="max-w-2xl mx-auto mt-6">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">客服联系方式</CardTitle>
-            <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="max-w-md mx-auto">
-              <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
-                <Users className="h-8 w-8 text-primary mb-3" />
-                <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <p className="text-2xl font-bold text-primary">1034981273</p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={handleCopyQQ}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
+          {/* 
+          <Card className="max-w-2xl mx-auto mt-6">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">客服联系方式</CardTitle>
+              <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="max-w-md mx-auto">
+                <div className="flex flex-col items-center p-6 border rounded-lg bg-card hover:shadow-md transition-shadow">
+                  <Users className="h-8 w-8 text-primary mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">版本更新及售后通知QQ群</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-2xl font-bold text-primary">1034981273</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={handleCopyQQ}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    售后1群已满，二群建立于2025年11月
+                  </p>
+                  <p className="text-sm text-muted-foreground text-center mt-3">
+                    闲鱼不方便下单的客户，联系群主即可
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  售后1群已满，二群建立于2025年11月
-                </p>
-                <p className="text-sm text-muted-foreground text-center mt-3">
-                  闲鱼不方便下单的客户，联系群主即可
-                </p>
               </div>
-            </div>
-          </CardContent>
-        </Card>*/}
+            </CardContent>
+          </Card>*/}
+        </div>
       </div>
     </div>
   );
