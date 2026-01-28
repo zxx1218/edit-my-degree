@@ -1,3 +1,89 @@
+/**
+ * 压缩图片
+ * @param file - 图片文件
+ * @param maxSizeMB - 最大大小(MB)，默认2MB
+ * @returns 压缩后的base64数据
+ */
+export async function compressImage(file: File, maxSizeMB = 2): Promise<string> {
+  // 如果文件小于指定大小，直接返回
+  if (file.size / 1024 / 1024 < maxSizeMB) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          reject(new Error('无法获取canvas上下文'));
+          return;
+        }
+
+        // 设置画布尺寸
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // 绘制图片
+        ctx.drawImage(img, 0, 0);
+
+        // 从0.9开始尝试压缩质量
+        let quality = 0.9;
+        const dataUrlToBlob = (dataUrl: string): Blob | null => {
+          try {
+            const arr = dataUrl.split(',');
+            const mime = arr[0].match(/:(.*?);/)![1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) {
+              u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], { type: mime });
+          } catch {
+            return null;
+          }
+        };
+
+        const tryCompress = () => {
+          // 尝试导出图片
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          const blob = dataUrlToBlob(dataUrl);
+          
+          if (!blob) {
+            reject(new Error('图片处理失败'));
+            return;
+          }
+
+          // 检查大小
+          if (blob.size / 1024 / 1024 < maxSizeMB || quality <= 0.3) {
+            // 达到目标大小或质量已很低
+            resolve(dataUrl);
+          } else {
+            // 继续降低质量
+            quality -= 0.1;
+            setTimeout(tryCompress, 50);
+          }
+        };
+
+        tryCompress();
+      };
+      
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target?.result as string;
+    };
+    
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -160,14 +246,32 @@ const DegreeVerificationDialog = ({
     return `${year}年${month}月${day}日`;
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, photo: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error("请选择有效的图片文件");
+      return;
+    }
+
+    try {
+      // Log user info and file details
+      const currentUser = localStorage.getItem("currentUser");
+      if (currentUser) {
+        const user = JSON.parse(currentUser);
+        console.log(`用户 ${user.name || user.id} 正在上传学位验证照片，文件名: ${file.name}`);
+      }
+      
+      // Import compressImage utility
+      const { compressImage } = await import('@/lib/utils');
+      // Compress image if needed
+      const compressedPhotoData = await compressImage(file);
+      setFormData({ ...formData, photo: compressedPhotoData });
+    } catch (error) {
+      console.error("照片上传失败:", error);
+      toast.error("照片上传失败，请重试");
     }
   };
 

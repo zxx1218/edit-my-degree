@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { compressImage } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -204,16 +205,29 @@ const StudentStatusDialog = ({
     return `${year}年${month}月${day}日`;
   };
 
-  const handlePhotoUpload = (file: File) => {
+  const handlePhotoUpload = async (file: File) => {
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error("请选择有效的图片文件");
+      return;
+    }
+
     try {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({
-          ...prev,
-          degreePhoto: reader.result as string,
-        }));
-      };
-      reader.readAsDataURL(file);
+      // Log user info and file details
+      const currentUser = localStorage.getItem("currentUser");
+      if (currentUser) {
+        const user = JSON.parse(currentUser);
+        console.log(`用户 ${user.name || user.id} 正在上传学籍状态照片，文件名: ${file.name}, 文件大小: ${file.size}字节, 文件类型: ${file.type}`);
+      }
+      
+      // Compress image if needed
+      const compressedPhotoData = await compressImage(file);
+      setFormData((prev) => ({
+        ...prev,
+        degreePhoto: compressedPhotoData,
+      }));
     } catch (error) {
       console.error("照片上传失败:", error);
       toast.error("照片上传失败");

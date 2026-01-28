@@ -16,13 +16,35 @@ const logFormat = winston.format.combine(
 
 // 创建传输器
 const transports = [
-  // 按日期轮转的文件传输器，保留3天日志
+  // info级别及以上的普通日志 - .log 文件
   new DailyRotateFile({
+    level: 'info',
     filename: path.join(logDir, 'application-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
-    format: logFormat
+    format: logFormat,
+    silent: false
+  }),
+  // warn级别及以上的警告日志 - .warn 文件
+  new DailyRotateFile({
+    level: 'warn',
+    filename: path.join(logDir, 'application-%DATE%.warn'),
+    datePattern: 'YYYY-MM-DD',
+    maxSize: '10m', // 10MB
+    maxFiles: '3d', // 保留3天
+    format: logFormat,
+    silent: false
+  }),
+  // error级别及以上的错误日志 - .error 文件
+  new DailyRotateFile({
+    level: 'error',
+    filename: path.join(logDir, 'application-%DATE%.error'),
+    datePattern: 'YYYY-MM-DD',
+    maxSize: '10m', // 10MB
+    maxFiles: '3d', // 保留3天
+    format: logFormat,
+    silent: false
   })
 ];
 

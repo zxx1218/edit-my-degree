@@ -26,6 +26,7 @@ import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getUserData } from "@/lib/api";
+import { compressImage } from "@/lib/utils"; // Import compressImage utility
 import LoadingDialog from "./LoadingDialog";
 
 interface EducationRegistrationDialogProps {
@@ -163,14 +164,30 @@ const EducationRegistrationDialog = ({
     setShowForm(true);
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, photo: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error("请选择有效的图片文件");
+      return;
+    }
+
+    try {
+      // Log user info and file details
+      const currentUser = localStorage.getItem("currentUser");
+      if (currentUser) {
+        const user = JSON.parse(currentUser);
+        console.log(`用户 ${user.name || user.id} 正在上传教育背景照片，文件名: ${file.name}`);
+      }
+      
+      // Compress image if needed
+      const compressedPhotoData = await compressImage(file);
+      setFormData({ ...formData, photo: compressedPhotoData });
+    } catch (error) {
+      console.error("照片上传失败:", error);
+      toast.error("照片上传失败");
     }
   };
 

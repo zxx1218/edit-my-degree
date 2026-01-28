@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
+import { compressImage } from "@/lib/utils"; // Import compressImage utility
 
 // Long press hook
 const useLongPress = (onLongPress: () => void, delay = 500) => {
@@ -299,36 +300,57 @@ const StudentStatusDetail = () => {
 
   const handleImageUpload = async (type: "admissionPhoto" | "degreePhoto", e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const photoData = reader.result as string;
-        setData({ ...data, [type]: photoData });
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "格式错误",
+        description: "请选择有效的图片文件",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        const currentUser = localStorage.getItem("currentUser");
-        if (!currentUser || !id) return;
-        const userId = JSON.parse(currentUser).id;
+    try {
+      // Log user info and file details
+      const currentUser = localStorage.getItem("currentUser");
+      if (currentUser) {
+        const user = JSON.parse(currentUser);
+        console.log(`用户 ${user.name || user.id} 正在上传${type === 'admissionPhoto' ? '录取' : '学历'}照片，文件名: ${file.name}`);
+      }
+      
+      // Compress image if needed
+      const compressedPhotoData = await compressImage(file);
+      setData({ ...data, [type]: compressedPhotoData });
 
-        try {
-          const dbField = type
-            .replace(/([A-Z])/g, "_$1")
-            .toLowerCase()
-            .replace(/^_/, "");
-          await updateData("student_status", "update", userId, { [dbField]: photoData }, id);
+      const userId = JSON.parse(currentUser!).id;
 
-          toast({
-            title: "上传成功",
-            description: "照片已更新并同步到数据库",
-          });
-        } catch (error) {
-          toast({
-            title: "上传失败",
-            description: "请稍后重试",
-            variant: "destructive",
-          });
-        }
-      };
-      reader.readAsDataURL(file);
+      try {
+        const dbField = type
+          .replace(/([A-Z])/g, "_$1")
+          .toLowerCase()
+          .replace(/^_/, "");
+        await updateData("student_status", "update", userId, { [dbField]: compressedPhotoData }, id);
+
+        toast({
+          title: "上传成功",
+          description: "照片已更新并同步到数据库",
+        });
+      } catch (error) {
+        toast({
+          title: "上传失败",
+          description: "请稍后重试",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error processing image:", error);
+      toast({
+        title: "处理失败",
+        description: "图片处理过程中出现错误，请重试",
+        variant: "destructive",
+      });
     }
   };
 

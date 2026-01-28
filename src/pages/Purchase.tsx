@@ -1,14 +1,16 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, ExternalLink, MessageSquare, HelpCircle, Users, Copy } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const faqItems = [
   {
     question: "如何购买套餐？",
-    answer: "目前支持通过闲鱼或者微信支付宝购买，搜索相关商品下单后您会得到充值卡密。如闲鱼不方便，可通过留言板联系我们使用微信/支付宝付款。"
+    answer: "目前支持通过闲鱼或者微信支付宝购买，搜索相关商品下单后您会得到充值卡密。如闲鱼不方便，可通过QQ群联系我们使用微信/支付宝付款。"
   },
   {
     question: "登录次数是什么意思？",
@@ -34,6 +36,28 @@ const faqItems = [
 
 const Purchase = () => {
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const handleCopyQQ = async () => {
+    try {
+      await navigator.clipboard.writeText('1034981273');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      
+      toast({
+        title: "QQ号已复制",
+        description: "您可以粘贴到QQ中联系客服",
+      });
+    } catch (err) {
+      console.error('Failed to copy QQ number: ', err);
+      toast({
+        title: "复制失败",
+        description: "请手动复制QQ号：1034981273",
+        variant: "destructive"
+      });
+    }
+  };
 
   const plans = [
     {
@@ -197,8 +221,7 @@ const Purchase = () => {
             </CardContent>
           </Card>
 
-          {/* 
-          <Card className="max-w-2xl mx-auto mt-6">
+          <Card className="max-w-2xl mx-auto mt-6 md:col-span-2">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">客服联系方式</CardTitle>
               <CardDescription>如遇问题或需要微信/支付宝下单，请联系我们</CardDescription>
@@ -224,7 +247,7 @@ const Purchase = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground text-center">
-                    售后1群已满，二群建立于2025年11月
+                    售后1群已满，二群建立于2026年2月
                   </p>
                   <p className="text-sm text-muted-foreground text-center mt-3">
                     闲鱼不方便下单的客户，联系群主即可
@@ -232,7 +255,7 @@ const Purchase = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>*/}
+          </Card>
         </div>
       </div>
     </div>
