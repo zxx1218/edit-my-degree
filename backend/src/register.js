@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const { logOperation } = require('./operation-logger');
 
 /**
  * 初始化注册模块
@@ -11,6 +12,11 @@ function initialize(db) {
    * @param {Object} res - 响应对象
    */
   async function register(req, res) {
+    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
+                      req.headers['x-real-ip'] || 'unknown';
+    const userAgent = req.get('User-Agent') || 'Unknown';
+
     try {
       const { username, password } = req.body;
 
@@ -49,6 +55,9 @@ function initialize(db) {
         `INSERT INTO student_status (id, user_id, name, school, major, study_type, degree_level) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [studentStatusId, userId, '新用户', '清华大学', '汉语言文学', '全日制', '本科']
       );
+
+      // 记录用户注册日志
+      logOperation(userId, username, 'register', 'users', { username }, ipAddress, userAgent);
 
       // 获取新创建的用户信息
       const [newUsers] = await db.execute(

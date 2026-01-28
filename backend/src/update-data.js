@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const { logOperation } = require('./operation-logger');
 
 /**
  * 更新数据接口
@@ -6,6 +7,11 @@ const { v4: uuidv4 } = require('uuid');
  */
 function initialize(db) {
   return async (req, res) => {
+    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
+                      req.headers['x-real-ip'] || 'unknown';
+    const userAgent = req.get('User-Agent') || 'Unknown';
+
     try {
       const { table, action, data, id, userId } = req.body;
       
@@ -31,6 +37,20 @@ function initialize(db) {
           success: false,
           error: '缺少记录ID'
         });
+      }
+      
+      // 获取用户名
+      let username = 'unknown';
+      try {
+        const [userResult] = await db.execute(
+          'SELECT username FROM users WHERE id = ?',
+          [userId]
+        );
+        if (userResult.length > 0) {
+          username = userResult[0].username;
+        }
+      } catch (err) {
+        console.error('获取用户名失败:', err);
       }
       
       let result;
@@ -66,6 +86,9 @@ function initialize(db) {
             values
           );
           
+          // 记录操作日志
+          logOperation(userId, username, 'insert', table, { id: recordId, ...sanitizedData }, ipAddress, userAgent);
+          
           // 返回完整的数据对象
           const responseData = insertData;
           res.json({ success: true, data: [responseData] }); // 包装成数组以匹配supabase格式
@@ -82,14 +105,34 @@ function initialize(db) {
             updateValues
           );
           
+          // 记录操作日志
+          logOperation(userId, username, 'update', table, { id, data: sanitizedData }, ipAddress, userAgent);
+          
           result = { id };
           break;
           
         case 'delete':
+          // 获取要删除的记录数据用于日志
+          let deletedData = {};
+          try {
+            const [recordResult] = await db.execute(
+              `SELECT * FROM ${table} WHERE id = ? AND user_id = ?`,
+              [id, userId]
+            );
+            if (recordResult.length > 0) {
+              deletedData = recordResult[0];
+            }
+          } catch (err) {
+            console.error('获取删除记录数据失败:', err);
+          }
+          
           await db.execute(
             `DELETE FROM ${table} WHERE id = ? AND user_id = ?`,
             [id, userId].map(value => value === undefined ? null : value)
           );
+          
+          // 记录操作日志
+          logOperation(userId, username, 'delete', table, { id, data: deletedData }, ipAddress, userAgent);
           
           result = { id };
           break;

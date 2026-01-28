@@ -1,9 +1,16 @@
+const { logPasswordChange } = require('./operation-logger');
+
 /**
  * 修改密码接口
  * @param {Object} db - 数据库连接实例
  */
 function initialize(db) {
   return async (req, res) => {
+    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
+                      req.headers['x-real-ip'] || 'unknown';
+    const userAgent = req.get('User-Agent') || 'Unknown';
+
     try {
       const { username, oldPassword, newPassword } = req.body;
 
@@ -21,6 +28,11 @@ function initialize(db) {
       );
 
       if (users.length === 0) {
+        // 记录密码更改失败日志
+        if (users.length > 0) {
+          logPasswordChange(users[0].id, username, ipAddress, userAgent, 'failed');
+        }
+        
         return res.status(401).json({
           success: false,
           error: '用户名或原密码错误'
@@ -32,6 +44,9 @@ function initialize(db) {
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newPassword, users[0].id]
       );
+
+      // 记录密码更改成功日志
+      logPasswordChange(users[0].id, username, ipAddress, userAgent, 'success');
 
       res.json({
         success: true,
