@@ -219,8 +219,8 @@ const signatureValidationMiddleware = (req, res, next) => {
   // 签名验证通过
   console.info('签名验证通过', {
     url: req.path,
-    method: req.method,
-    appKey,
+    // method: req.method,
+    // appKey,
     userAgent: req.get('User-Agent'),
     ip: clientIp
   });
