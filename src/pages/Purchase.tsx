@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle, Users, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 import xianyuImage from "@/assets/xianyu.png";
 
 const faqItems = [
@@ -35,6 +37,32 @@ const faqItems = [
 
 const Purchase = () => {
   const navigate = useNavigate();
+  const [copied, setCopied] = useState(false);
+  const qqGroup = "1034981273";
+  const xianyuLink = "https://m.tb.cn/h.7HY5IJW?tk=va1FUjdOrPS";
+
+  const handleCopyQQ = async () => {
+    try {
+      await navigator.clipboard.writeText(qqGroup);
+      setCopied(true);
+      toast.success("QQ群号已复制到剪贴板");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      const textArea = document.createElement("textarea");
+      textArea.value = qqGroup;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      toast.success("QQ群号已复制到剪贴板");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handlePurchase = () => {
+    window.open(xianyuLink, "_blank");
+  };
 
   const plans = [
     {
@@ -90,11 +118,12 @@ const Purchase = () => {
 
         <div className="mb-12">
           <h2 className="text-2xl font-semibold text-center mb-6">主要套餐</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
             {plans.slice(0, 3).map((plan, index) => (
               <Card
                 key={index}
-                className={`relative transition-all hover:shadow-lg ${
+                onClick={handlePurchase}
+                className={`relative transition-all hover:shadow-lg cursor-pointer hover:scale-105 ${
                   plan.popular ? "border-primary shadow-lg scale-105" : ""
                 }`}
               >
@@ -120,6 +149,12 @@ const Purchase = () => {
                     ))}
                   </div>
                 </CardContent>
+                <div className="px-6 pb-4">
+                  <Button className="w-full" variant="outline">
+                    前往购买
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>
@@ -128,7 +163,10 @@ const Purchase = () => {
         <div className="mb-12">
           <h2 className="text-2xl font-semibold text-center mb-6">附加产品</h2>
           <div className="max-w-md mx-auto">
-            <Card className="relative transition-all hover:shadow-lg">
+            <Card 
+              onClick={handlePurchase}
+              className="relative transition-all hover:shadow-lg cursor-pointer hover:scale-105"
+            >
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-2xl">{plans[3].name}</CardTitle>
                 <div className="mt-4">
@@ -150,6 +188,12 @@ const Purchase = () => {
                   ))}
                 </div>
               </CardContent>
+              <div className="px-6 pb-4">
+                <Button className="w-full" variant="outline">
+                  前往购买
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
             </Card>
           </div>
         </div>
@@ -243,6 +287,43 @@ const Purchase = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* 客服联系方式卡片 */}
+        <Card className="max-w-2xl mx-auto mt-6 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardHeader className="text-center pb-2">
+            <CardTitle className="text-xl flex items-center justify-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              客服联系方式
+            </CardTitle>
+            <CardDescription>版本更新通知与售后服务</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+              如需<span className="font-medium text-foreground">支付宝/微信付款</span>或遇到任何问题，欢迎加入QQ群联系我们
+            </p>
+            <div className="flex items-center justify-center gap-3 p-4 bg-background rounded-lg border">
+              <span className="text-lg font-mono font-semibold">{qqGroup}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyQQ}
+                className="gap-1.5"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 text-primary" />
+                    已复制
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    复制群号
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
