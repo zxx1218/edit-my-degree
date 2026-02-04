@@ -422,7 +422,7 @@ const handleConfirmGenerate = async () => {
       });
     } catch (error) {
       console.error("学位在线验证报告PDF生成错误:", error);
-      toast.error("学位在线验证报告PDF生成失败，请重试");
+      toast.error(`${error},学位在线验证报告PDF生成失败！`);
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);

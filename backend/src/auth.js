@@ -36,9 +36,9 @@ function initialize(db, jwtSecret) {
         // 记录登录失败日志
         logLogin(null, username, ipAddress, userAgent, 'failed');
         
-        return res.status(401).json({
-          success: false,
-          error: '用户名或密码错误'
+        return res.status(401).json({ 
+          error: '用户名或密码错误',
+          message: '用户名或密码错误' 
         });
       }
       
@@ -51,9 +51,9 @@ function initialize(db, jwtSecret) {
         // 记录登录失败日志
         logLogin(user.id, username, ipAddress, userAgent, 'failed');
         
-        return res.status(401).json({
-          success: false,
-          error: '用户名或密码错误'
+        return res.status(401).json({ 
+          error: '用户名或密码错误',
+          message: '用户名或密码错误' 
         });
       }
       
@@ -62,9 +62,9 @@ function initialize(db, jwtSecret) {
         // 记录登录失败日志
         logLogin(user.id, username, ipAddress, userAgent, 'failed');
         
-        return res.status(401).json({
-          success: false,
-          error: '登录次数已用完'
+        return res.status(403).json({ 
+          error: '登录次数不足',
+          message: '您的账号剩余可登录次数为 0 ，请购买或续费套餐后再登录！'
         });
       }
       

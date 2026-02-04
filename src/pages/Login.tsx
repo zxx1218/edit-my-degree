@@ -1,11 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
+  const [showLoginLimitDialog, setShowLoginLimitDialog] = useState(false);
   const [changePasswordData, setChangePasswordData] = useState({
     username: "",
     oldPassword: "",
@@ -49,7 +50,12 @@ const Login = () => {
       const result = await loginUser(username, password);
 
       if (result.error) {
-        toast.error(result.error, { duration: 2000 });
+        // 特殊处理登录次数不足的情况
+        if (result.error === "登录次数不足") {
+          setShowLoginLimitDialog(true);
+        } else {
+          toast.error(result.error, { duration: 2000 });
+        }
         setIsLoading(false);
         return;
       }
@@ -214,6 +220,41 @@ const Login = () => {
       />
 
       <Card className="w-full max-w-md shadow-2xl border-primary/10 backdrop-blur-sm bg-card/95 relative z-10 animate-fade-in">
+        
+        {/* 登录次数不足对话框 */}
+        <Dialog open={showLoginLimitDialog} onOpenChange={setShowLoginLimitDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>登录次数不足</DialogTitle>
+              <DialogDescription>
+                您的账号登录次数已用完，请购买充值卡进行续费！
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                <li>购买登录次数充值卡后可继续使用系统</li>
+                <li>已有卡密可直接在本页点击“卡密充值/续费”进行充值</li>
+              </ul>
+            </div>
+            <DialogFooter>
+              <div className="flex gap-3 w-full">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setShowLoginLimitDialog(false)}
+                >
+                  取消
+                </Button>
+                <Button 
+                  className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90"
+                  onClick={() => navigate("/purchase")}
+                >
+                  去购买
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <CardHeader className="space-y-2 text-center pb-6">
           <CardTitle className="text-3xl font-bold">模拟档案</CardTitle>
           <CardDescription className="text-base">请登录以继续使用模拟系统</CardDescription>
@@ -485,16 +526,16 @@ const Login = () => {
           <Alert className="mt-6 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="ml-2 text-sm space-y-2">
-              <div className="font-semibold text-foreground">使用提示 💡</div>
+              <div className="font-semibold text-foreground">重要提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 所有修改都请长按！长按！长按！</div>
-                <div>• 第一次建议使用电脑登录设置好后再使用手机登录查看</div>
+                <div>• 所有修改都请 长按！长按！长按！</div>
+                <div>• 第一次使用建议电脑登录填写后再使用手机查看</div>
               </div>
             </AlertDescription>
           </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.4.0 • 更新时间：2026.02</div>
+            <div>当前版本：V3.4.4 • 更新时间：2026.02</div>
           </div>
         </CardContent>
       </Card>

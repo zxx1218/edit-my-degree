@@ -418,7 +418,7 @@ const handleConfirmGenerate = async () => {
       toast.success("教育部学籍在线验证报告生成成功");
     } catch (error) {
       console.error("生成学籍验证报告失败:", error);
-      toast.error("生成学籍验证报告失败，请重试");
+      toast.error(`${error},生成学籍验证报告失败!`);
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);

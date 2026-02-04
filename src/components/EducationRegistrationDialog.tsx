@@ -335,10 +335,10 @@ const handleConfirmGenerate = async () => {
       
       window.URL.revokeObjectURL(url);
 
-      toast.success("教育部学历证书电子注册备案表报告生成成功！");
+      toast.success("学历证书电子注册备案表生成成功！");
     } catch (error) {
-      console.error("生成报告失败:", error);
-      toast.error("生成报告失败，请稍后重试");
+      console.error("生成学历证书电子注册备案表失败:", error);
+      toast.error(`${error},生成学历证书电子注册备案表失败！`);
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
