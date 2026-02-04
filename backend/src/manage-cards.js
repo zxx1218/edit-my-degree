@@ -87,20 +87,28 @@ const manageCards = (db) => async (req, res) => {
           });
         }
 
-        // 检查充值卡是否存在且未被使用
-        const [cardsResult] = await database.execute(
-          'SELECT * FROM cards WHERE id = ? AND used = FALSE',
+        // 首先检查充值卡是否存在
+        const [cardExistsResult] = await database.execute(
+          'SELECT id, used FROM cards WHERE id = ?',
           [cardId]
         );
 
-        if (cardsResult.length === 0) {
+        if (cardExistsResult.length === 0) {
           return res.status(400).json({
             success: false,
-            error: '充值卡不存在或已被使用'
+            error: '充值卡不存在'
           });
         }
 
-        const card = cardsResult[0];
+        const cardInfo = cardExistsResult[0];
+        
+        // 检查充值卡是否已被使用
+        if (cardInfo.used === 1) {
+          return res.status(400).json({
+            success: false,
+            error: '充值卡已被使用'
+          });
+        }
 
         // 查找用户
         const [usersResult] = await database.execute(
@@ -111,7 +119,7 @@ const manageCards = (db) => async (req, res) => {
         if (usersResult.length === 0) {
           return res.status(404).json({
             success: false,
-            error: '用户不存在'
+            error: '待充值的用户不存在，请检查账号是否已注册！'
           });
         }
 
@@ -128,15 +136,15 @@ const manageCards = (db) => async (req, res) => {
           );
 
           // 根据充值卡类型更新用户相应资源
-          if (card.type === 'login') {
+          if (cardInfo.type === 'login') {
             await database.execute(
               'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
-              [card.values, user.id]
+              [cardInfo.values, user.id]
             );
-          } else if (card.type === 'pdf') {
+          } else if (cardInfo.type === 'pdf') {
             await database.execute(
               'UPDATE users SET pdf_limit = pdf_limit + ? WHERE id = ?',
-              [card.values, user.id]
+              [cardInfo.values, user.id]
             );
           }
 
@@ -152,9 +160,9 @@ const manageCards = (db) => async (req, res) => {
             success: true,
             message: '充值卡使用成功',
             card: {
-              id: card.id,
-              type: card.type,
-              values: card.values
+              id: cardInfo.id,
+              type: cardInfo.type,
+              values: cardInfo.values
             },
             user: updatedUserResult[0]
           });

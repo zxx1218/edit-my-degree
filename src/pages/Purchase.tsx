@@ -295,7 +295,7 @@ const Purchase = () => {
               <Users className="h-5 w-5 text-primary" />
               客服联系方式
             </CardTitle>
-            <CardDescription>版本更新通知与售后服务</CardDescription>
+            <CardDescription>版本更新通知与售后服务2群</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
