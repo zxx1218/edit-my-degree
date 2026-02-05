@@ -1,41 +1,14 @@
 const mysql = require('mysql2/promise');
+const dbManager = require('../db-utils');
 
 async function initializeDatabaseConnection() {
   try {
-    // 首先不指定数据库名称来连接MySQL
-    const connectionConfig = {
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      port: process.env.DB_PORT || 3306,
-      timezone: '+08:00' // 设置为中国时区
-    };
-    
-    const tempDb = await mysql.createConnection(connectionConfig);
-    console.log('Connected to MySQL server');
-    
-    // 创建数据库（如果不存在）
-    const dbName = process.env.DB_NAME || 'degree_management';
-    await tempDb.execute(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-    console.log(`Database '${dbName}' is ready`);
-    
-    // 关闭临时连接
-    await tempDb.end();
-    
-    // 现在连接到具体的数据库
-    const db = await mysql.createConnection({
-      ...connectionConfig,
-      database: dbName
-    });
-    
-    console.log(`Connected to MySQL database '${dbName}'`);
-    
-    // 设置时区为中国时区
-    await db.execute("SET time_zone = '+08:00'");
-    
-    return db;
+    // 使用连接池管理器
+    const pool = await dbManager.initializePool();
+    console.log('使用连接池连接到MySQL数据库');
+    return pool;
   } catch (err) {
-    console.error('Database connection initialization failed:', err);
+    console.error('数据库连接初始化失败:', err);
     throw err;
   }
 }

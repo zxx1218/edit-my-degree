@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { logLogin } = require('./operation-logger');
+const dbManager = require('./db-utils');
 
 /**
  * 初始化认证模块
- * @param {Object} db - 数据库连接实例
+ * @param {Object} pool - 数据库连接池实例
  */
-function initialize(db, jwtSecret) {
+function initialize(pool, jwtSecret) {
   // JWT 密钥
   const JWT_SECRET = jwtSecret || process.env.JWT_SECRET;
 
@@ -21,13 +22,10 @@ function initialize(db, jwtSecret) {
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {
-      // 设置时区为中国时区
-      await db.execute("SET time_zone = '+08:00'");
-      
       const { username, password } = req.body;
       
-      // 查询用户
-      const [rows] = await db.execute(
+      // 使用连接池执行查询
+      const [rows] = await dbManager.execute(
         'SELECT * FROM users WHERE username = ?',
         [username]
       );
@@ -69,7 +67,7 @@ function initialize(db, jwtSecret) {
       }
       
       // 减少登录次数
-      await db.execute(
+      await dbManager.execute(
         'UPDATE users SET remaining_logins = remaining_logins - 1 WHERE id = ?',
         [user.id]
       );
@@ -78,7 +76,7 @@ function initialize(db, jwtSecret) {
       logLogin(user.id, username, ipAddress, userAgent, 'success');
       
       // 记录登录日志到login_logs表
-      await db.execute(
+      await dbManager.execute(
         'INSERT INTO login_logs (user_id, username) VALUES (?, ?)',
         [user.id, username]
       );
@@ -100,7 +98,20 @@ function initialize(db, jwtSecret) {
         token
       });
     } catch (err) {
-      console.error(err);
+      console.error('登录错误:', err);
+      // 如果是连接相关错误，尝试重新连接
+      if (err.message.includes('connection is in closed state')) {
+        try {
+          await dbManager.reconnect();
+          return res.status(503).json({
+            success: false,
+            error: '数据库连接已恢复，请重新尝试'
+          });
+        } catch (reconnectErr) {
+          console.error('数据库重新连接失败:', reconnectErr);
+        }
+      }
+      
       res.status(500).json({
         success: false,
         error: '服务器内部错误'
@@ -120,13 +131,10 @@ function initialize(db, jwtSecret) {
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {
-      // 设置时区为中国时区
-      await db.execute("SET time_zone = '+08:00'");
-      
       const { username, password } = req.body;
       
       // 查询管理员
-      const [rows] = await db.execute(
+      const [rows] = await dbManager.execute(
         'SELECT * FROM admins WHERE username = ?',
         [username]
       );
@@ -185,7 +193,20 @@ function initialize(db, jwtSecret) {
         token
       });
     } catch (err) {
-      console.error(err);
+      console.error('管理员登录错误:', err);
+      // 如果是连接相关错误，尝试重新连接
+      if (err.message.includes('connection is in closed state')) {
+        try {
+          await dbManager.reconnect();
+          return res.status(503).json({
+            success: false,
+            error: '数据库连接已恢复，请重新尝试'
+          });
+        } catch (reconnectErr) {
+          console.error('数据库重新连接失败:', reconnectErr);
+        }
+      }
+      
       res.status(500).json({
         success: false,
         error: '服务器内部错误'
