@@ -81,6 +81,20 @@ class DatabaseManager {
   }
 
   /**
+   * 执行非查询命令（用于不支持预编译语句的命令，如事务控制）
+   */
+  async executeNonQuery(query) {
+    const connection = await this.getConnection();
+    try {
+      // 使用query方法而不是execute，因为某些命令不支持预编译语句
+      const result = await connection.query(query);
+      return result;
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
    * 重新连接数据库
    */
   async reconnect() {

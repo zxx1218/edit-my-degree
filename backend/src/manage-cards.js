@@ -89,7 +89,7 @@ const manageCards = (db) => async (req, res) => {
 
         // 首先检查充值卡是否存在
         const [cardExistsResult] = await database.execute(
-          'SELECT id, used FROM cards WHERE id = ?',
+          'SELECT id, type, `values`, used FROM cards WHERE id = ?',
           [cardId]
         );
 
@@ -125,49 +125,68 @@ const manageCards = (db) => async (req, res) => {
 
         const user = usersResult[0];
         
-        // 开始事务处理
-        await database.query('START TRANSACTION');
+        // 获取数据库连接用于事务处理
+        const connection = await database.getConnection();
         
         try {
+          // 开始事务处理 - 使用数据库管理器的executeNonQuery方法
+          await database.executeNonQuery('START TRANSACTION');
+          
           // 标记充值卡为已使用
-          await database.execute(
+          await connection.execute(
             'UPDATE cards SET used = TRUE, used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?',
             [user.id, cardId]
           );
 
           // 根据充值卡类型更新用户相应资源
           if (cardInfo.type === 'login') {
-            await database.execute(
+            await connection.execute(
               'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
               [cardInfo.values, user.id]
             );
           } else if (cardInfo.type === 'pdf') {
-            await database.execute(
+            await connection.execute(
               'UPDATE users SET pdf_limit = pdf_limit + ? WHERE id = ?',
               [cardInfo.values, user.id]
             );
           }
 
-          await database.query('COMMIT');
+          await database.executeNonQuery('COMMIT');
 
-          // 获取更新后的用户信息
-          const [updatedUserResult] = await database.execute(
+          // 获取更新后的用户信息用于消息提示
+          const updatedUserResult = await connection.execute(
             'SELECT remaining_logins, pdf_limit FROM users WHERE id = ?',
             [user.id]
           );
+          connection.release();
+
+          // 获取更新后的用户信息用于消息提示
+          const updatedUser = updatedUserResult[0];
+          const loginRemaining = updatedUser[0].remaining_logins || 0;
+          const pdfRemaining = updatedUser[0].pdf_limit || 0;
+          console.log(`用户 ${username} 的登录次数剩余 ${loginRemaining}，PDF积分剩余 ${pdfRemaining}`);
+          
+          // 根据充值卡类型生成相应的消息
+          let message = '充值卡使用成功';
+          if (cardInfo.type === 'login') {
+            message += `，当前登录次数剩余 ${loginRemaining} 次`;
+          } else if (cardInfo.type === 'pdf') {
+            message += `，当前PDF积分剩余 ${pdfRemaining} 分`;
+          }
 
           return res.json({
             success: true,
-            message: '充值卡使用成功',
+            message: message,
             card: {
               id: cardInfo.id,
               type: cardInfo.type,
               values: cardInfo.values
             },
-            user: updatedUserResult[0]
+            user: updatedUser
           });
         } catch (error) {
-          await database.execute('ROLLBACK');
+          await database.executeNonQuery('ROLLBACK');
+          connection.release();
           throw error;
         }
 
