@@ -39,7 +39,7 @@ const Purchase = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const qqGroup = "1034981273";
-  const xianyuLink = "https://m.tb.cn/h.7HY5IJW?tk=va1FUjdOrPS";
+  const xianyuLink = "https://m.tb.cn/h.7Ex6cF0?tk=j0ZTUOOjKiK";
 
   const handleCopyQQ = async () => {
     try {
@@ -67,17 +67,17 @@ const Purchase = () => {
   const plans = [
     {
       name: "体验版",
-      logins: "3次登录",
+      logins: "5次登录",
       price: "¥9",
-      description: "为您的个人账号充值3次登录次数",
+      description: "为您的个人账号充值5次登录次数",
       popular: false,
       features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "标准版",
-      logins: "30次登录",
+      logins: "50次登录",
       price: "¥29",
-      description: "为您的个人账号充值30次登录次数",
+      description: "为您的个人账号充值50次登录次数",
       popular: true,
       features: ["数据加密存储", "支持信息任意修改"],
     },
