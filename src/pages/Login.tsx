@@ -256,8 +256,8 @@ const Login = () => {
           </DialogContent>
         </Dialog>
         <CardHeader className="space-y-2 text-center pb-6">
-          <CardTitle className="text-3xl font-bold">模拟档案</CardTitle>
-          <CardDescription className="text-base">请登录以继续使用模拟系统</CardDescription>
+          <CardTitle className="text-3xl font-bold">学信档案</CardTitle>
+          <CardDescription className="text-base">请登录以继续使用学信系统</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleLogin} className="space-y-5">

@@ -67,17 +67,17 @@ const Purchase = () => {
   const plans = [
     {
       name: "体验版",
-      logins: "5次",
+      logins: "3次登录",
       price: "¥9",
-      description: "为您的个人账号充值5次登录次数",
+      description: "为您的个人账号充值3次登录次数",
       popular: false,
       features: ["数据加密存储", "支持信息任意修改"],
     },
     {
       name: "标准版",
-      logins: "50次",
+      logins: "30次登录",
       price: "¥29",
-      description: "为您的个人账号充值50次登录次数",
+      description: "为您的个人账号充值30次登录次数",
       popular: true,
       features: ["数据加密存储", "支持信息任意修改"],
     },
@@ -113,7 +113,7 @@ const Purchase = () => {
 
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">选择您的套餐</h1>
-          <p className="text-muted-foreground text-lg">购买或续费模拟档案账号，享受便捷的信息管理服务</p>
+          <p className="text-muted-foreground text-lg">购买或续费学信档案账号，享受便捷的信息管理服务</p>
         </div>
 
         <div className="mb-12">
