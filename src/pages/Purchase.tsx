@@ -6,20 +6,19 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle, Users, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import xianyuImage from "@/assets/xianyu.png";
 
 const faqItems = [
   {
     question: "如何购买套餐？",
-    answer: "目前支持通过闲鱼平台、微信、支付宝购买，闲鱼用户点击上方套餐下方购买按钮即可前往闲鱼商品页。如闲鱼不方便，可通过下方售后QQ群联系我们使用微信/支付宝付款。"
+    answer: "目前支持通过微信、支付宝购买，点击上方套餐下方购买按钮即可前往商品购买页。如遇到麻烦，可通过下方售后QQ群联系我们。"
   },
   {
     question: "登录次数是什么意思？",
-    answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。永久版不限制登录次数。"
+    answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。登录次数不使用永不过期"
   },
   {
     question: "PDF积分是什么？",
-    answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗30积分，积分不使用永不过期，每30个积分30元。"
+    answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗30积分，积分不使用永不过期。"
   },
   {
     question: "数据安全吗？",
@@ -39,7 +38,8 @@ const Purchase = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const qqGroup = "1034981273";
-  const xianyuLink = "https://m.tb.cn/h.7Ex6cF0?tk=j0ZTUOOjKiK";
+  const card_login = "http://4ox.cn/bq3kuv";
+  const card_PDF = "http://4ox.cn/sdms3r";
 
   const handleCopyQQ = async () => {
     try {
@@ -58,10 +58,14 @@ const Purchase = () => {
       toast.success("QQ群号已复制到剪贴板");
       setTimeout(() => setCopied(false), 2000);
     }
+  };  
+
+  const handlePurchaseLogin = () => {
+    window.open(card_login, "_blank");
   };
 
-  const handlePurchase = () => {
-    window.open(xianyuLink, "_blank");
+  const handlePurchasePDF= () => {
+    window.open(card_PDF, "_blank");
   };
 
   const plans = [
@@ -99,10 +103,6 @@ const Purchase = () => {
     },
   ];
 
-  // const handlePurchase = () => {
-  //   window.open("https://m.tb.cn/h.SBeNzg7?tk=soe4fLh0W4i", "_blank");
-  // };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -122,7 +122,7 @@ const Purchase = () => {
             {plans.slice(0, 3).map((plan, index) => (
               <Card
                 key={index}
-                onClick={handlePurchase}
+                onClick={handlePurchaseLogin}
                 className={`relative transition-all hover:shadow-lg cursor-pointer hover:scale-105 ${
                   plan.popular ? "border-primary shadow-lg scale-105" : ""
                 }`}
@@ -164,7 +164,7 @@ const Purchase = () => {
           <h2 className="text-2xl font-semibold text-center mb-6">附加产品</h2>
           <div className="max-w-md mx-auto">
             <Card 
-              onClick={handlePurchase}
+              onClick={ handlePurchasePDF}
               className="relative transition-all hover:shadow-lg cursor-pointer hover:scale-105"
             >
               <CardHeader className="text-center pb-4">
@@ -197,47 +197,6 @@ const Purchase = () => {
             </Card>
           </div>
         </div>
-
-        {/* 购买流程先注释掉 */}
-        {/* <Card className="max-w-2xl mx-auto">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">如何购买？</CardTitle>
-            <CardDescription>通过闲鱼平台安全购买</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-center">
-              <img src={xianyuImage} alt="闲鱼购买" className="max-w-sm h-auto rounded-lg shadow-md" />
-            </div>
-
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">①</span>
-                <span>在系统注册页注册一个个人账号</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">②</span>
-                <span>点击下方"前往购买"按钮跳转到闲鱼商品页面</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">③</span>
-                <span>在闲鱼APP中选择您需要的套餐并完成支付</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">④</span>
-                <span>支付成功后，将您注册的账号发给卖家(无需密码)</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-foreground">⑤</span>
-                <span>稍等片刻，商品发货即代表开通成功</span>
-              </div>
-            </div>
-
-            <Button onClick={handlePurchase} className="w-full h-12 text-lg" size="lg">
-              前往购买
-              <ExternalLink className="ml-2 h-5 w-5" />
-            </Button>
-          </CardContent>
-        </Card> */}
 
         <div className="max-w-2xl mx-auto mt-6 grid md:grid-cols-2 gap-6">
           <Card>
