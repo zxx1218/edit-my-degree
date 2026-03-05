@@ -24,10 +24,14 @@ module.exports = {
       script: './server.js',
       
       /**
-       * 实例数量 - 设置为 1 表示只运行一个实例
-       * 如果需要集群模式，可以设置为 "max" 或具体数字
+       * 实例数量 - 设置为 "max" 表示自动匹配 CPU 核心数
        */
-      instances: 1,
+      instances: "max",
+      
+      /**
+       * 集群模式 - 启用多进程集群
+       */
+      exec_mode: "cluster",
       
       /**
        * 自动重启 - 当应用崩溃时自动重启
@@ -41,10 +45,16 @@ module.exports = {
       watch: false,
       
       /**
-       * 内存限制重启 - 当应用内存使用超过指定值时自动重启
-       * 防止内存泄漏导致服务器性能下降
+       * 内存限制重启 - 当应用内存超过指定值时自动重启
+       * 32G 内存服务器，每个实例限制 800M，40 个实例约占用 32G
        */
-      max_memory_restart: '4G',
+      max_memory_restart: '800M',
+      
+      /**
+       * Node.js 选项 - 设置 V8 引擎最大内存
+       * 与 max_memory_restart 配合使用，防止内存溢出
+       */
+      node_args: '--max-old-space-size=768',
       
       /**
        * 默认环境变量配置
@@ -56,9 +66,25 @@ module.exports = {
         NODE_ENV: 'production',
         
         /**
-         * 应用监听端口
+         * 应用监听端口（所有实例共享同一端口）
          */
-        PORT: 20000
+        PORT: 20000,
+        
+        /**
+         * 数据库连接池配置 - 根据实例数调整
+         * 40 个实例，每个实例 2-4 个连接，总共 80-160 个连接
+         */
+        DB_CONNECTION_LIMIT: '4',
+        
+        /**
+         * 等待连接队列限制
+         */
+        DB_QUEUE_LIMIT: '100',
+        
+        /**
+         * 数据库连接超时时间（毫秒）
+         */
+        DB_CONNECT_TIMEOUT: '5000'
       },
       
       /**
@@ -73,7 +99,17 @@ module.exports = {
         /**
          * 生产环境运行端口
          */
-        PORT: 20000
+        PORT: 20000,
+        
+        /**
+         * 生产环境数据库连接池大小
+         */
+        DB_CONNECTION_LIMIT: '4',
+        
+        /**
+         * 生产环境队列限制
+         */
+        DB_QUEUE_LIMIT: '100'
       },
       
       /**
@@ -88,7 +124,12 @@ module.exports = {
         /**
          * 开发环境运行端口
          */
-        PORT: 20002
+        PORT: 20002,
+        
+        /**
+         * 开发环境数据库连接池大小（单实例可设置较大）
+         */
+        DB_CONNECTION_LIMIT: '10'
       }
     }
   ]
