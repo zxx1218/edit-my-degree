@@ -535,7 +535,7 @@ const Login = () => {
           </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.5.2 • 更新时间：2026.02</div>
+            <div>当前版本：V3.5.2 • 更新时间：2026.03</div>
           </div>
         </CardContent>
       </Card>
