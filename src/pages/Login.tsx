@@ -54,7 +54,7 @@ const Login = () => {
         if (result.error === "登录次数不足") {
           setShowLoginLimitDialog(true);
         } else {
-          toast.error(result.error, { duration: 2000 });
+          toast.error(result.error, { duration: 4000 });
         }
         setIsLoading(false);
         return;
@@ -62,13 +62,13 @@ const Login = () => {
 
       if (result.success && result.user) {
         localStorage.setItem("currentUser", JSON.stringify(result.user));
-        toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 1500 });
+        toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 3000 });
         login();
         navigate("/");
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "网络连接失败，请检查网络后重试";
-      toast.error(errorMessage, { duration: 2000 });
+      toast.error(errorMessage, { duration: 4000 });
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -79,12 +79,12 @@ const Login = () => {
     e.preventDefault();
 
     if (changePasswordData.newPassword !== changePasswordData.confirmPassword) {
-      toast.error("两次输入的新密码不一致", { duration: 1500 });
+      toast.error("两次输入的新密码不一致", { duration: 3000 });
       return;
     }
 
     if (changePasswordData.newPassword.length < 6) {
-      toast.error("新密码长度至少为6位", { duration: 1500 });
+      toast.error("新密码长度至少为6位", { duration: 3000 });
       return;
     }
 
@@ -98,9 +98,9 @@ const Login = () => {
       );
 
       if (result.error) {
-        toast.error(result.error, { duration: 1500 });
+        toast.error(result.error, { duration: 3000 });
       } else if (result.success) {
-        toast.success("密码修改成功", { duration: 1500 });
+        toast.success("密码修改成功", { duration: 3000 });
         setIsChangePasswordOpen(false);
         setChangePasswordData({
           username: "",
@@ -110,7 +110,7 @@ const Login = () => {
         });
       }
     } catch (error) {
-      toast.error("密码修改失败，请重试", { duration: 1500 });
+      toast.error("密码修改失败，请重试", { duration: 3000 });
       console.error("Change password error:", error);
     } finally {
       setIsChangingPassword(false);
@@ -181,7 +181,7 @@ const Login = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || "充值失败", { duration: 2000 });
+        toast.error(result.error || "充值失败", { duration: 4000 });
         return;
       }
 
@@ -190,7 +190,7 @@ const Login = () => {
         return;
       }
 
-      toast.success(result.message || "充值成功", { duration: 2000 });
+      toast.success(result.message || "充值成功", { duration: 4000 });
 
       // 清空输入
       if (type === "login") {
@@ -202,7 +202,7 @@ const Login = () => {
       setIsRechargeOpen(false);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "充值失败，请重试";
-      toast.error(errorMessage, { duration: 2000 });
+      toast.error(errorMessage, { duration: 4000 });
       console.error("Recharge error:", error);
     } finally {
       setIsRecharging(false);
@@ -511,7 +511,7 @@ const Login = () => {
               className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform"
             >
               <span>💰</span>
-              <span>定价说明</span>
+              <span>卡密购买</span>
             </button>
             <span className="text-border">•</span>
             <button
@@ -519,7 +519,7 @@ const Login = () => {
               className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform"
             >
               <span>📹</span>
-              <span>使用教程</span>
+              <span>演示视频</span>
             </button>
           </div>
 
@@ -535,7 +535,7 @@ const Login = () => {
           </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.4.4 • 更新时间：2026.02</div>
+            <div>当前版本：V3.5.2 • 更新时间：2026.02</div>
           </div>
         </CardContent>
       </Card>

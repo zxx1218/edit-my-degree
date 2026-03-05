@@ -240,9 +240,9 @@ const VerificationReport = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>访问确认</AlertDialogTitle>
             <AlertDialogDescription>
-              1. 建议使用电脑访问该页面以获得更好的浏览体验。
+              1. 建议使用电脑访问该页面以获得更好的浏览体验
               <br />
-              2. 注意这里页面内容取决于您在系统主页设置的学籍学历学位以及考研信息，请确保信息准确填写再访问该页面。
+              2. 网页版信息取决于您在系统中设置的学籍学历学位以及考研信息，请确保信息准确填写再访问该页面
               <br />
               3. 访问该页面需要消耗 <span className="font-semibold text-foreground">1次登录次数</span>，是否确认访问？
             </AlertDialogDescription>
@@ -256,11 +256,13 @@ const VerificationReport = () => {
       <AlertDialog open={showPdfCreditConfirm} onOpenChange={setShowPdfCreditConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>PDF积分提示</AlertDialogTitle>
+            <AlertDialogTitle>报告制作提示</AlertDialogTitle>
             <AlertDialogDescription>
-              1. 生成该报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span>，如果不足将无法生成。
+              1. 制作报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span>，如果不足将无法生成
               <br />
-              2. 如果您是永久版用户，您会自动获得30个PDF积分，其余用户默认积分数为0，PDF积分需购买
+              2. 永久版用户，赠送30个PDF积分，其余用户默认积分数为0
+              <br />
+              3. PDF积分购买请前往登录页，点击“卡密购买”进行购买
               <br />
               3. <span className="font-semibold text-foreground">务必使用电脑操作PDF生成！手机操作会导致无法下载！</span>
             </AlertDialogDescription>

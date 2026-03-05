@@ -38,8 +38,8 @@ const Purchase = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const qqGroup = "1034981273";
-  const card_login = "http://4ox.cn/bq3kuv";
-  const card_PDF = "http://4ox.cn/sdms3r";
+  const card_login = "http://4ox.cn/bq3kuv"; // 四云发卡网卡密购买链接
+  const card_PDF = "http://4ox.cn/sdms3r"; // 四云发卡网PDF购买链接
 
   const handleCopyQQ = async () => {
     try {
