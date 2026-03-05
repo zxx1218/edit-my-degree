@@ -33,8 +33,9 @@ const getLoginStatsRangeModule = require('../get-login-stats-range');
 // IP黑名单 - 在这里添加需要封禁的IP地址
 const IP_BLACKLIST = [
   '103.151.173.208',
-  '183.6.9.103'
-
+  '183.6.9.103',
+  '222.120.184.140',
+  '222.120.184.141'
 ];
 
 // IP封禁中间件
