@@ -1,0 +1,91 @@
+server
+{
+    listen 9092;
+    server_name 192.168.1.201; # 同时支持IP和域名访问（匹配你的请求origin）
+    index index.html index.htm default.htm default.html;
+    root /www/wwwroot/mainWeb/dist; # 确认这个路径下有 index.html 和 assets 文件夹
+
+    # 核心1：接口代理规则（解决 /api 请求转发，修复 405 问题）
+    location ^~ /api {
+        # 替换为你的后端真实地址（IP+端口，结尾不要加 /！）
+        # 示例：后端部署在 192.168.1.201:20000 就填这个，根据实际后端地址修改
+        proxy_pass http://192.168.1.201:20000;
+
+        # 转发请求头（确保后端能正确识别请求来源和参数）
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 支持 POST/PUT/DELETE 等方法（关键修复 405）
+        proxy_http_version 1.1;
+        proxy_set_header Connection ""; # 清除默认连接限制
+
+        # 明确允许常用请求方法
+        limit_except GET POST PUT DELETE OPTIONS { deny all; }
+    }
+
+    # 核心2：SPA 路由重定向 + OPTIONS 跨域预检处理
+    location / {
+        # 处理跨域预检 OPTIONS 请求（必须！否则 POST 跨域会被拦截）
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "http://cheerout.cn:9092"; # 匹配前端请求origin
+            add_header Access-Control-Allow-Methods "GET,POST,PUT,DELETE,OPTIONS";
+            add_header Access-Control-Allow-Headers "Content-Type,Authorization"; # 支持常用请求头
+            add_header Access-Control-Allow-Credentials "true"; # 允许携带Cookie（如需）
+            add_header Content-Length 0;
+            add_header Content-Type text/plain;
+            return 200; # OPTIONS 请求直接返回 200，不转发到后端
+        }
+
+        # 原有 SPA 路由重定向（保留）
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 静态文件缓存配置（保留原配置，优化性能）
+    location ~ .*\\.(gif|jpg|jpeg|png|bmp|swf)$
+    {
+        expires      30d;
+        access_log  /dev/null;
+		error_log  /dev/null;
+    }
+
+    location ~ .*\\.(js|css)?$
+    {
+        expires      12h;
+        access_log  /dev/null;
+		error_log  /dev/null;
+    }
+
+    # 禁止访问敏感文件（保留原配置）
+    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    {
+        return 404;
+    }
+
+    # SSL 相关注释（保留，无需删除）
+    #CERT-APPLY-CHECK--START
+    # include /www/server/panel/vhost/nginx/well-known/chsiii.cn.conf;
+    #CERT-APPLY-CHECK--END
+    #SSL-START
+    #error_page 404/404.html;
+    #SSL-END
+    #ERROR-PAGE-START
+    #error_page 404 /404.html;
+    #error_page 502 /502.html;
+    #ERROR-PAGE-END
+
+    # 重要：已注释面板伪静态规则（避免覆盖路由配置）
+    # include /www/server/panel/vhost/rewrite/html_chsiii.cn.conf;
+
+    # 证书验证目录（保留，不影响）
+    location ~ \.well-known{
+        allow all;
+    }
+    if ( $uri ~ "^/\.well-known/.*\.(php|jsp|py|js|css|lua|ts|go|zip|tar\.gz|rar|7z|sql|bak)$" ) {
+        return 403;
+    }
+
+    access_log  /www/wwwlogs/cheerout.cn.log;
+    error_log  /www/wwwlogs/cheerout.cn.error.log;
+}
