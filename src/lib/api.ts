@@ -154,7 +154,7 @@ export const changePassword = async (username: string, oldPassword: string, newP
   return data;
 };
 
-// 减少PDF积分API
+// 减少 PDF 积分 API
 export const decreasePdfLimit = async (username: string, decreaseAmount: number) => {
   const options = createSignedRequestOptions('POST', '/api/decrease-pdf-limit', { username, decreaseAmount });
   const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, options);
@@ -162,8 +162,29 @@ export const decreasePdfLimit = async (username: string, decreaseAmount: number)
   const data = await response.json();
   
   if (!response.ok) {
-    throw new Error(data.error || '减少PDF积分失败');
+    throw new Error(data.error || '减少 PDF 积分失败');
   }
 
+  return data;
+};
+
+// 查询用户登录次数和 PDF 积分 API
+export interface QueryUserLoginsPdfResponse {
+  success: boolean;
+  user: {
+    id: string;
+    username: string;
+    remaining_logins: number;
+    pdf_limit: number;
+  };
+  error?: string;
+}
+
+export const queryUserLoginsPdf = async (username: string, password: string): Promise<QueryUserLoginsPdfResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/query-user-logins-pdf', { username, password });
+  const response = await fetch(`${API_BASE_URL}/query-user-logins-pdf`, options);
+
+  const data = await response.json();
+  
   return data;
 };

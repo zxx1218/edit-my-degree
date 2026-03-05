@@ -29,6 +29,7 @@ const increasePdfLimitModule = require('../increase-pdf-limit');
 const resetPdfLimitModule = require('../reset-pdf-limit');
 const getHourlyLoginStatsModule = require('../get-hourly-login-stats');
 const getLoginStatsRangeModule = require('../get-login-stats-range');
+const queryUserLoginsPdfModule = require('../query-user-logins-pdf');
 
 // IP黑名单 - 在这里添加需要封禁的IP地址
 const IP_BLACKLIST = [
@@ -281,7 +282,9 @@ function setupRoutes(app, db, JWT_SECRET) {
   app.post('/api/get-hourly-login-stats', generalLimiter, signatureValidationMiddleware, getHourlyLoginStatsModule.initialize(db));
   // 获取登录统计范围接口 - 用于获取一周或一月内的登录统计数据
   app.post('/api/get-login-stats-range', generalLimiter, signatureValidationMiddleware, getLoginStatsRangeModule.initialize(db));
-  
+  // 查询用户登录次数和 PDF 积分接口 - 用于用户查询自己的登录次数和 PDF 积分
+  app.post('/api/query-user-logins-pdf', generalLimiter, queryUserLoginsPdfModule.initialize(db));
+
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));
 

@@ -420,7 +420,7 @@ const Login = () => {
                     value="pdf" 
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
                   >
-                    📑 PDF积分充值
+                    📑 PDF 积分充值
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="login" className="space-y-4 pt-4 animate-fade-in">
@@ -475,11 +475,11 @@ const Login = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pdf-card">PDF积分充值卡密</Label>
+                    <Label htmlFor="pdf-card">PDF 积分充值卡密</Label>
                     <Input
                       id="pdf-card"
                       type="text"
-                      placeholder="请输入PDF积分充值卡密"
+                      placeholder="请输入 PDF 积分充值卡密"
                       value={pdfRechargeData.cardId}
                       onChange={(e) =>
                         setPdfRechargeData({
@@ -494,6 +494,22 @@ const Login = () => {
                   </Button>
                 </TabsContent>
               </Tabs>
+              
+              {/* 查询次数入口 */}
+              <div className="mt-0 pt-0 border-border">
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      setIsRechargeOpen(false);
+                      navigate("/query-logins");
+                    }}
+                    className="text-blue-700 hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm"
+                  >
+                    <span>🔍</span>
+                    <span>点我查询当前剩余登录次数与 PDF 积分</span>
+                  </button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
 
@@ -535,7 +551,7 @@ const Login = () => {
           </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.5.2 • 更新时间：2026.03</div>
+            <div>当前版本：V3.6.1 • 更新时间：2026.03</div>
           </div>
         </CardContent>
       </Card>
