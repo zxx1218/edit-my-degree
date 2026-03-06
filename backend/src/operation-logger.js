@@ -35,16 +35,34 @@ function logOperation(userId, username, operationType, table, operationData, ipA
  * 记录密码更改日志
  * @param {string} userId - 用户ID
  * @param {string} username - 用户名
- * @param {string} ipAddress - IP地址
+ * @param {string} ipAddress - IP 地址
  * @param {string} userAgent - 用户代理
  * @param {string} result - 操作结果
  */
 function logPasswordChange(userId, username, ipAddress, userAgent, result = 'success') {
-  logger.info(`密码更改 - 用户ID: ${userId}, 用户名: ${username}, IP地址: ${ipAddress}, 用户代理: ${userAgent}, 结果: ${result}`);
+  logger.info(`密码更改 - 用户ID: ${userId}, 用户名：${username}, IP 地址：${ipAddress}, 用户代理：${userAgent}, 结果：${result}`);
+}
+
+/**
+ * 记录查询登录次数和 PDF 积分日志
+ * @param {string} userId - 用户ID
+ * @param {string} username - 用户名
+ * @param {string} ipAddress - IP 地址
+ * @param {string} userAgent - 用户代理
+ * @param {string} result - 操作结果
+ * @param {Object} queryData - 查询的数据（包含剩余登录次数和 PDF 积分）
+ */
+function logQueryUserLogins(userId, username, ipAddress, userAgent, result = 'success', queryData = null) {
+  let logMessage = `查询登录信息 - 用户ID: ${userId}, 用户名：${username}, IP 地址：${ipAddress}, 用户代理：${userAgent}, 结果：${result}`;
+  if (queryData) {
+    logMessage += `, 剩余登录次数：${queryData.remaining_logins}, PDF 积分：${queryData.pdf_limit}`;
+  }
+  logger.info(logMessage);
 }
 
 module.exports = {
   logLogin,
   logOperation,
-  logPasswordChange
+  logPasswordChange,
+  logQueryUserLogins
 };
