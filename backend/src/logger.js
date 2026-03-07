@@ -9,8 +9,18 @@ const logDir = path.join(__dirname, '..', 'logs');
 // 定义日志格式
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.printf(({ timestamp, level, message }) => {
-    return `${timestamp} [${level.toUpperCase()}]: ${message}`;
+  winston.format.printf(({ timestamp, level, message, ...metadata }) => {
+    // 如果有额外的元数据，将其格式化为 JSON 字符串
+    let fullMessage = message;
+    if (Object.keys(metadata).length > 0) {
+      try {
+        const metadataStr = JSON.stringify(metadata, null, 2);
+        fullMessage = `${message}\n${metadataStr}`;
+      } catch (e) {
+        fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: false })}`;
+      }
+    }
+    return `${timestamp} [${level.toUpperCase()}]: ${fullMessage}`;
   })
 );
 

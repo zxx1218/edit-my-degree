@@ -246,7 +246,7 @@ const generateEducationPdf = async (req, res) => {
 
       /*
         二维码路由
-        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
+        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4 年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=/backend/assets/demo.jpg
       */
       
       // 构建查询参数对象
@@ -268,7 +268,7 @@ const generateEducationPdf = async (req, res) => {
         principalName: principalName || t,
         verificationCode: 'B6JD8L2NH26BO3M', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加minio
+        photo: '/backend/assets/demo.jpg' // 照片URL，使用本地图片
       };
 
       // 构建查询字符串并对所有值进行编码

@@ -243,8 +243,8 @@ const generateStudentStatusPdf = async (req, res) => {
       logger.info('🔄 开始生成二维码...');
 
       /*
-          样例url - 学籍
-          /verification-studentStatus?name=张三&gender=男&birthDate=1998年01月15日&nationality=汉族&school=北京大学&degreeLevel=本科&major=计算机科学与技术&duration=四年&educationType=普通高等教育&studyType=普通全日制&branch=信息科学技术学院&department=计算机系&enrollmentDate=2016年09月01日&status=注册学籍&graduationDate=2020年06月30日&verificationCode=ABCD1234567890&updateDate=2024年11月27日&photo=https://example.com/photo.jpg
+          样例 url - 学籍
+          /verification-studentStatus?name=张三&gender=男&birthDate=1998 年 01 月 15 日&nationality=汉族&school=北京大学&degreeLevel=本科&major=计算机科学与技术&duration=四年&educationType=普通高等教育&studyType=普通全日制&branch=信息科学技术学院&department=计算机系&enrollmentDate=2016 年 09 月 01 日&status=注册学籍&graduationDate=2020 年 06 月 30 日&verificationCode=ABCD1234567890&updateDate=2024 年 11 月 27 日&photo=/backend/assets/demo.jpg
       */
       
       // 构建查询参数对象
@@ -267,8 +267,8 @@ const generateStudentStatusPdf = async (req, res) => {
         graduationDate: graduationDate || t,
         verificationCode: 'L31N9H2JS18JK3U', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加miniio
-        // photo: degreePhoto || 'https://example.com/photo.jpg'
+        photo: '/backend/assets/demo.jpg' // 照片URL，使用本地图片
+        // photo: degreePhoto || '/backend/assets/demo.jpg'
       };
 
       // 构建查询字符串并对所有值进行编码

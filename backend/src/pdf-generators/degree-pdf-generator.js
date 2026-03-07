@@ -7,7 +7,7 @@ const logger = require('../logger');
 
 const generateDegreePdf = async (req, res) => {
   try {
-    logger.info('🚀 开始生成学位在线验证报告 PDF...');
+    logger.info('==========🚀 开始生成学位在线验证报告 PDF...==========');
     const {
       name,
       gender,
@@ -233,9 +233,9 @@ const generateDegreePdf = async (req, res) => {
         degreeName: degreeType || t,
         major: major || t,
         certificateNumber: certificateNumber || t,
-        verificationCode: 'X2KY9H6CU48KL6B', // 在线验证码，目前先写死
+        verificationCode: 'X2KY9H6CU4G6639', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: 'https://example.com/photo.jpg' // 照片URL目前先写死，后续添加minio
+        photo: '/backend/assets/demo.jpg' // 照片URL，使用本地图片
       };
 
       // 构建查询字符串并对所有值进行编码
@@ -347,7 +347,7 @@ const generateDegreePdf = async (req, res) => {
 
     // 发送PDF数据
     res.send(Buffer.from(pdfBytes));
-    logger.info('✅ 学位在线验证报告PDF文件发送成功');
+    logger.info('==========✅ 学位在线验证报告PDF文件发送成功==========');
   } catch (error) {
     logger.error("❌ PDF generation error:", error);
     res.status(500).json({

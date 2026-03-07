@@ -53,9 +53,9 @@ const Verification = () => {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <div className="flex flex-col min-h-screen bg-white">
+      {/* Header 
+      <header className="bg-white border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-3">
           <button 
             onClick={() => navigate(-1)}
@@ -68,18 +68,15 @@ const Verification = () => {
           </button>
         </div>
       </header>
+      */}
 
       {/* Logo and Title Bar */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">学</span>
-              </div>
-              <span className="text-2xl font-bold text-gray-800">学信网</span>
-            </div>
-            <span className="text-gray-600 ml-4">在线验证</span>
+            <img src="/logo_img/verify_logo.png" alt="学信网" className="h-8 w-auto" />
+            <span className="text-gray-300 text-xl leading-relaxed">|</span>
+            <span className="text-gray-600">在线验证</span>
           </div>
           <div className="flex items-center gap-4">
             <Search className="w-5 h-5 text-gray-600" />
@@ -121,10 +118,10 @@ const Verification = () => {
       </div>
 
       {/* Main Content */}
-      <div className="px-4 py-6 max-w-2xl mx-auto">
+      <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full">
         {/* Title */}
         <h1 className="text-center text-xl font-bold text-gray-900 mb-6">
-          教育部学历证书电子注册备案表
+          中国高等教育学历认证报告
         </h1>
 
         {/* Photo */}
@@ -141,94 +138,74 @@ const Verification = () => {
         </div>
 
         {/* Information Fields */}
-        <div className="space-y-0">
+        <div className="space-y-0 pl-4">
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">姓名</span>
-            <span className="text-gray-900 ml-2">{data.name}</span>
+            <span className="text-gray-900 ml-6">{data.name}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">性别</span>
-            <span className="text-gray-900 ml-2">{data.gender}</span>
+            <span className="text-gray-900 ml-6">{data.gender}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">出生日期</span>
-            <span className="text-gray-900 ml-2">{data.birthDate}</span>
+            <span className="text-gray-900 ml-6">{data.birthDate}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">入学日期</span>
-            <span className="text-gray-900 ml-2">{data.enrollmentDate}</span>
+            <span className="text-gray-900 ml-6">{data.enrollmentDate}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">毕（结）业日期</span>
-            <span className="text-gray-900 ml-2">{data.graduationDate}</span>
+            <span className="text-gray-900 ml-6">{data.graduationDate}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学校名称</span>
-            <span className="text-gray-900 ml-2">{data.school}</span>
+            <span className="text-gray-900 ml-6">{data.school}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">专业</span>
-            <span className="text-gray-900 ml-2">{data.major}</span>
+            <span className="text-gray-900 ml-6">{data.major}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学制</span>
-            <span className="text-gray-900 ml-2">{data.duration}</span>
+            <span className="text-gray-900 ml-6">{data.duration}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">层次</span>
-            <span className="text-gray-900 ml-2">{data.level}</span>
+            <span className="text-gray-900 ml-6">{data.level}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学历类别</span>
-            <span className="text-gray-900 ml-2">{data.educationType}</span>
+            <span className="text-gray-900 ml-6">{data.educationType}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">学习形式</span>
-            <span className="text-gray-900 ml-2">{data.studyType}</span>
+            <span className="text-gray-900 ml-6">{data.studyType}</span>
           </div>
 
           <div className="flex py-2">
             <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">毕（结）业</span>
-            <span className="text-gray-900 ml-2">{data.graduationStatus}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">证书编号</span>
-            <span className="text-gray-900 ml-2">{data.certificateNumber}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">校（院）长姓名</span>
-            <span className="text-gray-900 ml-2">{data.principalName}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">在线验证码</span>
-            <span className="text-gray-900 ml-2">{data.verificationCode}</span>
-          </div>
-
-          <div className="flex py-2">
-            <span className="text-[rgb(136,143,152)] w-32 flex-shrink-0 text-right">更新日期</span>
-            <span className="text-gray-900 ml-2">{data.updateDate}</span>
+            <span className="text-gray-900 ml-6">{data.graduationStatus}</span>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-6 px-4 mt-12">
+      <footer className="bg-[rgb(40,40,40)] text-white py-3 px-4">
         <div className="text-center">
-          <p className="text-sm mb-2">主办单位：教育部学生服务与素质发展中心</p>
-          <p className="text-xs text-gray-400">Copyright © 2003-2025 学信网 All Rights Reserved</p>
+          <p className="text-sm mb-1 text-[rgb(149,149,149)]">主办单位：教育部学生服务与素质发展中心</p>
+          <p className="text-xs text-[rgb(149,149,149)]">Copyright © 2003-2026 学信网 All Rights Reserved</p>
         </div>
       </footer>
     </div>
