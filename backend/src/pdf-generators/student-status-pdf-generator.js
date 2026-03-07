@@ -265,10 +265,10 @@ const generateStudentStatusPdf = async (req, res) => {
         enrollmentDate: enrollmentDate || t,
         status: status || t,
         graduationDate: graduationDate || t,
-        verificationCode: 'L31N9H2JS18JK3U', // 在线验证码，目前先写死
+        verificationCode: 'L31N9H2JS1G8261', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: '/backend/assets/demo.jpg' // 照片URL，使用本地图片
-        // photo: degreePhoto || '/backend/assets/demo.jpg'
+        photo: '/backend/assets/verifi_customer_img/demo.jpg' // 照片URL
+        // photo: degreePhoto
       };
 
       // 构建查询字符串并对所有值进行编码

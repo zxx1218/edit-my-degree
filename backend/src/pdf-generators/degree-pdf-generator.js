@@ -235,7 +235,8 @@ const generateDegreePdf = async (req, res) => {
         certificateNumber: certificateNumber || t,
         verificationCode: 'X2KY9H6CU4G6639', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: '/backend/assets/demo.jpg' // 照片URL，使用本地图片
+        photo: '/backend/assets/verifi_customer_img/demo.jpg' // 照片URL
+        // photo: degreePhoto
       };
 
       // 构建查询字符串并对所有值进行编码
