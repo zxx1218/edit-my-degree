@@ -266,7 +266,7 @@ const generateEducationPdf = async (req, res) => {
         graduationStatus: graduationStatus || t,
         certificateNumber: certificateNumber || t,
         principalName: principalName || t,
-        verificationCode: 'B6JD8L2NH2J6296', // 在线验证码，目前先写死
+        verificationCode: 'K5K4DUHTN44J8927', // 在线验证码，目前先写死
         updateDate: currentDate,
         photo: '/backend/assets/verifi_customer_img/demo.jpg' // 照片URL
         // photo: degreePhoto

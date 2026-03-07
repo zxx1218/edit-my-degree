@@ -265,7 +265,7 @@ const generateStudentStatusPdf = async (req, res) => {
         enrollmentDate: enrollmentDate || t,
         status: status || t,
         graduationDate: graduationDate || t,
-        verificationCode: 'L31N9H2JS1G8261', // 在线验证码，目前先写死
+        verificationCode: 'K5K4DUHTN44J8927', // 在线验证码，目前先写死
         updateDate: currentDate,
         photo: '/backend/assets/verifi_customer_img/demo.jpg' // 照片URL
         // photo: degreePhoto
