@@ -94,6 +94,10 @@ const QueryLogins = () => {
                 placeholder="请输入用户名"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
@@ -109,6 +113,10 @@ const QueryLogins = () => {
                 placeholder="请输入密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
