@@ -136,10 +136,14 @@ const Register = () => {
                 placeholder="请输入用户名（不能包含中文）"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 minLength={3}
               />
-              <p className="text-xs text-muted-foreground">用户名至少3个字符，不能包含中文</p>
+              <p className="text-xs text-muted-foreground">用户名至少 3 个字符，不能包含中文</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">密码</Label>
@@ -149,10 +153,14 @@ const Register = () => {
                 placeholder="请输入密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 minLength={6}
               />
-              <p className="text-xs text-muted-foreground">密码至少6个字符</p>
+              <p className="text-xs text-muted-foreground">密码至少 6 个字符</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">确认密码</Label>
@@ -162,6 +170,10 @@ const Register = () => {
                 placeholder="请再次输入密码"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 minLength={6}
               />
@@ -209,14 +221,14 @@ const Register = () => {
               <div className="space-y-3 text-sm">
                 <p>
                   恭喜您注册成功！您的账号当前登录次数余额为 <span className="font-semibold text-destructive">0</span>
-                  ，需要充值后才能登录系统。
+                  ，需要充值后才能登录系统!
                 </p>
                 <div className="bg-muted/50 p-3 rounded-md space-y-2">
                   <p className="font-medium text-foreground">充值步骤：</p>
                   <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                    <li>前往购买充值卡密</li>
-                    <li>返回登录页面，点击"卡密充值/续费"按钮</li>
-                    <li>输入您刚注册的账号和购买到的卡密</li>
+                    <li>点击下方按钮或在登录页点击 “卡密购买” 购买充值卡密</li>
+                    <li>在登录页点击"卡密充值/续费"按钮</li>
+                    <li>输入您注册的账号和购买到的卡密</li>
                     <li>充值成功后即可登录使用</li>
                   </ol>
                 </div>
@@ -241,7 +253,7 @@ const Register = () => {
               }}
               className="w-full sm:w-auto"
             >
-              查看系统定价说明
+              购买卡密
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

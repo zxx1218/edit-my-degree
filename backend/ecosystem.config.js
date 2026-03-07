@@ -6,6 +6,14 @@
  * pm2 save   保存当前进程列表
  * pm2 startup systemd -u $USER --hp /home/$USER  生成启动脚本
  * pm2 save   保存当前进程列表以便开机自启
+ * pm2 stop edit_my_degree_backend  停止应用
+ * pm2 restart edit_my_degree_backend  重启应用
+ * pm2 delete edit_my_degree_backend  删除应用
+ * pm2 list   查看所有应用状态
+ * pm2 logs edit_my_degree_backend  查看应用日志
+ * pm2 monit  监控应用性能和资源使用情况
+ * 注意：生产环境建议设置 watch: false，避免不必要的重启
+ *       根据服务器资源和负载调整实例数量和数据库连接池大小
  */
 module.exports = {
   /**

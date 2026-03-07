@@ -271,6 +271,10 @@ const Login = () => {
                 placeholder="请输入用户名"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
@@ -285,6 +289,10 @@ const Login = () => {
                 placeholder="请输入密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onInput={(e) => {
+                  const target = e.target as HTMLInputElement;
+                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                }}
                 required
                 className="h-11 transition-all focus:ring-2 focus:ring-primary/20"
               />
@@ -340,6 +348,10 @@ const Login = () => {
                           username: e.target.value,
                         })
                       }
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                      }}
                       required
                     />
                   </div>
@@ -356,6 +368,10 @@ const Login = () => {
                           oldPassword: e.target.value,
                         })
                       }
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                      }}
                       required
                     />
                   </div>
@@ -364,7 +380,7 @@ const Login = () => {
                     <Input
                       id="new-password"
                       type="password"
-                      placeholder="请输入新密码（至少6位）"
+                      placeholder="请输入新密码（至少 6 位）"
                       value={changePasswordData.newPassword}
                       onChange={(e) =>
                         setChangePasswordData({
@@ -372,6 +388,10 @@ const Login = () => {
                           newPassword: e.target.value,
                         })
                       }
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                      }}
                       required
                     />
                   </div>
@@ -388,6 +408,10 @@ const Login = () => {
                           confirmPassword: e.target.value,
                         })
                       }
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                      }}
                       required
                     />
                   </div>
@@ -437,6 +461,10 @@ const Login = () => {
                           username: e.target.value,
                         })
                       }
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
@@ -472,6 +500,10 @@ const Login = () => {
                           username: e.target.value,
                         })
                       }
+                      onInput={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
