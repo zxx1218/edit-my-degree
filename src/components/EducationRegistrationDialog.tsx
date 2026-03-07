@@ -665,13 +665,13 @@ const handleConfirmGenerate = async () => {
       <LoadingDialog
         open={showLoadingDialog}
         message="正在生成报告"
-        description="请稍候，这可能需要几秒钟..."
+        description="请稍候，这可能需要 10 秒钟左右..."
       />
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
+          <AlertDialogTitle>确认制作报告</AlertDialogTitle>
           <AlertDialogDescription>
             生成学历证书电子注册备案表PDF<span className="text-destructive">需要消耗30个PDF积分</span>，是否确认生成？
           </AlertDialogDescription>

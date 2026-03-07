@@ -15,14 +15,14 @@ interface LoadingDialogProps {
 const LoadingDialog = ({
   open,
   message = "正在生成报告",
-  description = "请稍候，这可能需要几秒钟...",
+  description = "请稍候，这可能需要 10 秒钟左右...",
 }: LoadingDialogProps) => {
   return (
     <Dialog open={open}>
       <DialogContent className="sm:max-w-[400px] border-none shadow-2xl" hideClose>
         <DialogHeader className="sr-only">
-          <DialogTitle>正在生成报告</DialogTitle>
-          <DialogDescription>请稍候，这可能需要几秒钟...</DialogDescription>
+          <DialogTitle>正在制作报告</DialogTitle>
+          <DialogDescription>请稍候，这可能需要 10 秒钟左右...</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col items-center justify-center gap-6 py-8">
           <div className="relative">

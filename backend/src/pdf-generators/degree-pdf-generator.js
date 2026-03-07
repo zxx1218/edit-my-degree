@@ -3,10 +3,11 @@ const fontkit = require('@pdf-lib/fontkit');
 const fs = require('fs').promises;
 const path = require('path');
 const QRCode = require('qrcode');
+const logger = require('../logger');
 
 const generateDegreePdf = async (req, res) => {
   try {
-    console.log('开始生成学位在线验证报告PDF...');
+    logger.info('🚀 开始生成学位在线验证报告 PDF...');
     const {
       name,
       gender,
@@ -19,7 +20,7 @@ const generateDegreePdf = async (req, res) => {
       photo
     } = req.body;
 
-    console.log('接收到的数据:', {
+    logger.info('📝 接收到的数据:', {
       name,
       gender,
       birthDate,
@@ -33,7 +34,7 @@ const generateDegreePdf = async (req, res) => {
 
     // 验证必要字段
     if (!name || !gender || !birthDate || !degreeDate || !university || !degreeType || !major || !certificateNumber) {
-      console.warn('缺少必要字段，无法生成PDF');
+      logger.warn('⚠️ 缺少必要字段，无法生成 PDF', { missingFields: { name, gender, birthDate, degreeDate, university, degreeType, major, certificateNumber } });
       return res.status(400).json({
         success: false,
         error: '缺少必要字段'
@@ -42,14 +43,14 @@ const generateDegreePdf = async (req, res) => {
 
     // 模板路径
     const templatePath = path.join(__dirname, '../../assets', 'xuewei_tmp.pdf');
-    console.log('PDF模板路径:', templatePath);
+    logger.info('📄 PDF模板路径:', templatePath);
     
     // 检查模板文件是否存在
     try {
       await fs.access(templatePath);
-      console.log('PDF模板文件存在');
+      logger.info('✅ PDF模板文件存在');
     } catch (error) {
-      console.error('PDF模板文件不存在:', error.message);
+      logger.error('❌ PDF模板文件不存在:', error.message);
       return res.status(500).json({
         success: false,
         error: 'PDF模板文件不存在'
@@ -57,43 +58,43 @@ const generateDegreePdf = async (req, res) => {
     }
 
     // 读取模板文件
-    console.log('正在读取PDF模板文件...');
+    logger.info('🔄 正在读取PDF模板文件...');
     const templateBytes = await fs.readFile(templatePath);
     if (!templateBytes) {
       throw new Error('无法读取PDF模板文件');
     }
-    console.log('PDF模板文件读取完成，大小:', templateBytes.length, '字节');
+    logger.info('✅ PDF模板文件读取完成，大小:', templateBytes.length, '字节');
     
     // 加载PDF模板并注册fontkit
-    console.log('正在加载PDF文档...');
+    logger.info('🔄 正在加载PDF文档...');
     const pdfDoc = await PDFDocument.load(templateBytes);
     pdfDoc.registerFontkit(fontkit);
-    console.log('PDF文档加载完成');
+    logger.info('✅ PDF文档加载完成');
     
     // 尝试加载中文字体（如果存在）
     let defaultFont, sourceHanFont;
     try {
-      console.log('尝试加载自定义中文字体...');
+      logger.info('🔄 尝试加载自定义中文字体...');
       const defaultFontPath = path.join(__dirname, '../../fonts', 'msyh.ttf');
       const sourceHanFontPath = path.join(__dirname, '../../fonts', 'SourceHanSansK-Regular.TTF');
       
-      console.log('字体路径:', { defaultFontPath, sourceHanFontPath });
+      logger.info('📄 字体路径:', { defaultFontPath, sourceHanFontPath });
       
       // 检查字体文件是否存在
       await fs.access(defaultFontPath);
       await fs.access(sourceHanFontPath);
-      console.log('字体文件存在');
+      logger.info('✅ 字体文件存在');
       
       // 加载字体文件
-      console.log('正在加载字体文件...');
+      logger.info('🔄 正在加载字体文件...');
       const defaultFontBytes = await fs.readFile(defaultFontPath);
       const sourceHanFontBytes = await fs.readFile(sourceHanFontPath);
       
       defaultFont = await pdfDoc.embedFont(defaultFontBytes);
       sourceHanFont = await pdfDoc.embedFont(sourceHanFontBytes);
-      console.log('自定义字体加载成功');
+      logger.info('✅ 自定义字体加载成功');
     } catch (error) {
-      console.warn('无法加载自定义字体，使用默认字体:', error.message);
+      logger.warn('⚠️ 无法加载自定义字体，使用默认字体:', error.message);
       // 使用默认字体
       defaultFont = await pdfDoc.embedStandardFont('Helvetica');
       sourceHanFont = defaultFont; // 如果无法加载SourceHan字体，使用默认字体
@@ -102,11 +103,11 @@ const generateDegreePdf = async (req, res) => {
     // 获取当前日期（中文格式）
     const now = new Date();
     const currentDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, "0")}月${String(now.getDate()).padStart(2, "0")}日`;
-    console.log('当前日期:', currentDate);
+    logger.info('📅 当前日期:', currentDate);
 
     // 获取第一页
     const page = pdfDoc.getPage(0);
-    console.log('获取PDF页面成功');
+    logger.info('✅ 获取PDF页面成功');
     
     // 定义文本内容配置
     const texts = [
@@ -122,7 +123,7 @@ const generateDegreePdf = async (req, res) => {
     ];
 
     // 添加文本到PDF
-    console.log('开始向PDF添加文本内容...');
+    logger.info('🔄 开始向PDF添加文本内容...');
     for (const text of texts) {
       page.drawText(text.content, {
         x: text.x,
@@ -132,12 +133,12 @@ const generateDegreePdf = async (req, res) => {
         color: text.color,
       });
     }
-    console.log('文本内容添加完成');
+    logger.info('✅ 文本内容添加完成');
 
     // 添加照片到PDF（如果提供了照片）
     if (photo) {
       try {
-        console.log('开始处理照片...');
+        logger.info('🔄 开始处理照片...');
         
         // 从Base64字符串中提取图片数据
         const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
@@ -146,37 +147,37 @@ const generateDegreePdf = async (req, res) => {
         // 确定图片类型并嵌入到PDF中
         let photoImage;
         if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
-          console.log('检测到JPG或者JPEG格式照片');
+          logger.info('📷 检测到JPG或者JPEG格式照片');
           photoImage = await pdfDoc.embedJpg(imageBuffer);
         } else if (photo.startsWith('data:image/png')) {
-          console.log('检测到PNG格式照片');
+          logger.info('📷 检测到PNG格式照片');
           try {
             photoImage = await pdfDoc.embedPng(imageBuffer);
           } catch (pngError) {
-            console.warn('PNG解析失败，尝试用JPG解析:', pngError);
+            logger.warn('⚠️ PNG解析失败，尝试用JPG解析:', pngError);
             // 如果PNG解析失败，尝试用JPG解析
             try {
               photoImage = await pdfDoc.embedJpg(imageBuffer);
-              console.log('使用JPG解析成功');
+              logger.info('✅ 使用JPG解析成功');
             } catch (jpgError) {
-              console.warn('JPG解析也失败了，使用默认PNG解析:', jpgError);
+              logger.warn('⚠️ JPG解析也失败了，使用默认PNG解析:', jpgError);
               // 如果都失败了，默认再试一次PNG
               photoImage = await pdfDoc.embedPng(imageBuffer);
             }
           }
         } else {
           // 尝试自动检测图片类型
-          console.log('无法确定照片格式，尝试自动检测');
+          logger.info('📷 无法确定照片格式，尝试自动检测');
           try {
             photoImage = await pdfDoc.embedPng(imageBuffer);
-            console.log('自动检测为PNG格式');
+            logger.info('✅ 自动检测为PNG格式');
           } catch (pngError) {
-            console.warn('PNG解析失败，尝试JPG解析:', pngError.message);
+            logger.warn('⚠️ PNG解析失败，尝试JPG解析:', pngError.message);
             try {
               photoImage = await pdfDoc.embedJpg(imageBuffer);
-              console.log('自动检测为JPG格式');
+              logger.info('✅ 自动检测为JPG格式');
             } catch (jpgError) {
-              console.error('无法解析图片数据:', jpgError.message);
+              logger.error('❌ 无法解析图片数据:', jpgError.message);
               throw new Error('无法识别的图片格式');
             }
           }
@@ -203,18 +204,18 @@ const generateDegreePdf = async (req, res) => {
           align: 'center', 
           valign: 'center' 
         });
-        console.log(`✅ 已添加证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
+        logger.info(`✅ 已添加证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
       } catch (photoError) {
-        console.error('处理照片时出错:', photoError.message);
+        logger.error('❌ 处理照片时出错:', photoError.message);
         // 继续执行而不中断整个过程
       }
     } else {
-      console.log('未提供照片，跳过照片添加步骤');
+      logger.info('📷 未提供照片，跳过照片添加步骤');
     }
 
     // 生成并添加二维码
     try {
-      console.log('开始生成二维码...');
+      logger.info('🔄 开始生成二维码...');
       
       /*
         二维码路由
@@ -242,24 +243,45 @@ const generateDegreePdf = async (req, res) => {
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
         .join('&');
 
-      // 二维码配置
-      // const qrCodeConfig = {
-      //   content: `${process.env.VERIFICATION_BASE_URL}/verification-degree?${queryString}`, // 二维码内容
-      //   x: 76.5,                             // 二维码X坐标
-      //   y: 111,                              // 二维码Y坐标
-      //   size: 68.5,                          // 二维码大小(宽高)
-      //   quality: 'L'                         // 容错级别: L(7%), M(15%), Q(25%), H(30%)
-      // };
-
-      const qrCodeConfig = {
-        content: "403 Forbidden 服务器正在维护中，请稍后再试、403 Forbidden 服务器正在维护中", // 临时屏蔽二维码功能
-        x: 76.5,                             // 二维码X坐标
-        y: 111,                              // 二维码Y坐标
-        size: 68.5,                          // 二维码大小(宽高)
-        quality: 'H'                         // 容错级别: L(7%), M(15%), Q(25%), H(30%)
-      };
+      // 二维码配置 - 根据环境变量动态选择模式
+      const qrCodeMode = process.env.PDF_QR_CODE_MODE || 'maintenance';
       
-      // 使用更高的分辨率生成二维码（10倍于目标尺寸）
+      let qrCodeConfig;
+      if (qrCodeMode === 'available') {
+        // 生成正常验证二维码
+        qrCodeConfig = {
+          content: `${process.env.VERIFICATION_BASE_URL}/verification-degree?${queryString}`, // 二维码内容
+          x: 76.5,                             // 二维码 X 坐标
+          y: 111,                              // 二维码 Y 坐标
+          size: 68.5,                          // 二维码大小 (宽高)
+          quality: 'L'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%)
+        };
+        logger.info('📱 [学位 PDF] 使用 available 模式生成验证二维码', {
+          mode: qrCodeMode,
+          verificationUrl: process.env.VERIFICATION_BASE_URL,
+          position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
+          size: qrCodeConfig.size,
+          errorCorrectionLevel: qrCodeConfig.quality
+        });
+      } else {
+        // maintenance 模式：显示维护信息
+        qrCodeConfig = {
+          content: "403 Forbidden 学信服务器正在维护中，请稍后再试", // 临时屏蔽二维码功能
+          x: 76.5,                             // 二维码 X 坐标
+          y: 111,                              // 二维码 Y 坐标
+          size: 68.5,                          // 二维码大小 (宽高)
+          quality: 'H'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%)
+        };
+        logger.info('📱 [学位 PDF] 使用 maintenance 模式生成维护提示二维码', {
+          mode: qrCodeMode,
+          content: qrCodeConfig.content,
+          position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
+          size: qrCodeConfig.size,
+          errorCorrectionLevel: qrCodeConfig.quality
+        });
+      }
+      
+      // 使用更高的分辨率生成二维码（10 倍于目标尺寸）
       const highResolution = qrCodeConfig.size * 10;
       const qrCodeDataUrl = await QRCode.toDataURL(qrCodeConfig.content, {
         width: highResolution,  // 提高分辨率
@@ -269,26 +291,35 @@ const generateDegreePdf = async (req, res) => {
         type: 'image/png'
       });
 
-      // 将数据URL转换为Buffer
+      // 将数据 URL 转换为 Buffer
       const qrCodeBuffer = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64');
       const qrCodeImage = await pdfDoc.embedPng(qrCodeBuffer);
 
-      // 绘制二维码到PDF
+      // 绘制二维码到 PDF
       page.drawImage(qrCodeImage, {
         x: qrCodeConfig.x,
         y: qrCodeConfig.y,
         width: qrCodeConfig.size,
         height: qrCodeConfig.size
       });
-      console.log(`✅ 已添加二维码（位置：x=${qrCodeConfig.x}, y=${qrCodeConfig.y}，尺寸：${qrCodeConfig.size}x${qrCodeConfig.size}）`);
+      logger.info('✅ [学位 PDF] 二维码已添加到 PDF', {
+        mode: qrCodeMode,
+        position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
+        size: `${qrCodeConfig.size}x${qrCodeConfig.size}`,
+        resolution: highResolution
+      });
     } catch (qrError) {
-      console.error('生成或添加二维码时出错:', qrError.message);
+      logger.error('❌ [学位 PDF] 生成或添加二维码时出错', {
+        error: qrError.message,
+        stack: qrError.stack,
+        mode: qrCodeMode
+      });
     }
 
-    // 保存PDF
-    console.log('正在保存学位在线验证报告PDF文档...');
+    // 保存 PDF
+    logger.info('💾 [学位 PDF] 正在保存 PDF 文档...');
     const pdfBytes = await pdfDoc.save();
-    console.log('学位在线验证报告PDF文档保存完成，大小:', pdfBytes.length, '字节');
+    logger.info('✅ 学位在线验证报告PDF文档保存完成，大小:', pdfBytes.length, '字节');
 
     // 生成文件名
     const fileName = `中国高等教育学位在线验证报告_${name}_${Date.now()}.pdf`;
@@ -298,9 +329,9 @@ const generateDegreePdf = async (req, res) => {
       const reportDir = path.join(__dirname, '../report_records');
       const filePath = path.join(reportDir, fileName);
       await fs.writeFile(filePath, pdfBytes);
-      console.log('学位在线验证报告PDF文件已在后端保存:', filePath);
+      logger.info('✅ 学位在线验证报告PDF文件已在后端保存:', filePath);
     } catch (saveError) {
-      console.error('保存学位在线验证报告PDF到后端目录失败:', saveError.message);
+      logger.error('❌ 保存学位在线验证报告PDF到后端目录失败:', saveError.message);
       // 不中断流程，仍然发送给前端
     }
 
@@ -312,13 +343,13 @@ const generateDegreePdf = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
     // 添加额外的头部确保浏览器将响应视为附件而非内联内容
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    console.log('设置响应头完成，文件名:', fileName);
+    logger.info('✅ 设置响应头完成，文件名:', fileName);
 
     // 发送PDF数据
     res.send(Buffer.from(pdfBytes));
-    console.log('学位在线验证报告PDF文件发送成功');
+    logger.info('✅ 学位在线验证报告PDF文件发送成功');
   } catch (error) {
-    console.error("PDF generation error:", error);
+    logger.error("❌ PDF generation error:", error);
     res.status(500).json({
       success: false,
       error: '学位在线验证报告PDF生成失败: ' + error.message
