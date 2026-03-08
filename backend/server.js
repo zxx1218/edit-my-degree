@@ -89,8 +89,11 @@ initializeApp().then((success) => {
         const stats = dbManager.getPoolStats();
         if (stats) {
           console.log('=== 数据库连接池状态报告 ===');
-          console.log(`连接状态: ${stats.isConnected ? '正常' : '异常'}`);
+          console.log(`连接状态：${stats.isConnected ? '正常' : '异常'}`);
           console.log(`配置信息:`, stats.config);
+          console.log(`活动连接数：${stats.activeConnections}`);
+          console.log(`空闲连接数：${stats.freeConnections}`);
+          console.log(`等待队列长度：${stats.queuedRequests}`);
           console.log('========================');
         }
       }, statusReportInterval);

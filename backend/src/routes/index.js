@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+require('dotenv').config();
 
 // 引入PDF生成器模块
 const generateDegreePdf = require('../pdf-generators/degree-pdf-generator');
@@ -31,13 +32,13 @@ const getHourlyLoginStatsModule = require('../get-hourly-login-stats');
 const getLoginStatsRangeModule = require('../get-login-stats-range');
 const queryUserLoginsPdfModule = require('../query-user-logins-pdf');
 
-// IP黑名单 - 在这里添加需要封禁的IP地址
-const IP_BLACKLIST = [
-  '103.151.173.208',
-  '183.6.9.103',
-  '222.120.184.140',
-  '222.120.184.141'
-];
+// 引入 IP归属地查询工具
+const { queryIPLocation } = require('../ip-location');
+
+// 从环境变量读取 IP黑名单配置
+const IP_BLACKLIST = process.env.IP_BLACKLIST 
+  ? process.env.IP_BLACKLIST.split(',').map(ip => ip.trim()).filter(ip => ip)
+  : [];
 
 // IP封禁中间件
 const ipBlacklistMiddleware = (req, res, next) => {
@@ -89,7 +90,7 @@ const generalLimiter = rateLimit({
 });
 
 // 签名验证中间件
-const signatureValidationMiddleware = (req, res, next) => {
+const signatureValidationMiddleware = async (req, res, next) => {
   // 免签接口白名单
   const whitelist = [
     '/api/auth', // 登录接口
@@ -219,12 +220,14 @@ const signatureValidationMiddleware = (req, res, next) => {
   }
   
   // 签名验证通过
+  const ipLocation = await queryIPLocation(clientIp);
   console.info('签名验证通过', {
     url: req.path,
     // method: req.method,
     // appKey,
     userAgent: req.get('User-Agent'),
-    ip: clientIp
+    ip: clientIp,
+    ipLocation: ipLocation
   });
   next();
 };

@@ -162,13 +162,24 @@ class DatabaseManager {
    */
   getPoolStats() {
     if (this.pool) {
+      // mysql2 的 Pool 对象将实际配置存储在 pool.pool.config 中
+      const internalPool = this.pool.pool;
+      const poolConfig = internalPool?.config || {};
+      
       return {
         isConnected: this.isConnected,
         config: {
-          connectionLimit: this.pool.config?.connectionLimit || 'N/A',
-          queueLimit: this.pool.config?.queueLimit || 'N/A',
-          waitForConnections: this.pool.config?.waitForConnections || 'N/A'
-        }
+          connectionLimit: poolConfig.connectionLimit || 'N/A',
+          queueLimit: poolConfig.queueLimit || 'N/A',
+          waitForConnections: poolConfig.waitForConnections || 'N/A',
+          connectTimeout: poolConfig.connectTimeout || poolConfig.timeout || 'N/A',
+          idleTimeout: poolConfig.idleTimeout || 'N/A',
+          acquireTimeout: poolConfig.acquireTimeout || 'N/A'
+        },
+        // 添加更多统计信息
+        activeConnections: internalPool?._allConnections ? internalPool._allConnections.length : 'N/A',
+        freeConnections: internalPool?._freeConnections ? internalPool._freeConnections.length : 'N/A',
+        queuedRequests: internalPool?._connectionQueue ? internalPool._connectionQueue.length : 'N/A'
       };
     }
     return null;
