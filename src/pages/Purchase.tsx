@@ -37,9 +37,11 @@ const faqItems = [
 const Purchase = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  const qqGroup = "1034981273";
-  const card_login = "http://4ox.cn/bq3kuv"; // 四云发卡网卡密购买链接
-  const card_PDF = "http://4ox.cn/sdms3r"; // 四云发卡网PDF购买链接
+  // 从环境变量读取配置，提供默认值以防未配置
+  const qqGroup = import.meta.env.VITE_QQ_GROUP || "1034981273";
+  const card_login = import.meta.env.VITE_CARD_LOGIN_URL || "http://4ox.cn/bq3kuv";
+  const card_PDF = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
+  const messageBoardUrl = import.meta.env.VITE_MESSAGE_BOARD_URL || "http://cheerout.cn:40000";
 
   const handleCopyQQ = async () => {
     try {
@@ -236,7 +238,7 @@ const Purchase = () => {
                   您的每一条留言都会有专人查看和处理
                 </p>
                 <Button
-                  onClick={() => window.open("http://cheerout.cn:40000", "_blank")}
+                  onClick={() => window.open(messageBoardUrl, "_blank")}
                   className="w-full"
                 >
                   前往留言板
