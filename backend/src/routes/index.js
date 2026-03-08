@@ -58,7 +58,7 @@ const ipBlacklistMiddleware = (req, res, next) => {
     
     return res.status(403).json({
       success: false,
-      error: 'AI风控检测到行为异常！拒绝请求！'
+      error: '傻逼玩意！AI风控检测到行为异常！拒绝请求！'
     });
   }
   
@@ -83,7 +83,7 @@ const generalLimiter = rateLimit({
   max: 100,
   message: {
     success: false,
-    error: '傻逼，请求这来多干啥？你IP被封了！'
+    error: '透你妈傻逼，请求这来多干啥？你IP被封了！'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -145,7 +145,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼，你这请求他妈过期了！'
+      error: '透你妈傻逼，你这请求他妈过期了！'
     });
   }
   
@@ -162,7 +162,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼，你他妈这是无效的Key，你他妈的再检查检查！'
+      error: '透你妈傻逼，你他妈这是无效的Key，你他妈了个逼的再检查检查！'
     });
   }
   
@@ -215,7 +215,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼，失败了，听见了没？'
+      error: '透你妈傻逼，失败了，听见了没？'
     });
   }
   
