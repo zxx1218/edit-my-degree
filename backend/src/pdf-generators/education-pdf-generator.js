@@ -4,10 +4,75 @@ const fs = require('fs').promises;
 const path = require('path');
 const QRCode = require('qrcode');
 const logger = require('../logger');
+const minio = require('minio');
+
+// 初始化 MinIO 客户端
+const minioClient = new minio.Client({
+  endPoint: (process.env.MINIO_ENDPOINT || 'cheerot.cn:19000').split(':')[0], // 提取主机名
+  port: parseInt((process.env.MINIO_ENDPOINT || 'cheerot.cn:19000').split(':')[1]) || 19000, // 提取端口号
+  useSSL: process.env.MINIO_USE_SSL === 'true' || false,
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY
+});
+
+const BUCKET_NAME = process.env.MINIO_BUCKET || 'editmydegree';
+
+// 上传照片到 MinIO
+const uploadPhotoToMinIO = async (base64Data, studentName) => {
+  try {
+  logger.info('🔄 开始上传照片到 MinIO...');
+    
+    // 从 Base64 字符串中提取图片数据
+  const imageBuffer= Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+    
+    // 确定图片类型
+    let imageType = 'jpeg';
+    if (base64Data.startsWith('data:image/png')) {
+      imageType = 'png';
+    } else if (base64Data.startsWith('data:image/jpeg') || base64Data.startsWith('data:image/jpg')) {
+      imageType = 'jpeg';
+    }
+    
+    // 生成唯一的文件名
+  const timestamp = Date.now();
+  const randomString = Math.random().toString(36).substring(2, 8);
+  const fileName = `photos/${studentName}_${timestamp}_${randomString}.${imageType}`;
+    
+  logger.info('📁 MinIO 文件路径:', fileName);
+    
+    // 检查 bucket 是否存在，不存在则创建
+  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+    if (!bucketExists) {
+    logger.info('🪣 Bucket 不存在，正在创建:', BUCKET_NAME);
+    await minioClient.makeBucket(BUCKET_NAME);
+    logger.info('✅ Bucket 创建成功:', BUCKET_NAME);
+    } else {
+    logger.info('✅ Bucket 已存在:', BUCKET_NAME);
+    }
+    
+    // 上传文件到 MinIO
+  await minioClient.putObject(BUCKET_NAME, fileName, imageBuffer, {
+      'Content-Type': `image/${imageType}`,
+      'x-amz-acl': 'public-read'
+    });
+    
+  logger.info('✅ 照片上传成功到 MinIO:', fileName);
+    
+    // 构建可访问的 URL
+    // 注意：这里假设使用 HTTP 访问，如果需要 HTTPS 请相应修改
+  const photoUrl = `http://${process.env.MINIO_ENDPOINT}/${BUCKET_NAME}/${fileName}`;
+  logger.info('🔗 照片访问 URL:', photoUrl);
+    
+    return photoUrl;
+  } catch (error) {
+  logger.error('❌ 上传照片到 MinIO 失败:', error.message);
+  throw error;
+  }
+};
 
 const generateEducationPdf = async (req, res) => {
   try {
-    logger.info('🚀 开始生成学历在线验证报告 PDF...');
+  logger.info('==========🚀 开始生成学历在线验证报告 PDF...==========');
     // 从请求中获取数据
     const {
       name,
@@ -162,18 +227,28 @@ const generateEducationPdf = async (req, res) => {
     }
     logger.info('✅ 文本内容添加完成');
 
-    // 添加照片到PDF（如果提供了照片）
-    if (photo) {
-      try {
-        logger.info('🔄 开始处理照片...');
+    // 添加照片到 PDF（如果提供了照片）
+    let uploadedPhotoUrl = null;
+   if (photo) {
+   try {
+     logger.info('🔄 开始处理照片...');
         
-        // 从Base64字符串中提取图片数据
-        const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
-        const imageBuffer = Buffer.from(base64Data, 'base64');
+        // 上传照片到 MinIO
+     try {
+          uploadedPhotoUrl = await uploadPhotoToMinIO(photo, name);
+       logger.info('✅ 照片已上传到 MinIO:', uploadedPhotoUrl);
+        } catch (uploadError) {
+       logger.error('❌ 上传照片到 MinIO 失败，但继续生成 PDF:', uploadError.message);
+          // 上传失败不中断流程，继续使用本地处理
+        }
+        
+        // 从 Base64 字符串中提取图片数据
+     const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
+     const imageBuffer= Buffer.from(base64Data, 'base64');
         
         // 确定图片类型并嵌入到PDF中
-        let photoImage;
-        if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
+     let photoImage;
+     if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
           logger.info('📷 检测到JPG或者JPEG格式照片');
           photoImage = await pdfDoc.embedJpg(imageBuffer);
         } else if (photo.startsWith('data:image/png')) {
@@ -233,16 +308,16 @@ const generateEducationPdf = async (req, res) => {
         });
         logger.info(`✅ 已添加证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
       } catch (photoError) {
-        logger.error('❌ 处理照片时出错:', photoError.message);
+     logger.error('❌ 处理照片时出错:', photoError.message);
         // 继续执行而不中断整个过程
       }
     } else {
-      logger.info('📸 未提供照片，跳过照片添加步骤');
+   logger.info('📸 未提供照片，跳过照片添加步骤');
     }
 
     // 生成并添加二维码
-    try {
-      logger.info('🔄 开始生成二维码...');
+  try {
+  logger.info('🔄 开始生成二维码...');
 
       /*
         二维码路由
@@ -250,8 +325,8 @@ const generateEducationPdf = async (req, res) => {
       */
       
       // 构建查询参数对象
-      const t = '' // 如果没写就传空值
-      const queryParams = {
+   const t = '' // 如果没写就传空值
+   const queryParams = {
         name: name || t,
         gender: gender || t,
         birthDate: birthDate || t,
@@ -268,8 +343,7 @@ const generateEducationPdf = async (req, res) => {
         principalName: principalName || t,
         verificationCode: 'K5K4DUHTN44J8927', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: 'demo.jpg' // 照片URL
-        // photo: degreePhoto
+        photo: uploadedPhotoUrl || '/demo.jpg' // 使用 MinIO 存储的照片 URL，如果上传失败则使用默认值
       };
 
       // 构建查询字符串并对所有值进行编码

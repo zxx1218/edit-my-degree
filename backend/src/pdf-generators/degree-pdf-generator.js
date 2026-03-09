@@ -4,11 +4,76 @@ const fs = require('fs').promises;
 const path = require('path');
 const QRCode = require('qrcode');
 const logger = require('../logger');
+const minio = require('minio');
+
+// 初始化 MinIO 客户端
+const minioClient = new minio.Client({
+  endPoint: (process.env.MINIO_ENDPOINT || 'cheerot.cn:19000').split(':')[0], // 提取主机名
+  port: parseInt((process.env.MINIO_ENDPOINT || 'cheerot.cn:19000').split(':')[1]) || 19000, // 提取端口号
+  useSSL: process.env.MINIO_USE_SSL === 'true' || false,
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY
+});
+
+const BUCKET_NAME = process.env.MINIO_BUCKET || 'editmydegree';
+
+// 上传照片到 MinIO
+const uploadPhotoToMinIO = async (base64Data, studentName) => {
+  try {
+   logger.info('🔄 开始上传照片到 MinIO...');
+    
+    // 从 Base64 字符串中提取图片数据
+   const imageBuffer = Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+    
+    // 确定图片类型
+    let imageType = 'jpeg';
+    if (base64Data.startsWith('data:image/png')) {
+      imageType = 'png';
+    } else if (base64Data.startsWith('data:image/jpeg') || base64Data.startsWith('data:image/jpg')) {
+      imageType = 'jpeg';
+    }
+    
+    // 生成唯一的文件名
+   const timestamp = Date.now();
+   const randomString = Math.random().toString(36).substring(2, 8);
+   const fileName = `photos/${studentName}_${timestamp}_${randomString}.${imageType}`;
+    
+   logger.info('📁 MinIO 文件路径:', fileName);
+    
+    // 检查 bucket 是否存在，不存在则创建
+   const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+    if (!bucketExists) {
+     logger.info('🪣 Bucket 不存在，正在创建:', BUCKET_NAME);
+     await minioClient.makeBucket(BUCKET_NAME);
+     logger.info('✅ Bucket 创建成功:', BUCKET_NAME);
+    } else {
+     logger.info('✅ Bucket 已存在:', BUCKET_NAME);
+    }
+    
+    // 上传文件到 MinIO
+   await minioClient.putObject(BUCKET_NAME, fileName, imageBuffer, {
+      'Content-Type': `image/${imageType}`,
+      'x-amz-acl': 'public-read'
+    });
+    
+   logger.info('✅ 照片上传成功到 MinIO:', fileName);
+    
+    // 构建可访问的 URL
+    // 注意：这里假设使用 HTTP 访问，如果需要 HTTPS 请相应修改
+   const photoUrl = `http://${process.env.MINIO_ENDPOINT}/${BUCKET_NAME}/${fileName}`;
+   logger.info('🔗 照片访问 URL:', photoUrl);
+    
+    return photoUrl;
+  } catch (error) {
+   logger.error('❌ 上传照片到 MinIO 失败:', error.message);
+    throw error;
+  }
+};
 
 const generateDegreePdf = async (req, res) => {
   try {
-    logger.info('==========🚀 开始生成学位在线验证报告 PDF...==========');
-    const {
+   logger.info('==========🚀 开始生成学位在线验证报告 PDF...==========');
+   const {
       name,
       gender,
       birthDate,
@@ -20,7 +85,7 @@ const generateDegreePdf = async (req, res) => {
       photo
     } = req.body;
 
-    logger.info('📝 接收到的数据:', {
+   logger.info('📝 接收到的数据:', {
       name,
       gender,
       birthDate,
@@ -33,7 +98,7 @@ const generateDegreePdf = async (req, res) => {
     });
 
     // 验证必要字段
-    if (!name || !gender || !birthDate || !degreeDate || !university || !degreeType || !major || !certificateNumber) {
+   if (!name || !gender || !birthDate || !degreeDate || !university || !degreeType || !major || !certificateNumber) {
       logger.warn('⚠️ 缺少必要字段，无法生成 PDF', { missingFields: { name, gender, birthDate, degreeDate, university, degreeType, major, certificateNumber } });
       return res.status(400).json({
         success: false,
@@ -42,11 +107,11 @@ const generateDegreePdf = async (req, res) => {
     }
 
     // 模板路径
-    const templatePath = path.join(__dirname, '../../assets', 'xuewei_tmp.pdf');
-    logger.info('📄 PDF模板路径:', templatePath);
+   const templatePath = path.join(__dirname, '../../assets', 'xuewei_tmp.pdf');
+   logger.info('📄 PDF模板路径:', templatePath);
     
     // 检查模板文件是否存在
-    try {
+   try {
       await fs.access(templatePath);
       logger.info('✅ PDF模板文件存在');
     } catch (error) {
@@ -58,22 +123,22 @@ const generateDegreePdf = async (req, res) => {
     }
 
     // 读取模板文件
-    logger.info('🔄 正在读取PDF模板文件...');
-    const templateBytes = await fs.readFile(templatePath);
+   logger.info('🔄 正在读取PDF模板文件...');
+   const templateBytes = await fs.readFile(templatePath);
     if (!templateBytes) {
       throw new Error('无法读取PDF模板文件');
     }
     logger.info('✅ PDF模板文件读取完成，大小:', templateBytes.length, '字节');
     
     // 加载PDF模板并注册fontkit
-    logger.info('🔄 正在加载PDF文档...');
-    const pdfDoc = await PDFDocument.load(templateBytes);
-    pdfDoc.registerFontkit(fontkit);
-    logger.info('✅ PDF文档加载完成');
+   logger.info('🔄 正在加载PDF文档...');
+   const pdfDoc = await PDFDocument.load(templateBytes);
+   pdfDoc.registerFontkit(fontkit);
+   logger.info('✅ PDF文档加载完成');
     
     // 尝试加载中文字体（如果存在）
     let defaultFont, sourceHanFont;
-    try {
+   try {
       logger.info('🔄 尝试加载自定义中文字体...');
       const defaultFontPath = path.join(__dirname, '../../fonts', 'msyh.ttf');
       const sourceHanFontPath = path.join(__dirname, '../../fonts', 'SourceHanSansK-Regular.TTF');
@@ -101,16 +166,16 @@ const generateDegreePdf = async (req, res) => {
     }
 
     // 获取当前日期（中文格式）
-    const now = new Date();
-    const currentDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, "0")}月${String(now.getDate()).padStart(2, "0")}日`;
-    logger.info('📅 当前日期:', currentDate);
+   const now = new Date();
+   const currentDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, "0")}月${String(now.getDate()).padStart(2, "0")}日`;
+   logger.info('📅 当前日期:', currentDate);
 
     // 获取第一页
-    const page = pdfDoc.getPage(0);
-    logger.info('✅ 获取PDF页面成功');
+   const page = pdfDoc.getPage(0);
+   logger.info('✅ 获取PDF页面成功');
     
     // 定义文本内容配置
-    const texts = [
+   const texts = [
       { content: currentDate, x: 285, y: 738, fontSize: 10, color: rgb(0.588, 0.588, 0.588), font: sourceHanFont, specialFont: true },
       { content: name, x: 180, y: 701, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
       { content: gender, x: 180, y: 673, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont },
@@ -123,8 +188,8 @@ const generateDegreePdf = async (req, res) => {
     ];
 
     // 添加文本到PDF
-    logger.info('🔄 开始向PDF添加文本内容...');
-    for (const text of texts) {
+   logger.info('🔄 开始向PDF添加文本内容...');
+   for (const text of texts) {
       page.drawText(text.content, {
         x: text.x,
         y: text.y,
@@ -135,56 +200,66 @@ const generateDegreePdf = async (req, res) => {
     }
     logger.info('✅ 文本内容添加完成');
 
-    // 添加照片到PDF（如果提供了照片）
-    if (photo) {
-      try {
-        logger.info('🔄 开始处理照片...');
+    // 添加照片到 PDF（如果提供了照片）
+    let uploadedPhotoUrl = null;
+   if (photo) {
+     try {
+       logger.info('🔄 开始处理照片...');
         
-        // 从Base64字符串中提取图片数据
-        const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
-        const imageBuffer = Buffer.from(base64Data, 'base64');
+        // 上传照片到 MinIO
+       try {
+          uploadedPhotoUrl = await uploadPhotoToMinIO(photo, name);
+         logger.info('✅ 照片已上传到 MinIO:', uploadedPhotoUrl);
+        } catch (uploadError) {
+         logger.error('❌ 上传照片到 MinIO 失败，但继续生成 PDF:', uploadError.message);
+          // 上传失败不中断流程，继续使用本地处理
+        }
+        
+        // 从 Base64 字符串中提取图片数据
+       const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
+       const imageBuffer = Buffer.from(base64Data, 'base64');
         
         // 确定图片类型并嵌入到PDF中
         let photoImage;
-        if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
-          logger.info('📷 检测到JPG或者JPEG格式照片');
-          photoImage = await pdfDoc.embedJpg(imageBuffer);
-        } else if (photo.startsWith('data:image/png')) {
-          logger.info('📷 检测到PNG格式照片');
-          try {
-            photoImage = await pdfDoc.embedPng(imageBuffer);
-          } catch (pngError) {
-            logger.warn('⚠️ PNG解析失败，尝试用JPG解析:', pngError);
+       if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
+         logger.info('📷 检测到JPG或者JPEG格式照片');
+         photoImage = await pdfDoc.embedJpg(imageBuffer);
+       } else if (photo.startsWith('data:image/png')) {
+         logger.info('📷 检测到PNG格式照片');
+         try {
+           photoImage = await pdfDoc.embedPng(imageBuffer);
+         } catch (pngError) {
+           logger.warn('⚠️ PNG解析失败，尝试用JPG解析:', pngError);
             // 如果PNG解析失败，尝试用JPG解析
-            try {
-              photoImage = await pdfDoc.embedJpg(imageBuffer);
-              logger.info('✅ 使用JPG解析成功');
-            } catch (jpgError) {
-              logger.warn('⚠️ JPG解析也失败了，使用默认PNG解析:', jpgError);
-              // 如果都失败了，默认再试一次PNG
-              photoImage = await pdfDoc.embedPng(imageBuffer);
-            }
-          }
-        } else {
-          // 尝试自动检测图片类型
-          logger.info('📷 无法确定照片格式，尝试自动检测');
-          try {
-            photoImage = await pdfDoc.embedPng(imageBuffer);
-            logger.info('✅ 自动检测为PNG格式');
-          } catch (pngError) {
-            logger.warn('⚠️ PNG解析失败，尝试JPG解析:', pngError.message);
-            try {
-              photoImage = await pdfDoc.embedJpg(imageBuffer);
-              logger.info('✅ 自动检测为JPG格式');
-            } catch (jpgError) {
-              logger.error('❌ 无法解析图片数据:', jpgError.message);
-              throw new Error('无法识别的图片格式');
-            }
-          }
-        }
+           try {
+             photoImage = await pdfDoc.embedJpg(imageBuffer);
+             logger.info('✅ 使用JPG解析成功');
+           } catch (jpgError) {
+             logger.warn('⚠️ JPG解析也失败了，使用默认PNG解析:', jpgError);
+             // 如果都失败了，默认再试一次PNG
+             photoImage = await pdfDoc.embedPng(imageBuffer);
+           }
+         }
+       } else {
+         // 尝试自动检测图片类型
+         logger.info('📷 无法确定照片格式，尝试自动检测');
+         try {
+           photoImage = await pdfDoc.embedPng(imageBuffer);
+           logger.info('✅ 自动检测为PNG格式');
+         } catch (pngError) {
+           logger.warn('⚠️ PNG解析失败，尝试JPG解析:', pngError.message);
+           try {
+             photoImage = await pdfDoc.embedJpg(imageBuffer);
+             logger.info('✅ 自动检测为JPG格式');
+           } catch (jpgError) {
+             logger.error('❌ 无法解析图片数据:', jpgError.message);
+             throw new Error('无法识别的图片格式');
+           }
+         }
+       }
         
         // 证件照配置
-        const photoConfig = { 
+       const photoConfig = { 
           x: 455.5, // 右侧X坐标（根据PDF宽度调整）
           y: 627.5, // Y坐标（与文字区域对齐）
           width: 79.5, // 证件照宽度
@@ -194,8 +269,8 @@ const generateDegreePdf = async (req, res) => {
         };
 
         // 添加证件照（无边框）
-        const { x, y, width: photoWidth, height: photoHeight } = photoConfig;
-        page.drawImage(photoImage, { 
+       const { x, y, width: photoWidth, height: photoHeight } = photoConfig;
+       page.drawImage(photoImage, { 
           x: x, 
           y: y, 
           width: photoWidth, 
@@ -204,27 +279,27 @@ const generateDegreePdf = async (req, res) => {
           align: 'center', 
           valign: 'center' 
         });
-        logger.info(`✅ 已添加证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
+       logger.info(`✅ 已添加证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
       } catch (photoError) {
-        logger.error('❌ 处理照片时出错:', photoError.message);
+       logger.error('❌ 处理照片时出错:', photoError.message);
         // 继续执行而不中断整个过程
       }
     } else {
-      logger.info('📷 未提供照片，跳过照片添加步骤');
+     logger.info('📷 未提供照片，跳过照片添加步骤');
     }
 
     // 生成并添加二维码
-    try {
-      logger.info('🔄 开始生成二维码...');
+   try {
+     logger.info('🔄 开始生成二维码...');
       
       /*
         二维码路由
-        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
+        /verification?name=张三&gender=男&birthDate=1998-05-15&enrollmentDate=2016-09-01&graduationDate=2020-06-30&school=北京大学&major=计算机科学与技术&duration=4 年&level=本科&educationType=普通高等教育&studyType=全日制&graduationStatus=毕业&certificateNumber=123456789&principalName=李四&verificationCode=ABC123XYZ&updateDate=2024-01-15&photo=https://example.com/photo.jpg
       */
 
       // 构建查询参数对象
-      const t = '' // 如果没写就填空值
-      const queryParams = {
+     const t = '' // 如果没写就填空值
+     const queryParams = {
         name: name || t,
         gender: gender || t,
         birthDate: birthDate || t,
@@ -235,29 +310,28 @@ const generateDegreePdf = async (req, res) => {
         certificateNumber: certificateNumber || t,
         verificationCode: 'K5K4DUHTN44J8927', // 在线验证码，目前先写死
         updateDate: currentDate,
-        photo: '/demo.jpg' // 照片URL
-        // photo: degreePhoto
+        photo: uploadedPhotoUrl || '/demo.jpg' // 使用 MinIO 存储的照片 URL，如果上传失败则使用默认值
       };
 
       // 构建查询字符串并对所有值进行编码
-      const queryString = Object.keys(queryParams)
+     const queryString = Object.keys(queryParams)
         .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
         .join('&');
 
       // 二维码配置 - 根据环境变量动态选择模式
-      const qrCodeMode = process.env.PDF_QR_CODE_MODE || 'maintenance';
+     const qrCodeMode = process.env.PDF_QR_CODE_MODE || 'maintenance';
       
       let qrCodeConfig;
-      if (qrCodeMode === 'available') {
+     if (qrCodeMode === 'available') {
         // 生成正常验证二维码
-        qrCodeConfig = {
+       qrCodeConfig = {
           content: `${process.env.VERIFICATION_BASE_URL}/verification-degree?${queryString}`, // 二维码内容
           x: 76.5,                             // 二维码 X 坐标
           y: 111,                              // 二维码 Y 坐标
           size: 68.5,                          // 二维码大小 (宽高)
           quality: 'L'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%)
         };
-        logger.info('📱 [学位 PDF] 使用 available 模式生成验证二维码', {
+       logger.info('📱 [学位 PDF] 使用 available 模式生成验证二维码', {
           mode: qrCodeMode,
           verificationUrl: process.env.VERIFICATION_BASE_URL,
           position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
@@ -266,14 +340,14 @@ const generateDegreePdf = async (req, res) => {
         });
       } else {
         // maintenance 模式：显示维护信息
-        qrCodeConfig = {
+       qrCodeConfig = {
           content: "403 Forbidden 学信服务器正在维护中，请稍后再试", // 临时屏蔽二维码功能
           x: 76.5,                             // 二维码 X 坐标
           y: 111,                              // 二维码 Y 坐标
           size: 68.5,                          // 二维码大小 (宽高)
           quality: 'H'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%)
         };
-        logger.info('📱 [学位 PDF] 使用 maintenance 模式生成维护提示二维码', {
+       logger.info('📱 [学位 PDF] 使用 maintenance 模式生成维护提示二维码', {
           mode: qrCodeMode,
           content: qrCodeConfig.content,
           position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
@@ -283,8 +357,8 @@ const generateDegreePdf = async (req, res) => {
       }
       
       // 使用更高的分辨率生成二维码（10 倍于目标尺寸）
-      const highResolution = qrCodeConfig.size * 10;
-      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeConfig.content, {
+     const highResolution = qrCodeConfig.size * 10;
+     const qrCodeDataUrl = await QRCode.toDataURL(qrCodeConfig.content, {
         width: highResolution,  // 提高分辨率
         margin: 0,
         errorCorrectionLevel: qrCodeConfig.quality,
@@ -293,24 +367,24 @@ const generateDegreePdf = async (req, res) => {
       });
 
       // 将数据 URL 转换为 Buffer
-      const qrCodeBuffer = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64');
-      const qrCodeImage = await pdfDoc.embedPng(qrCodeBuffer);
+     const qrCodeBuffer = Buffer.from(qrCodeDataUrl.split(',')[1], 'base64');
+     const qrCodeImage = await pdfDoc.embedPng(qrCodeBuffer);
 
       // 绘制二维码到 PDF
-      page.drawImage(qrCodeImage, {
+     page.drawImage(qrCodeImage, {
         x: qrCodeConfig.x,
         y: qrCodeConfig.y,
         width: qrCodeConfig.size,
         height: qrCodeConfig.size
       });
-      logger.info('✅ [学位 PDF] 二维码已添加到 PDF', {
+     logger.info('✅ [学位 PDF] 二维码已添加到 PDF', {
         mode: qrCodeMode,
         position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
         size: `${qrCodeConfig.size}x${qrCodeConfig.size}`,
         resolution: highResolution
       });
     } catch (qrError) {
-      logger.error('❌ [学位 PDF] 生成或添加二维码时出错', {
+     logger.error('❌ [学位 PDF] 生成或添加二维码时出错', {
         error: qrError.message,
         stack: qrError.stack,
         mode: qrCodeMode
@@ -318,15 +392,15 @@ const generateDegreePdf = async (req, res) => {
     }
 
     // 保存 PDF
-    logger.info('💾 [学位 PDF] 正在保存 PDF 文档...');
-    const pdfBytes = await pdfDoc.save();
-    logger.info('✅ 学位在线验证报告PDF文档保存完成，大小:', pdfBytes.length, '字节');
+   logger.info('💾 [学位 PDF] 正在保存 PDF 文档...');
+   const pdfBytes = await pdfDoc.save();
+   logger.info('✅ 学位在线验证报告PDF文档保存完成，大小:', pdfBytes.length, '字节');
 
     // 生成文件名
-    const fileName = `中国高等教育学位在线验证报告_${name}_${Date.now()}.pdf`;
+   const fileName = `中国高等教育学位在线验证报告_${name}_${Date.now()}.pdf`;
     
     // 保存PDF到后端目录
-    try {
+   try {
       const reportDir = path.join(__dirname, '../report_records');
       const filePath = path.join(reportDir, fileName);
       await fs.writeFile(filePath, pdfBytes);
@@ -337,20 +411,20 @@ const generateDegreePdf = async (req, res) => {
     }
 
     // 设置响应头以触发浏览器下载
-    res.setHeader('Content-Type', 'application/pdf');
+   res.setHeader('Content-Type', 'application/pdf');
     // 对文件名进行编码以避免特殊字符导致的错误
-    const encodedFileName = encodeURIComponent(fileName);
+   const encodedFileName = encodeURIComponent(fileName);
     // 修复文件名显示问题，同时兼容不同浏览器
-    res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
+   res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
     // 添加额外的头部确保浏览器将响应视为附件而非内联内容
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    logger.info('✅ 设置响应头完成，文件名:', fileName);
+   res.setHeader('X-Content-Type-Options', 'nosniff');
+   logger.info('✅ 设置响应头完成，文件名:', fileName);
 
     // 发送PDF数据
-    res.send(Buffer.from(pdfBytes));
-    logger.info('==========✅ 学位在线验证报告PDF文件发送成功==========');
+   res.send(Buffer.from(pdfBytes));
+   logger.info('==========✅ 学位在线验证报告PDF文件发送成功==========');
   } catch (error) {
-    logger.error("❌ PDF generation error:", error);
+   logger.error("❌ PDF generation error:", error);
     res.status(500).json({
       success: false,
       error: '学位在线验证报告PDF生成失败: ' + error.message
