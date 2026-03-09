@@ -250,7 +250,7 @@ const generateEducationPdf = async (req, res) => {
       */
       
       // 构建查询参数对象
-      const t = '服务器错误'
+      const t = '' // 如果没写就传空值
       const queryParams = {
         name: name || t,
         gender: gender || t,
