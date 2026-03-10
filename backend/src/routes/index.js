@@ -33,23 +33,23 @@ const getLoginStatsRangeModule = require('../get-login-stats-range');
 const queryUserLoginsPdfModule = require('../query-user-logins-pdf');
 
 // 引入 IP归属地查询工具
-const { queryIPLocation } = require('../ip-location');
+const { queryIPLocation, isChinaIP } = require('../ip-location');
 
-// 从环境变量读取 IP黑名单配置
+// 从环境变量读取 IP 黑名单配置
 const IP_BLACKLIST = process.env.IP_BLACKLIST 
   ? process.env.IP_BLACKLIST.split(',').map(ip => ip.trim()).filter(ip => ip)
   : [];
 
 // IP封禁中间件
-const ipBlacklistMiddleware = (req, res, next) => {
-  // 获取客户端IP地址
+const ipBlacklistMiddleware = async (req, res, next) => {
+  // 获取客户端 IP 地址
   const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
                   (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
                   req.headers['x-real-ip'] || 'unknown';
   
-  // 检查IP是否在黑名单中
+  // 检查 IP 是否在黑名单中
   if (IP_BLACKLIST.includes(clientIp)) {
-    console.warn('被封禁的IP地址发来请求', {
+    console.warn('被封禁的 IP 地址发来请求', {
       ip: clientIp,
       url: req.path,
       method: req.method,
@@ -58,29 +58,48 @@ const ipBlacklistMiddleware = (req, res, next) => {
     
     return res.status(403).json({
       success: false,
-      error: '傻逼玩意！AI风控检测到行为异常！拒绝请求！'
+      error: '傻逼玩意！AI 风控检测到行为异常！拒绝请求！'
     });
+  }
+  
+  // 检查是否为中国大陆地区 IP（本地测试 IP 除外）
+  const localTestIPs = ['127.0.0.1', '::1', 'localhost'];
+  if (!localTestIPs.includes(clientIp)) {
+    const isChina = await isChinaIP(clientIp);
+    if (!isChina) {
+      console.warn('非中国大陆地区 IP 访问被拒绝', {
+        ip: clientIp,
+        url: req.path,
+        method: req.method,
+        userAgent: req.get('User-Agent')
+      });
+      
+      return res.status(403).json({
+        success: false,
+        error: '傻逼玩意！AI 风控检测到访问异常！机器码已拉黑！'
+      });
+    }
   }
   
   next();
 };
 
-// 为注册接口设置限流规则 - 每个IP每60分钟最多10次注册尝试（方便测试）
+// 为注册接口设置限流规则 - 每个IP每天最多2次注册
 const registrationLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 1小时
-  max: 10, // 限制每个IP在窗口期内最多发送10个请求
+  windowMs: 24 * 60 * 60 * 1000, // 1天
+  max: 2, // 限制每个IP在窗口期内最多发送10个请求
   message: {
     success: false,
-    error: '注册次数太多了，请一小时后再试！'
+    error: '注册次数太多了，稍后再试！'
   },
   standardHeaders: true, // 返回标准的RateLimit-*头部
   legacyHeaders: false, // 不返回X-RateLimit-*头部
 });
 
-// 为一般API设置全局限流规则 - 每个IP每10分钟最多100次请求
+// 为一般API设置全局限流规则 - 每个IP每10分钟最多50次请求
 const generalLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10分钟
-  max: 100,
+  max: 50,
   message: {
     success: false,
     error: '透你妈傻逼，请求这来多干啥？你IP被封了！'
@@ -220,15 +239,18 @@ const signatureValidationMiddleware = async (req, res, next) => {
   }
   
   // 签名验证通过
-  const ipLocation = await queryIPLocation(clientIp);
-  console.info('签名验证通过', {
-    url: req.path,
-    // method: req.method,
-    // appKey,
-    userAgent: req.get('User-Agent'),
-    ip: clientIp,
-    ipLocation: ipLocation
+  // 异步查询 IP归属地（不阻塞主流程）
+  queryIPLocation(clientIp).then(ipLocation => {
+   console.info('签名验证通过', {
+      url: req.path,
+     userAgent: req.get('User-Agent'),
+      ip: clientIp,
+      ipLocation: ipLocation
+    });
+  }).catch(error => {
+   console.warn('IP归属地查询失败:', error.message);
   });
+  
   next();
 };
 
