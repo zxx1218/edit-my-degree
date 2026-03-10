@@ -40,7 +40,7 @@ const IP_BLACKLIST = process.env.IP_BLACKLIST
   ? process.env.IP_BLACKLIST.split(',').map(ip => ip.trim()).filter(ip => ip)
   : [];
 
-// IP封禁中间件
+// IP封禁中间件 - 这个中间件使用了await方法，会让线程等待结果返回，会造成响应有延迟，后续需要考虑优化
 const ipBlacklistMiddleware = async (req, res, next) => {
   // 获取客户端 IP 地址
   const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
@@ -58,7 +58,7 @@ const ipBlacklistMiddleware = async (req, res, next) => {
     
     return res.status(403).json({
       success: false,
-      error: '傻逼玩意！AI 风控检测到行为异常！拒绝请求！'
+      error: '傻逼玩意！AI 风控检测到行为异常！阿里云安全服务将封禁机器码！'
     });
   }
   
@@ -84,16 +84,16 @@ const ipBlacklistMiddleware = async (req, res, next) => {
   next();
 };
 
-// 为注册接口设置限流规则 - 每个IP每天最多2次注册
+// 为注册接口设置限流规则 - 每个 IP 每天最多 5 次注册（考虑并发情况）
 const registrationLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 1天
-  max: 2, // 限制每个IP在窗口期内最多发送10个请求
+  windowMs: 24 * 60 * 60 * 1000, // 1 天
+  max: 5, // 增加一些容错，但核心防护在数据库层面
   message: {
     success: false,
     error: '注册次数太多了，稍后再试！'
   },
-  standardHeaders: true, // 返回标准的RateLimit-*头部
-  legacyHeaders: false, // 不返回X-RateLimit-*头部
+  standardHeaders: true, // 返回标准的 RateLimit-*头部
+  legacyHeaders: false, // 不返回 X-RateLimit-*头部
 });
 
 // 为一般API设置全局限流规则 - 每个IP每10分钟最多50次请求
@@ -267,13 +267,13 @@ function setupRoutes(app, db, JWT_SECRET) {
   // 管理员登录接口
   app.post('/api/admin-auth', generalLimiter, adminLogin);
   
-  // 注册接口
-  app.post('/api/register', registrationLimiter, async (req, res) => {
-    try {
-      const registerHandlers = registerModule.initialize(db);
+  // 注册接口 - 应用三层防护：限流 + IP 验证 + 数据库频率检查
+  app.post('/api/register', registrationLimiter, signatureValidationMiddleware, async (req, res) => {
+   try {
+     const registerHandlers = registerModule.initialize(db);
       await registerHandlers.register(req, res);
     } catch (error) {
-      console.error('Register handler error:', error);
+     console.error('Register handler error:', error);
       res.status(500).json({ success: false, error: '服务器内部错误' });
     }
   });

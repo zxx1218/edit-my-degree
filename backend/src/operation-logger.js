@@ -13,7 +13,7 @@ const logger = require('./logger');
  * @param {string} result - 操作结果
  */
 function logLogin(userId, username, ipAddress, userAgent, result = 'success') {
-  logger.info(`用户登录 - 用户ID: ${userId}, 用户名: ${username}, IP地址: ${ipAddress}, 用户代理: ${userAgent}, 结果: ${result}`);
+  logger.info(`用户登录 - 用户ID: ${userId}, IP地址: ${ipAddress}, 用户名: ${username}, 用户代理: ${userAgent}, 结果: ${result}`);
 }
 
 /**
@@ -28,7 +28,7 @@ function logLogin(userId, username, ipAddress, userAgent, result = 'success') {
  * @param {string} result - 操作结果
  */
 function logOperation(userId, username, operationType, table, operationData, ipAddress, userAgent, result = 'success') {
-  logger.info(`数据操作 - 用户ID: ${userId}, 用户名: ${username}, 操作类型: ${operationType}, 操作表: ${table}, 操作数据: ${JSON.stringify(operationData)}, IP地址: ${ipAddress}, 用户代理: ${userAgent}, 结果: ${result}`);
+  logger.info(`数据操作 - 用户ID: ${userId}, IP地址: ${ipAddress}, 用户名: ${username}, 操作类型: ${operationType}, 操作表: ${table}, 操作数据: ${JSON.stringify(operationData)}, 用户代理: ${userAgent}, 结果: ${result}`);
 }
 
 /**
@@ -40,7 +40,7 @@ function logOperation(userId, username, operationType, table, operationData, ipA
  * @param {string} result - 操作结果
  */
 function logPasswordChange(userId, username, ipAddress, userAgent, result = 'success') {
-  logger.info(`密码更改 - 用户ID: ${userId}, 用户名：${username}, IP 地址：${ipAddress}, 用户代理：${userAgent}, 结果：${result}`);
+  logger.info(`密码更改 - 用户ID: ${userId}, IP地址: ${ipAddress}, 用户名：${username}, 用户代理：${userAgent}, 结果：${result}`);
 }
 
 /**
@@ -53,7 +53,7 @@ function logPasswordChange(userId, username, ipAddress, userAgent, result = 'suc
  * @param {Object} queryData - 查询的数据（包含剩余登录次数和 PDF 积分）
  */
 function logQueryUserLogins(userId, username, ipAddress, userAgent, result = 'success', queryData = null) {
-  let logMessage = `查询登录信息 - 用户ID: ${userId}, 用户名：${username}, IP 地址：${ipAddress}, 用户代理：${userAgent}, 结果：${result}`;
+  let logMessage = `查询登录信息 - 用户ID: ${userId}, IP地址: ${ipAddress}, 用户名：${username}, 用户代理：${userAgent}, 结果：${result}`;
   if (queryData) {
     logMessage += `, 剩余登录次数：${queryData.remaining_logins}, PDF 积分：${queryData.pdf_limit}`;
   }

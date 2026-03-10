@@ -3,7 +3,7 @@ const { logOperation } = require('./operation-logger');
 
 /**
  * 初始化注册模块
- * @param {Object} db - 数据库连接实例
+ * @param {Object} db- 数据库连接实例
  */
 function initialize(db) {
   /**
@@ -12,13 +12,13 @@ function initialize(db) {
    * @param {Object} res - 响应对象
    */
   async function register(req, res) {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
+   const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
                       (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
                       req.headers['x-real-ip'] || 'unknown';
-    const userAgent = req.get('User-Agent') || 'Unknown';
+   const userAgent = req.get('User-Agent') || 'Unknown';
 
-    try {
-      const { username, password } = req.body;
+   try {
+     const { username, password } = req.body;
 
       if (!username || !password) {
         return res.status(400).json({
@@ -27,8 +27,31 @@ function initialize(db) {
         });
       }
 
+      // 【第二层防护】检查该 IP 在过去 24 小时内是否已经注册过
+     const [recentRegistrations] = await db.execute(
+        `SELECT id, username FROM users 
+         WHERE registration_ip = ? 
+         AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)`,
+        [ipAddress]
+      );
+
+      if (recentRegistrations.length > 2) {
+        // 记录安全日志
+       console.warn('检测到同一 IP 频繁注册', {
+          ip: ipAddress,
+          userAgent,
+          existingUsernames: recentRegistrations.map(r => r.username),
+          registrationCount: recentRegistrations.length
+        });
+
+        return res.status(403).json({
+          success: false,
+          error: '阿里云安全服务器已拦截您的请求！'
+        });
+      }
+
       // 检查用户名是否已存在
-      const [existingUsers] = await db.execute(
+     const [existingUsers] = await db.execute(
         'SELECT id FROM users WHERE username = ?',
         [username]
       );
@@ -40,39 +63,39 @@ function initialize(db) {
         });
       }
 
-      // 生成UUID作为用户ID
-      const userId = uuidv4();
+      // 生成 UUID 作为用户ID
+     const userId = uuidv4();
 
-      // 插入新用户，初始登录次数为0
+      // 插入新用户，初始登录次数为 0，并记录注册 IP
       await db.execute(
-        'INSERT INTO users (id, username, password, remaining_logins) VALUES (?, ?, ?, ?)',
-        [userId, username, password, 0]
+        'INSERT INTO users (id, username, password, remaining_logins, registration_ip) VALUES (?, ?, ?, ?, ?)',
+        [userId, username, password, 0, ipAddress]
       );
 
-      // 为新用户创建默认的学生状态记录
-      const studentStatusId = uuidv4();
+      // 为新用户创建默认的学籍记录
+     const studentStatusId = uuidv4();
       await db.execute(
         `INSERT INTO student_status (id, user_id, name, school, major, study_type, degree_level) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [studentStatusId, userId, '新用户', '清华大学', '汉语言文学', '全日制', '本科']
+        [studentStatusId, userId, '浆果儿', '清华大学', '汉语言文学', '普通全日制', '本科']
       );
 
       // 记录用户注册日志
       logOperation(userId, username, 'register', 'users', { username }, ipAddress, userAgent);
 
       // 获取新创建的用户信息
-      const [newUsers] = await db.execute(
+     const [newUsers] = await db.execute(
         'SELECT id, username, remaining_logins FROM users WHERE id = ?',
         [userId]
       );
 
-      const newUser = newUsers[0];
+     const newUser = newUsers[0];
 
       res.status(200).json({
         success: true,
         user: newUser
       });
-    } catch (err) {
-      console.error('Registration error:', err);
+    } catch(err) {
+     console.error('Registration error:', err);
       res.status(500).json({
         success: false,
         error: '注册失败，请重试'
