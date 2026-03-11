@@ -5,7 +5,10 @@ async function initializeDatabaseConnection() {
   try {
     // 使用连接池管理器
     const pool = await dbManager.initializePool();
-    console.log('使用连接池连接到MySQL数据库');
+    // 只在日志进程中打印初始化日志
+    if (dbManager.isLogProcess) {
+      console.log('使用连接池连接到 MySQL 数据库');
+    }
     return pool;
   } catch (err) {
     console.error('数据库连接初始化失败:', err);
@@ -175,15 +178,22 @@ async function createTables(db) {
     await db.execute(query);
   }
   
+  // 只在日志进程中打印日志
+  const isLogProcess = dbManager.isLogProcess;
+  
   // 创建索引的辅助函数，处理死锁和重复索引的情况
   async function createIndexIfExists(indexName, tableName, columnName) {
    try {
       await db.execute(`CREATE INDEX ${indexName} ON ${tableName}(${columnName})`);
-    console.log(`索引 ${indexName} 创建成功`);
+    if (isLogProcess) {
+      console.log(`索引 ${indexName} 创建成功`);
+    }
     } catch (err) {
       // 如果索引已存在或发生死锁，忽略错误
       if (err.code === 'ER_DUP_KEYNAME' || err.code === 'ER_LOCK_DEADLOCK') {
-      console.log(`索引 ${indexName} 已存在或创建时发生死锁，跳过`);
+      if (isLogProcess) {
+        console.log(`索引 ${indexName} 已存在或创建时发生死锁，跳过`);
+      }
       } else {
         throw err; // 其他错误继续抛出
       }
@@ -195,7 +205,9 @@ async function createTables(db) {
   await createIndexIfExists('idx_login_logs_user_id', 'login_logs', 'user_id');
   await createIndexIfExists('idx_users_registration_ip', 'users', 'registration_ip');
   
-  console.log('Database tables initialized');
+  if (isLogProcess) {
+    console.log('Database tables initialized');
+  }
   
   // 插入初始管理员账户（如果不存在）
   const [adminExists] = await db.execute(
@@ -209,7 +221,9 @@ async function createTables(db) {
       'INSERT INTO admins (username, password) VALUES (?, ?)',
       ['zxx', '991218zxnmA-']
     );
-    console.log('Initial admin user created');
+    if (isLogProcess) {
+      console.log('Initial admin user created');
+    }
   }
 }
 

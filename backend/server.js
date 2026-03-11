@@ -15,6 +15,9 @@ const app = express();
 app.set('trust proxy', 1); // 添加这一行以信任代理
 const PORT = process.env.PORT || 3001;
 
+// 判断是否为日志进程（只在进程 0 中记录日志）
+const isLogProcess = process.env.NODE_APP_INSTANCE === '0' || !process.env.NODE_APP_INSTANCE;
+
 app.use(cors());
 
 // 增加请求体大小限制以支持图片上传
@@ -64,13 +67,17 @@ async function initializeApp() {
 
 // 优雅关闭处理
 process.on('SIGTERM', async () => {
-  console.log('收到 SIGTERM 信号，正在优雅关闭');
+  if (isLogProcess) {
+    console.log('收到 SIGTERM 信号，正在优雅关闭');
+  }
   await dbManager.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('收到 SIGINT 信号，正在优雅关闭');
+  if (isLogProcess) {
+    console.log('收到 SIGINT 信号，正在优雅关闭');
+  }
   await dbManager.close();
   process.exit(0);
 });
@@ -79,24 +86,27 @@ process.on('SIGINT', async () => {
 initializeApp().then((success) => {
   if (success) {
     const server = app.listen(PORT, () => {
-      console.log(`服务器运行在端口 ${PORT}`);
+      // 只在日志进程中打印启动信息
+      if (isLogProcess) {
+        console.log(`服务器运行在端口 ${PORT}`);
       
-      // 从环境变量读取状态报告间隔，默认5小时
-      const statusReportInterval = parseInt(process.env.DB_STATUS_REPORT_INTERVAL) || 18000000;
-      
-      // 定期输出连接池状态
-      setInterval(() => {
-        const stats = dbManager.getPoolStats();
-        if (stats) {
-          console.log('=== 数据库连接池状态报告 ===');
-          console.log(`连接状态：${stats.isConnected ? '正常' : '异常'}`);
-          console.log(`配置信息:`, stats.config);
-          console.log(`活动连接数：${stats.activeConnections}`);
-          console.log(`空闲连接数：${stats.freeConnections}`);
-          console.log(`等待队列长度：${stats.queuedRequests}`);
-          console.log('========================');
-        }
-      }, statusReportInterval);
+        // 从环境变量读取状态报告间隔，默认 5 小时
+        const statusReportInterval = parseInt(process.env.DB_STATUS_REPORT_INTERVAL) || 18000000;
+        
+        // 定期输出连接池状态（只在日志进程中）
+        setInterval(() => {
+          const stats = dbManager.getPoolStats();
+          if (stats) {
+            console.log('=== 数据库连接池状态报告 ===');
+            console.log(`连接状态：${stats.isConnected ? '正常' : '异常'}`);
+            console.log(`配置信息:`, stats.config);
+            console.log(`活动连接数：${stats.activeConnections}`);
+            console.log(`空闲连接数：${stats.freeConnections}`);
+            console.log(`等待队列长度：${stats.queuedRequests}`);
+            console.log('========================');
+          }
+        }, statusReportInterval);
+      }
     });
 
     // 处理未捕获的异常

@@ -5,6 +5,8 @@ class DatabaseManager {
     this.pool = null;
     this.isConnected = false;
     this.monitorInterval = null;
+    // 判断是否为日志进程（只在进程 0 中记录日志）
+    this.isLogProcess = process.env.NODE_APP_INSTANCE === '0' || !process.env.NODE_APP_INSTANCE;
   }
 
   /**
@@ -34,7 +36,11 @@ class DatabaseManager {
       connection.release();
       
       this.isConnected = true;
-      console.log('数据库连接池初始化成功');
+      
+      // 只在日志进程中打印初始化日志
+      if (this.isLogProcess) {
+        console.log('数据库连接池初始化成功');
+      }
       
       // 启动连接监控
       this.startConnectionMonitoring();
@@ -98,13 +104,17 @@ class DatabaseManager {
    * 重新连接数据库
    */
   async reconnect() {
-    console.log('正在尝试重新连接数据库...');
+    if (this.isLogProcess) {
+      console.log('正在尝试重新连接数据库...');
+    }
     try {
       if (this.pool) {
         await this.pool.end();
       }
       await this.initializePool();
-      console.log('数据库重新连接成功');
+      if (this.isLogProcess) {
+        console.log('数据库重新连接成功');
+      }
     } catch (err) {
       console.error('数据库重新连接失败:', err);
       throw err;
@@ -115,8 +125,13 @@ class DatabaseManager {
    * 启动连接监控
    */
   startConnectionMonitoring() {
-    // 从环境变量读取监控间隔，默认5小时
+    // 从环境变量读取监控间隔，默认 5 小时
     const healthCheckInterval = parseInt(process.env.DB_HEALTH_CHECK_INTERVAL) || 18000000;
+    
+    // 只在日志进程中进行健康检查和打印日志
+    if (!this.isLogProcess) {
+      return;
+    }
     
     this.monitorInterval = setInterval(async () => {
       try {
@@ -125,7 +140,7 @@ class DatabaseManager {
           await connection.ping();
           connection.release();
           
-          console.log('数据库连接池健康检查: 连接正常');
+          console.log('数据库连接池健康检查：连接正常');
         }
       } catch (err) {
         console.warn('数据库连接检查失败，正在尝试重新连接...', err);
@@ -141,7 +156,9 @@ class DatabaseManager {
     if (this.monitorInterval) {
       clearInterval(this.monitorInterval);
       this.monitorInterval = null;
-      console.log('数据库连接监控已停止');
+      if (this.isLogProcess) {
+        console.log('数据库连接监控已停止');
+      }
     }
   }
 
@@ -153,7 +170,9 @@ class DatabaseManager {
     if (this.pool) {
       await this.pool.end();
       this.isConnected = false;
-      console.log('数据库连接池已关闭');
+      if (this.isLogProcess) {
+        console.log('数据库连接池已关闭');
+      }
     }
   }
 
