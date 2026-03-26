@@ -20,10 +20,10 @@ const BUCKET_NAME = process.env.MINIO_BUCKET || 'editmydegree';
 // 上传照片到 MinIO
 const uploadPhotoToMinIO = async (base64Data, studentName) => {
   try {
-  logger.info('🔄 开始上传照片到 MinIO...');
+    logger.info(`🔄 开始上传照片到 MinIO...`);
     
     // 从 Base64 字符串中提取图片数据
-  const imageBuffer= Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+    const imageBuffer= Buffer.from(base64Data.replace(/^data:image\/\w+;base64,/, ""), 'base64');
     
     // 确定图片类型
     let imageType = 'jpeg';
@@ -34,45 +34,45 @@ const uploadPhotoToMinIO = async (base64Data, studentName) => {
     }
     
     // 生成唯一的文件名
-  const timestamp = Date.now();
-  const randomString = Math.random().toString(36).substring(2, 8);
-  const fileName = `photos/${studentName}_${timestamp}_${randomString}.${imageType}`;
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    const fileName = `photos/${studentName}_${timestamp}_${randomString}.${imageType}`;
     
-  logger.info('📁 MinIO 文件路径:', fileName);
+    logger.info(`📁 MinIO 文件路径：${fileName}`);
     
     // 检查 bucket 是否存在，不存在则创建
-  const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+    const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
     if (!bucketExists) {
-    logger.info('🪣 Bucket 不存在，正在创建:', BUCKET_NAME);
-    await minioClient.makeBucket(BUCKET_NAME);
-    logger.info('✅ Bucket 创建成功:', BUCKET_NAME);
+      logger.info(`🪣 Bucket 不存在，正在创建：${BUCKET_NAME}`);
+      await minioClient.makeBucket(BUCKET_NAME);
+      logger.info(`✅ Bucket 创建成功：${BUCKET_NAME}`);
     } else {
-    logger.info('✅ Bucket 已存在:', BUCKET_NAME);
+      logger.info(`✅ Bucket 已存在：${BUCKET_NAME}`);
     }
     
     // 上传文件到 MinIO
-  await minioClient.putObject(BUCKET_NAME, fileName, imageBuffer, {
+    await minioClient.putObject(BUCKET_NAME, fileName, imageBuffer, {
       'Content-Type': `image/${imageType}`,
       'x-amz-acl': 'public-read'
     });
     
-  logger.info('✅ 照片上传成功到 MinIO:', fileName);
-    
-    // 构建可访问的 URL
+    // 构建可访问的 URL - 在上传成功后才构建和打印日志
     // 注意：这里假设使用 HTTP 访问，如果需要 HTTPS 请相应修改
-  const photoUrl = `http://${process.env.MINIO_ENDPOINT}/${BUCKET_NAME}/${fileName}`;
-  logger.info('🔗 照片访问 URL:', photoUrl);
+    const photoUrl = `http://${process.env.MINIO_ENDPOINT}/${BUCKET_NAME}/${fileName}`;
+    
+    logger.info(`✅ 照片上传成功到 MinIO: ${fileName}`);
+    logger.info(`🔗 照片访问 URL: ${photoUrl}`);
     
     return photoUrl;
   } catch (error) {
-  logger.error('❌ 上传照片到 MinIO 失败:', error.message);
-  throw error;
+    logger.error(`❌ 上传照片到 MinIO 失败：${error.message}`);
+    throw error;
   }
 };
 
 const generateEducationPdf = async (req, res) => {
   try {
-  logger.info('==========🚀 开始生成学历在线验证报告 PDF...==========');
+    logger.info('==========🚀 开始生成学历在线验证报告 PDF...==========');
     // 从请求中获取数据
     const {
       name,
@@ -92,7 +92,7 @@ const generateEducationPdf = async (req, res) => {
       photo
     } = req.body;
 
-    logger.info('📝 接收到的数据:', {
+    logger.info(`📝 接收到的数据：${JSON.stringify({
       name,
       gender,
       birthDate,
@@ -108,7 +108,7 @@ const generateEducationPdf = async (req, res) => {
       certificateNumber,
       principalName,
       photo: photo ? '照片数据已接收' : '无照片数据'
-    });
+    })}`);
 
     // 验证必要字段
     if (!name || !gender || !birthDate || !enrollmentDate || !graduationDate || 
@@ -129,14 +129,14 @@ const generateEducationPdf = async (req, res) => {
 
     // 模板路径
     const templatePath = path.join(__dirname, '../../assets', 'xueli_tmp.pdf');
-    logger.info('📁 PDF模板路径:', templatePath);
+    logger.info(`📁 PDF 模板路径：${templatePath}`);
     
     // 检查模板文件是否存在
     try {
       await fs.access(templatePath);
-      logger.info('✅ PDF模板文件存在');
+      logger.info('✅ PDF 模板文件存在');
     } catch (error) {
-      logger.error('❌ PDF模板文件不存在:', error.message);
+      logger.error('❌ PDF 模板文件不存在：', error.message);
       return res.status(500).json({
         success: false,
         error: 'PDF模板文件不存在'
@@ -144,18 +144,18 @@ const generateEducationPdf = async (req, res) => {
     }
 
     // 读取模板文件
-    logger.info('📖 正在读取PDF模板文件...');
+    logger.info('📖 正在读取 PDF 模板文件...');
     const templateBytes = await fs.readFile(templatePath);
     if (!templateBytes) {
-      throw new Error('无法读取PDF模板文件');
+      throw new Error('无法读取 PDF 模板文件');
     }
-    logger.info('✅ PDF模板文件读取完成，大小:', templateBytes.length, '字节');
+    logger.info(`✅ PDF 模板文件读取完成，大小：${templateBytes.length} 字节`);
     
-    // 加载PDF模板并注册fontkit
-    logger.info('🔄 正在加载PDF文档...');
+    // 加载 PDF 模板并注册 fontkit
+    logger.info('🔄 正在加载 PDF 文档...');
     const pdfDoc = await PDFDocument.load(templateBytes);
     pdfDoc.registerFontkit(fontkit);
-    logger.info('✅ PDF文档加载完成');
+    logger.info('✅ PDF 文档加载完成');
     
     // 尝试加载中文字体（如果存在）
     let defaultFont, sourceHanFont;
@@ -164,7 +164,7 @@ const generateEducationPdf = async (req, res) => {
       const defaultFontPath = path.join(__dirname, '../../fonts', 'msyh.ttf');
       const sourceHanFontPath = path.join(__dirname, '../../fonts', 'SourceHanSansK-Regular.TTF');
       
-      logger.info('📁 字体路径:', { defaultFontPath, sourceHanFontPath });
+      logger.info(`📁 字体路径：defaultFontPath=${defaultFontPath}, sourceHanFontPath=${sourceHanFontPath}`);
       
       // 检查字体文件是否存在
       await fs.access(defaultFontPath);
@@ -180,20 +180,20 @@ const generateEducationPdf = async (req, res) => {
       sourceHanFont = await pdfDoc.embedFont(sourceHanFontBytes);
       logger.info('✅ 自定义字体加载成功');
     } catch (error) {
-      logger.warn('⚠️ 无法加载自定义字体，使用默认字体:', error.message);
+      logger.warn(`⚠️ 无法加载自定义字体，使用默认字体：${error.message}`);
       // 使用默认字体
       defaultFont = await pdfDoc.embedStandardFont('Helvetica');
-      sourceHanFont = defaultFont; // 如果无法加载SourceHan字体，使用默认字体
+      sourceHanFont = defaultFont; // 如果无法加载 SourceHan 字体，使用默认字体
     }
 
     // 获取当前日期（中文格式）
     const now = new Date();
     const currentDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, "0")}月${String(now.getDate()).padStart(2, "0")}日`;
-    logger.info('📅 当前日期:', currentDate);
+    logger.info(`📅 当前日期：${currentDate}`);
 
     // 获取第一页
     const page = pdfDoc.getPage(0);
-    logger.info('✅ 获取PDF页面成功');
+    logger.info('✅ 获取 PDF 页面成功');
     
     // 定义文本内容配置
     const texts = [
@@ -214,8 +214,8 @@ const generateEducationPdf = async (req, res) => {
       { content: principalName, x: 179, y: 375, fontSize: 11, color: rgb(0, 0, 0), font: defaultFont }
     ];
 
-    // 添加文本到PDF
-    logger.info('🔄 开始向PDF添加文本内容...');
+    // 添加文本到 PDF
+    logger.info('🔄 开始向 PDF 添加文本内容...');
     for (const text of texts) {
       page.drawText(text.content, {
         x: text.x,
@@ -229,41 +229,41 @@ const generateEducationPdf = async (req, res) => {
 
     // 添加照片到 PDF（如果提供了照片）
     let uploadedPhotoUrl = null;
-   if (photo) {
-   try {
-     logger.info('🔄 开始处理照片...');
+    if (photo) {
+      try {
+        logger.info('🔄 开始处理照片...');
         
         // 上传照片到 MinIO
-     try {
+        try {
           uploadedPhotoUrl = await uploadPhotoToMinIO(photo, name);
-       logger.info('✅ 照片已上传到 MinIO:', uploadedPhotoUrl);
+          logger.info(`✅ 照片已上传到 MinIO: ${uploadedPhotoUrl}`);
         } catch (uploadError) {
-       logger.error('❌ 上传照片到 MinIO 失败，但继续生成 PDF:', uploadError.message);
+          logger.error(`❌ 上传照片到 MinIO 失败，但继续生成 PDF: ${uploadError.message}`);
           // 上传失败不中断流程，继续使用本地处理
         }
         
         // 从 Base64 字符串中提取图片数据
-     const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
-     const imageBuffer= Buffer.from(base64Data, 'base64');
+        const base64Data = photo.replace(/^data:image\/\w+;base64,/, "");
+        const imageBuffer= Buffer.from(base64Data, 'base64');
         
-        // 确定图片类型并嵌入到PDF中
-     let photoImage;
-     if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
-          logger.info('📷 检测到JPG或者JPEG格式照片');
+        // 确定图片类型并嵌入到 PDF 中
+        let photoImage;
+        if (photo.startsWith('data:image/jpeg') || photo.startsWith('data:image/jpg')) {
+          logger.info('📷 检测到 JPG 或者 JPEG 格式照片');
           photoImage = await pdfDoc.embedJpg(imageBuffer);
         } else if (photo.startsWith('data:image/png')) {
-          logger.info('📷 检测到PNG格式照片');
+          logger.info('📷 检测到 PNG 格式照片');
           try {
             photoImage = await pdfDoc.embedPng(imageBuffer);
           } catch (pngError) {
-            logger.warn('⚠️ PNG解析失败，尝试用JPG解析:', pngError);
-            // 如果PNG解析失败，尝试用JPG解析
+            logger.warn(`⚠️ PNG 解析失败，尝试用 JPG 解析：${pngError}`);
+            // 如果 PNG 解析失败，尝试用 JPG 解析
             try {
               photoImage = await pdfDoc.embedJpg(imageBuffer);
-              logger.info('✅ 使用JPG解析成功');
+              logger.info('✅ 使用 JPG 解析成功');
             } catch (jpgError) {
-              logger.warn('⚠️ JPG解析也失败了，使用默认PNG解析:', jpgError);
-              // 如果都失败了，默认再试一次PNG
+              logger.warn(`⚠️ JPG 解析也失败了，使用默认 PNG 解析：${jpgError}`);
+              // 如果都失败了，默认再试一次 PNG
               photoImage = await pdfDoc.embedPng(imageBuffer);
             }
           }
@@ -272,14 +272,14 @@ const generateEducationPdf = async (req, res) => {
           logger.info('📷 无法确定照片格式，尝试自动检测');
           try {
             photoImage = await pdfDoc.embedPng(imageBuffer);
-            logger.info('✅ 自动检测为PNG格式');
+            logger.info('✅ 自动检测为 PNG 格式');
           } catch (pngError) {
-            logger.warn('⚠️ PNG解析失败，尝试JPG解析:', pngError.message);
+            logger.warn(`⚠️ PNG 解析失败，尝试 JPG 解析：${pngError.message}`);
             try {
               photoImage = await pdfDoc.embedJpg(imageBuffer);
-              logger.info('✅ 自动检测为JPG格式');
+              logger.info('✅ 自动检测为 JPG 格式');
             } catch (jpgError) {
-              logger.error('❌ 无法解析图片数据:', jpgError.message);
+              logger.error(`❌ 无法解析图片数据：${jpgError.message}`);
               throw new Error('无法识别的图片格式');
             }
           }
@@ -308,16 +308,16 @@ const generateEducationPdf = async (req, res) => {
         });
         logger.info(`✅ 已添加证件照（位置：x=${x}, y=${y}，尺寸：${photoWidth}x${photoHeight}，无边框）`);
       } catch (photoError) {
-     logger.error('❌ 处理照片时出错:', photoError.message);
+        logger.error(`❌ 处理照片时出错：${photoError.message}`);
         // 继续执行而不中断整个过程
       }
     } else {
-   logger.info('📸 未提供照片，跳过照片添加步骤');
+      logger.info('📸 未提供照片，跳过照片添加步骤');
     }
 
     // 生成并添加二维码
-  try {
-  logger.info('🔄 开始生成二维码...');
+    try {
+      logger.info('🔄 开始生成二维码...');
 
       /*
         二维码路由
@@ -325,8 +325,8 @@ const generateEducationPdf = async (req, res) => {
       */
       
       // 构建查询参数对象
-   const t = '' // 如果没写就传空值
-   const queryParams = {
+      const t = '' // 如果没写就传空值
+      const queryParams = {
         name: name || t,
         gender: gender || t,
         birthDate: birthDate || t,
@@ -364,7 +364,7 @@ const generateEducationPdf = async (req, res) => {
           size: 68.5,                        // 二维码大小 (宽高)
           quality: 'L'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%)
         };
-        logger.info('📱 [学历 PDF] 使用 available 模式生成验证二维码', {
+        logger.info(`📱 [学历 PDF] 使用 available 模式生成验证二维码`, {
           mode: qrCodeMode,
           verificationUrl: process.env.VERIFICATION_BASE_URL,
           position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
@@ -380,7 +380,7 @@ const generateEducationPdf = async (req, res) => {
           size: 68.5,                        // 二维码大小 (宽高)
           quality: 'H'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%)
         };
-        logger.info('📱 [学历 PDF] 使用 maintenance 模式生成维护提示二维码', {
+        logger.info(`📱 [学历 PDF] 使用 maintenance 模式生成维护提示二维码`, {
           mode: qrCodeMode,
           content: qrCodeConfig.content,
           position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
@@ -410,14 +410,14 @@ const generateEducationPdf = async (req, res) => {
         width: qrCodeConfig.size,
         height: qrCodeConfig.size
       });
-      logger.info('✅ [学历 PDF] 二维码已添加到 PDF', {
+      logger.info(`✅ [学历 PDF] 二维码已添加到 PDF`, {
         mode: qrCodeMode,
         position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
         size: `${qrCodeConfig.size}x${qrCodeConfig.size}`,
         resolution: highResolution
       });
     } catch (qrError) {
-      logger.error('❌ [学历 PDF] 生成或添加二维码时出错', {
+      logger.error(`❌ [学历 PDF] 生成或添加二维码时出错`, {
         error: qrError.message,
         stack: qrError.stack,
         mode: qrCodeMode
@@ -427,19 +427,19 @@ const generateEducationPdf = async (req, res) => {
     // 保存 PDF
     logger.info('💾 [学历 PDF] 正在保存 PDF 文档...');
     const pdfBytes = await pdfDoc.save();
-    logger.info('✅ 学位在线验证报告PDF文档保存完成，大小:', pdfBytes.length, '字节');
+    logger.info(`✅ 学位在线验证报告 PDF 文档保存完成，大小：${pdfBytes.length} 字节`);
 
     // 生成文件名
     const fileName = `中国高等教育学位在线验证报告_${name}_${Date.now()}.pdf`;
     
-    // 保存PDF到后端目录
+    // 保存 PDF 到后端目录
     try {
       const reportDir = path.join(__dirname, '../report_records');
       const filePath = path.join(reportDir, fileName);
       await fs.writeFile(filePath, pdfBytes);
-      logger.info('✅ 学位在线验证报告PDF文件已在后端保存:', filePath);
+      logger.info(`✅ 学位在线验证报告 PDF 文件已在后端保存：${filePath}`);
     } catch (saveError) {
-      logger.error('❌ 保存学位在线验证报告PDF到后端目录失败:', saveError.message);
+      logger.error(`❌ 保存学位在线验证报告 PDF 到后端目录失败：${saveError.message}`);
       // 不中断流程，仍然发送给前端
     }
 
@@ -451,16 +451,16 @@ const generateEducationPdf = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
     // 添加额外的头部确保浏览器将响应视为附件而非内联内容
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    logger.info('✅ 设置响应头完成，文件名:', fileName);
+    logger.info(`✅ 设置响应头完成，文件名：${fileName}`);
 
-    // 发送PDF数据
+    // 发送 PDF 数据
     res.send(Buffer.from(pdfBytes));
-    logger.info('✅ 学位在线验证报告PDF文件发送成功');
+    logger.info('✅ 学位在线验证报告 PDF 文件发送成功');
   } catch (error) {
-    logger.error("❌ 学位在线验证报告PDF生成错误:", error);
+    logger.error(`❌ 学位在线验证报告 PDF 生成错误：${error.message}`);
     res.status(500).json({
       success: false,
-      error: 'PDF生成失败: ' + error.message
+      error: 'PDF 生成失败：' + error.message
     });
   }
 };
