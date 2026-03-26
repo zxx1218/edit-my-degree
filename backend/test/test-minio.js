@@ -7,7 +7,7 @@
  * 此脚本用于测试 MinIO 配置是否正确
  */
 
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: '../../.env' });
 const minio = require('minio');
 
 // 初始化 MinIO 客户端

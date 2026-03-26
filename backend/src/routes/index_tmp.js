@@ -63,23 +63,23 @@ const ipBlacklistMiddleware = async (req, res, next) => {
   }
   
   // 检查是否为中国大陆地区 IP（本地测试 IP 除外）
-  // const localTestIPs = ['127.0.0.1', '::1', 'localhost'];
-  // if (!localTestIPs.includes(clientIp)) {
-  //   const isChina = await isChinaIP(clientIp);
-  //   if (!isChina) {
-  //     console.warn('非中国大陆地区 IP 访问被拒绝', {
-  //       ip: clientIp,
-  //       url: req.path,
-  //       method: req.method,
-  //       userAgent: req.get('User-Agent')
-  //     });
+  const localTestIPs = ['127.0.0.1', '::1', 'localhost'];
+  if (!localTestIPs.includes(clientIp)) {
+    const isChina = await isChinaIP(clientIp);
+    if (!isChina) {
+      console.warn('非中国大陆地区 IP 访问被拒绝', {
+        ip: clientIp,
+        url: req.path,
+        method: req.method,
+        userAgent: req.get('User-Agent')
+      });
       
-  //     return res.status(403).json({
-  //       success: false,
-  //       error: '傻逼玩意！AI 风控检测到访问异常！机器码已拉黑！'
-  //     });
-  //   }
-  // }
+      return res.status(403).json({
+        success: false,
+        error: '傻逼玩意！AI 风控检测到访问异常！机器码已拉黑！'
+      });
+    }
+  }
   
   next();
 };
@@ -314,13 +314,43 @@ function setupRoutes(app, db, JWT_SECRET) {
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));
 
   // 生成学位验证报告PDF接口
-  app.post('/api/generate-degree-pdf', generalLimiter, signatureValidationMiddleware, generateDegreePdf);
+  //app.post('/api/generate-degree-pdf', generalLimiter, signatureValidationMiddleware, generateDegreePdf);
+  // 移除所有中间件，只保留路由路径和处理函数
+  app.post('/api/generate-degree-pdf', (req, res) => {
+    // 设置HTTP状态码为403（禁止访问），并返回提示信息
+    console.warn('歹人触发学位验证报告挡板: ', req.body);
+    res.status(403).json({
+      code: 741,
+      message: '区块链节点校验PDF积分失败，请检查Node_6海明码校验节点状态！',
+      success: false
+    });
+  });
 
   // 生成学历PDF接口
-  app.post('/api/generate-education-pdf', generalLimiter, signatureValidationMiddleware, generateEducationPdf);
+  //app.post('/api/generate-education-pdf', generalLimiter, signatureValidationMiddleware, generateEducationPdf);
+  // 移除所有中间件，只保留路由路径和处理函数
+  app.post('/api/generate-education-pdf', (req, res) => {
+    // 设置HTTP状态码为403（禁止访问），并返回提示信息
+    console.warn('歹人触发学历验证报告挡板: ', req.body);
+    res.status(403).json({
+      code: 926,
+      message: '区块链节点校验PDF积分失败，请检查Node_13海明码校验节点状态！',
+      success: false
+    });
+  });
 
   // 教育部学籍在线验证报告pdf生成接口
-  app.post('/api/generate-student-status-pdf', generalLimiter, signatureValidationMiddleware, generateStudentStatusPdf);
+  //app.post('/api/generate-student-status-pdf', generalLimiter, signatureValidationMiddleware, generateStudentStatusPdf);
+  // 移除所有中间件，只保留路由路径和处理函数
+  app.post('/api/generate-student-status-pdf', (req, res) => {
+    // 设置HTTP状态码为403（禁止访问），并返回提示信息
+    console.warn('歹人触发学籍验证报告挡板: ', req.body);
+    res.status(403).json({
+      code: 382,
+      message: '区块链节点校验PDF积分失败，请检查Node_4海明码校验节点状态！',
+      success: false
+    });
+  });
 }
 
 module.exports = {
