@@ -1,3 +1,25 @@
+/**
+ * 专为家中服务器设计的数据库增量同步脚本
+ * 
+ * 增量同步SFTP文件到本地目录
+ * 
+ * 功能说明：
+ * 1. 连接远程SFTP服务器，获取指定目录下的所有文件和目录信息（包括修改时间）。
+ * 2. 获取本地目录下的所有文件和目录信息（包括修改时间）。
+ * 3. 对比远程和本地文件列表，执行以下操作：
+ *    - 如果远程文件/目录在本地不存在，下载/创建它。
+ *    - 如果远程文件存在且修改时间更新，重新下载它。
+ *    - 如果本地文件/目录在远程不存在，删除它。
+ * 4. 下载大文件时显示进度条和文件大小。
+ * 5. 错误处理：在连接、读取、写入过程中捕获并记录错误，确保程序稳定运行。
+ * 6. 最后断开SFTP连接，确保资源释放。
+ *
+ * 注意事项：
+ * - 请确保配置中的SFTP连接信息正确，并且本地目录具有适当的读写权限。
+ * - 该脚本适用于Node.js环境，需安装ssh2-sftp-client库（npm install ssh2-sftp-client）。
+ * - 运行前请备份重要数据，以防止误删除或覆盖。
+ */
+
 const Client = require('ssh2-sftp-client');
 const fs = require('fs');
 const path = require('path');
@@ -5,12 +27,12 @@ const { promisify } = require('util');
 
 // 配置信息
   const config = {
-    host: 'cheerout.cn',
+    host: 'cheerout.cn', // 远程服务器地址
     port: 2222,
-    username: 'root',
-    password: '991218aa',
-    remoteDir: '/home/databasesBackUp/database/mysql/crontab_backup/degree_management',
-    localDir: '/home/databasesBack'
+    username: 'root', // 登录服务器的用户名
+    password: '991218aa', // 登录服务器的密码
+    remoteDir: '/home/databasesBackUp/database/mysql/crontab_backup/degree_management', // 要下载的远程数据库备份目录路径
+    localDir: '/home/databasesBack' // 本地存储目录路径
   };
 
 // 路径拼接工具函数

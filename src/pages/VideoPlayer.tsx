@@ -44,30 +44,25 @@ const VideoPlayer = () => {
     },
     demo2: {
       src: "tt.mp4",
-      title: "在线验证报告生成",
+      title: "在线验证报告制作演示",
       description: "学籍、学历、学位在线验证报告生成功能以及网页版学信档案操作演示",
       instructions: [
         {
           number: "1",
-          text: "生成PDF之前务必注意您填写的信息要准确，证件照上传请保持1:1.33的标准证件照比例",
+          text: "建议使用电脑登录系统操作PDF报告的下载，部分手机浏览器对生成的报告可能只能观看无法下载",
           isWarning: false,
         },
         {
           number: "2",
-          text: "务必使用电脑登录系统操作PDF报告的下载，部分手机浏览器对生成的报告可能只能观看无法下载",
+          text: "每生成一份报告需消耗30个PDF积分，积分请在登录页点击“卡密购买”购买（永久版卡密自带30个积分赠送）",
           isWarning: false,
         },
         {
           number: "3",
-          text: "每生成一份报告需消耗30个PDF积分，永久版用户会赠送30个积分，若需额外PDF积分充值请单独购买",
+          text: "网页版学信网信息来源于您在主页设置的学籍学历学位以及考研信息卡片及其内容，请先设置好再登陆网页版查看",
           isWarning: false,
         },
-        {
-          number: "4",
-          text: "网页版建议使用电脑端访问，手机访问效果不佳，注意网页信息来源于您在主页设置的学籍学历学位以及考研信息卡片及其内容，请先设置好再登陆网页版查看",
-          isWarning: false,
-        },
-        { number: "5", text: "特别注意：仅限娱乐！", isWarning: true },
+        { number: "4", text: "特别注意：低调低调！！", isWarning: true },
       ],
     },
     demo3: {
@@ -122,15 +117,15 @@ const VideoPlayer = () => {
               variant={selectedVideo === "demo1" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo1")}
             >
-              系统基础操作
+              系统基础操作演示
             </Button>
 
-            {/* <Button
+             <Button
               variant={selectedVideo === "demo2" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo2")}
             >
-              在线验证报告生成
-            </Button> */}
+              在线验证报告制作演示
+            </Button>
 
             <Button
               variant={selectedVideo === "demo3" ? "default" : "outline"}
