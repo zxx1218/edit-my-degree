@@ -39,13 +39,13 @@ const VideoPlayer = () => {
           text: "每制作一份需消耗30个PDF积分，永久版用户会赠送30个积分，其余用户若需PDF积分充值请下单充值",
           isWarning: true,
         },
-        { number: "7", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实学信网上", isWarning: true },
+        { number: "7", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实模拟网上", isWarning: true },
       ],
     },
     demo2: {
       src: "tt.mp4",
       title: "在线验证报告制作演示",
-      description: "学籍、学历、学位在线验证报告生成功能以及网页版学信档案操作演示",
+      description: "学籍、学历、学位在线验证报告生成功能以及网页版模拟档案操作演示",
       instructions: [
         {
           number: "1",
@@ -59,7 +59,7 @@ const VideoPlayer = () => {
         },
         {
           number: "3",
-          text: "网页版学信网信息来源于您在主页设置的学籍学历学位以及考研信息卡片及其内容，请先设置好再登陆网页版查看",
+          text: "网页版模拟网信息来源于您在主页设置的学籍学历学位以及考研信息卡片及其内容，请先设置好再登陆网页版查看",
           isWarning: false,
         },
         { number: "4", text: "特别注意：低调低调！！", isWarning: true },

@@ -207,7 +207,7 @@ const VerificationReport = () => {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h3 className="text-lg font-bold text-white mb-1">登录网页版学历学籍信息页面</h3>
-                <p className="text-white/80 text-sm">跳转到网页版学信信息查询页面，建议您在主页设置好您的所有信息后使用电脑端访问</p>
+                <p className="text-white/80 text-sm">跳转到网页版模拟信息查询页面，建议您在主页设置好您的所有信息后使用电脑端访问</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ml-4">
                 <ArrowRight className="w-5 h-5 text-white" />

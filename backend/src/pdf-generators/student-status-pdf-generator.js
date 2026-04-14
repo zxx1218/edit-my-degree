@@ -372,7 +372,7 @@ const generateStudentStatusPdf = async (req, res) => {
       } else {
         // maintenance 模式：显示维护信息
         qrCodeConfig = {
-          content: "403 Forbidden 学信服务器正在维护中，请稍后再试", // 临时屏蔽二维码功能
+          content: "403 Forbidden 模拟服务器正在维护中，请稍后再试", // 临时屏蔽二维码功能
           x: 76.5,                           // 二维码 X 坐标
           y: 126,                            // 二维码 Y 坐标
           size: 68.5,                        // 二维码大小 (宽高)

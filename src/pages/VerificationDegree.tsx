@@ -64,7 +64,7 @@ const VerificationDegree = () => {
       <div className="bg-white border-b border-gray-200 py-4 px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/logo_img/verify_logo.png" alt="学信网" className="h-8 w-auto" />
+            <img src="/logo_img/verify_logo.png" alt="模拟网" className="h-8 w-auto" />
             <span className="text-gray-300 text-xl leading-relaxed">|</span>
             <span className="text-gray-600">在线验证</span>
           </div>
@@ -185,7 +185,7 @@ const VerificationDegree = () => {
       <footer className="bg-[rgb(40,40,40)] text-white py-3 px-4">
         <div className="text-center">
           <p className="text-sm mb-1 text-[rgb(149,149,149)]">主办单位：教育部学生服务与素质发展中心</p>
-          <p className="text-xs text-[rgb(149,149,149)]">Copyright © 2003-2026 学信网 All Rights Reserved</p>
+          <p className="text-xs text-[rgb(149,149,149)]">Copyright © 2003-2026 模拟网 All Rights Reserved</p>
         </div>
       </footer>
     </div>

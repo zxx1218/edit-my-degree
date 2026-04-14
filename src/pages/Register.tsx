@@ -124,7 +124,7 @@ const Register = () => {
             </Button>
             <CardTitle className="text-3xl font-bold">注册账号</CardTitle>
           </div>
-          <CardDescription>创建您的学信档案账号</CardDescription>
+          <CardDescription>创建您的模拟档案账号</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">

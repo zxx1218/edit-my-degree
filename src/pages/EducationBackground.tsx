@@ -113,7 +113,7 @@ const EducationBackground = () => {
         <div className="container mx-auto px-4 py-3 flex items-center gap-8">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-8 h-8" />
-            <span className="text-2xl font-semibold">学信档案</span>
+            <span className="text-2xl font-semibold">模拟档案</span>
           </div>
           <nav className="hidden md:flex gap-6">
             <button className="hover:text-accent transition-colors">首页</button>
@@ -737,11 +737,11 @@ const EducationBackground = () => {
       <footer className="bg-card border-t mt-12 py-6">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-2">
           <div className="flex items-center justify-center gap-4">
-            <button className="hover:text-primary">学信网</button>
+            <button className="hover:text-primary">模拟网</button>
             <span>|</span>
             <button className="hover:text-primary">帮助中心</button>
           </div>
-          <p>Copyright © 2003-2025 学信网 All Rights Reserved</p>
+          <p>Copyright © 2003-2025 模拟网 All Rights Reserved</p>
           <div className="flex items-center justify-center gap-4">
             <span>京ICP备19004913号-1</span>
             <span>京公网安备11010202007479号</span>
