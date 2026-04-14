@@ -31,6 +31,9 @@ const resetPdfLimitModule = require('../reset-pdf-limit');
 const getHourlyLoginStatsModule = require('../get-hourly-login-stats');
 const getLoginStatsRangeModule = require('../get-login-stats-range');
 const queryUserLoginsPdfModule = require('../query-user-logins-pdf');
+const getUserActivityHeatmapModule = require('../get-user-activity-heatmap');
+const getTopActiveUsersModule = require('../get-top-active-users');
+const getAnomalyLoginDetectionModule = require('../get-anomaly-login-detection');
 
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
@@ -309,6 +312,15 @@ function setupRoutes(app, db, JWT_SECRET) {
   app.post('/api/get-login-stats-range', generalLimiter, signatureValidationMiddleware, getLoginStatsRangeModule.initialize(db));
   // 查询用户登录次数和 PDF 积分接口 - 用于用户查询自己的登录次数和 PDF 积分
   app.post('/api/query-user-logins-pdf', generalLimiter, queryUserLoginsPdfModule.initialize(db));
+
+  // 获取用户活跃度热力图接口 - 用于展示7天×24小时的登录密度分布
+  app.post('/api/get-user-activity-heatmap', generalLimiter, signatureValidationMiddleware, getUserActivityHeatmapModule.initialize(db));
+  
+  // 获取Top活跃用户排行榜接口 - 用于显示登录次数最多的用户
+  app.post('/api/get-top-active-users', generalLimiter, signatureValidationMiddleware, getTopActiveUsersModule.initialize(db));
+  
+  // 获取异常登录检测接口 - 用于检测频繁登录和异常时间段登录
+  app.post('/api/get-anomaly-login-detection', generalLimiter, signatureValidationMiddleware, getAnomalyLoginDetectionModule.initialize(db));
 
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));

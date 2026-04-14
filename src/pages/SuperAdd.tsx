@@ -28,6 +28,9 @@ import {
   Download,
   BarChart3,
   CalendarIcon,
+  AlertTriangle,
+  Trophy,
+  Flame,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -142,6 +145,68 @@ const SuperAdd = () => {
   const [isLoadingRangeStats, setIsLoadingRangeStats] = useState(false);
   const [statsViewMode, setStatsViewMode] = useState<"day" | "week" | "month">("day");
 
+  // 用户活跃度热力图
+  interface HeatmapDataItem {
+    day: string;
+    dayIndex: number;
+    hour: number;
+    hourLabel: string;
+    loginCount: number;
+    uniqueUsers: number;
+  }
+  const [heatmapData, setHeatmapData] = useState<HeatmapDataItem[]>([]);
+  const [isLoadingHeatmap, setIsLoadingHeatmap] = useState(false);
+
+  // Top活跃用户
+  interface TopActiveUser {
+    id: string;
+    username: string;
+    totalLogins: number;
+    activeDays: number;
+    lastLogin: string;
+    firstLoginInPeriod: string;
+    avgLoginsPerDay: string;
+  }
+  const [topActiveUsers, setTopActiveUsers] = useState<TopActiveUser[]>([]);
+  const [isLoadingTopUsers, setIsLoadingTopUsers] = useState(false);
+  const [topUsersPeriod, setTopUsersPeriod] = useState<number>(30);
+
+  // 异常登录检测
+  interface AnomalyDetection {
+    anomalies: {
+      frequentLogins: Array<{
+        username: string;
+        date: string;
+        hour: string;
+        loginCount: number;
+      }>;
+      abnormalTimeLogins: Array<{
+        username: string;
+        loginTime: string;
+        hour: string;
+        date: string;
+      }>;
+      dailyAnomalies: Array<{
+        username: string;
+        date: string;
+        dailyLogins: number;
+      }>;
+    };
+    summary: {
+      totalFrequentLoginUsers: number;
+      totalAbnormalTimeLogins: number;
+      totalDailyAnomalyUsers: number;
+      period: {
+        days: number;
+        startDate: string;
+        endDate: string;
+      };
+    };
+  }
+  const [anomalyDetection, setAnomalyDetection] = useState<AnomalyDetection | null>(null);
+  const [isLoadingAnomaly, setIsLoadingAnomaly] = useState(false);
+  const [anomalyPeriod, setAnomalyPeriod] = useState<number>(7);
+
   const { toast } = useToast();
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
@@ -248,6 +313,61 @@ const SuperAdd = () => {
     }
   };
 
+  // 获取用户活跃度热力图数据
+  const fetchHeatmapData = async () => {
+    if (!token) return;
+    
+    setIsLoadingHeatmap(true);
+    try {
+      const data = await adminApi.getUserActivityHeatmap(token);
+      if (data.success) {
+        setHeatmapData(data.heatmap || []);
+      }
+    } catch (error) {
+      console.error("获取用户活跃度热力图时出错:", error);
+    } finally {
+      setIsLoadingHeatmap(false);
+    }
+  };
+
+  // 获取Top活跃用户
+  const fetchTopActiveUsers = async (period?: number) => {
+    if (!token) return;
+    
+    setIsLoadingTopUsers(true);
+    try {
+      const days = period || topUsersPeriod;
+      const data = await adminApi.getTopActiveUsers(token, { limit: 20, days });
+      if (data.success) {
+        setTopActiveUsers(data.users || []);
+        setTopUsersPeriod(days);
+      }
+    } catch (error) {
+      console.error("获取Top活跃用户时出错:", error);
+    } finally {
+      setIsLoadingTopUsers(false);
+    }
+  };
+
+  // 获取异常登录检测数据
+  const fetchAnomalyDetection = async (period?: number) => {
+    if (!token) return;
+    
+    setIsLoadingAnomaly(true);
+    try {
+      const days = period || anomalyPeriod;
+      const data = await adminApi.getAnomalyLoginDetection(token, { days });
+      if (data.success) {
+        setAnomalyDetection(data);
+        setAnomalyPeriod(days);
+      }
+    } catch (error) {
+      console.error("获取异常登录检测数据时出错:", error);
+    } finally {
+      setIsLoadingAnomaly(false);
+    }
+  };
+
   // 当选择日期变化时重新获取数据
   useEffect(() => {
     if (isVerified && statsViewMode === "day") {
@@ -287,13 +407,16 @@ const SuperAdd = () => {
     setCardCurrentPage(1);
   }, [cardSearchQuery]);
 
-  // 登录验证成功后获取数据
+    // 登录验证成功后获取数据
   useEffect(() => {
     if (isVerified) {
       fetchTodayLoginCount();
       fetchHourlyStats();
       fetchUsers();
       fetchCards();
+      fetchHeatmapData();
+      fetchTopActiveUsers();
+      fetchAnomalyDetection();
     }
   }, [isVerified]);
 
@@ -1678,6 +1801,434 @@ const SuperAdd = () => {
                 刷新数据
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* 用户活跃度热力图 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                  用户活跃度热力图
+                </CardTitle>
+                <CardDescription>展示过去7天各时段的登录密度分布</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchHeatmapData}
+                disabled={isLoadingHeatmap}
+              >
+                {isLoadingHeatmap ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                )}
+                刷新
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingHeatmap ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : heatmapData.length > 0 ? (
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[800px]">
+                  {/* 热力图网格 */}
+                  <div className="grid grid-cols-[80px_repeat(24,1fr)] gap-1">
+                    {/* 表头 - 小时 */}
+                    <div className="text-xs font-medium text-muted-foreground"></div>
+                    {Array.from({ length: 24 }, (_, hour) => (
+                      <div key={hour} className="text-xs text-center text-muted-foreground py-2">
+                        {hour.toString().padStart(2, '0')}
+                      </div>
+                    ))}
+                    
+                    {/* 数据行 - 每天 */}
+                    {['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map((day, dayIndex) => (
+                      <div key={day} className="contents">
+                        <div className="text-xs font-medium text-muted-foreground flex items-center justify-end pr-2">
+                          {day}
+                        </div>
+                        {Array.from({ length: 24 }, (_, hour) => {
+                          const dataPoint = heatmapData.find(
+                            d => d.dayIndex === dayIndex && d.hour === hour
+                          );
+                          const value = dataPoint?.loginCount || 0;
+                          
+                          // 根据登录次数计算颜色强度
+                          let bgColor = 'bg-gray-100 dark:bg-gray-800';
+                          if (value > 0) bgColor = 'bg-green-200 dark:bg-green-900/30';
+                          if (value > 2) bgColor = 'bg-green-300 dark:bg-green-800/50';
+                          if (value > 5) bgColor = 'bg-green-400 dark:bg-green-700/60';
+                          if (value > 10) bgColor = 'bg-green-500 dark:bg-green-600/70';
+                          if (value > 20) bgColor = 'bg-green-600 dark:bg-green-500/80';
+                          
+                          return (
+                            <div
+                              key={`${dayIndex}-${hour}`}
+                              className={`aspect-square rounded ${bgColor} hover:ring-2 hover:ring-primary transition-all cursor-pointer relative group`}
+                              title={`${day} ${hour.toString().padStart(2, '0')}:00 - 登录${value}次`}
+                            >
+                              {value > 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {value}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* 图例 */}
+                  <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t">
+                    <span className="text-xs text-muted-foreground">登录密度:</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded"></div>
+                      <span className="text-xs">0</span>
+                      <div className="w-4 h-4 bg-green-200 dark:bg-green-900/30 rounded"></div>
+                      <span className="text-xs">1-2</span>
+                      <div className="w-4 h-4 bg-green-400 dark:bg-green-700/60 rounded"></div>
+                      <span className="text-xs">5-10</span>
+                      <div className="w-4 h-4 bg-green-600 dark:bg-green-500/80 rounded"></div>
+                      <span className="text-xs">20+</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无热力图数据
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top活跃用户排行榜 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Top活跃用户排行榜
+                </CardTitle>
+                <CardDescription>显示指定时间段内登录次数最多的用户</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={topUsersPeriod.toString()}
+                  onValueChange={(value) => fetchTopActiveUsers(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="选择时间段" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">近7天</SelectItem>
+                    <SelectItem value="30">近30天</SelectItem>
+                    <SelectItem value="90">近90天</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchTopActiveUsers(topUsersPeriod)}
+                  disabled={isLoadingTopUsers}
+                >
+                  {isLoadingTopUsers ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                  )}
+                  刷新
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingTopUsers ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : topActiveUsers.length > 0 ? (
+              <div className="space-y-3">
+                {topActiveUsers.map((user, index) => {
+                  // 根据排名设置不同的徽章颜色
+                  let badgeColor = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+                  let icon = null;
+                  if (index === 0) {
+                    badgeColor = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-2 border-yellow-300";
+                    icon = "🥇";
+                  } else if (index === 1) {
+                    badgeColor = "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border-2 border-gray-300";
+                    icon = "🥈";
+                  } else if (index === 2) {
+                    badgeColor = "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-2 border-orange-300";
+                    icon = "🥉";
+                  }
+                  
+                  return (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-4 p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg border-2 hover:shadow-md transition-all"
+                    >
+                      {/* 排名 */}
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${badgeColor}`}>
+                        {icon || `#${index + 1}`}
+                      </div>
+                      
+                      {/* 用户信息 */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-lg truncate">{user.username}</div>
+                        <div className="text-sm text-muted-foreground">
+                          活跃天数: {user.activeDays} 天 · 日均登录: {user.avgLoginsPerDay} 次
+                        </div>
+                      </div>
+                      
+                      {/* 登录统计 */}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-2xl font-bold text-primary">{user.totalLogins}</div>
+                        <div className="text-xs text-muted-foreground">总登录次数</div>
+                      </div>
+                      
+                      {/* 柱状图 */}
+                      <div className="flex-shrink-0 w-32 hidden md:block">
+                        <div className="h-8 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all"
+                            style={{
+                              width: `${Math.min(100, (user.totalLogins / (topActiveUsers[0]?.totalLogins || 1)) * 100)}%`
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无活跃用户数据
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 异常登录检测 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  异常登录检测
+                </CardTitle>
+                <CardDescription>检测频繁登录、异常时间段登录等可疑行为</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={anomalyPeriod.toString()}
+                  onValueChange={(value) => fetchAnomalyDetection(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="选择时间段" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">近7天</SelectItem>
+                    <SelectItem value="30">近30天</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchAnomalyDetection(anomalyPeriod)}
+                  disabled={isLoadingAnomaly}
+                >
+                  {isLoadingAnomaly ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                  )}
+                  刷新
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingAnomaly ? (
+              <div className="flex items-center justify-center h-[200px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : anomalyDetection ? (
+              <div className="space-y-6">
+                {/* 异常统计摘要 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border-2 border-red-200 dark:border-red-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      <span className="font-semibold text-red-900 dark:text-red-100">频繁登录用户</span>
+                    </div>
+                    <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+                      {anomalyDetection.summary.totalFrequentLoginUsers}
+                    </div>
+                    <div className="text-xs text-red-700 dark:text-red-300 mt-1">
+                      1小时内登录超过5次
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border-2 border-orange-200 dark:border-orange-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      <span className="font-semibold text-orange-900 dark:text-orange-100">凌晨登录次数</span>
+                    </div>
+                    <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                      {anomalyDetection.summary.totalAbnormalTimeLogins}
+                    </div>
+                    <div className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                      凌晨0-5点登录
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                      <span className="font-semibold text-yellow-900 dark:text-yellow-100">单日异常用户</span>
+                    </div>
+                    <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                      {anomalyDetection.summary.totalDailyAnomalyUsers}
+                    </div>
+                    <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                      单日登录超过20次
+                    </div>
+                  </div>
+                </div>
+
+                {/* 详细异常列表 */}
+                <Tabs defaultValue="frequent" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 h-10">
+                    <TabsTrigger value="frequent" className="text-sm">
+                      频繁登录
+                    </TabsTrigger>
+                    <TabsTrigger value="abnormal" className="text-sm">
+                      凌晨登录
+                    </TabsTrigger>
+                    <TabsTrigger value="daily" className="text-sm">
+                      单日异常
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="frequent" className="mt-4">
+                    {anomalyDetection.anomalies.frequentLogins.length > 0 ? (
+                      <div className="border-2 rounded-lg max-h-80 overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">用户名</th>
+                              <th className="px-4 py-3 text-left font-medium">日期</th>
+                              <th className="px-4 py-3 text-left font-medium">时段</th>
+                              <th className="px-4 py-3 text-right font-medium">登录次数</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalyDetection.anomalies.frequentLogins.map((record, idx) => (
+                              <tr key={idx} className="border-t hover:bg-muted/50">
+                                <td className="px-4 py-3 font-medium">{record.username}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.date}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.hour}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <Badge variant="destructive">{record.loginCount} 次</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        未检测到频繁登录行为
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="abnormal" className="mt-4">
+                    {anomalyDetection.anomalies.abnormalTimeLogins.length > 0 ? (
+                      <div className="border-2 rounded-lg max-h-80 overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">用户名</th>
+                              <th className="px-4 py-3 text-left font-medium">日期</th>
+                              <th className="px-4 py-3 text-left font-medium">时间</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalyDetection.anomalies.abnormalTimeLogins.slice(0, 20).map((record, idx) => (
+                              <tr key={idx} className="border-t hover:bg-muted/50">
+                                <td className="px-4 py-3 font-medium">{record.username}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.date}</td>
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  <Badge variant="secondary">{record.hour}</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {anomalyDetection.anomalies.abnormalTimeLogins.length > 20 && (
+                          <div className="text-center py-2 text-xs text-muted-foreground border-t">
+                            显示前20条，共 {anomalyDetection.anomalies.abnormalTimeLogins.length} 条记录
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        未检测到凌晨登录行为
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="daily" className="mt-4">
+                    {anomalyDetection.anomalies.dailyAnomalies.length > 0 ? (
+                      <div className="border-2 rounded-lg max-h-80 overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">用户名</th>
+                              <th className="px-4 py-3 text-left font-medium">日期</th>
+                              <th className="px-4 py-3 text-right font-medium">当日登录次数</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalyDetection.anomalies.dailyAnomalies.map((record, idx) => (
+                              <tr key={idx} className="border-t hover:bg-muted/50">
+                                <td className="px-4 py-3 font-medium">{record.username}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.date}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <Badge variant="destructive">{record.dailyLogins} 次</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        未检测到单日登录异常
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无异常检测数据
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

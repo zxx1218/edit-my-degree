@@ -215,3 +215,51 @@ export const getLoginStatsRange = async (token: string, body: any) => {
   
   return await response.json();
 };
+
+// 获取用户活跃度热力图
+export const getUserActivityHeatmap = async (token: string) => {
+  const url = '/api/get-user-activity-heatmap';
+  const options = createSignedRequestOptions('POST', url, {});
+  
+  const response = await fetch(`${API_BASE_URL}/get-user-activity-heatmap`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 获取Top活跃用户排行榜
+export const getTopActiveUsers = async (token: string, body: any) => {
+  const url = '/api/get-top-active-users';
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetch(`${API_BASE_URL}/get-top-active-users`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 获取异常登录检测数据
+export const getAnomalyLoginDetection = async (token: string, body: any) => {
+  const url = '/api/get-anomaly-login-detection';
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetch(`${API_BASE_URL}/get-anomaly-login-detection`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
