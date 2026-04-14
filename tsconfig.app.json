@@ -21,6 +21,9 @@
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
+    /* Deprecation handling */
+    "ignoreDeprecations": "6.0",
+    
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
