@@ -42,29 +42,29 @@ const VideoPlayer = () => {
         { number: "7", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实模拟网上", isWarning: true },
       ],
     },
-    demo2: {
-      src: "tt.mp4",
-      title: "在线验证报告制作演示",
-      description: "学籍、学历、学位在线验证报告生成功能以及网页版模拟档案操作演示",
-      instructions: [
-        {
-          number: "1",
-          text: "建议使用电脑登录系统操作PDF报告的下载，部分手机浏览器对生成的报告可能只能观看无法下载",
-          isWarning: false,
-        },
-        {
-          number: "2",
-          text: "每生成一份报告需消耗30个PDF积分，积分请在登录页点击“卡密购买”购买（永久版卡密自带30个积分赠送）",
-          isWarning: false,
-        },
-        {
-          number: "3",
-          text: "网页版模拟网信息来源于您在主页设置的学籍学历学位以及考研信息卡片及其内容，请先设置好再登陆网页版查看",
-          isWarning: false,
-        },
-        { number: "4", text: "特别注意：低调低调！！", isWarning: true },
-      ],
-    },
+    // demo2: {
+    //   src: "tt.mp4",
+    //   title: "在线验证报告制作演示",
+    //   description: "学籍、学历、学位在线验证报告生成功能以及网页版模拟档案操作演示",
+    //   instructions: [
+    //     {
+    //       number: "1",
+    //       text: "建议使用电脑登录系统操作PDF报告的下载，部分手机浏览器对生成的报告可能只能观看无法下载",
+    //       isWarning: false,
+    //     },
+    //     {
+    //       number: "2",
+    //       text: "每生成一份报告需消耗30个PDF积分，积分请在登录页点击“卡密购买”购买（永久版卡密自带30个积分赠送）",
+    //       isWarning: false,
+    //     },
+    //     {
+    //       number: "3",
+    //       text: "网页版模拟网信息来源于您在主页设置的学籍学历学位以及考研信息卡片及其内容，请先设置好再登陆网页版查看",
+    //       isWarning: false,
+    //     },
+    //     { number: "4", text: "特别注意：低调低调！！", isWarning: true },
+    //   ],
+    // },
     demo3: {
       src: "ttt.mp4",
       title: "账号注册与充值示范",
