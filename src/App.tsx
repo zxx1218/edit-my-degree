@@ -18,6 +18,7 @@ import ExamDetail from "./pages/ExamDetail";
 import SuperAdd from "./pages/SuperAdd";
 import EducationBackground from "./pages/EducationBackground";
 import VerificationReport from "./pages/VerificationReport";
+import MaintenanceNotice from "./pages/MaintenanceNotice";
 import Verification from "./pages/VerificationEducation";
 import VerificationDegree from "./pages/VerificationDegree";
 import VerificationStudentStatus from "./pages/VerificationStudentStatus";
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/superadd" element={<SuperAdd />} />
             <Route path="/educationBackground" element={<EducationBackground />} />
             <Route path="/verification-report" element={<ProtectedRoute><VerificationReport /></ProtectedRoute>} />
+            <Route path="/maintenance-notice" element={<ProtectedRoute><MaintenanceNotice /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

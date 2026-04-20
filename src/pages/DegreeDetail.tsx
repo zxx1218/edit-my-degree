@@ -23,7 +23,7 @@ interface DegreeData {
 
 // Long press hook
 const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const start = useCallback(() => {
     timerRef.current = setTimeout(() => {
@@ -57,7 +57,7 @@ interface LongPressFieldProps {
 }
 
 const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const start = useCallback(() => {
     timerRef.current = setTimeout(() => {
@@ -359,7 +359,10 @@ const DegreeDetail = () => {
         {/* Button */}
         <Button
           className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
-          onClick={() => navigate("/verification-report")}
+          onClick={() => {
+            const reportIsOpen = import.meta.env.VITE_REPORT_IS_OPEN !== 'false';
+            navigate(reportIsOpen ? "/verification-report" : "/maintenance-notice");
+          }}
         >
           查看验证报告
         </Button>
