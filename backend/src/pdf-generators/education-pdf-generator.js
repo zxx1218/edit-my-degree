@@ -435,6 +435,17 @@ const generateEducationPdf = async (req, res) => {
     // 保存 PDF 到后端目录
     try {
       const reportDir = path.join(__dirname, '../report_records');
+      
+      // 检查目录是否存在，不存在则创建
+      try {
+        await fs.access(reportDir);
+        logger.info(`✅ report_records 目录已存在`);
+      } catch (dirError) {
+        logger.info(`📁 report_records 目录不存在，正在创建...`);
+        await fs.mkdir(reportDir, { recursive: true });
+        logger.info(`✅ report_records 目录创建成功`);
+      }
+      
       const filePath = path.join(reportDir, fileName);
       await fs.writeFile(filePath, pdfBytes);
       logger.info(`✅ 学位在线验证报告 PDF 文件已在后端保存：${filePath}`);

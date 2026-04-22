@@ -583,7 +583,7 @@ const Login = () => {
           </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>当前版本：V3.7.3 • 更新时间：2026.04</div>
+            <div>• 更新通知与售后交流QQ群：{import.meta.env.VITE_QQ_GROUP} •</div>
           </div>
         </CardContent>
       </Card>
