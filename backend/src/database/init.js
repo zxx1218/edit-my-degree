@@ -170,6 +170,13 @@ async function createTables(db) {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS messages (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
     `
   ];
 

@@ -34,6 +34,8 @@ const queryUserLoginsPdfModule = require('../query-user-logins-pdf');
 const getUserActivityHeatmapModule = require('../get-user-activity-heatmap');
 const getTopActiveUsersModule = require('../get-top-active-users');
 const getAnomalyLoginDetectionModule = require('../get-anomaly-login-detection');
+const getMessagesModule = require('../get-messages');
+const addMessageModule = require('../add-message');
 
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
@@ -321,6 +323,12 @@ function setupRoutes(app, db, JWT_SECRET) {
   
   // 获取异常登录检测接口 - 用于检测频繁登录和异常时间段登录
   app.post('/api/get-anomaly-login-detection', generalLimiter, signatureValidationMiddleware, getAnomalyLoginDetectionModule.initialize(db));
+
+  // 获取留言列表接口 - 用于获取所有用户的留言（分页）
+  app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));
+  
+  // 添加留言接口 - 用于用户提交新留言
+  app.post('/api/add-message', generalLimiter, addMessageModule.initialize(db));
 
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));

@@ -188,3 +188,45 @@ export const queryUserLoginsPdf = async (username: string, password: string): Pr
   
   return data;
 };
+
+// 获取留言列表 API
+export interface Message {
+  id: string;
+  content: string;
+  created_at: string;
+}
+
+export interface GetMessagesResponse {
+  success: boolean;
+  messages: Message[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  error?: string;
+}
+
+export const getMessages = async (page: number = 1, pageSize: number = 10): Promise<GetMessagesResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/get-messages', { page, pageSize });
+  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+
+  const data = await response.json();
+  
+  return data;
+};
+
+// 添加留言 API
+export interface AddMessageResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export const addMessage = async (content: string): Promise<AddMessageResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/add-message', { content });
+  const response = await fetch(`${API_BASE_URL}/add-message`, options);
+
+  const data = await response.json();
+  
+  return data;
+};
