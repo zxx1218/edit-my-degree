@@ -37,7 +37,7 @@ function initialize(db) {
 
       if (recentRegistrations.length > 2) {
         // 记录安全日志
-       console.warn('检测到同一 IP 频繁注册', {
+       console.warn('检测到同一  频繁注册', {
           ip: ipAddress,
           userAgent,
           existingUsernames: recentRegistrations.map(r => r.username),
