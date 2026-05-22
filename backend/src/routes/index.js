@@ -63,7 +63,7 @@ const ipBlacklistMiddleware = async (req, res, next) => {
     
     return res.status(403).json({
       success: false,
-      error: '傻逼玩意！AI 风控检测到行为异常！阿里云安全服务将封禁机器码！'
+      error: '阿里云已将本机机器码拉黑，访问被拒绝！'
     });
   }
   
