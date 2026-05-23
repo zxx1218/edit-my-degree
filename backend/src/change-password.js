@@ -28,9 +28,18 @@ function initialize(db) {
       );
 
       if (users.length === 0) {
-        // 记录密码更改失败日志
-        if (users.length > 0) {
-          logPasswordChange(users[0].id, username, ipAddress, userAgent, 'failed');
+        // 先尝试查找用户是否存在
+        const [userCheck] = await db.execute(
+          'SELECT id FROM users WHERE username = ?',
+          [username]
+        );
+        
+        if (userCheck.length > 0) {
+          // 用户存在但密码错误
+          logPasswordChange(userCheck[0].id, username, ipAddress, userAgent, 'failed', { reason: '原密码错误' });
+        } else {
+          // 用户不存在
+          logPasswordChange(null, username, ipAddress, userAgent, 'failed', { reason: '用户不存在' });
         }
         
         return res.status(401).json({
@@ -53,7 +62,11 @@ function initialize(db) {
         message: '密码修改成功'
       });
     } catch (err) {
-      console.error('Error changing password:', err);
+      console.error('[安全] 密码修改异常:', err.message, { 
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '服务器内部错误'

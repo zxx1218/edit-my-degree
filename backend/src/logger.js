@@ -6,9 +6,11 @@ const util = require('util');
 // 创建日志目录
 const logDir = path.join(__dirname, '..', 'logs');
 
-// 定义日志格式
+// 定义日志格式 - 增强版，支持彩色输出和更详细的信息
 const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
   winston.format.printf(({ timestamp, level, message, ...metadata }) => {
     // 如果有额外的元数据，将其格式化为 JSON 字符串
     let fullMessage = message;
@@ -20,19 +22,45 @@ const logFormat = winston.format.combine(
         fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: false })}`;
       }
     }
-    return `${timestamp} [${level.toUpperCase()}]: ${fullMessage}`;
+    return `${timestamp} [${level.toUpperCase().padEnd(7)}]: ${fullMessage}`;
+  })
+);
+
+// 控制台输出格式（带颜色）
+const consoleFormat = winston.format.combine(
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  winston.format.colorize(),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
+  winston.format.printf(({ timestamp, level, message, ...metadata }) => {
+    let fullMessage = message;
+    if (Object.keys(metadata).length > 0 && process.env.NODE_ENV !== 'production') {
+      try {
+        const metadataStr = JSON.stringify(metadata, null, 2);
+        fullMessage = `${message}\n${metadataStr}`;
+      } catch (e) {
+        fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: true })}`;
+      }
+    }
+    return `${timestamp} [${level}]: ${fullMessage}`;
   })
 );
 
 // 创建传输器
 const transports = [
+  // 控制台输出
+  new winston.transports.Console({
+    level: 'info',
+    format: consoleFormat,
+    silent: false
+  }),
   // info级别及以上的普通日志 - .log 文件
   new DailyRotateFile({
     level: 'info',
     filename: path.join(logDir, 'application-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
-    maxFiles: '3d', // 保留3天
+    maxFiles: '7d', // 保留7天
     format: logFormat,
     silent: false
   }),
@@ -42,7 +70,7 @@ const transports = [
     filename: path.join(logDir, 'application-%DATE%.warn'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
-    maxFiles: '3d', // 保留3天
+    maxFiles: '7d', // 保留7天
     format: logFormat,
     silent: false
   }),
@@ -52,7 +80,7 @@ const transports = [
     filename: path.join(logDir, 'application-%DATE%.error'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
-    maxFiles: '3d', // 保留3天
+    maxFiles: '14d', // 保留14天
     format: logFormat,
     silent: false
   })
@@ -60,7 +88,7 @@ const transports = [
 
 // 创建logger实例
 const logger = winston.createLogger({
-  level: 'info',
+  level: process.env.LOG_LEVEL || 'info',
   transports
 });
 
@@ -74,7 +102,7 @@ function formatArgs(args) {
   }).join(' ');
 }
 
-// 重写console方法，使其同时输出到日志文件
+// 重写console方法，使其同时输出到日志文件和控制台
 const originalLog = console.log;
 const originalInfo = console.info;
 const originalWarn = console.warn;
@@ -82,7 +110,7 @@ const originalError = console.error;
 
 console.log = (...args) => {
   logger.info(formatArgs(args));
-  originalLog.apply(console, args);
+  // originalLog.apply(console, args);
 };
 
 console.info = (...args) => {

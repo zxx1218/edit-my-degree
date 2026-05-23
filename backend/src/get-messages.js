@@ -2,6 +2,8 @@ const { v4: uuidv4 } = require('uuid');
 
 function initialize(db) {
   return async (req, res) => {
+    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    
     try {
       const { page = 1, pageSize = 10 } = req.body;
       
@@ -23,6 +25,8 @@ function initialize(db) {
         `SELECT id, content, created_at FROM messages ORDER BY created_at DESC LIMIT ${pageSizeNum} OFFSET ${offset}`
       );
       
+      console.info(`[留言板] 获取留言列表 - 页码: ${pageNum}, 每页: ${pageSizeNum}, 总数: ${total}, IP: ${ipAddress}`);
+      
       res.json({
         success: true,
         messages: messages.map(msg => ({
@@ -36,7 +40,10 @@ function initialize(db) {
         totalPages: Math.ceil(total / pageSizeNum)
       });
     } catch (error) {
-      console.error('获取留言列表失败:', error);
+      console.error('[留言板] 获取留言列表异常:', error.message, { 
+        ip: ipAddress,
+        stack: error.stack 
+      });
       res.status(500).json({
         success: false,
         error: '获取留言列表失败'

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
-const { logLogin } = require('./operation-logger');
+const { logLogin, logAdminOperation } = require('./operation-logger');
 const dbManager = require('./db-utils');
+const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
 
 /**
  * 初始化认证模块
@@ -22,6 +23,19 @@ function initialize(pool, jwtSecret) {
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {
+      // 检查IP是否在黑名单中
+      const blacklisted = await isIpBlacklisted(ipAddress);
+      if (blacklisted) {
+        logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
+        return res.status(403).json({ 
+          error: '访问被拒绝',
+          message: '由于异常活动，您的IP已被暂时限制访问。请稍后再试或联系管理员。'
+        });
+      }
+
+      // 记录并检查IP请求频率
+      await recordAndCheckIp(ipAddress);
+      
       const { username, password } = req.body;
       
       // 使用连接池执行查询
@@ -32,7 +46,7 @@ function initialize(pool, jwtSecret) {
       
       if (rows.length === 0) {
         // 记录登录失败日志
-        logLogin(null, username, ipAddress, userAgent, 'failed');
+        logLogin(null, username, ipAddress, userAgent, 'failed', { reason: '用户不存在' });
         
         return res.status(401).json({ 
           error: '用户名或密码错误',
@@ -47,7 +61,7 @@ function initialize(pool, jwtSecret) {
       
       if (!isPasswordValid) {
         // 记录登录失败日志
-        logLogin(user.id, username, ipAddress, userAgent, 'failed');
+        logLogin(user.id, username, ipAddress, userAgent, 'failed', { reason: '密码错误' });
         
         return res.status(401).json({ 
           error: '用户名或密码错误',
@@ -58,7 +72,7 @@ function initialize(pool, jwtSecret) {
       // 检查登录次数
       if (user.remaining_logins <= 0) {
         // 记录登录失败日志
-        logLogin(user.id, username, ipAddress, userAgent, 'failed');
+        logLogin(user.id, username, ipAddress, userAgent, 'failed', { reason: '登录次数不足', remaining_logins: 0 });
         
         return res.status(403).json({ 
           error: '登录次数不足',
@@ -73,7 +87,10 @@ function initialize(pool, jwtSecret) {
       );
       
       // 记录登录成功日志
-      logLogin(user.id, username, ipAddress, userAgent, 'success');
+      logLogin(user.id, username, ipAddress, userAgent, 'success', { 
+        remaining_logins_before: user.remaining_logins,
+        remaining_logins_after: user.remaining_logins - 1
+      });
       
       // 记录登录日志到login_logs表
       await dbManager.execute(
@@ -98,7 +115,11 @@ function initialize(pool, jwtSecret) {
         token
       });
     } catch (err) {
-      console.error('登录错误:', err);
+      console.error('[认证] 登录异常:', err.message, { 
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       // 如果是连接相关错误，尝试重新连接
       if (err.message.includes('connection is in closed state')) {
         try {
@@ -108,7 +129,7 @@ function initialize(pool, jwtSecret) {
             error: '数据库连接已恢复，请重新尝试'
           });
         } catch (reconnectErr) {
-          console.error('数据库重新连接失败:', reconnectErr);
+          console.error('[认证] 数据库重新连接失败:', reconnectErr.message);
         }
       }
       
@@ -140,10 +161,8 @@ function initialize(pool, jwtSecret) {
       );
       
       if (rows.length === 0) {
-        console.warn('管理员登录失败: 用户不存在', {
-          username,
-          ip: ipAddress,
-          userAgent
+        logAdminOperation(null, username, '管理员登录', ipAddress, userAgent, 'failed', { 
+          error: '用户不存在' 
         });
         
         return res.status(401).json({
@@ -158,10 +177,8 @@ function initialize(pool, jwtSecret) {
       const isPasswordValid = password === admin.password; // 简化处理，实际应该使用 bcrypt
       
       if (!isPasswordValid) {
-        console.warn('管理员登录失败: 密码错误', {
-          username,
-          ip: ipAddress,
-          userAgent
+        logAdminOperation(admin.id, username, '管理员登录', ipAddress, userAgent, 'failed', { 
+          error: '密码错误' 
         });
         
         return res.status(401).json({
@@ -178,11 +195,7 @@ function initialize(pool, jwtSecret) {
       );
       
       // 记录管理员登录日志
-      console.info('管理员登录成功', {
-        username,
-        ip: ipAddress,
-        userAgent
-      });
+      logAdminOperation(admin.id, username, '管理员登录', ipAddress, userAgent, 'success');
       
       res.json({
         success: true,
@@ -193,7 +206,11 @@ function initialize(pool, jwtSecret) {
         token
       });
     } catch (err) {
-      console.error('管理员登录错误:', err);
+      console.error('[认证] 管理员登录异常:', err.message, { 
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       // 如果是连接相关错误，尝试重新连接
       if (err.message.includes('connection is in closed state')) {
         try {
@@ -203,7 +220,7 @@ function initialize(pool, jwtSecret) {
             error: '数据库连接已恢复，请重新尝试'
           });
         } catch (reconnectErr) {
-          console.error('数据库重新连接失败:', reconnectErr);
+          console.error('[认证] 数据库重新连接失败:', reconnectErr.message);
         }
       }
       

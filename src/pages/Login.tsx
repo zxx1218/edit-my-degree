@@ -527,8 +527,20 @@ const Login = () => {
                 </TabsContent>
               </Tabs>
               
-              {/* 查询次数入口 */}
-              <div className="mt-0 pt-0 border-border">
+              {/* 查询次数和购买卡密入口 */}
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      setIsRechargeOpen(false);
+                      navigate("/purchase");
+                    }}
+                    className="text-green-600 hover:text-green-700 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm font-medium"
+                  >
+                    <span>💳</span>
+                    <span>卡密购买</span>
+                  </button>
+                </div>
                 <div className="text-center">
                   <button
                     onClick={() => {
@@ -576,8 +588,8 @@ const Login = () => {
             <AlertDescription className="ml-2 text-sm space-y-2">
               <div className="font-semibold text-foreground">重要提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 所有修改都请 长按！长按！长按！</div>
-                <div>• 第一次使用建议电脑登录填写后再使用手机查看</div>
+                <div>• 长按任意需修改的位置即可触发更改</div>
+                <div>• 第一次使用建议电脑登录填写后再使用手机</div>
               </div>
             </AlertDescription>
           </Alert> 

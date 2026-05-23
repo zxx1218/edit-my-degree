@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { logOperation } = require('./operation-logger');
+const { logRegister, logOperation } = require('./operation-logger');
 
 /**
  * 初始化注册模块
@@ -37,9 +37,8 @@ function initialize(db) {
 
       if (recentRegistrations.length > 2) {
         // 记录安全日志
-       console.warn('检测到同一  频繁注册', {
-          ip: ipAddress,
-          userAgent,
+        logRegister(null, username, ipAddress, userAgent, 'failed', {
+          reason: 'IP注册频率超限',
           existingUsernames: recentRegistrations.map(r => r.username),
           registrationCount: recentRegistrations.length
         });
@@ -57,6 +56,8 @@ function initialize(db) {
       );
 
       if (existingUsers.length > 0) {
+        logRegister(null, username, ipAddress, userAgent, 'failed', { reason: '用户名已存在' });
+        
         return res.status(400).json({
           success: false,
           error: '用户名已存在，请选择其他用户名'
@@ -80,7 +81,10 @@ function initialize(db) {
       );
 
       // 记录用户注册日志
-      logOperation(userId, username, 'register', 'users', { username }, ipAddress, userAgent);
+      logRegister(userId, username, ipAddress, userAgent, 'success', {
+        initial_logins: 0,
+        default_data_created: true
+      });
 
       // 获取新创建的用户信息
      const [newUsers] = await db.execute(
@@ -95,7 +99,11 @@ function initialize(db) {
         user: newUser
       });
     } catch(err) {
-     console.error('Registration error:', err);
+     console.error('[认证] 注册异常:', err.message, { 
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '注册失败，请重试'

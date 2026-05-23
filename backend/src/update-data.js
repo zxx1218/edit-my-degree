@@ -50,7 +50,7 @@ function initialize(db) {
           username = userResult[0].username;
         }
       } catch (err) {
-        console.error('获取用户名失败:', err);
+        console.error('[数据操作] 获取用户名失败:', err.message, { userId });
       }
       
       let result;
@@ -87,7 +87,7 @@ function initialize(db) {
           );
           
           // 记录操作日志
-          logOperation(userId, username, 'insert', table, { id: recordId, ...sanitizedData }, ipAddress, userAgent);
+          logOperation(userId, username, 'insert', table, { id: recordId, ...sanitizedData }, ipAddress, userAgent, 'success');
           
           // 返回完整的数据对象
           const responseData = insertData;
@@ -106,7 +106,7 @@ function initialize(db) {
           );
           
           // 记录操作日志
-          logOperation(userId, username, 'update', table, { id, data: sanitizedData }, ipAddress, userAgent);
+          logOperation(userId, username, 'update', table, { id, data: sanitizedData }, ipAddress, userAgent, 'success');
           
           result = { id };
           break;
@@ -123,7 +123,7 @@ function initialize(db) {
               deletedData = recordResult[0];
             }
           } catch (err) {
-            console.error('获取删除记录数据失败:', err);
+            console.error('[数据操作] 获取删除记录数据失败:', err.message, { id, userId });
           }
           
           await db.execute(
@@ -132,7 +132,7 @@ function initialize(db) {
           );
           
           // 记录操作日志
-          logOperation(userId, username, 'delete', table, { id, data: deletedData }, ipAddress, userAgent);
+          logOperation(userId, username, 'delete', table, { id, data: deletedData }, ipAddress, userAgent, 'success');
           
           result = { id };
           break;
@@ -146,7 +146,13 @@ function initialize(db) {
       
       res.json({ success: true, result });
     } catch (err) {
-      console.error(err);
+      console.error('[数据操作] 操作异常:', err.message, { 
+        table: req.body?.table,
+        action: req.body?.action,
+        userId: req.body?.userId,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '服务器内部错误'

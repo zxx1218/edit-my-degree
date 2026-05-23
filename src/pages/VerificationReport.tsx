@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, FileText, Download, ArrowRight } from "lucide-react";
+import { ChevronLeft, FileText, Download, ArrowRight, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import DegreeVerificationDialog from "@/components/DegreeVerificationDialog";
 import EducationRegistrationDialog from "@/components/EducationRegistrationDialog";
 import StudentStatusDialog from "@/components/StudentStatusDialog";
@@ -27,6 +28,9 @@ const VerificationReport = () => {
   const [showAccessConfirm, setShowAccessConfirm] = useState(false);
   const [showPdfCreditConfirm, setShowPdfCreditConfirm] = useState(false);
   const [pendingReportType, setPendingReportType] = useState<'studentStatus' | 'degree' | 'education' | null>(null);
+  
+  // 从环境变量读取PDF积分购买链接
+  const cardPdfUrl = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
 
   const handleReportClick = (type: 'studentStatus' | 'degree' | 'education') => {
     setPendingReportType(type);
@@ -43,6 +47,11 @@ const VerificationReport = () => {
       setEducationDialogOpen(true);
     }
     setPendingReportType(null);
+  };
+
+  // 处理PDF积分购买
+  const handlePurchasePdfCredits = () => {
+    window.open(cardPdfUrl, "_blank");
   };
 
   const handleEducationBackgroundAccess = async () => {
@@ -254,23 +263,43 @@ const VerificationReport = () => {
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={showPdfCreditConfirm} onOpenChange={setShowPdfCreditConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>报告制作提示</AlertDialogTitle>
-            <AlertDialogDescription>
-              1. 制作报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span>，如果不足将无法生成
-              <br />
-              2. 永久版用户，赠送30个PDF积分，其余用户默认积分数为0
-              <br />
-              3. PDF积分购买请前往登录页，点击“卡密购买”进行购买
-              <br />
-              3. <span className="font-semibold text-foreground">务必使用电脑操作PDF生成！手机操作会导致无法下载！</span>
+            <AlertDialogDescription className="space-y-2">
+              <div>1. 制作报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span></div>
+              <div>2. 永久版用户，赠送30个PDF积分，其余用户默认积分数为0</div>
+              {/* <div>3. <span className="font-semibold text-foreground">务必使用电脑操作PDF生成！手机操作会导致无法下载！</span></div> */}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
           <AlertDialogFooter>
+            <Button
+              onClick={handlePurchasePdfCredits}
+              variant="outline"
+              className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              购买PDF积分
+            </Button>
+            <div className="flex-1" />
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={handlePdfCreditConfirm}>我知道了，继续</AlertDialogAction>
           </AlertDialogFooter>
+          
+          {/* 查询PDF积分超链接 - 居中显示在底部 */}
+          <div className="text-center pb-2">
+            <button
+              onClick={() => {
+                setShowPdfCreditConfirm(false);
+                navigate("/query-logins");
+              }}
+              className="text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1.5 hover:underline text-sm"
+            >
+              <span>🔍</span>
+              <span>查询当前剩余PDF积分</span>
+            </button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>

@@ -28,7 +28,7 @@ function initialize(db) {
       
       if (users.length === 0) {
         // 记录查询失败 - 用户不存在
-        operationLogger.logQueryUserLogins('未知', username, ipAddress, userAgent, '失败 - 用户不存在');
+        operationLogger.logQueryUserLogins('未知', username, ipAddress, userAgent, '失败', { reason: '用户不存在' });
         return res.status(404).json({
           success: false,
           error: '用户不存在'
@@ -40,7 +40,7 @@ function initialize(db) {
       // 验证密码
       if (user.password !== password) {
         // 记录查询失败 - 密码错误
-        operationLogger.logQueryUserLogins(user.id.toString(), user.username, ipAddress, userAgent, '失败 - 密码错误');
+        operationLogger.logQueryUserLogins(user.id.toString(), user.username, ipAddress, userAgent, '失败', { reason: '密码错误' });
         return res.status(401).json({
           success: false,
           error: '密码错误'
@@ -66,7 +66,11 @@ function initialize(db) {
         }
       });
     } catch (err) {
-      console.error('查询用户登录信息错误:', err);
+      console.error('[查询] 查询用户登录信息异常:', err.message, { 
+        username: req.body?.username,
+        ip: req.ip,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '服务器内部错误'

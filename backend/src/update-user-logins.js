@@ -4,6 +4,8 @@
  */
 function initialize(db) {
   return async (req, res) => {
+    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    
     try {
       const { userId, username, addLogins } = req.body; // 支持通过userId或username
       
@@ -25,24 +27,27 @@ function initialize(db) {
       let user;
       if (userId) {
         const [users] = await db.execute(
-          'SELECT id FROM users WHERE id = ?',
+          'SELECT id, username, remaining_logins FROM users WHERE id = ?',
           [userId]
         );
         user = users[0];
       } else if (username) {
         const [users] = await db.execute(
-          'SELECT id FROM users WHERE username = ?',
+          'SELECT id, username, remaining_logins FROM users WHERE username = ?',
           [username]
         );
         user = users[0];
       }
       
       if (!user) {
+        console.warn(`[账户管理] 更新登录次数失败 - 用户不存在: ${userId || username}, IP: ${ipAddress}`);
         return res.status(404).json({
           success: false,
           error: '用户未找到'
         });
       }
+      
+      const oldLogins = user.remaining_logins;
       
       // 更新用户登录次数
       const [result] = await db.execute(
@@ -63,12 +68,22 @@ function initialize(db) {
         [user.id]
       );
       
+      const newLogins = users[0].remaining_logins;
+      console.info(`[账户管理] 登录次数更新成功 - 用户: ${user.username}, 原次数: ${oldLogins}, 增加: ${addLogins}, 新次数: ${newLogins}, IP: ${ipAddress}`);
+      
       res.json({
         success: true,
-        newLogins: users[0].remaining_logins
+        newLogins,
+        oldLogins,
+        added: addLogins
       });
     } catch (err) {
-      console.error(err);
+      console.error('[账户管理] 更新登录次数异常:', err.message, { 
+        userId: req.body?.userId,
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '服务器内部错误'

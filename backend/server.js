@@ -7,6 +7,7 @@ require('dotenv').config({ path: '../.env' }); // 修改这里，指向项目根
 const { initializeDatabaseConnection, createTables } = require('./src/database/init');
 const { setupRoutes } = require('./src/routes');
 const dbManager = require('./src/db-utils');
+const { startCleanupTask } = require('./src/ip-blacklist');
 
 // 引入日志模块
 require('./src/logger');
@@ -30,7 +31,12 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 // 全局错误处理中间件
 app.use((err, req, res, next) => {
-  console.error('未处理的错误:', err);
+  console.error('[系统] 未处理的错误:', err.message, { 
+    url: req?.url,
+    method: req?.method,
+    ip: req?.ip,
+    stack: err.stack 
+  });
   
   // 数据库连接错误处理
   if (err.message && err.message.includes('connection is in closed state')) {
@@ -49,18 +55,32 @@ app.use((err, req, res, next) => {
 
 async function initializeApp() {
   try {
+    console.log('[系统] 开始初始化应用...');
+    
     // 初始化数据库连接池
+    console.log('[系统] 正在初始化数据库连接池...');
     const pool = await initializeDatabaseConnection();
+    console.log('[系统] ✅ 数据库连接池初始化成功');
     
     // 创建表（如果不存在）
+    console.log('[系统] 正在检查并创建数据表...');
     await createTables(pool);
+    console.log('[系统] ✅ 数据表检查/创建完成');
+    
+    // 启动IP黑名单缓存清理任务
+    console.log('[系统] 正在启动IP黑名单缓存清理任务...');
+    startCleanupTask();
+    console.log('[系统] ✅ IP黑名单缓存清理任务已启动');
     
     // 设置路由
+    console.log('[系统] 正在配置路由...');
     setupRoutes(app, dbManager, JWT_SECRET);
+    console.log('[系统] ✅ 路由配置完成');
     
+    console.log('[系统] ✅ 应用初始化完成');
     return true;
   } catch (err) {
-    console.error('应用初始化失败:', err);
+    console.error('[系统] ❌ 应用初始化失败:', err.message, { stack: err.stack });
     return false;
   }
 }
@@ -68,7 +88,7 @@ async function initializeApp() {
 // 优雅关闭处理
 process.on('SIGTERM', async () => {
   if (isLogProcess) {
-    console.log('收到 SIGTERM 信号，正在优雅关闭');
+    console.log('[系统] 收到 SIGTERM 信号，正在优雅关闭...');
   }
   await dbManager.close();
   process.exit(0);
@@ -76,7 +96,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   if (isLogProcess) {
-    console.log('收到 SIGINT 信号，正在优雅关闭');
+    console.log('[系统] 收到 SIGINT 信号，正在优雅关闭...');
   }
   await dbManager.close();
   process.exit(0);
@@ -88,7 +108,12 @@ initializeApp().then((success) => {
     const server = app.listen(PORT, () => {
       // 只在日志进程中打印启动信息
       if (isLogProcess) {
-        console.log(`服务器运行在端口 ${PORT}`);
+        console.log(`\n========================================`);
+        console.log(`🚀 服务器启动成功`);
+        console.log(`📍 端口: ${PORT}`);
+        console.log(`🔧 环境: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`⏰ 启动时间: ${new Date().toLocaleString('zh-CN')}`);
+        console.log(`========================================\n`);
       
         // 从环境变量读取状态报告间隔，默认 5 小时
         const statusReportInterval = parseInt(process.env.DB_STATUS_REPORT_INTERVAL) || 18000000;
@@ -97,13 +122,12 @@ initializeApp().then((success) => {
         setInterval(() => {
           const stats = dbManager.getPoolStats();
           if (stats) {
-            console.log('=== 数据库连接池状态报告 ===');
-            console.log(`连接状态：${stats.isConnected ? '正常' : '异常'}`);
-            console.log(`配置信息:`, stats.config);
+            console.log('\n========== 数据库连接池状态报告 ==========');
+            console.log(`连接状态：${stats.isConnected ? '✅ 正常' : '❌ 异常'}`);
             console.log(`活动连接数：${stats.activeConnections}`);
             console.log(`空闲连接数：${stats.freeConnections}`);
             console.log(`等待队列长度：${stats.queuedRequests}`);
-            console.log('========================');
+            console.log('=========================================\n');
           }
         }, statusReportInterval);
       }
@@ -111,18 +135,19 @@ initializeApp().then((success) => {
 
     // 处理未捕获的异常
     process.on('uncaughtException', async (err) => {
-      console.error('未捕获的异常:', err);
+      console.error('[系统] ❌ 未捕获的异常:', err.message, { stack: err.stack });
       await dbManager.close();
       process.exit(1);
     });
 
     process.on('unhandledRejection', async (reason, promise) => {
-      console.error('未处理的Promise拒绝:', promise, '原因:', reason);
+      console.error('[系统] ❌ 未处理的Promise拒绝:', { reason, promise });
       await dbManager.close();
       process.exit(1);
     });
 
   } else {
+    console.error('[系统] ❌ 应用初始化失败，退出进程');
     process.exit(1);
   }
 });

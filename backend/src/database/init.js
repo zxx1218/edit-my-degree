@@ -177,6 +177,17 @@ async function createTables(db) {
       content TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS ip_blacklist (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      ip_address VARCHAR(45) NOT NULL,
+      reason TEXT,
+      blocked_until TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_ip_address (ip_address),
+      INDEX idx_blocked_until (blocked_until)
+    )
     `
   ];
 

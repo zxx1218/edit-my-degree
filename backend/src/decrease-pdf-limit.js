@@ -4,6 +4,10 @@
  */
 function initialize(db) {
   return async (req, res) => {
+    const operationLogger = require('./operation-logger');
+    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const userAgent = req.headers['user-agent'] || '未知设备';
+    
     try {
       const { username, decreaseAmount } = req.body;
 
@@ -28,6 +32,7 @@ function initialize(db) {
       );
 
       if (users.length === 0) {
+        console.warn(`[PDF管理] 减少PDF积分失败 - 用户不存在: ${username}, IP: ${ipAddress}`);
         return res.status(404).json({
           success: false,
           error: '用户不存在'
@@ -38,6 +43,7 @@ function initialize(db) {
 
       // 检查是否有足够的PDF积分
       if (user.pdf_limit < decreaseAmount) {
+        console.warn(`[PDF管理] 减少PDF积分失败 - 积分不足: 用户=${username}, 当前=${user.pdf_limit}, 需要=${decreaseAmount}, IP: ${ipAddress}`);
         return res.status(400).json({
           success: false,
           error: `PDF下载积分不足，当前积分：${user.pdf_limit}，需要：${decreaseAmount}`
@@ -60,13 +66,19 @@ function initialize(db) {
         });
       }
 
+      console.info(`[PDF管理] PDF积分减少成功 - 用户: ${username}, 原积分: ${user.pdf_limit}, 减少: ${decreaseAmount}, 新积分: ${newPdfLimit}, IP: ${ipAddress}`);
+
       res.json({
         success: true,
         newPdfLimit,
         decreased: decreaseAmount
       });
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('[PDF管理] 减少PDF积分异常:', err.message, { 
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '服务器内部错误'

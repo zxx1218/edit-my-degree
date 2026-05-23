@@ -4,6 +4,9 @@
  */
 function initialize(db) {
   return async (req, res) => {
+    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const userAgent = req.headers['user-agent'] || '未知设备';
+    
     try {
       const { username, increaseAmount } = req.body;
 
@@ -28,6 +31,7 @@ function initialize(db) {
       );
 
       if (users.length === 0) {
+        console.warn(`[PDF管理] 增加PDF积分失败 - 用户不存在: ${username}, IP: ${ipAddress}`);
         return res.status(404).json({
           success: false,
           error: '用户不存在'
@@ -52,13 +56,19 @@ function initialize(db) {
         });
       }
 
+      console.info(`[PDF管理] PDF积分增加成功 - 用户: ${username}, 原积分: ${user.pdf_limit}, 增加: ${increaseAmount}, 新积分: ${newPdfLimit}, IP: ${ipAddress}`);
+
       res.json({
         success: true,
         newPdfLimit,
         increased: increaseAmount
       });
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('[PDF管理] 增加PDF积分异常:', err.message, { 
+        username: req.body?.username,
+        ip: ipAddress,
+        stack: err.stack 
+      });
       res.status(500).json({
         success: false,
         error: '服务器内部错误'

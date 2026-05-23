@@ -2,6 +2,8 @@ const { v4: uuidv4 } = require('uuid');
 
 function initialize(db) {
   return async (req, res) => {
+    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    
     try {
       const { content } = req.body;
       
@@ -15,6 +17,7 @@ function initialize(db) {
       
       // 限制留言长度（最多500字符）
       if (content.length > 500) {
+        console.warn(`[留言板] 添加留言失败 - 内容过长: ${content.length}字符, IP: ${ipAddress}`);
         return res.status(400).json({
           success: false,
           error: '留言内容不能超过500个字符'
@@ -29,12 +32,18 @@ function initialize(db) {
         [id, content.trim()]
       );
       
+      console.info(`[留言板] 留言添加成功 - ID: ${id}, 内容长度: ${content.length}字符, IP: ${ipAddress}`);
+      
       res.json({
         success: true,
-        message: '留言成功'
+        message: '留言成功',
+        messageId: id
       });
     } catch (error) {
-      console.error('添加留言失败:', error);
+      console.error('[留言板] 添加留言异常:', error.message, { 
+        ip: ipAddress,
+        stack: error.stack 
+      });
       res.status(500).json({
         success: false,
         error: '添加留言失败'

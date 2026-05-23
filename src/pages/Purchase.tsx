@@ -53,7 +53,6 @@ const Purchase = () => {
   const qqGroup = import.meta.env.VITE_QQ_GROUP || "1034981273";
   const card_login = import.meta.env.VITE_CARD_LOGIN_URL || "http://4ox.cn/bq3kuv";
   const card_PDF = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
-  const messageBoardUrl = import.meta.env.VITE_MESSAGE_BOARD_URL || "http://cheerout.cn:40000";
 
   const handleCopyQQ = async () => {
     try {
@@ -411,7 +410,7 @@ const Purchase = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              如需<span className="font-medium text-foreground">支付宝/微信付款</span>或遇到任何问题，欢迎加入QQ群联系我们
+              如需<span className="font-medium text-foreground">合作/代理</span>或遇到任何问题，欢迎加入QQ群联系我们
             </p>
             <div className="flex items-center justify-center gap-3 p-4 bg-background rounded-lg border">
               <span className="text-lg font-mono font-semibold">{qqGroup}</span>
@@ -436,6 +435,7 @@ const Purchase = () => {
             </div>
           </CardContent>
         </Card>
+
       </div>
     </div>
   );
