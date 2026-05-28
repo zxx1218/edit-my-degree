@@ -94,6 +94,8 @@ async function queryIPLocation(ip) {
     return cached.location;
   }
 
+  let location = null;
+
   try {
     // 使用淘宝 IP 地址查询 API（国内访问更稳定）
     const response = await axios.get(`https://ip.taobao.com/outGetIpInfo?ip=${ip}&accessKey=alibaba-inc`, {
@@ -103,7 +105,7 @@ async function queryIPLocation(ip) {
 
     if (response.data && response.data.code === 0 && response.data.data) {
       const data = response.data.data;
-      const location = `${data.country}${data.region || ''}${data.city || ''}${data.isp || ''}`.trim();
+      location = `${data.country}${data.region || ''}${data.city || ''}${data.isp || ''}`.trim();
       if (location) {
         setCache(ipLocationCache, ip, { location });
         return location;
@@ -121,17 +123,20 @@ async function queryIPLocation(ip) {
     });
 
     if (response.data && response.data.status === 'success') {
-      const location = `${response.data.country}${response.data.regionName}${response.data.city}`;
-      setCache(ipLocationCache, ip, { location });
-      return location;
+      location = `${response.data.country}${response.data.regionName}${response.data.city}`;
+      if (location) {
+        setCache(ipLocationCache, ip, { location });
+        return location;
+      }
     }
   } catch (error) {
     console.warn(`ip-api.com 查询 IP归属地失败 [${ip}]:`, error.message);
   }
 
-  // 如果所有查询都失败，返回未知
-  setCache(ipLocationCache, ip, { location: '未知' });
-  return '未知';
+  // 如果所有查询都失败或返回空结果，缓存"未知"
+  location = '未知';
+  setCache(ipLocationCache, ip, { location });
+  return location;
 }
 
 /**
@@ -152,6 +157,8 @@ async function isChinaIP(ip) {
     return cached.isChina;
   }
 
+  let isChina = null;
+
   try {
     // 使用淘宝 IP 地址查询 API
     const response = await axios.get(`https://ip.taobao.com/outGetIpInfo?ip=${ip}&accessKey=alibaba-inc`, {
@@ -162,7 +169,7 @@ async function isChinaIP(ip) {
     if (response.data && response.data.code === 0 && response.data.data) {
       const country = response.data.data.country;
       // 判断是否为中国
-      const isChina = country === '中国' || country === 'China';
+      isChina = country === '中国' || country === 'China';
       setCache(ipChinaCache, ip, { isChina });
       return isChina;
     }
@@ -179,7 +186,7 @@ async function isChinaIP(ip) {
 
     if (response.data && response.data.status === 'success') {
       const country = response.data.country;
-      const isChina = country === '中国' || country === 'China';
+      isChina = country === '中国' || country === 'China';
       setCache(ipChinaCache, ip, { isChina });
       return isChina;
     }
@@ -187,9 +194,10 @@ async function isChinaIP(ip) {
     console.warn(`ip-api.com 判断中国 IP 失败 [${ip}]:`, error.message);
   }
 
-  // 如果所有查询都失败，默认成功
-  setCache(ipChinaCache, ip, { isChina: true });
-  return true;
+  // 如果所有查询都失败，默认成功并缓存结果
+  isChina = true;
+  setCache(ipChinaCache, ip, { isChina });
+  return isChina;
 }
 
 module.exports = { queryIPLocation, isChinaIP };
