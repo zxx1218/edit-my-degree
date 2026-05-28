@@ -9,6 +9,7 @@
  * node manage-ip-blacklist.js reload
  */
 
+require('dotenv').config({ path: '../.env' }); // 加载项目根目录的.env文件
 const dbManager = require('./src/db-utils');
 const { loadManualBlacklist } = require('./src/ip-blacklist');
 

@@ -169,7 +169,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '透你妈傻逼，你这请求他妈过期了！'
+      error: '透你妈傻逼！'
     });
   }
   
@@ -186,7 +186,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '透你妈傻逼，你他妈这是无效的Key，你他妈了个逼的再检查检查！'
+      error: '透你妈傻逼，你他妈了个逼的再检查检查！'
     });
   }
   
