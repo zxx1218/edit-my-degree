@@ -108,7 +108,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -126,6 +126,9 @@ const DegreeVerificationDialog = ({
   onOpenChange,
   onLoadingChange,
 }: DegreeVerificationDialogProps) => {
+  // 从环境变量读取PDF积分购买链接
+  const cardPdfUrl = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
+  
   const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
@@ -146,6 +149,7 @@ const DegreeVerificationDialog = ({
   const [birthDateOpen, setBirthDateOpen] = useState(false);
   const [degreeDateOpen, setDegreeDateOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [currentPdfLimit, setCurrentPdfLimit] = useState<number>(0);
 
   // 获取用户的学位记录
   useEffect(() => {
@@ -284,11 +288,18 @@ const DegreeVerificationDialog = ({
       return;
     }
 
+    // Get current PDF limit before showing confirmation dialog
+    const currentUserStr = localStorage.getItem("currentUser");
+    if (currentUserStr) {
+      const currentUser = JSON.parse(currentUserStr);
+      setCurrentPdfLimit(currentUser.pdf_limit || 0);
+    }
+
     // Show confirmation dialog
     setShowConfirmDialog(true);
   };
 
-const handleConfirmGenerate = async () => {
+  const handleConfirmGenerate = async () => {
     setShowConfirmDialog(false);
     
     try {
@@ -439,6 +450,11 @@ const handleConfirmGenerate = async () => {
     setTimeout(() => {
       document.body.removeChild(a);
     }, 100);
+  };
+
+  // 处理PDF积分购买
+  const handlePurchasePdfCredits = () => {
+    window.open(cardPdfUrl, "_blank");
   };
 
   return (
@@ -673,17 +689,49 @@ const handleConfirmGenerate = async () => {
     />
 
     <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-      <AlertDialogContent>
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>确认生成报告</AlertDialogTitle>
-          <AlertDialogDescription>
-            生成学位验证报告PDF<span className="text-destructive">需要消耗30个PDF积分</span>，是否确认生成？
+          <AlertDialogTitle className="text-center">确认生成报告</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-3 text-center">
+            <div className="bg-primary/10 rounded-lg p-4 space-y-2">
+              <div className="text-lg font-semibold text-primary">
+                当前剩余PDF积分：<span className="text-2xl">{currentPdfLimit}</span> 分
+              </div>
+              <div className="text-sm text-muted-foreground">
+                生成学位验证报告PDF需要消耗 <span className="font-semibold text-destructive">30个PDF积分</span>
+              </div>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirmGenerate}>确认</AlertDialogAction>
-        </AlertDialogFooter>
+        
+        <div className="flex flex-col gap-3 pt-2">
+          {/* 主要操作按钮 */}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              className="flex-1 h-11 text-base"
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleConfirmGenerate}
+              className="flex-1 h-11 text-base bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md"
+            >
+              确认生成
+            </Button>
+          </div>
+          
+          {/* 购买积分按钮 - 独立一行 */}
+          <Button
+            onClick={handlePurchasePdfCredits}
+            variant="outline"
+            className="w-full h-11 text-base border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 hover:border-green-600 transition-all duration-200 shadow-sm"
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            积分不足？点击购买PDF积分
+          </Button>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
     </>

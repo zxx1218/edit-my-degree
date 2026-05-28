@@ -28,11 +28,22 @@ const VerificationReport = () => {
   const [showAccessConfirm, setShowAccessConfirm] = useState(false);
   const [showPdfCreditConfirm, setShowPdfCreditConfirm] = useState(false);
   const [pendingReportType, setPendingReportType] = useState<'studentStatus' | 'degree' | 'education' | null>(null);
+  const [currentPdfLimit, setCurrentPdfLimit] = useState(0);
   
   // 从环境变量读取PDF积分购买链接
   const cardPdfUrl = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
 
   const handleReportClick = (type: 'studentStatus' | 'degree' | 'education') => {
+    // Get current PDF limit before showing confirmation dialog
+    const currentUserStr = localStorage.getItem("currentUser");
+    console.log("currentUser from localStorage:", currentUserStr);
+    if (currentUserStr) {
+      const currentUser = JSON.parse(currentUserStr);
+      console.log("currentUser object:", currentUser);
+      console.log("pdf_limit value:", currentUser.pdf_limit);
+      setCurrentPdfLimit(currentUser.pdf_limit || 0);
+    }
+    
     setPendingReportType(type);
     setShowPdfCreditConfirm(true);
   };
@@ -274,32 +285,9 @@ const VerificationReport = () => {
           </AlertDialogHeader>
           
           <AlertDialogFooter>
-            <Button
-              onClick={handlePurchasePdfCredits}
-              variant="outline"
-              className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              购买PDF积分
-            </Button>
-            <div className="flex-1" />
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={handlePdfCreditConfirm}>我知道了，继续</AlertDialogAction>
           </AlertDialogFooter>
-          
-          {/* 查询PDF积分超链接 - 居中显示在底部 */}
-          <div className="text-center pb-2">
-            <button
-              onClick={() => {
-                setShowPdfCreditConfirm(false);
-                navigate("/query-logins");
-              }}
-              className="text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1.5 hover:underline text-sm"
-            >
-              <span>🔍</span>
-              <span>查询当前剩余PDF积分</span>
-            </button>
-          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>

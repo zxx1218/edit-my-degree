@@ -110,7 +110,8 @@ function initialize(pool, jwtSecret) {
         user: {
           id: user.id,
           username: user.username,
-          remaining_logins: user.remaining_logins - 1
+          remaining_logins: user.remaining_logins - 1,
+          pdf_limit: user.pdf_limit || 0
         },
         token
       });
