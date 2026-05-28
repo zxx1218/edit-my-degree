@@ -1,13 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, CheckCircle2, ExternalLink, MessageSquare, HelpCircle, Users, Copy, Check, ChevronLeft, ChevronRight, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink, Users, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { getMessages, addMessage, type Message } from "@/lib/api";
 
 const faqItems = [
   {
@@ -39,15 +37,6 @@ const faqItems = [
 const Purchase = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
-  // 留言板状态
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalMessages, setTotalMessages] = useState(0);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [newMessage, setNewMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const pageSize = 5; // 每页显示5条留言
   
   // 从环境变量读取配置，提供默认值以防未配置
   const qqGroup = import.meta.env.VITE_QQ_GROUP || "1034981273";
@@ -80,63 +69,6 @@ const Purchase = () => {
   const handlePurchasePDF= () => {
     window.open(card_PDF, "_blank");
   };
-
-  // 获取留言列表
-  const fetchMessages = async (page: number) => {
-    setIsLoadingMessages(true);
-    try {
-      const response = await getMessages(page, pageSize);
-      if (response.success) {
-        setMessages(response.messages);
-        setCurrentPage(response.page);
-        setTotalPages(response.totalPages);
-        setTotalMessages(response.total);
-      } else {
-        toast.error(response.error || "获取留言失败");
-      }
-    } catch (error) {
-      console.error("获取留言失败:", error);
-      toast.error("获取留言失败，请稍后重试");
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  };
-
-  // 提交新留言
-  const handleSubmitMessage = async () => {
-    if (!newMessage.trim()) {
-      toast.error("留言内容不能为空");
-      return;
-    }
-
-    if (newMessage.length > 500) {
-      toast.error("留言内容不能超过500个字符");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await addMessage(newMessage);
-      if (response.success) {
-        toast.success("留言成功");
-        setNewMessage("");
-        // 刷新第一页的留言
-        await fetchMessages(1);
-      } else {
-        toast.error(response.error || "留言失败");
-      }
-    } catch (error) {
-      console.error("留言失败:", error);
-      toast.error("留言失败，请稍后重试");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // 页面加载时获取留言
-  useEffect(() => {
-    fetchMessages(1);
-  }, []);
 
   const plans = [
     {
@@ -266,137 +198,6 @@ const Purchase = () => {
               </div>
             </Card>
           </div>
-        </div>
-
-        {/* 常见问题区域 */}
-        <div className="max-w-2xl mx-auto mt-6">
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle className="text-xl flex items-center justify-center gap-2">
-                <HelpCircle className="h-5 w-5 text-primary" />
-                常见问题
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                {faqItems.map((item, index) => (
-                  <AccordionItem key={index} value={`item-${index}`}>
-                    <AccordionTrigger className="text-left text-sm">
-                      {item.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 客户留言板区域 */}
-        <div className="max-w-4xl mx-auto mt-6">
-          <Card>
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-xl flex items-center justify-center gap-2">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                客户留言板
-              </CardTitle>
-              <CardDescription>查看其他用户的留言和反馈，也可以留下您的宝贵意见</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* 留言列表 */}
-              <div className="border rounded-lg p-4 bg-background max-h-[400px] overflow-y-auto">
-                {isLoadingMessages ? (
-                  <div className="flex items-center justify-center py-8">
-                    <p className="text-sm text-muted-foreground">加载中...</p>
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="flex items-center justify-center py-8">
-                    <p className="text-sm text-muted-foreground">暂无留言，快来留下第一条吧！</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {messages.map((message, index) => (
-                      <div key={message.id} className="p-3 bg-card rounded border hover:shadow-sm transition-shadow">
-                        <p className="text-sm text-foreground mb-2 break-words">{message.content}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(message.created_at).toLocaleString('zh-CN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* 分页控制 */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchMessages(currentPage - 1)}
-                    disabled={currentPage === 1 || isLoadingMessages}
-                    className="gap-1"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    上一页
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    第 {currentPage} / {totalPages} 页（共 {totalMessages} 条）
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchMessages(currentPage + 1)}
-                    disabled={currentPage === totalPages || isLoadingMessages}
-                    className="gap-1"
-                  >
-                    下一页
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {/* 留言输入框 */}
-              <div className="space-y-2">
-                <Textarea
-                  placeholder="写下您的留言..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  maxLength={500}
-                  rows={3}
-                  className="resize-none"
-                />
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {newMessage.length}/500
-                  </span>
-                  <Button
-                    onClick={handleSubmitMessage}
-                    disabled={isSubmitting || !newMessage.trim()}
-                    size="sm"
-                    className="gap-1.5"
-                  >
-                    {isSubmitting ? (
-                      "提交中..."
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        提交留言
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* 客服联系方式卡片 */}

@@ -28,7 +28,7 @@ function initialize(pool, jwtSecret) {
       if (blacklisted) {
         logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
         return res.status(403).json({ 
-          error: '访问被拒绝',
+          error: '你的机器码已经被封禁，拒绝访问',
           message: '由于异常活动，您的IP已被暂时限制访问。请稍后再试或联系管理员。'
         });
       }
@@ -75,7 +75,7 @@ function initialize(pool, jwtSecret) {
         logLogin(user.id, username, ipAddress, userAgent, 'failed', { reason: '登录次数不足', remaining_logins: 0 });
         
         return res.status(403).json({ 
-          error: '登录次数不足',
+          error: '您的剩余登录次数为0，请购买或续费后再登录！',
           message: '您的账号剩余可登录次数为 0 ，请购买或续费套餐后再登录！'
         });
       }
@@ -136,7 +136,7 @@ function initialize(pool, jwtSecret) {
       
       res.status(500).json({
         success: false,
-        error: '服务器内部错误'
+        error: '服务器正在维护中，请稍后再试，具体信息请关注Q群通知！'
       });
     }
   }

@@ -181,7 +181,7 @@ async function createTables(db) {
     `
     CREATE TABLE IF NOT EXISTS ip_blacklist (
       id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
-      ip_address VARCHAR(45) NOT NULL,
+      ip_address VARCHAR(45) NOT NULL UNIQUE,
       reason TEXT,
       blocked_until TIMESTAMP NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

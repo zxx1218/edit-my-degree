@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import Purchase from "./pages/Purchase";
 import VideoPlayer from "./pages/VideoPlayer";
 import QueryLogins from "./pages/QueryLogins";
+import MessageBoard from "./pages/MessageBoard";
 import StudentStatusDetail from "./pages/StudentStatusDetail";
 import EducationDetail from "./pages/EducationDetail";
 import DegreeDetail from "./pages/DegreeDetail";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/purchase" element={<Purchase />} />
             <Route path="/video" element={<VideoPlayer />} />
             <Route path="/query-logins" element={<QueryLogins />} />
+            <Route path="/message-board" element={<MessageBoard />} />
             <Route path="/verification-education" element={<Verification />} />
             <Route path="/verification-degree" element={<VerificationDegree />} />
             <Route path="/verification-studentStatus" element={<VerificationStudentStatus />} />

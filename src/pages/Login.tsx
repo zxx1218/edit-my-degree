@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -15,9 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info } from "lucide-react";
+import { Info, MessageSquare, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { loginUser, changePassword } from "@/lib/api";
+import { loginUser, changePassword, getMessages, addMessage, type Message } from "@/lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -39,8 +40,78 @@ const Login = () => {
   const [pdfRechargeData, setPdfRechargeData] = useState({ username: "", cardId: "" });
   const [isRecharging, setIsRecharging] = useState(false);
 
+  // 留言板相关状态
+  const [isMessageBoardOpen, setIsMessageBoardOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalMessages, setTotalMessages] = useState(0);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const pageSize = 5; // 每页显示5条留言
+
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // 获取留言列表
+  const fetchMessages = async (page: number) => {
+    setIsLoadingMessages(true);
+    try {
+      const response = await getMessages(page, pageSize);
+      if (response.success) {
+        setMessages(response.messages);
+        setCurrentPage(response.page);
+        setTotalPages(response.totalPages);
+        setTotalMessages(response.total);
+      } else {
+        toast.error(response.error || "获取留言失败");
+      }
+    } catch (error) {
+      console.error("获取留言失败:", error);
+      toast.error("获取留言失败，请稍后重试");
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  // 提交新留言
+  const handleSubmitMessage = async () => {
+    if (!newMessage.trim()) {
+      toast.error("留言内容不能为空");
+      return;
+    }
+
+    if (newMessage.length > 500) {
+      toast.error("留言内容不能超过500个字符");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await addMessage(newMessage);
+      if (response.success) {
+        toast.success("留言成功");
+        setNewMessage("");
+        // 刷新第一页的留言
+        await fetchMessages(1);
+      } else {
+        toast.error(response.error || "留言失败");
+      }
+    } catch (error) {
+      console.error("留言失败:", error);
+      toast.error("留言失败，请稍后重试");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 打开留言板时加载数据
+  useEffect(() => {
+    if (isMessageBoardOpen) {
+      fetchMessages(1);
+    }
+  }, [isMessageBoardOpen]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -594,9 +665,130 @@ const Login = () => {
             </AlertDescription>
           </Alert> 
 
+          {/* QQ群信息和留言板链接 */}
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>• 通知交流QQ群：{import.meta.env.VITE_QQ_GROUP} •</div>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <span>交流Q群：{import.meta.env.VITE_QQ_GROUP}</span>
+              <span>•</span>
+              <button
+                onClick={() => setIsMessageBoardOpen(true)}
+                className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1 hover:scale-105 transform font-medium"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>客户留言板</span>
+              </button>
+            </div>
           </div>
+
+          {/* 留言板弹窗 */}
+          <Dialog open={isMessageBoardOpen} onOpenChange={setIsMessageBoardOpen}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  客户留言板
+                </DialogTitle>
+                <DialogDescription>
+                  查看其他用户的留言和反馈，也可以留下您的宝贵意见
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                {/* 留言列表 */}
+                <div className="border rounded-lg p-4 bg-background">
+                  {isLoadingMessages ? (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-sm text-muted-foreground">加载中...</p>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-sm text-muted-foreground">暂无留言，快来留下第一条吧！</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {messages.map((message) => (
+                        <div key={message.id} className="p-3 bg-card rounded border hover:shadow-sm transition-shadow">
+                          <p className="text-sm text-foreground mb-2 break-words whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(message.created_at).toLocaleString('zh-CN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 分页控制 */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchMessages(currentPage - 1)}
+                      disabled={currentPage === 1 || isLoadingMessages}
+                      className="gap-1"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      上一页
+                    </Button>
+                    <span className="text-xs text-muted-foreground">
+                      第 {currentPage} / {totalPages} 页（共 {totalMessages} 条）
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchMessages(currentPage + 1)}
+                      disabled={currentPage === totalPages || isLoadingMessages}
+                      className="gap-1"
+                    >
+                      下一页
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* 留言输入框 */}
+                <div className="space-y-2">
+                  <Label htmlFor="message-input">发表留言</Label>
+                  <Textarea
+                    id="message-input"
+                    placeholder="写下您的留言..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    maxLength={500}
+                    rows={3}
+                    className="resize-none"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {newMessage.length}/500
+                    </span>
+                    <Button
+                      onClick={handleSubmitMessage}
+                      disabled={isSubmitting || !newMessage.trim()}
+                      size="sm"
+                      className="gap-1.5"
+                    >
+                      {isSubmitting ? (
+                        "提交中..."
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          提交留言
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>

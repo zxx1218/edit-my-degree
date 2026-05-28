@@ -223,5 +223,6 @@ module.exports = {
   recordAndCheckIp,
   startCleanupTask,
   getIpStats,
-  loadManualBlacklist // 导出手动黑名单加载函数，供外部调用
+  loadManualBlacklist, // 导出手动黑名单加载函数，供外部调用
+  logIpBlacklist // 导出IP黑名单日志记录函数，供外部使用
 };
