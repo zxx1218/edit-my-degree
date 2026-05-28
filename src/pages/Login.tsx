@@ -595,7 +595,7 @@ const Login = () => {
           </Alert> 
 
           <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
-            <div>• 更新通知与售后交流QQ群：{import.meta.env.VITE_QQ_GROUP} •</div>
+            <div>• 通知交流QQ群：{import.meta.env.VITE_QQ_GROUP} •</div>
           </div>
         </CardContent>
       </Card>
