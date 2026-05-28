@@ -278,9 +278,7 @@ const VerificationReport = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>报告制作提示</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <div>1. 制作报告需要确保您的账户内有 <span className="font-semibold text-foreground">30个PDF积分</span></div>
-              <div>2. 永久版用户，赠送30个PDF积分，其余用户默认积分数为0</div>
-              {/* <div>3. <span className="font-semibold text-foreground">务必使用电脑操作PDF生成！手机操作会导致无法下载！</span></div> */}
+              <div>注意: 建议您使用电脑操作PDF生成，手机操作可能会导致报告无法下载!</div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           
