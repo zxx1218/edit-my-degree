@@ -1,0 +1,1838 @@
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { Users } from "lucide-react";
+import * as adminApi from "@/lib/adminApi";
+import {
+  AdminLogin,
+  LoginStatsCard,
+  UserPointsManager,
+  CardManager,
+  UserList,
+  LoginStatsChart,
+  ActivityHeatmap,
+  TopActiveUsers,
+  AnomalyDetection,
+} from "@/components/admin";
+
+interface User {
+  id: string;
+  username: string;
+  password: string;
+  remaining_logins: number;
+  pdf_limit: number;
+}
+
+interface CardItem {
+  id: string;
+  type: string;
+  values: number;
+  used: boolean;
+  used_by: string | null;
+  used_at: string | null;
+  created_at: string;
+}
+
+interface HourlyStatItem {
+  hour: number;
+  hourLabel: string;
+  totalLogins: number;
+  uniqueUsers: number;
+}
+
+interface DailyStatItem {
+  date: string;
+  dateLabel: string;
+  totalLogins: number;
+  uniqueUsers: number;
+}
+
+interface RangeSummary {
+  totalLogins: number;
+  avgLogins: number;
+  totalUniqueUsers: number;
+  days: number;
+}
+
+interface HeatmapDataItem {
+  day: string;
+  dayIndex: number;
+  hour: number;
+  hourLabel: string;
+  loginCount: number;
+  uniqueUsers: number;
+}
+
+interface TopActiveUser {
+  id: string;
+  username: string;
+  totalLogins: number;
+  activeDays: number;
+  lastLogin: string;
+  firstLoginInPeriod: string;
+  avgLoginsPerDay: string;
+}
+
+interface AnomalyDetectionData {
+  anomalies: {
+    frequentLogins: Array<{
+      username: string;
+      date: string;
+      hour: string;
+      loginCount: number;
+    }>;
+    abnormalTimeLogins: Array<{
+      username: string;
+      loginTime: string;
+      hour: string;
+      date: string;
+    }>;
+    dailyAnomalies: Array<{
+      username: string;
+      date: string;
+      dailyLogins: number;
+    }>;
+  };
+  summary: {
+    totalFrequentLoginUsers: number;
+    totalAbnormalTimeLogins: number;
+    totalDailyAnomalyUsers: number;
+    period: {
+      days: number;
+      startDate: string;
+      endDate: string;
+    };
+  };
+}
+
+const SuperAdd = () => {
+  const [isVerified, setIsVerified] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
+  const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
+  const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
+
+  // PDF积分管理
+  const [cards, setCards] = useState<CardItem[]>([]);
+  const [isFetchingCards, setIsFetchingCards] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // 每小时登录统计
+  const [hourlyStats, setHourlyStats] = useState<HourlyStatItem[]>([]);
+  const [isLoadingHourlyStats, setIsLoadingHourlyStats] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  // 周/月统计
+  const [dailyStats, setDailyStats] = useState<DailyStatItem[]>([]);
+  const [rangeSummary, setRangeSummary] = useState<RangeSummary | null>(null);
+  const [isLoadingRangeStats, setIsLoadingRangeStats] = useState(false);
+  const [statsViewMode, setStatsViewMode] = useState<"day" | "week" | "month">("day");
+
+  // 用户活跃度热力图
+  const [heatmapData, setHeatmapData] = useState<HeatmapDataItem[]>([]);
+  const [isLoadingHeatmap, setIsLoadingHeatmap] = useState(false);
+
+  // Top活跃用户
+  const [topActiveUsers, setTopActiveUsers] = useState<TopActiveUser[]>([]);
+  const [isLoadingTopUsers, setIsLoadingTopUsers] = useState(false);
+  const [topUsersPeriod, setTopUsersPeriod] = useState<number>(30);
+
+  // 异常登录检测
+  const [anomalyDetection, setAnomalyDetection] = useState<AnomalyDetectionData | null>(null);
+  const [isLoadingAnomaly, setIsLoadingAnomaly] = useState(false);
+  const [anomalyPeriod, setAnomalyPeriod] = useState<number>(7);
+
+  const { toast } = useToast();
+
+  // 数据获取函数
+  const fetchTodayLoginCount = async () => {
+    if (!token) return;
+    
+    setIsLoadingLoginCount(true);
+    try {
+      const data = await adminApi.getTodayLoginCount(token);
+      if (data.success) {
+        setTodayLoginCount(data.total_logins);
+        setDistinctUsers(data.distinct_users);
+      }
+    } catch (error) {
+      console.error("获取登录统计时出错:", error);
+    } finally {
+      setIsLoadingLoginCount(false);
+    }
+  };
+
+  const fetchHourlyStats = async (date?: Date) => {
+    if (!token) return;
+    
+    setIsLoadingHourlyStats(true);
+    try {
+      const targetDate = date || selectedDate;
+      const dateString = format(targetDate, "yyyy-MM-dd");
+      
+      const data = await adminApi.getHourlyLoginStats(token, { date: dateString });
+      if (data.success) {
+        setHourlyStats(data.hourlyStats || []);
+      }
+    } catch (error) {
+      console.error("获取每小时登录统计时出错:", error);
+    } finally {
+      setIsLoadingHourlyStats(false);
+    }
+  };
+
+  const fetchRangeStats = async (range: "week" | "month") => {
+    if (!token) return;
+    
+    setIsLoadingRangeStats(true);
+    try {
+      const data = await adminApi.getLoginStatsRange(token, { range });
+      if (data?.success) {
+        const dailyStatsData = Array.isArray(data.dailyStats) ? data.dailyStats : [];
+        const summaryData = data.summary && typeof data.summary === 'object' ? data.summary : null;
+        
+        setDailyStats(dailyStatsData);
+        setRangeSummary(summaryData);
+      } else {
+        throw new Error(data?.error || "获取周/月登录统计失败");
+      }
+    } catch (error: any) {
+      console.error("获取周/月登录统计时出错:", error);
+      toast({
+        variant: "destructive",
+        title: "获取统计失败",
+        description: error.message || "请重试",
+      });
+    } finally {
+      setIsLoadingRangeStats(false);
+    }
+  };
+
+  const fetchHeatmapData = async () => {
+    if (!token) return;
+    
+    setIsLoadingHeatmap(true);
+    try {
+      const data = await adminApi.getUserActivityHeatmap(token);
+      if (data.success) {
+        setHeatmapData(data.heatmap || []);
+      }
+    } catch (error) {
+      console.error("获取用户活跃度热力图时出错:", error);
+    } finally {
+      setIsLoadingHeatmap(false);
+    }
+  };
+
+  const fetchTopActiveUsers = async (period?: number) => {
+    if (!token) return;
+    
+    setIsLoadingTopUsers(true);
+    try {
+      const days = period || topUsersPeriod;
+      const data = await adminApi.getTopActiveUsers(token, { limit: 20, days });
+      if (data.success) {
+        setTopActiveUsers(data.users || []);
+        setTopUsersPeriod(days);
+      }
+    } catch (error) {
+      console.error("获取Top活跃用户时出错:", error);
+    } finally {
+      setIsLoadingTopUsers(false);
+    }
+  };
+
+  const fetchAnomalyDetection = async (period?: number) => {
+    if (!token) return;
+    
+    setIsLoadingAnomaly(true);
+    try {
+      const days = period || anomalyPeriod;
+      const data = await adminApi.getAnomalyLoginDetection(token, { days });
+      if (data.success) {
+        setAnomalyDetection(data);
+        setAnomalyPeriod(days);
+      }
+    } catch (error) {
+      console.error("获取异常登录检测数据时出错:", error);
+    } finally {
+      setIsLoadingAnomaly(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.getAllUsers(token);
+      if (data.success) {
+        setUsers(data.users || []);
+      } else {
+        throw new Error(data.error || "获取用户列表失败");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "获取用户列表失败",
+        description: error.message,
+      });
+    }
+  };
+
+  const fetchCards = async () => {
+    if (!token) return;
+    
+    setIsFetchingCards(true);
+    try {
+      const data = await adminApi.manageCards(token, { action: "list" });
+      if (data.success) {
+        setCards(data.cards || []);
+      } else {
+        throw new Error(data.error || "获取充值卡列表失败");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "获取充值卡列表失败",
+        description: error.message,
+      });
+    } finally {
+      setIsFetchingCards(false);
+    }
+  };
+
+  // 处理函数
+  const handleVerify = (newToken: string) => {
+    setToken(newToken);
+    setIsVerified(true);
+  };
+
+  const handleAddLogins = async (username: string, logins: number) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.updateUserLogins(token, { username, addLogins: logins });
+      if (data.success) {
+        toast({
+          title: "添加成功",
+          description: `已为用户 ${username} 添加 ${logins} 次登录，当前剩余 ${data.newLogins} 次`,
+        });
+        fetchUsers();
+      } else {
+        toast({ variant: "destructive", title: "添加失败", description: data.error || "未知错误" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "添加失败", description: error.message });
+    }
+  };
+
+  const handleDecreaseLogins = async (username: string, logins: number) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.decreaseUserLogins(token, { username, decreaseLogins: logins });
+      if (data.success) {
+        toast({
+          title: "减少成功",
+          description: `已为用户 ${username} 减少 ${data.decreased} 次登录，当前剩余 ${data.newLogins} 次`,
+        });
+        fetchUsers();
+      } else {
+        toast({ variant: "destructive", title: "减少失败", description: data.error || "未知错误" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "减少失败", description: error.message });
+    }
+  };
+
+  const handleResetLogins = async (username: string) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.resetUserLogins(token, { username });
+      if (data.success) {
+        toast({ title: "重置成功", description: `已将用户 ${username} 的登录次数重置为 0` });
+        fetchUsers();
+      } else {
+        toast({ variant: "destructive", title: "重置失败", description: data.error || "未知错误" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "重置失败", description: error.message });
+    }
+  };
+
+  const handleAddPdf = async (username: string, amount: number) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.increasePdfLimit(token, { username, increaseAmount: amount });
+      if (data.success) {
+        toast({
+          title: "添加成功",
+          description: `已为用户 ${username} 添加 ${amount} 积分，当前剩余 ${data.newPdfLimit} 积分`,
+        });
+        fetchUsers();
+      } else {
+        toast({ variant: "destructive", title: "添加失败", description: data.error || "未知错误" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "添加失败", description: error.message });
+    }
+  };
+
+  const handleDecreasePdf = async (username: string, amount: number) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.decreasePdfLimit(token, { username, decreaseAmount: amount });
+      if (data.success) {
+        toast({
+          title: "减少成功",
+          description: `已为用户 ${username} 减少 ${amount} 积分，当前剩余 ${data.newPdfLimit} 积分`,
+        });
+        fetchUsers();
+      } else {
+        toast({ variant: "destructive", title: "减少失败", description: data.error || "未知错误" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "减少失败", description: error.message });
+    }
+  };
+
+  const handleResetPdf = async (username: string) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.resetPdfLimit(token, { username });
+      if (data.success) {
+        toast({ title: "重置成功", description: `已将用户 ${username} 的PDF积分重置为 0` });
+        fetchUsers();
+      } else {
+        toast({ variant: "destructive", title: "重置失败", description: data.error || "未知错误" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "重置失败", description: error.message });
+    }
+  };
+
+  const handleCreateCards = async (type: string, values: number, count: number) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.manageCards(token, { action: "create", type, values, count });
+      if (data.success) {
+        toast({ title: "创建成功", description: `已成功创建 ${data.cards.length} 张充值卡` });
+        fetchCards();
+      } else {
+        throw new Error(data.error || "创建失败");
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "创建失败", description: error.message });
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+        if (!successful) {
+          throw new Error("execCommand copy failed");
+        }
+      }
+      setCopiedId(text);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast({ title: "已复制", description: "卡密已复制到剪贴板" });
+    } catch (error) {
+      console.error("复制失败:", error);
+      toast({ variant: "destructive", title: "复制失败", description: "请手动复制卡密" });
+    }
+  };
+
+  // 当选择日期变化时重新获取数据
+  useEffect(() => {
+    if (isVerified && statsViewMode === "day") {
+      fetchHourlyStats(selectedDate);
+    }
+  }, [selectedDate, statsViewMode]);
+
+  // 当视图模式变化时获取对应数据
+  useEffect(() => {
+    if (isVerified) {
+      if (statsViewMode === "day") {
+        fetchHourlyStats(selectedDate);
+      } else {
+        fetchRangeStats(statsViewMode);
+      }
+    }
+  }, [statsViewMode]);
+
+  // 登录验证成功后获取数据
+  useEffect(() => {
+    if (isVerified) {
+      fetchTodayLoginCount();
+      fetchHourlyStats();
+      fetchUsers();
+      fetchCards();
+      fetchHeatmapData();
+      fetchTopActiveUsers();
+      fetchAnomalyDetection();
+    }
+  }, [isVerified]);
+
+  if (!isVerified) {
+    return <AdminLogin onVerify={handleVerify} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 md:p-6">
+      <div className="container max-w-6xl mx-auto py-4">
+        {/* 页面标题 */}
+        <div className="mb-6 text-center space-y-2">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+              <Users className="h-7 w-7 text-white" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            用户管理系统
+          </h1>
+          <p className="text-muted-foreground">管理用户登录次数与PDF积分</p>
+        </div>
+
+        {/* 今日登录统计卡片 */}
+        <LoginStatsCard
+          todayLoginCount={todayLoginCount}
+          distinctUsers={distinctUsers}
+          isLoading={isLoadingLoginCount}
+          onRefresh={fetchTodayLoginCount}
+        />
+
+        {/* 用户积分管理 */}
+        <UserPointsManager
+          onAddLogins={handleAddLogins}
+          onDecreaseLogins={handleDecreaseLogins}
+          onResetLogins={handleResetLogins}
+          onAddPdf={handleAddPdf}
+          onDecreasePdf={handleDecreasePdf}
+          onResetPdf={handleResetPdf}
+        />
+
+        {/* 充值卡管理 */}
+        <CardManager
+          cards={cards}
+          isFetchingCards={isFetchingCards}
+          onFetchCards={fetchCards}
+          onCreateCards={handleCreateCards}
+          onCopyToClipboard={copyToClipboard}
+          copiedId={copiedId}
+        />
+
+        {/* 用户列表 */}
+        <UserList
+          users={users}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          isFetchingUsers={false}
+          onFetchUsers={fetchUsers}
+        />
+
+        {/* 登录统计图表 */}
+        <LoginStatsChart
+          hourlyStats={hourlyStats}
+          dailyStats={dailyStats}
+          rangeSummary={rangeSummary}
+          isLoadingHourly={isLoadingHourlyStats}
+          isLoadingRange={isLoadingRangeStats}
+          selectedDate={selectedDate}
+          statsViewMode={statsViewMode}
+          onDateChange={setSelectedDate}
+          onViewModeChange={setStatsViewMode}
+          onRefresh={() => {
+            if (statsViewMode === "day") {
+              fetchHourlyStats();
+            } else {
+              fetchRangeStats(statsViewMode);
+            }
+          }}
+        />
+
+        {/* 用户活跃度热力图 */}
+        <ActivityHeatmap
+          heatmapData={heatmapData}
+          isLoading={isLoadingHeatmap}
+          onRefresh={fetchHeatmapData}
+        />
+
+        {/* Top活跃用户排行榜 */}
+        <TopActiveUsers
+          users={topActiveUsers}
+          isLoading={isLoadingTopUsers}
+          period={topUsersPeriod}
+          onPeriodChange={fetchTopActiveUsers}
+          onRefresh={() => fetchTopActiveUsers(topUsersPeriod)}
+        />
+
+        {/* 异常登录检测 */}
+        <AnomalyDetection
+          data={anomalyDetection}
+          isLoading={isLoadingAnomaly}
+          period={anomalyPeriod}
+          onPeriodChange={fetchAnomalyDetection}
+          onRefresh={() => fetchAnomalyDetection(anomalyPeriod)}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default SuperAdd;
+
+                            className="h-10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="decrease-logins">减少登录次数</Label>
+                          <Input
+                            id="decrease-logins"
+                            type="number"
+                            min="1"
+                            value={decreaseLogins}
+                            onChange={(e) => setDecreaseLogins(e.target.value)}
+                            placeholder="请输入要减少的次数"
+                            className="h-10"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleDecreaseLogins}
+                          disabled={isDecreasingLogins}
+                          className="w-full h-11 text-base bg-orange-600 hover:bg-orange-700"
+                        >
+                          {isDecreasingLogins ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              减少中...
+                            </>
+                          ) : (
+                            "确认减少"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="reset" className="mt-4">
+                    <div className="p-6 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-lg border-2 border-red-200 dark:border-red-800">
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                        <RotateCcw className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        重置登录次数
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">将指定用户的登录次数重置为 0</p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-username">用户名</Label>
+                          <Input
+                            id="reset-username"
+                            value={resetUsername}
+                            onChange={(e) => setResetUsername(e.target.value)}
+                            placeholder="请输入用户名"
+                            className="h-10"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleResetLogins}
+                          disabled={isResetting}
+                          variant="destructive"
+                          className="w-full h-11 text-base"
+                        >
+                          {isResetting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              重置中...
+                            </>
+                          ) : (
+                            "确认重置为 0"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+
+              {/* PDF积分操作 */}
+              <TabsContent value="pdf">
+                <Tabs defaultValue="add" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 h-10">
+                    <TabsTrigger value="add" className="text-sm">
+                      <UserPlus className="mr-1 h-3 w-3" />
+                      添加积分
+                    </TabsTrigger>
+                    <TabsTrigger value="decrease" className="text-sm">
+                      <Minus className="mr-1 h-3 w-3" />
+                      减少积分
+                    </TabsTrigger>
+                    <TabsTrigger value="reset" className="text-sm">
+                      <RotateCcw className="mr-1 h-3 w-3" />
+                      重置积分
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="add" className="mt-4">
+                    <div className="p-6 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                        <CreditCard className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        添加PDF积分
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">为指定用户增加PDF积分</p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="pdf-username">用户名</Label>
+                          <Input
+                            id="pdf-username"
+                            value={pdfUsername}
+                            onChange={(e) => setPdfUsername(e.target.value)}
+                            placeholder="请输入用户名"
+                            className="h-10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="pdf-amount">添加积分数量</Label>
+                          <Input
+                            id="pdf-amount"
+                            type="number"
+                            min="1"
+                            value={pdfAmount}
+                            onChange={(e) => setPdfAmount(e.target.value)}
+                            placeholder="请输入要添加的积分数量"
+                            className="h-10"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleAddPdfLimit}
+                          disabled={isAddingPdf}
+                          className="w-full h-11 text-base bg-purple-600 hover:bg-purple-700"
+                        >
+                          {isAddingPdf ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              添加中...
+                            </>
+                          ) : (
+                            "确认添加"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="decrease" className="mt-4">
+                    <div className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-lg border-2 border-orange-200 dark:border-orange-800">
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                        <Minus className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                        减少PDF积分
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">为指定用户减少PDF积分</p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="decrease-pdf-username">用户名</Label>
+                          <Input
+                            id="decrease-pdf-username"
+                            value={decreasePdfUsername}
+                            onChange={(e) => setDecreasePdfUsername(e.target.value)}
+                            placeholder="请输入用户名"
+                            className="h-10"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="decrease-pdf-amount">减少积分数量</Label>
+                          <Input
+                            id="decrease-pdf-amount"
+                            type="number"
+                            min="1"
+                            value={decreasePdfAmount}
+                            onChange={(e) => setDecreasePdfAmount(e.target.value)}
+                            placeholder="请输入要减少的积分数量"
+                            className="h-10"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleDecreasePdfLimit}
+                          disabled={isDecreasingPdf}
+                          className="w-full h-11 text-base bg-orange-600 hover:bg-orange-700"
+                        >
+                          {isDecreasingPdf ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              减少中...
+                            </>
+                          ) : (
+                            "确认减少"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="reset" className="mt-4">
+                    <div className="p-6 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20 rounded-lg border-2 border-red-200 dark:border-red-800">
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                        <RotateCcw className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        重置PDF积分
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-4">将指定用户的PDF积分重置为 0</p>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-pdf-username">用户名</Label>
+                          <Input
+                            id="reset-pdf-username"
+                            value={resetPdfUsername}
+                            onChange={(e) => setResetPdfUsername(e.target.value)}
+                            placeholder="请输入用户名"
+                            className="h-10"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleResetPdfLimit}
+                          disabled={isResettingPdf}
+                          variant="destructive"
+                          className="w-full h-11 text-base"
+                        >
+                          {isResettingPdf ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              重置中...
+                            </>
+                          ) : (
+                            "确认重置为 0"
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* 充值卡管理 */}
+        <Card className="shadow-lg border-2">
+          <CardHeader>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                  <Ticket className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">充值卡管理</CardTitle>
+                  <CardDescription>创建和查看充值卡</CardDescription>
+                </div>
+              </div>
+              <Button onClick={fetchCards} variant="outline" size="sm" className="border-2" disabled={isFetchingCards}>
+                {isFetchingCards ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <List className="h-4 w-4 mr-2" />
+                )}
+                刷新列表
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="create" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 h-12">
+                <TabsTrigger value="create" className="text-base">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  批量创建
+                </TabsTrigger>
+                <TabsTrigger value="list" className="text-base">
+                  <List className="mr-2 h-4 w-4" />
+                  查看列表
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="create" className="space-y-4 mt-6">
+                <div className="p-6 bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/20 dark:to-cyan-950/20 rounded-lg border-2 border-teal-200 dark:border-teal-800">
+                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <Ticket className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                    批量创建充值卡
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">批量生成充值卡密（最多100张）</p>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="card-type">卡类型</Label>
+                      <Select value={newCardType} onValueChange={setNewCardType}>
+                        <SelectTrigger className="h-10">
+                          <SelectValue placeholder="选择卡类型" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="login">登录次数充值卡</SelectItem>
+                          <SelectItem value="pdf">PDF积分充值卡</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="card-values">充值数量（每张卡）</Label>
+                      <Input
+                        id="card-values"
+                        type="number"
+                        min="1"
+                        value={newCardValues}
+                        onChange={(e) => setNewCardValues(e.target.value)}
+                        placeholder="请输入每张卡的充值数量"
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="card-count">生成张数</Label>
+                      <Input
+                        id="card-count"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={newCardCount}
+                        onChange={(e) => setNewCardCount(e.target.value)}
+                        placeholder="请输入要生成的张数（1-100）"
+                        className="h-10"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleCreateCards}
+                      disabled={isCreatingCards}
+                      className="w-full h-11 text-base bg-teal-600 hover:bg-teal-700"
+                    >
+                      {isCreatingCards ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          创建中...
+                        </>
+                      ) : (
+                        "确认创建"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="list" className="space-y-4 mt-6">
+                {/* 搜索框 */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={cardSearchQuery}
+                    onChange={(e) => setCardSearchQuery(e.target.value)}
+                    placeholder="搜索卡密ID或使用者..."
+                    className="pl-10 h-10"
+                  />
+                </div>
+
+                {/* 卡片统计 */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-3 bg-teal-50 dark:bg-teal-950/30 rounded-lg border border-teal-200 dark:border-teal-800 text-center">
+                    <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{cards.length}</div>
+                    <div className="text-xs text-muted-foreground">总数</div>
+                  </div>
+                  <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-center">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {cards.filter((c) => !c.used).length}
+                    </div>
+                    <div className="text-xs text-muted-foreground">未使用</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-950/30 rounded-lg border border-gray-200 dark:border-gray-800 text-center">
+                    <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                      {cards.filter((c) => c.used).length}
+                    </div>
+                    <div className="text-xs text-muted-foreground">已使用</div>
+                  </div>
+                </div>
+
+                {/* 导出按钮 */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => exportCardsToCSV(true)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-2"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    导出全部CSV
+                  </Button>
+                  <Button
+                    onClick={() => exportCardsToCSV(false)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-2"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    导出未使用CSV
+                  </Button>
+                </div>
+
+                {/* 卡片列表 */}
+                {isFetchingCards ? (
+                  <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground">正在加载充值卡列表...</p>
+                    </div>
+                  </div>
+                ) : paginatedCards.length > 0 ? (
+                  <div className="border-2 rounded-lg p-3 max-h-96 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+                    <div className="space-y-2">
+                      {paginatedCards.map((card, index) => (
+                        <div
+                          key={card.id}
+                          className={`flex justify-between items-center p-4 rounded-lg hover:shadow-lg transition-all border-2 animate-scale-in ${
+                            card.used
+                              ? "bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800/50 dark:to-gray-900/50 border-gray-300 dark:border-gray-700"
+                              : "bg-gradient-to-r from-background to-muted/20 border-border/50 hover:border-teal-300"
+                          }`}
+                          style={{ animationDelay: `${index * 30}ms` }}
+                        >
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm truncate">{card.id}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => copyToClipboard(card.id)}
+                              >
+                                {copiedId === card.id ? (
+                                  <Check className="h-3.5 w-3.5 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{card.type === "login" ? "登录次数" : "PDF积分"}</span>
+                              <span>·</span>
+                              <span>{card.values} 点</span>
+                              {card.used && card.used_by && (
+                                <>
+                                  <span>·</span>
+                                  <span>使用者: {card.used_by}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <Badge
+                            variant={card.used ? "secondary" : "default"}
+                            className={card.used ? "" : "bg-teal-600"}
+                          >
+                            {card.used ? "已使用" : "未使用"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                    {cardSearchQuery ? "未找到匹配的充值卡" : "暂无充值卡数据"}
+                  </div>
+                )}
+
+                {/* 分页控件 */}
+                {cardTotalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      第 {cardCurrentPage} / {cardTotalPages} 页
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCardCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={cardCurrentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        上一页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCardCurrentPage((p) => Math.min(cardTotalPages, p + 1))}
+                        disabled={cardCurrentPage === cardTotalPages}
+                      >
+                        下一页
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        {/* 用户列表（合并查询功能） */}
+        <Card className="shadow-lg border-2">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <List className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">用户列表</CardTitle>
+                  <CardDescription>
+                    共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}
+                  </CardDescription>
+                </div>
+              </div>
+              <Button onClick={fetchUsers} variant="outline" size="sm" className="border-2" disabled={isFetchingUsers}>
+                {isFetchingUsers ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <List className="h-4 w-4 mr-2" />
+                )}
+                刷新列表
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 搜索框 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索用户名..."
+                className="pl-10 h-10"
+              />
+            </div>
+
+            {/* 用户列表 */}
+            {isFetchingUsers ? (
+              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
+                </div>
+              </div>
+            ) : paginatedUsers.length > 0 ? (
+              <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+                <div className="space-y-2">
+                  {paginatedUsers.map((user, index) => (
+                    <div
+                      key={user.id}
+                      className="flex justify-between items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <span className="font-bold text-lg block truncate">{user.username}</span>
+                        <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
+                      </div>
+                      <div className="ml-4 flex flex-col gap-2">
+                        <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                          <LogIn className="h-3.5 w-3.5" />
+                          <span className="font-medium">登录次数: {user.remaining_logins}</span>
+                        </Badge>
+                        <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 justify-start">
+                          <CreditCard className="h-3.5 w-3.5" />
+                          <span className="font-medium">PDF积分: {user.pdf_limit}</span>
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
+              </div>
+            )}
+
+            {/* 分页控件 */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  第 {currentPage} / {totalPages} 页
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    上一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    下一页
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 登录统计图表 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    登录统计图表
+                  </CardTitle>
+                  <CardDescription>
+                    {statsViewMode === "day"
+                      ? "展示当日各时段的用户登录情况"
+                      : statsViewMode === "week"
+                        ? "展示过去7天的用户登录趋势"
+                        : "展示过去30天的用户登录趋势"}
+                  </CardDescription>
+                </div>
+                {statsViewMode === "day" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[200px] justify-start text-left font-normal",
+                          !selectedDate && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "yyyy年MM月dd日", { locale: zhCN }) : "选择日期"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                        className="pointer-events-auto"
+                        locale={zhCN}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+
+              {/* 视图切换按钮 */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={statsViewMode === "day" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatsViewMode("day")}
+                >
+                  日视图
+                </Button>
+                <Button
+                  variant={statsViewMode === "week" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatsViewMode("week")}
+                >
+                  周视图
+                </Button>
+                <Button
+                  variant={statsViewMode === "month" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatsViewMode("month")}
+                >
+                  月视图
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* 汇总统计卡片 (周/月视图) */}
+            {statsViewMode !== "day" && rangeSummary && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-primary/10 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">总登录次数</p>
+                  <p className="text-2xl font-bold text-primary">{rangeSummary.totalLogins}</p>
+                </div>
+                <div className="bg-accent/10 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">独立用户数</p>
+                  <p className="text-2xl font-bold text-accent">{rangeSummary.totalUniqueUsers}</p>
+                </div>
+                <div className="bg-secondary/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">日均登录</p>
+                  <p className="text-2xl font-bold">{rangeSummary.avgLogins}</p>
+                </div>
+                <div className="bg-muted rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">统计天数</p>
+                  <p className="text-2xl font-bold">{rangeSummary.days}天</p>
+                </div>
+              </div>
+            )}
+
+            {/* 图表区域 */}
+            {statsViewMode === "day" ? (
+              // 日视图 - 小时统计
+              isLoadingHourlyStats ? (
+                <div className="flex items-center justify-center h-[300px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : hourlyStats.length > 0 ? (
+                <div className="w-full h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={hourlyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis
+                        dataKey="hourLabel"
+                        tick={{ fontSize: 12 }}
+                        interval={1}
+                        angle={-45}
+                        textAnchor="end"
+                        height={60}
+                      />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                        formatter={(value: number, name: string) => [
+                          value,
+                          name === "totalLogins" ? "登录次数" : "独立用户数",
+                        ]}
+                        labelFormatter={(label) => `时间: ${label}`}
+                      />
+                      <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                      <Bar dataKey="totalLogins" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="totalLogins" />
+                      <Bar dataKey="uniqueUsers" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="uniqueUsers" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                  暂无登录数据
+                </div>
+              )
+            ) : // 周/月视图 - 每日统计
+            isLoadingRangeStats ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : dailyStats.length > 0 ? (
+              <div className="w-full h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailyStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="dateLabel"
+                      tick={{ fontSize: 12 }}
+                      interval={statsViewMode === "month" ? 4 : 0}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number, name: string) => [
+                        value,
+                        name === "totalLogins" ? "登录次数" : "独立用户数",
+                      ]}
+                      labelFormatter={(label) => `日期: ${label}`}
+                    />
+                    <Legend formatter={(value) => (value === "totalLogins" ? "登录次数" : "独立用户数")} />
+                    <Line
+                      type="monotone"
+                      dataKey="totalLogins"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 2 }}
+                      name="totalLogins"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="uniqueUsers"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                      dot={{ fill: "hsl(var(--accent))", strokeWidth: 2 }}
+                      name="uniqueUsers"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无登录数据
+              </div>
+            )}
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => (statsViewMode === "day" ? fetchHourlyStats() : fetchRangeStats(statsViewMode))}
+                disabled={isLoadingHourlyStats || isLoadingRangeStats}
+              >
+                {isLoadingHourlyStats || isLoadingRangeStats ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                )}
+                刷新数据
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 用户活跃度热力图 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Flame className="h-5 w-5 text-orange-500" />
+                  用户活跃度热力图
+                </CardTitle>
+                <CardDescription>展示过去7天各时段的登录密度分布</CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchHeatmapData}
+                disabled={isLoadingHeatmap}
+              >
+                {isLoadingHeatmap ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                )}
+                刷新
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingHeatmap ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : heatmapData.length > 0 ? (
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[800px]">
+                  {/* 热力图网格 */}
+                  <div className="grid grid-cols-[80px_repeat(24,1fr)] gap-1">
+                    {/* 表头 - 小时 */}
+                    <div className="text-xs font-medium text-muted-foreground"></div>
+                    {Array.from({ length: 24 }, (_, hour) => (
+                      <div key={hour} className="text-xs text-center text-muted-foreground py-2">
+                        {hour.toString().padStart(2, '0')}
+                      </div>
+                    ))}
+                    
+                    {/* 数据行 - 每天 */}
+                    {['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map((day, dayIndex) => (
+                      <div key={day} className="contents">
+                        <div className="text-xs font-medium text-muted-foreground flex items-center justify-end pr-2">
+                          {day}
+                        </div>
+                        {Array.from({ length: 24 }, (_, hour) => {
+                          const dataPoint = heatmapData.find(
+                            d => d.dayIndex === dayIndex && d.hour === hour
+                          );
+                          const value = dataPoint?.loginCount || 0;
+                          
+                          // 根据登录次数计算颜色强度
+                          let bgColor = 'bg-gray-100 dark:bg-gray-800';
+                          if (value > 0) bgColor = 'bg-green-200 dark:bg-green-900/30';
+                          if (value > 2) bgColor = 'bg-green-300 dark:bg-green-800/50';
+                          if (value > 5) bgColor = 'bg-green-400 dark:bg-green-700/60';
+                          if (value > 10) bgColor = 'bg-green-500 dark:bg-green-600/70';
+                          if (value > 20) bgColor = 'bg-green-600 dark:bg-green-500/80';
+                          
+                          return (
+                            <div
+                              key={`${dayIndex}-${hour}`}
+                              className={`aspect-square rounded ${bgColor} hover:ring-2 hover:ring-primary transition-all cursor-pointer relative group`}
+                              title={`${day} ${hour.toString().padStart(2, '0')}:00 - 登录${value}次`}
+                            >
+                              {value > 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {value}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* 图例 */}
+                  <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t">
+                    <span className="text-xs text-muted-foreground">登录密度:</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded"></div>
+                      <span className="text-xs">0</span>
+                      <div className="w-4 h-4 bg-green-200 dark:bg-green-900/30 rounded"></div>
+                      <span className="text-xs">1-2</span>
+                      <div className="w-4 h-4 bg-green-400 dark:bg-green-700/60 rounded"></div>
+                      <span className="text-xs">5-10</span>
+                      <div className="w-4 h-4 bg-green-600 dark:bg-green-500/80 rounded"></div>
+                      <span className="text-xs">20+</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无热力图数据
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top活跃用户排行榜 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
+                  Top活跃用户排行榜
+                </CardTitle>
+                <CardDescription>显示指定时间段内登录次数最多的用户</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={topUsersPeriod.toString()}
+                  onValueChange={(value) => fetchTopActiveUsers(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="选择时间段" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">近7天</SelectItem>
+                    <SelectItem value="30">近30天</SelectItem>
+                    <SelectItem value="90">近90天</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchTopActiveUsers(topUsersPeriod)}
+                  disabled={isLoadingTopUsers}
+                >
+                  {isLoadingTopUsers ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                  )}
+                  刷新
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingTopUsers ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : topActiveUsers.length > 0 ? (
+              <div className="space-y-3">
+                {topActiveUsers.map((user, index) => {
+                  // 根据排名设置不同的徽章颜色
+                  let badgeColor = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+                  let icon = null;
+                  if (index === 0) {
+                    badgeColor = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-2 border-yellow-300";
+                    icon = "🥇";
+                  } else if (index === 1) {
+                    badgeColor = "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 border-2 border-gray-300";
+                    icon = "🥈";
+                  } else if (index === 2) {
+                    badgeColor = "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 border-2 border-orange-300";
+                    icon = "🥉";
+                  }
+                  
+                  return (
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-4 p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg border-2 hover:shadow-md transition-all"
+                    >
+                      {/* 排名 */}
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${badgeColor}`}>
+                        {icon || `#${index + 1}`}
+                      </div>
+                      
+                      {/* 用户信息 */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-lg truncate">{user.username}</div>
+                        <div className="text-sm text-muted-foreground">
+                          活跃天数: {user.activeDays} 天 · 日均登录: {user.avgLoginsPerDay} 次
+                        </div>
+                      </div>
+                      
+                      {/* 登录统计 */}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="text-2xl font-bold text-primary">{user.totalLogins}</div>
+                        <div className="text-xs text-muted-foreground">总登录次数</div>
+                      </div>
+                      
+                      {/* 柱状图 */}
+                      <div className="flex-shrink-0 w-32 hidden md:block">
+                        <div className="h-8 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all"
+                            style={{
+                              width: `${Math.min(100, (user.totalLogins / (topActiveUsers[0]?.totalLogins || 1)) * 100)}%`
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无活跃用户数据
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 异常登录检测 */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                  异常登录检测
+                </CardTitle>
+                <CardDescription>检测频繁登录、异常时间段登录等可疑行为</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={anomalyPeriod.toString()}
+                  onValueChange={(value) => fetchAnomalyDetection(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[120px] h-9">
+                    <SelectValue placeholder="选择时间段" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">近7天</SelectItem>
+                    <SelectItem value="30">近30天</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchAnomalyDetection(anomalyPeriod)}
+                  disabled={isLoadingAnomaly}
+                >
+                  {isLoadingAnomaly ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                  )}
+                  刷新
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoadingAnomaly ? (
+              <div className="flex items-center justify-center h-[200px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : anomalyDetection ? (
+              <div className="space-y-6">
+                {/* 异常统计摘要 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border-2 border-red-200 dark:border-red-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      <span className="font-semibold text-red-900 dark:text-red-100">频繁登录用户</span>
+                    </div>
+                    <div className="text-3xl font-bold text-red-600 dark:text-red-400">
+                      {anomalyDetection.summary.totalFrequentLoginUsers}
+                    </div>
+                    <div className="text-xs text-red-700 dark:text-red-300 mt-1">
+                      1小时内登录超过5次
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border-2 border-orange-200 dark:border-orange-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                      <span className="font-semibold text-orange-900 dark:text-orange-100">凌晨登录次数</span>
+                    </div>
+                    <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                      {anomalyDetection.summary.totalAbnormalTimeLogins}
+                    </div>
+                    <div className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                      凌晨0-5点登录
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border-2 border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                      <span className="font-semibold text-yellow-900 dark:text-yellow-100">单日异常用户</span>
+                    </div>
+                    <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                      {anomalyDetection.summary.totalDailyAnomalyUsers}
+                    </div>
+                    <div className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                      单日登录超过20次
+                    </div>
+                  </div>
+                </div>
+
+                {/* 详细异常列表 */}
+                <Tabs defaultValue="frequent" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 h-10">
+                    <TabsTrigger value="frequent" className="text-sm">
+                      频繁登录
+                    </TabsTrigger>
+                    <TabsTrigger value="abnormal" className="text-sm">
+                      凌晨登录
+                    </TabsTrigger>
+                    <TabsTrigger value="daily" className="text-sm">
+                      单日异常
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="frequent" className="mt-4">
+                    {anomalyDetection.anomalies.frequentLogins.length > 0 ? (
+                      <div className="border-2 rounded-lg max-h-80 overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">用户名</th>
+                              <th className="px-4 py-3 text-left font-medium">日期</th>
+                              <th className="px-4 py-3 text-left font-medium">时段</th>
+                              <th className="px-4 py-3 text-right font-medium">登录次数</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalyDetection.anomalies.frequentLogins.map((record, idx) => (
+                              <tr key={idx} className="border-t hover:bg-muted/50">
+                                <td className="px-4 py-3 font-medium">{record.username}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.date}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.hour}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <Badge variant="destructive">{record.loginCount} 次</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        未检测到频繁登录行为
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="abnormal" className="mt-4">
+                    {anomalyDetection.anomalies.abnormalTimeLogins.length > 0 ? (
+                      <div className="border-2 rounded-lg max-h-80 overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">用户名</th>
+                              <th className="px-4 py-3 text-left font-medium">日期</th>
+                              <th className="px-4 py-3 text-left font-medium">时间</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalyDetection.anomalies.abnormalTimeLogins.slice(0, 20).map((record, idx) => (
+                              <tr key={idx} className="border-t hover:bg-muted/50">
+                                <td className="px-4 py-3 font-medium">{record.username}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.date}</td>
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  <Badge variant="secondary">{record.hour}</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {anomalyDetection.anomalies.abnormalTimeLogins.length > 20 && (
+                          <div className="text-center py-2 text-xs text-muted-foreground border-t">
+                            显示前20条，共 {anomalyDetection.anomalies.abnormalTimeLogins.length} 条记录
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        未检测到凌晨登录行为
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="daily" className="mt-4">
+                    {anomalyDetection.anomalies.dailyAnomalies.length > 0 ? (
+                      <div className="border-2 rounded-lg max-h-80 overflow-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-medium">用户名</th>
+                              <th className="px-4 py-3 text-left font-medium">日期</th>
+                              <th className="px-4 py-3 text-right font-medium">当日登录次数</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anomalyDetection.anomalies.dailyAnomalies.map((record, idx) => (
+                              <tr key={idx} className="border-t hover:bg-muted/50">
+                                <td className="px-4 py-3 font-medium">{record.username}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{record.date}</td>
+                                <td className="px-4 py-3 text-right">
+                                  <Badge variant="destructive">{record.dailyLogins} 次</Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
+                        未检测到单日登录异常
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+                暂无异常检测数据
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default SuperAdd;
