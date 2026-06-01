@@ -150,7 +150,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '缺少必要的认证信息'
+      error: '傻逼玩意，机器码封了，换主板吧'
     });
   }
   
@@ -169,7 +169,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '透你妈傻逼！'
+      error: '傻逼玩意，机器码封了，换主板吧'
     });
   }
   
@@ -186,7 +186,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '透你妈傻逼，你他妈了个逼的再检查检查！'
+      error: '傻逼玩意，机器码封了，换主板吧'
     });
   }
   
@@ -239,7 +239,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '透你妈傻逼，失败了，听见了没？'
+      error: '傻逼玩意，机器码封了，换主板吧'
     });
   }
   
