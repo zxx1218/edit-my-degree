@@ -39,7 +39,7 @@ class DatabaseManager {
       
       // 只在日志进程中打印初始化日志
       if (this.isLogProcess) {
-        console.log('数据库连接池初始化成功');
+        console.safe('数据库连接池初始化成功');
       }
       
       // 启动连接监控
@@ -105,7 +105,7 @@ class DatabaseManager {
    */
   async reconnect() {
     if (this.isLogProcess) {
-      console.log('正在尝试重新连接数据库...');
+      console.safe('正在尝试重新连接数据库...');
     }
     try {
       if (this.pool) {
@@ -113,7 +113,7 @@ class DatabaseManager {
       }
       await this.initializePool();
       if (this.isLogProcess) {
-        console.log('数据库重新连接成功');
+        console.safe('数据库重新连接成功');
       }
     } catch (err) {
       console.error('数据库重新连接失败:', err);
@@ -140,7 +140,7 @@ class DatabaseManager {
           await connection.ping();
           connection.release();
           
-          console.log('数据库连接池健康检查：连接正常');
+          console.safe('数据库连接池健康检查：连接正常');
         }
       } catch (err) {
         console.warn('数据库连接检查失败，正在尝试重新连接...', err);
@@ -157,7 +157,7 @@ class DatabaseManager {
       clearInterval(this.monitorInterval);
       this.monitorInterval = null;
       if (this.isLogProcess) {
-        console.log('数据库连接监控已停止');
+        console.safe('数据库连接监控已停止');
       }
     }
   }
@@ -171,7 +171,7 @@ class DatabaseManager {
       await this.pool.end();
       this.isConnected = false;
       if (this.isLogProcess) {
-        console.log('数据库连接池已关闭');
+        console.safe('数据库连接池已关闭');
       }
     }
   }

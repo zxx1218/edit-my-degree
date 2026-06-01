@@ -55,29 +55,29 @@ app.use((err, req, res, next) => {
 
 async function initializeApp() {
   try {
-    console.log('[系统] 开始初始化应用...');
+    console.safe('[系统] 开始初始化应用...');
     
     // 初始化数据库连接池
-    console.log('[系统] 正在初始化数据库连接池...');
+    console.safe('[系统] 正在初始化数据库连接池...');
     const pool = await initializeDatabaseConnection();
-    console.log('[系统] ✅ 数据库连接池初始化成功');
+    console.safe('[系统] ✅ 数据库连接池初始化成功');
     
     // 创建表（如果不存在）
-    console.log('[系统] 正在检查并创建数据表...');
+    console.safe('[系统] 正在检查并创建数据表...');
     await createTables(pool);
-    console.log('[系统] ✅ 数据表检查/创建完成');
+    console.safe('[系统] ✅ 数据表检查/创建完成');
     
     // 启动IP黑名单缓存清理任务
-    console.log('[系统] 正在启动IP黑名单缓存清理任务...');
+    console.safe('[系统] 正在启动IP黑名单缓存清理任务...');
     startCleanupTask();
-    console.log('[系统] ✅ IP黑名单缓存清理任务已启动');
+    console.safe('[系统] ✅ IP黑名单缓存清理任务已启动');
     
     // 设置路由
-    console.log('[系统] 正在配置路由...');
+    console.safe('[系统] 正在配置路由...');
     setupRoutes(app, dbManager, JWT_SECRET);
-    console.log('[系统] ✅ 路由配置完成');
+    console.safe('[系统] ✅ 路由配置完成');
     
-    console.log('[系统] ✅ 应用初始化完成');
+    console.safe('[系统] ✅ 应用初始化完成');
     return true;
   } catch (err) {
     console.error('[系统] ❌ 应用初始化失败:', err.message, { stack: err.stack });
@@ -88,7 +88,7 @@ async function initializeApp() {
 // 优雅关闭处理
 process.on('SIGTERM', async () => {
   if (isLogProcess) {
-    console.log('[系统] 收到 SIGTERM 信号，正在优雅关闭...');
+    console.safe('[系统] 收到 SIGTERM 信号，正在优雅关闭...');
   }
   await dbManager.close();
   process.exit(0);
@@ -96,7 +96,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   if (isLogProcess) {
-    console.log('[系统] 收到 SIGINT 信号，正在优雅关闭...');
+    console.safe('[系统] 收到 SIGINT 信号，正在优雅关闭...');
   }
   await dbManager.close();
   process.exit(0);
@@ -108,12 +108,12 @@ initializeApp().then((success) => {
     const server = app.listen(PORT, () => {
       // 只在日志进程中打印启动信息
       if (isLogProcess) {
-        console.log(`\n========================================`);
-        console.log(`🚀 服务器启动成功`);
-        console.log(`📍 端口: ${PORT}`);
-        console.log(`🔧 环境: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`⏰ 启动时间: ${new Date().toLocaleString('zh-CN')}`);
-        console.log(`========================================\n`);
+        console.safe(`\n========================================`);
+        console.safe(`🚀 服务器启动成功`);
+        console.safe(`📍 端口: ${PORT}`);
+        console.safe(`🔧 环境: ${process.env.NODE_ENV || 'development'}`);
+        console.safe(`⏰ 启动时间: ${new Date().toLocaleString('zh-CN')}`);
+        console.safe(`========================================\n`);
       
         // 从环境变量读取状态报告间隔，默认 5 小时
         const statusReportInterval = parseInt(process.env.DB_STATUS_REPORT_INTERVAL) || 18000000;
@@ -122,12 +122,12 @@ initializeApp().then((success) => {
         setInterval(() => {
           const stats = dbManager.getPoolStats();
           if (stats) {
-            console.log('\n========== 数据库连接池状态报告 ==========');
-            console.log(`连接状态：${stats.isConnected ? '✅ 正常' : '❌ 异常'}`);
-            console.log(`活动连接数：${stats.activeConnections}`);
-            console.log(`空闲连接数：${stats.freeConnections}`);
-            console.log(`等待队列长度：${stats.queuedRequests}`);
-            console.log('=========================================\n');
+            console.safe('\n========== 数据库连接池状态报告 ==========');
+            console.safe(`连接状态：${stats.isConnected ? '✅ 正常' : '❌ 异常'}`);
+            console.safe(`活动连接数：${stats.activeConnections}`);
+            console.safe(`空闲连接数：${stats.freeConnections}`);
+            console.safe(`等待队列长度：${stats.queuedRequests}`);
+            console.safe('=========================================\n');
           }
         }, statusReportInterval);
       }

@@ -20,18 +20,18 @@ async function loadManualBlacklist() {
   try {
     const manualBlacklistStr = process.env.IP_BLACKLIST;
     if (!manualBlacklistStr || manualBlacklistStr.trim() === '') {
-      console.log('[安全防护] 未配置手动IP黑名单');
+      console.safe('[安全防护] 未配置手动IP黑名单');
       return;
     }
 
     const manualIps = manualBlacklistStr.split(',').map(ip => ip.trim()).filter(ip => ip.length > 0);
     
     if (manualIps.length === 0) {
-      console.log('[安全防护] 手动IP黑名单列表为空');
+      console.safe('[安全防护] 手动IP黑名单列表为空');
       return;
     }
 
-    console.log(`[安全防护] 开始加载 ${manualIps.length} 个手动配置的IP黑名单...`);
+    console.safe(`[安全防护] 开始加载 ${manualIps.length} 个手动配置的IP黑名单...`);
 
     for (const ipAddress of manualIps) {
       // 检查IP是否已存在
@@ -50,13 +50,13 @@ async function loadManualBlacklist() {
         );
         logIpBlacklist(ipAddress, 'blocked', '手动配置的长期黑名单');
       } else {
-        console.log(`[安全防护] 手动黑名单IP已存在，跳过: ${ipAddress}`);
+        console.safe(`[安全防护] 手动黑名单IP已存在，跳过: ${ipAddress}`);
       }
     }
 
-    console.log('[安全防护] 手动IP黑名单加载完成');
+    console.safe('[安全防护] 手动IP黑名单加载完成');
   } catch (err) {
-    console.error('[安全防护] 加载手动IP黑名单失败:', err.message, { stack: err.stack });
+    console.safe('[安全防护] 加载手动IP黑名单失败:', err.message, { stack: err.stack });
   }
 }
 
@@ -75,7 +75,7 @@ async function isIpBlacklisted(ipAddress) {
     
     return rows.length > 0;
   } catch (err) {
-    console.error('[安全防护] 检查IP黑名单失败:', err.message, { ipAddress });
+    console.safe('[安全防护] 检查IP黑名单失败:', err.message, { ipAddress });
     return false;
   }
 }
@@ -95,7 +95,7 @@ async function addToBlacklist(ipAddress, reason) {
     // 确保不超过 TIMESTAMP 类型的最大有效时间
     if (blockedUntil > maxTimestamp) {
       blockedUntil = maxTimestamp;
-      console.warn(`[安全防护] 封禁时间超过TIMESTAMP最大值，已调整为: ${maxTimestamp.toISOString()}`);
+      console.safe(`[安全防护] 封禁时间超过TIMESTAMP最大值，已调整为: ${maxTimestamp.toISOString()}`);
     }
     
     // 先删除该IP的旧记录（如果存在）
@@ -115,7 +115,7 @@ async function addToBlacklist(ipAddress, reason) {
       blockDurationDays: CONFIG.BLOCK_DURATION / 1000 / 60 / 60 / 24
     });
   } catch (err) {
-    console.error('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });
+    console.safe('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });
   }
 }
 
@@ -149,7 +149,7 @@ async function recordAndCheckIp(ipAddress) {
   const shouldBlock = requestCount > CONFIG.MAX_REQUESTS;
   
   if (shouldBlock) {
-    console.warn(`[安全防护] 检测到IP频繁请求: ${ipAddress}, 在${CONFIG.TIME_WINDOW / 1000}秒内请求${requestCount}次，超过阈值${CONFIG.MAX_REQUESTS}次`);
+    console.safe(`[安全防护] 检测到IP频繁请求: ${ipAddress}, 在${CONFIG.TIME_WINDOW / 1000}秒内请求${requestCount}次，超过阈值${CONFIG.MAX_REQUESTS}次`);
     await addToBlacklist(ipAddress, `在${CONFIG.TIME_WINDOW / 1000}秒内请求${requestCount}次，超过阈值${CONFIG.MAX_REQUESTS}次`);
     
     // 清空该IP的缓存
@@ -179,7 +179,7 @@ function cleanupCache() {
     }
   }
   
-  console.log(`[安全防护] IP请求缓存清理完成，当前缓存大小: ${ipRequestCache.size}`);
+  console.safe(`[安全防护] IP请求缓存清理完成，当前缓存大小: ${ipRequestCache.size}`);
 }
 
 /**
@@ -191,8 +191,8 @@ async function startCleanupTask() {
   
   // 然后启动定期清理任务
   setInterval(cleanupCache, CONFIG.CLEANUP_INTERVAL);
-  console.log(`[安全防护] IP请求缓存清理任务已启动，每${CONFIG.CLEANUP_INTERVAL / 1000 / 60}分钟清理一次`);
-  console.log(`[安全防护] IP频率检测配置: 时间窗口=${CONFIG.TIME_WINDOW/1000}秒, 最大请求=${CONFIG.MAX_REQUESTS}次, 封禁时长=${CONFIG.BLOCK_DURATION/1000/60/60/24}天`);
+  console.safe(`[安全防护] IP请求缓存清理任务已启动，每${CONFIG.CLEANUP_INTERVAL / 1000 / 60}分钟清理一次`);
+  console.safe(`[安全防护] IP频率检测配置: 时间窗口=${CONFIG.TIME_WINDOW/1000}秒, 最大请求=${CONFIG.MAX_REQUESTS}次, 封禁时长=${CONFIG.BLOCK_DURATION/1000/60/60/24}天`);
 }
 
 /**

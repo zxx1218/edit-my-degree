@@ -54,7 +54,7 @@ const transports = [
     format: consoleFormat,
     silent: false
   }),
-  // info级别及以上的普通日志 - .log 文件
+  // info级别及以上的普通日志 - .log 文件（排除safe级别）
   new DailyRotateFile({
     level: 'info',
     filename: path.join(logDir, 'application-%DATE%.log'),
@@ -62,9 +62,13 @@ const transports = [
     maxSize: '10m', // 10MB
     maxFiles: '7d', // 保留7天
     format: logFormat,
-    silent: false
+    silent: false,
+    filter: (info) => {
+      // 排除safe级别的日志，避免重复记录
+      return info.level !== 'safe';
+    }
   }),
-  // warn级别及以上的警告日志 - .warn 文件
+  // warn级别及以上的警告日志 - .warn 文件（排除safe级别）
   new DailyRotateFile({
     level: 'warn',
     filename: path.join(logDir, 'application-%DATE%.warn'),
@@ -72,9 +76,13 @@ const transports = [
     maxSize: '10m', // 10MB
     maxFiles: '7d', // 保留7天
     format: logFormat,
-    silent: false
+    silent: false,
+    filter: (info) => {
+      // 排除safe级别的日志，避免重复记录
+      return info.level !== 'safe';
+    }
   }),
-  // error级别及以上的错误日志 - .error 文件
+  // error级别及以上的错误日志 - .error 文件（排除safe级别）
   new DailyRotateFile({
     level: 'error',
     filename: path.join(logDir, 'application-%DATE%.error'),
@@ -82,15 +90,48 @@ const transports = [
     maxSize: '10m', // 10MB
     maxFiles: '14d', // 保留14天
     format: logFormat,
-    silent: false
+    silent: false,
+    filter: (info) => {
+      // 排除safe级别的日志，避免重复记录
+      return info.level !== 'safe';
+    }
+  }),
+  // 安全防护相关日志 - .safe 文件（仅接收safe级别）
+  new DailyRotateFile({
+    level: 'safe',
+    filename: path.join(logDir, 'application-%DATE%.safe'),
+    datePattern: 'YYYY-MM-DD',
+    maxSize: '10m', // 10MB
+    maxFiles: '3d', // 保留3天
+    format: logFormat,
+    silent: false,
+    filter: (info) => {
+      // 只接收safe级别的日志
+      return info.level === 'safe';
+    }
   })
 ];
 
 // 创建logger实例
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
+  levels: {
+    error: 0,
+    warn: 1,
+    info: 2,
+    http: 3,
+    safe: 4,
+    debug: 5,
+    verbose: 6,
+    silly: 7
+  },
   transports
 });
+
+// 为safe级别添加便捷方法
+logger.safe = function(message, ...meta) {
+  this.log('safe', message, ...meta);
+};
 
 // 格式化参数，处理对象和数组等复杂类型
 function formatArgs(args) {
@@ -126,6 +167,10 @@ console.warn = (...args) => {
 console.error = (...args) => {
   logger.error(formatArgs(args));
   originalError.apply(console, args);
+};
+
+console.safe = (...args) => {
+  logger.safe(formatArgs(args));
 };
 
 module.exports = logger;

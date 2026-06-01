@@ -7,7 +7,7 @@ async function initializeDatabaseConnection() {
     const pool = await dbManager.initializePool();
     // 只在日志进程中打印初始化日志
     if (dbManager.isLogProcess) {
-      console.log('使用连接池连接到 MySQL 数据库');
+      console.safe('使用连接池连接到 MySQL 数据库');
     }
     return pool;
   } catch (err) {
@@ -204,13 +204,13 @@ async function createTables(db) {
    try {
       await db.execute(`CREATE INDEX ${indexName} ON ${tableName}(${columnName})`);
     if (isLogProcess) {
-      console.log(`索引 ${indexName} 创建成功`);
+      console.safe(`索引 ${indexName} 创建成功`);
     }
     } catch (err) {
       // 如果索引已存在或发生死锁，忽略错误
       if (err.code === 'ER_DUP_KEYNAME' || err.code === 'ER_LOCK_DEADLOCK') {
       if (isLogProcess) {
-        console.log(`索引 ${indexName} 已存在或创建时发生死锁，跳过`);
+        console.safe(`索引 ${indexName} 已存在或创建时发生死锁，跳过`);
       }
       } else {
         throw err; // 其他错误继续抛出
@@ -224,7 +224,7 @@ async function createTables(db) {
   await createIndexIfExists('idx_users_registration_ip', 'users', 'registration_ip');
   
   if (isLogProcess) {
-    console.log('Database tables initialized');
+    console.safe('Database tables initialized');
   }
   
   // 插入初始管理员账户（如果不存在）
@@ -240,7 +240,7 @@ async function createTables(db) {
       ['zxx', '991218zxnmA-']
     );
     if (isLogProcess) {
-      console.log('Initial admin user created');
+      console.safe('Initial admin user created');
     }
   }
 }

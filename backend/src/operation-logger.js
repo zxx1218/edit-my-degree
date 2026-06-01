@@ -188,7 +188,7 @@ function logIpBlacklist(ipAddress, operation, reason, extra = {}) {
   };
   const operationName = operationMap[operation] || operation;
   
-  logger.warn(`[安全防护] IP黑名单 - IP: ${ipAddress}, 操作: ${operationName}, 原因: ${reason}${extraInfo}`);
+  logger.safe(`[安全防护] IP黑名单 - IP: ${ipAddress}, 操作: ${operationName}, 原因: ${reason}${extraInfo}`);
 }
 
 module.exports = {

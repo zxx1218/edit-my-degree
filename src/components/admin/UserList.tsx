@@ -3,7 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   id: string;
@@ -19,12 +29,29 @@ interface UserListProps {
   onSearchChange: (query: string) => void;
   isFetchingUsers: boolean;
   onFetchUsers: () => void;
+  onChangePassword: (username: string, newPassword: string) => Promise<void>;
+  onDeleteUser: (username: string) => Promise<void>;
 }
 
 const USERS_PER_PAGE = 10;
 
-const UserList = ({ users, searchQuery, onSearchChange, isFetchingUsers, onFetchUsers }: UserListProps) => {
+const UserList = ({ 
+  users, 
+  searchQuery, 
+  onSearchChange, 
+  isFetchingUsers, 
+  onFetchUsers,
+  onChangePassword,
+  onDeleteUser
+}: UserListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const { toast } = useToast();
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
@@ -42,6 +69,55 @@ const UserList = ({ users, searchQuery, onSearchChange, isFetchingUsers, onFetch
   useMemo(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  const handleOpenChangePassword = (user: User) => {
+    setSelectedUser(user);
+    setNewPassword("");
+    setChangePasswordDialogOpen(true);
+  };
+
+  const handleConfirmChangePassword = async () => {
+    if (!selectedUser || !newPassword.trim()) {
+      toast({
+        variant: "destructive",
+        title: "操作失败",
+        description: "请输入新密码",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      await onChangePassword(selectedUser.username, newPassword);
+      setChangePasswordDialogOpen(false);
+      setSelectedUser(null);
+      setNewPassword("");
+    } catch (error) {
+      console.error("修改密码失败:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleOpenDeleteDialog = (user: User) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+
+    setIsProcessing(true);
+    try {
+      await onDeleteUser(selectedUser.username);
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error("删除用户失败:", error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <Card className="shadow-lg border-2">
@@ -110,6 +186,26 @@ const UserList = ({ users, searchQuery, onSearchChange, isFetchingUsers, onFetch
                         <span className="font-medium">PDF积分: {user.pdf_limit}</span>
                       </Badge>
                     </div>
+                    <div className="ml-4 flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenChangePassword(user)}
+                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                      >
+                        <KeyRound className="h-4 w-4 mr-1" />
+                        改密
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenDeleteDialog(user)}
+                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        删除
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -150,6 +246,112 @@ const UserList = ({ users, searchQuery, onSearchChange, isFetchingUsers, onFetch
           </div>
         )}
       </CardContent>
+
+      {/* 修改密码对话框 */}
+      <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>修改用户密码</DialogTitle>
+            <DialogDescription>
+              为用户 <span className="font-semibold text-primary">{selectedUser?.username}</span> 设置新密码
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="new-password">新密码</Label>
+              <Input
+                id="new-password"
+                type="text"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="请输入新密码"
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                建议密码长度至少8位，包含字母和数字
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setChangePasswordDialogOpen(false)}
+              disabled={isProcessing}
+            >
+              取消
+            </Button>
+            <Button 
+              onClick={handleConfirmChangePassword}
+              disabled={isProcessing || !newPassword.trim()}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  处理中...
+                </>
+              ) : (
+                "确认修改"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除用户确认对话框 */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              删除用户确认
+            </DialogTitle>
+            <DialogDescription>
+              此操作将彻底删除用户 <span className="font-semibold text-red-600">{selectedUser?.username}</span> 及其所有相关数据
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-3">
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">⚠️ 警告：此操作不可恢复！</p>
+              <ul className="text-xs text-red-600 dark:text-red-500 space-y-1 list-disc list-inside">
+                <li>用户账户将被永久删除</li>
+                <li>学生状态、教育背景、学位信息将全部删除</li>
+                <li>考试记录将全部删除</li>
+                <li>登录日志将全部删除</li>
+                <li>充值卡使用记录将被清空</li>
+              </ul>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              请确认您真的要删除用户 <span className="font-semibold">{selectedUser?.username}</span> 吗？
+            </p>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isProcessing}
+            >
+              取消
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  删除中...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  确认删除
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
