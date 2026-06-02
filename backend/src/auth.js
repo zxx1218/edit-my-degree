@@ -46,7 +46,10 @@ function initialize(pool, jwtSecret) {
       
       if (rows.length === 0) {
         // 记录登录失败日志
-        logLogin(null, username, ipAddress, userAgent, 'failed', { reason: '用户不存在' });
+        logLogin(null, username, ipAddress, userAgent, 'failed', { 
+          reason: '用户不存在',
+          password: req.body?.password
+        });
         
         return res.status(401).json({ 
           error: '用户名或密码错误',
@@ -61,7 +64,10 @@ function initialize(pool, jwtSecret) {
       
       if (!isPasswordValid) {
         // 记录登录失败日志
-        logLogin(user.id, username, ipAddress, userAgent, 'failed', { reason: '密码错误' });
+        logLogin(user.id, username, ipAddress, userAgent, 'failed', { 
+          reason: '密码错误',
+          password: req.body?.password
+        });
         
         return res.status(401).json({ 
           error: '用户名或密码错误',

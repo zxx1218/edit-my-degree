@@ -22,7 +22,7 @@ const logFormat = winston.format.combine(
         fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: false })}`;
       }
     }
-    return `${timestamp} [${level.toUpperCase().padEnd(7)}]: ${fullMessage}`;
+    return `${timestamp} [${level.toUpperCase()}]: ${fullMessage}`;
   })
 );
 
@@ -42,7 +42,7 @@ const consoleFormat = winston.format.combine(
         fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: true })}`;
       }
     }
-    return `${timestamp} [${level}]: ${fullMessage}`;
+    return `${timestamp} [${level.toUpperCase()}]: ${fullMessage}`;
   })
 );
 
@@ -54,67 +54,83 @@ const transports = [
     format: consoleFormat,
     silent: false
   }),
-  // info级别及以上的普通日志 - .log 文件（排除safe级别）
+  // info级别及以上的普通日志 - .log 文件（仅记录 info 和 http）
   new DailyRotateFile({
-    level: 'info',
     filename: path.join(logDir, 'application-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
-    format: logFormat,
-    silent: false,
-    filter: (info) => {
-      // 排除safe级别的日志，避免重复记录
-      return info.level !== 'safe';
-    }
+    format: winston.format.combine(
+      winston.format((info) => {
+        // 只记录 info 和 http 级别
+        if (info.level === 'info' || info.level === 'http') {
+          return info;
+        }
+        return false; // 返回 false 会丢弃该日志
+      })(),
+      logFormat
+    ),
+    silent: false
   }),
-  // warn级别及以上的警告日志 - .warn 文件（排除safe级别）
+  // warn级别的警告日志 - .warn 文件（仅记录 warn）
   new DailyRotateFile({
-    level: 'warn',
     filename: path.join(logDir, 'application-%DATE%.warn'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
-    format: logFormat,
-    silent: false,
-    filter: (info) => {
-      // 排除safe级别的日志，避免重复记录
-      return info.level !== 'safe';
-    }
+    format: winston.format.combine(
+      winston.format((info) => {
+        // 只记录 warn 级别
+        if (info.level === 'warn') {
+          return info;
+        }
+        return false;
+      })(),
+      logFormat
+    ),
+    silent: false
   }),
-  // error级别及以上的错误日志 - .error 文件（排除safe级别）
+  // error级别的错误日志 - .error 文件（仅记录 error）
   new DailyRotateFile({
-    level: 'error',
     filename: path.join(logDir, 'application-%DATE%.error'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
-    format: logFormat,
-    silent: false,
-    filter: (info) => {
-      // 排除safe级别的日志，避免重复记录
-      return info.level !== 'safe';
-    }
+    format: winston.format.combine(
+      winston.format((info) => {
+        // 只记录 error 级别
+        if (info.level === 'error') {
+          return info;
+        }
+        return false;
+      })(),
+      logFormat
+    ),
+    silent: false
   }),
   // 安全防护相关日志 - .safe 文件（仅接收safe级别）
   new DailyRotateFile({
-    level: 'safe',
     filename: path.join(logDir, 'application-%DATE%.safe'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
-    format: logFormat,
-    silent: false,
-    filter: (info) => {
-      // 只接收safe级别的日志
-      return info.level === 'safe';
-    }
+    format: winston.format.combine(
+      winston.format((info) => {
+        // 只接收safe级别的日志
+        if (info.level === 'safe') {
+          return info;
+        }
+        return false;
+      })(),
+      logFormat
+    ),
+    silent: false
   })
 ];
 
 // 创建logger实例
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+  level: 'silly', // 设置为最低级别，让所有日志都能被处理，由传输器的filter来控制
   levels: {
     error: 0,
     warn: 1,
