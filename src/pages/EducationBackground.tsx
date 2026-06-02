@@ -247,11 +247,11 @@ const EducationBackground = () => {
                         </div>
                         <div className="flex">
                           <span className="text-muted-foreground w-28">性别：</span>
-                          <span>{record.gender || "男"}</span>
+                          <span>{record.gender || "女"}</span>
                         </div>
                         <div className="flex">
                           <span className="text-muted-foreground w-28">出生日期：</span>
-                          <span>{record.birth_date || "1999年12月18日"}</span>
+                          <span>{record.birth_date || "2003年05月25日"}</span>
                         </div>
                         <div className="flex">
                           <span className="text-muted-foreground w-28">民族：</span>
