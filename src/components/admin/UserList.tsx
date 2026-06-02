@@ -169,14 +169,14 @@ const UserList = ({
                 {paginatedUsers.map((user, index) => (
                   <div
                     key={user.id}
-                    className="flex justify-between items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in"
+                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3 sm:gap-0"
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
-                    <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex-1 min-w-0 space-y-1 w-full sm:w-auto">
                       <span className="font-bold text-lg block truncate">{user.username}</span>
                       <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
                     </div>
-                    <div className="ml-4 flex flex-col gap-2">
+                    <div className="ml-0 sm:ml-4 flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
                         <LogIn className="h-3.5 w-3.5" />
                         <span className="font-medium">登录次数: {user.remaining_logins}</span>
@@ -186,12 +186,12 @@ const UserList = ({
                         <span className="font-medium">PDF积分: {user.pdf_limit}</span>
                       </Badge>
                     </div>
-                    <div className="ml-4 flex gap-2">
+                    <div className="ml-0 sm:ml-4 flex gap-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenChangePassword(user)}
-                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 flex-1 sm:flex-none"
                       >
                         <KeyRound className="h-4 w-4 mr-1" />
                         改密
@@ -200,7 +200,7 @@ const UserList = ({
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenDeleteDialog(user)}
-                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 flex-1 sm:flex-none"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         删除
@@ -314,8 +314,8 @@ const UserList = ({
               <p className="text-sm text-red-700 dark:text-red-400 font-medium mb-2">⚠️ 警告：此操作不可恢复！</p>
               <ul className="text-xs text-red-600 dark:text-red-500 space-y-1 list-disc list-inside">
                 <li>用户账户将被永久删除</li>
-                <li>学生状态、教育背景、学位信息将全部删除</li>
-                <li>考试记录将全部删除</li>
+                <li>学历、学位将全部删除</li>
+                <li>考研信息、学位信息将全部删除</li>
                 <li>登录日志将全部删除</li>
                 <li>充值卡使用记录将被清空</li>
               </ul>
