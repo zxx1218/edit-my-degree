@@ -362,25 +362,25 @@ const Index = () => {
       <EducationHeader />
 
       {/* 考证现状广告窗口 */}
-      <div className="px-4 mt-4">
+      <div className="px-4 mt-3.5">
         <div 
-          className="bg-blue-500 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
+          className="bg-blue-500 rounded-[7px] overflow-hidden cursor-pointer transition-all duration-300"
           onClick={() => {
             // 可以在这里添加跳转逻辑，例如跳转到考证相关页面
-            toast.info("功能开发中", { duration: 1500 });
+            // toast.info("功能开发中", { duration: 1500 });
           }}
         >
           <img 
             src="/certification-banner.png" 
             alt="考证现状"
-            className="w-full h-[100px] sm:h-[110px] object-cover"
+            className="w-full h-[90px] sm:h-[100px] object-cover"
             onError={(e) => {
               // 如果图片加载失败，显示占位内容
               e.currentTarget.style.display = 'none';
               e.currentTarget.parentElement!.innerHTML = `
                 <div class="p-6 text-white">
-                  <h3 class="text-xl font-bold mb-2">考证现状</h3>
-                  <p class="text-sm opacity-90">参与考证需求调研，分享备考经验，共筑高效考证指南</p>
+                  <h3 class="text-xl font-bold mb-2">模拟广告栏</h3>
+                  <p class="text-sm opacity-90">需一张1200px*400px的图片</p>
                 </div>
               `;
             }}
@@ -388,7 +388,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="space-y-2 mt-4">
+      <div className="space-y-2 mt-2.5">
         <section>
           <SectionHeader
             title="学籍信息"
