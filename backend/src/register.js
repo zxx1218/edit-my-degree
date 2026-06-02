@@ -45,7 +45,7 @@ function initialize(db) {
 
         return res.status(403).json({
           success: false,
-          error: '阿里云安全服务器已拦截您的请求，若再次尝试将永久封禁机器码！'
+          error: '阿里云安全服务器已拦截您的请求，若再请求一次将永久封禁机器码！'
         });
       }
 
