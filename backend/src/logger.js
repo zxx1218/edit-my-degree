@@ -60,7 +60,7 @@ const transports = [
     filename: path.join(logDir, 'application-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
-    maxFiles: '7d', // 保留7天
+    maxFiles: '3d', // 保留3天
     format: logFormat,
     silent: false,
     filter: (info) => {
@@ -74,7 +74,7 @@ const transports = [
     filename: path.join(logDir, 'application-%DATE%.warn'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
-    maxFiles: '7d', // 保留7天
+    maxFiles: '3d', // 保留3天
     format: logFormat,
     silent: false,
     filter: (info) => {
@@ -88,7 +88,7 @@ const transports = [
     filename: path.join(logDir, 'application-%DATE%.error'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
-    maxFiles: '14d', // 保留14天
+    maxFiles: '3d', // 保留3天
     format: logFormat,
     silent: false,
     filter: (info) => {
