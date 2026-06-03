@@ -704,7 +704,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, status: e.target.value })
                     }
-                    placeholder="例：在籍 \不在籍（毕业）"
+                    placeholder="例：在籍（注册学籍） \不在籍（毕业）"
                   />
                 </div>
 
