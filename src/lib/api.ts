@@ -192,7 +192,10 @@ export const queryUserLoginsPdf = async (username: string, password: string): Pr
 // 获取留言列表 API
 export interface Message {
   id: string;
+  username: string;
   content: string;
+  reply_content?: string | null;
+  replied_at?: string | null;
   created_at: string;
 }
 
@@ -225,6 +228,38 @@ export interface AddMessageResponse {
 export const addMessage = async (content: string): Promise<AddMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/add-message', { content });
   const response = await fetch(`${API_BASE_URL}/add-message`, options);
+
+  const data = await response.json();
+  
+  return data;
+};
+
+// 回复留言 API
+export interface ReplyMessageResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export const replyMessage = async (messageId: string, replyContent: string): Promise<ReplyMessageResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'replyMessage', messageId, replyContent });
+  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+
+  const data = await response.json();
+  
+  return data;
+};
+
+// 删除留言 API
+export interface DeleteMessageResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export const deleteMessage = async (messageId: string): Promise<DeleteMessageResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'deleteMessage', messageId });
+  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
 
   const data = await response.json();
   

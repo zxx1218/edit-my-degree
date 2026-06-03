@@ -13,6 +13,7 @@ import {
   ActivityHeatmap,
   TopActiveUsers,
   AnomalyDetection,
+  MessageList,
 } from "@/components/admin";
 
 interface User {
@@ -476,6 +477,9 @@ const SuperAdd = () => {
           isFetchingUsers={false}
           onFetchUsers={fetchUsers}
         />
+
+        {/* 留言管理 */}
+        <MessageList token={token} />
 
         {/* 登录统计图表 */}
         <LoginStatsChart

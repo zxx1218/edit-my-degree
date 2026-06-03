@@ -17,13 +17,13 @@ function initializeMessageBoard(db) {
 
         // 查询总记录数
         const [countResult] = await db.execute(
-          'SELECT COUNT(*) as total FROM message_board'
+          'SELECT COUNT(*) as total FROM messages'
         );
         const total = countResult[0].total;
 
         // 查询分页数据（按时间倒序）
         const [messages] = await db.execute(
-          'SELECT id, username, content, created_at FROM message_board ORDER BY created_at DESC LIMIT ? OFFSET ?',
+          'SELECT id, username, content, reply_content, replied_at, created_at FROM messages ORDER BY created_at DESC LIMIT ? OFFSET ?',
           [parseInt(pageSize), parseInt(offset)]
         );
 
@@ -61,13 +61,89 @@ function initializeMessageBoard(db) {
 
         // 插入新留言
         await db.execute(
-          'INSERT INTO message_board (username, content) VALUES (?, ?)',
+          'INSERT INTO messages (username, content) VALUES (?, ?)',
           [username, content]
         );
 
         return res.json({
           success: true,
           message: '留言成功'
+        });
+      }
+
+      // 回复留言
+      if (action === 'replyMessage') {
+        const { messageId, replyContent } = req.body;
+
+        // 验证参数
+        if (!messageId || !replyContent) {
+          return res.status(400).json({
+            success: false,
+            error: '留言ID和回复内容不能为空'
+          });
+        }
+
+        // 限制回复长度
+        if (replyContent.length > 1000) {
+          return res.status(400).json({
+            success: false,
+            error: '回复内容不能超过1000个字符'
+          });
+        }
+
+        // 检查留言是否存在
+        const [existingMessages] = await db.execute(
+          'SELECT id FROM messages WHERE id = ?',
+          [messageId]
+        );
+
+        if (existingMessages.length === 0) {
+          return res.status(404).json({
+            success: false,
+            error: '留言不存在'
+          });
+        }
+
+        // 更新留言，添加回复
+        await db.execute(
+          'UPDATE messages SET reply_content = ?, replied_at = NOW() WHERE id = ?',
+          [replyContent, messageId]
+        );
+
+        return res.json({
+          success: true,
+          message: '回复成功'
+        });
+      }
+
+      // 删除留言
+      if (action === 'deleteMessage') {
+        const { messageId } = req.body;
+
+        // 验证参数
+        if (!messageId) {
+          return res.status(400).json({
+            success: false,
+            error: '留言ID不能为空'
+          });
+        }
+
+        // 删除留言
+        const [result] = await db.execute(
+          'DELETE FROM messages WHERE id = ?',
+          [messageId]
+        );
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({
+            success: false,
+            error: '留言不存在'
+          });
+        }
+
+        return res.json({
+          success: true,
+          message: '删除成功'
         });
       }
 

@@ -49,7 +49,7 @@ const Login = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const pageSize = 5; // 每页显示5条留言
+  const pageSize = 3; // 每页显示3条留言
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -682,42 +682,98 @@ const Login = () => {
 
           {/* 留言板弹窗 */}
           <Dialog open={isMessageBoardOpen} onOpenChange={setIsMessageBoardOpen}>
-            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-xl">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+            <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-2xl border-0 shadow-2xl">
+              <DialogHeader className="px-6 pt-6 pb-4 border-b bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 backdrop-blur-sm">
+                <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                  <div className="p-2.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl shadow-sm">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                  </div>
                   客户留言板
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-sm mt-2 ml-1">
                   查看其他用户的留言和反馈，也可以留下您的宝贵意见
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="flex-1 overflow-y-auto py-4 space-y-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gradient-to-b from-muted/10 to-background/50">
                 {/* 留言列表 */}
-                <div className="border rounded-lg p-4 bg-background">
+                <div className="space-y-4">
                   {isLoadingMessages ? (
-                    <div className="flex items-center justify-center py-8">
-                      <p className="text-sm text-muted-foreground">加载中...</p>
+                    <div className="flex items-center justify-center py-12">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p className="text-sm text-muted-foreground">加载中...</p>
+                      </div>
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="flex items-center justify-center py-8">
-                      <p className="text-sm text-muted-foreground">暂无留言，快来留下第一条吧！</p>
+                    <div className="flex items-center justify-center py-12">
+                      <div className="text-center space-y-3">
+                        <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+                          <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">暂无留言，快来留下第一条吧！</p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {messages.map((message) => (
-                        <div key={message.id} className="p-3 bg-card rounded border hover:shadow-sm transition-shadow">
-                          <p className="text-sm text-foreground mb-2 break-words whitespace-pre-wrap">{message.content}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(message.created_at).toLocaleString('zh-CN', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
+                        <div key={message.id} className="bg-card rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                          {/* 留言内容 */}
+                          <div className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                                <span className="text-sm font-semibold text-primary">
+                                  {(message.username || '用户').charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="font-medium text-sm text-foreground">{message.username || '匿名用户'}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(message.created_at).toLocaleString('zh-CN', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-foreground break-words whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 回复内容 */}
+                          {message.reply_content && (
+                            <div className="px-4 pb-4 pt-3 bg-muted/30 border-t">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+                                  <span className="text-sm font-semibold text-green-600">管</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="inline-flex items-center gap-1">
+                                      <span className="font-medium text-sm text-green-700">管理员回复</span>
+                                      <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded font-medium">官方</span>
+                                    </span>
+                                    {message.replied_at && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {new Date(message.replied_at).toLocaleString('zh-CN', {
+                                          year: 'numeric',
+                                          month: '2-digit',
+                                          day: '2-digit',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-foreground break-words whitespace-pre-wrap leading-relaxed">{message.reply_content}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -726,18 +782,18 @@ const Login = () => {
 
                 {/* 分页控制 */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between px-2 py-3 bg-card rounded-lg border shadow-sm">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => fetchMessages(currentPage - 1)}
                       disabled={currentPage === 1 || isLoadingMessages}
-                      className="gap-1"
+                      className="gap-1.5 hover:bg-primary/5"
                     >
                       <ChevronLeft className="h-4 w-4" />
                       上一页
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm text-muted-foreground font-medium">
                       第 {currentPage} / {totalPages} 页（共 {totalMessages} 条）
                     </span>
                     <Button
@@ -745,7 +801,7 @@ const Login = () => {
                       size="sm"
                       onClick={() => fetchMessages(currentPage + 1)}
                       disabled={currentPage === totalPages || isLoadingMessages}
-                      className="gap-1"
+                      className="gap-1.5 hover:bg-primary/5"
                     >
                       下一页
                       <ChevronRight className="h-4 w-4" />
@@ -754,8 +810,11 @@ const Login = () => {
                 )}
 
                 {/* 留言输入框 */}
-                <div className="space-y-2">
-                  <Label htmlFor="message-input">发表留言</Label>
+                <div className="bg-card rounded-lg border shadow-sm p-4 space-y-3">
+                  <Label htmlFor="message-input" className="text-sm font-semibold flex items-center gap-2">
+                    <Send className="h-4 w-4 text-primary" />
+                    发表留言
+                  </Label>
                   <Textarea
                     id="message-input"
                     placeholder="写下您的留言..."
@@ -763,20 +822,23 @@ const Login = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     maxLength={500}
                     rows={3}
-                    className="resize-none"
+                    className="resize-none focus-visible:ring-primary/20"
                   />
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
+                    <span className={`text-xs ${newMessage.length >= 450 ? 'text-orange-500 font-medium' : 'text-muted-foreground'}`}>
                       {newMessage.length}/500
                     </span>
                     <Button
                       onClick={handleSubmitMessage}
                       disabled={isSubmitting || !newMessage.trim()}
                       size="sm"
-                      className="gap-1.5"
+                      className="gap-1.5 min-w-[100px]"
                     >
                       {isSubmitting ? (
-                        "提交中..."
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                          提交中...
+                        </>
                       ) : (
                         <>
                           <Send className="h-4 w-4" />

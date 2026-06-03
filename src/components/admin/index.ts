@@ -7,3 +7,4 @@ export { default as LoginStatsChart } from './LoginStatsChart';
 export { default as ActivityHeatmap } from './ActivityHeatmap';
 export { default as TopActiveUsers } from './TopActiveUsers';
 export { default as AnomalyDetection } from './AnomalyDetection';
+export { default as MessageList } from './MessageList';

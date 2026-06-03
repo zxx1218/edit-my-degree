@@ -174,7 +174,10 @@ async function createTables(db) {
     `
     CREATE TABLE IF NOT EXISTS messages (
       id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      username VARCHAR(255) NOT NULL,
       content TEXT NOT NULL,
+      reply_content TEXT,
+      replied_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     `,
