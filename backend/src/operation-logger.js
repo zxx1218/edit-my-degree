@@ -123,7 +123,7 @@ function logQueryUserLogins(userId, username, ipAddress, userAgent, result = 'su
     logMessage += `, 剩余登录次数: ${queryData.remaining_logins}, PDF 积分: ${queryData.pdf_limit}`;
   }
   
-  if (result === 'success') {
+  if (result === 'success' || result === '成功') {
     logger.info(logMessage);
   } else {
     logger.warn(logMessage);
