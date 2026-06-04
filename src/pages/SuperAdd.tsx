@@ -12,8 +12,8 @@ import {
   LoginStatsChart,
   ActivityHeatmap,
   TopActiveUsers,
-  AnomalyDetection,
   MessageList,
+  TodayLoginList,
 } from "@/components/admin";
 
 interface User {
@@ -42,6 +42,7 @@ const SuperAdd = () => {
   const [todayLoginCount, setTodayLoginCount] = useState<number | null>(null);
   const [distinctUsers, setDistinctUsers] = useState<number | null>(null);
   const [isLoadingLoginCount, setIsLoadingLoginCount] = useState(false);
+  const [isFetchingUsers, setIsFetchingUsers] = useState(false);
 
   // PDF积分管理
   const [cards, setCards] = useState<CardItem[]>([]);
@@ -68,10 +69,9 @@ const SuperAdd = () => {
   const [isLoadingTopUsers, setIsLoadingTopUsers] = useState(false);
   const [topUsersPeriod, setTopUsersPeriod] = useState<number>(30);
 
-  // 异常登录检测
-  const [anomalyDetection, setAnomalyDetection] = useState<any>(null);
-  const [isLoadingAnomaly, setIsLoadingAnomaly] = useState(false);
-  const [anomalyPeriod, setAnomalyPeriod] = useState<number>(7);
+  // 今日登录详情
+  const [todayLoginDetails, setTodayLoginDetails] = useState<any[]>([]);
+  const [isLoadingTodayLoginDetails, setIsLoadingTodayLoginDetails] = useState(false);
 
   const { toast } = useToast();
 
@@ -161,7 +161,7 @@ const SuperAdd = () => {
     setIsLoadingTopUsers(true);
     try {
       const days = period || topUsersPeriod;
-      const data = await adminApi.getTopActiveUsers(token, { limit: 20, days });
+      const data = await adminApi.getTopActiveUsers(token, { limit: 3, days });
       if (data.success) {
         setTopActiveUsers(data.users || []);
         setTopUsersPeriod(days);
@@ -173,27 +173,27 @@ const SuperAdd = () => {
     }
   };
 
-  const fetchAnomalyDetection = async (period?: number) => {
+  // 获取今日登录详情
+  const fetchTodayLoginDetails = async () => {
     if (!token) return;
     
-    setIsLoadingAnomaly(true);
+    setIsLoadingTodayLoginDetails(true);
     try {
-      const days = period || anomalyPeriod;
-      const data = await adminApi.getAnomalyLoginDetection(token, { days });
+      const data = await adminApi.getTodayLoginDetails(token);
       if (data.success) {
-        setAnomalyDetection(data);
-        setAnomalyPeriod(days);
+        setTodayLoginDetails(data.loginDetails || []);
       }
     } catch (error) {
-      console.error("获取异常登录检测数据时出错:", error);
+      console.error("获取今日登录详情时出错:", error);
     } finally {
-      setIsLoadingAnomaly(false);
+      setIsLoadingTodayLoginDetails(false);
     }
   };
 
   const fetchUsers = async () => {
     if (!token) return;
     
+    setIsFetchingUsers(true);
     try {
       const data = await adminApi.getAllUsers(token);
       if (data.success) {
@@ -207,6 +207,8 @@ const SuperAdd = () => {
         title: "获取用户列表失败",
         description: error.message,
       });
+    } finally {
+      setIsFetchingUsers(false);
     }
   };
 
@@ -473,7 +475,7 @@ const SuperAdd = () => {
       fetchCards();
       fetchHeatmapData();
       fetchTopActiveUsers();
-      fetchAnomalyDetection();
+      fetchTodayLoginDetails();
     }
   }, [isVerified]);
 
@@ -530,7 +532,7 @@ const SuperAdd = () => {
           users={users}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          isFetchingUsers={false}
+          isFetchingUsers={isFetchingUsers}
           onFetchUsers={fetchUsers}
           onChangePassword={handleChangePassword}
           onDeleteUser={handleDeleteUser}
@@ -575,13 +577,11 @@ const SuperAdd = () => {
           onRefresh={() => fetchTopActiveUsers(topUsersPeriod)}
         />
 
-        {/* 异常登录检测 */}
-        <AnomalyDetection
-          data={anomalyDetection}
-          isLoading={isLoadingAnomaly}
-          period={anomalyPeriod}
-          onPeriodChange={fetchAnomalyDetection}
-          onRefresh={() => fetchAnomalyDetection(anomalyPeriod)}
+        {/* 今日登录用户列表 */}
+        <TodayLoginList
+          loginDetails={todayLoginDetails}
+          isLoading={isLoadingTodayLoginDetails}
+          onRefresh={fetchTodayLoginDetails}
         />
       </div>
     </div>

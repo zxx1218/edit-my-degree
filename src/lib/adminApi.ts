@@ -248,12 +248,12 @@ export const getTopActiveUsers = async (token: string, body: any) => {
   return await response.json();
 };
 
-// 获取异常登录检测数据
-export const getAnomalyLoginDetection = async (token: string, body: any) => {
-  const url = '/api/get-anomaly-login-detection';
-  const options = createSignedRequestOptions('POST', url, body);
+// 获取今日登录详情
+export const getTodayLoginDetails = async (token: string) => {
+  const url = '/api/get-today-login-details';
+  const options = createSignedRequestOptions('POST', url, {});
   
-  const response = await fetch(`${API_BASE_URL}/get-anomaly-login-detection`, {
+  const response = await fetch(`${API_BASE_URL}/get-today-login-details`, {
     ...options,
     headers: {
       ...options.headers,

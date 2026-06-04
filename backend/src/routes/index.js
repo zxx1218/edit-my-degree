@@ -33,10 +33,10 @@ const getLoginStatsRangeModule = require('../get-login-stats-range');
 const queryUserLoginsPdfModule = require('../query-user-logins-pdf');
 const getUserActivityHeatmapModule = require('../get-user-activity-heatmap');
 const getTopActiveUsersModule = require('../get-top-active-users');
-const getAnomalyLoginDetectionModule = require('../get-anomaly-login-detection');
 const getMessagesModule = require('../get-messages');
 const addMessageModule = require('../add-message');
 const deleteUserModule = require('../delete-user');
+const getTodayLoginDetailsModule = require('../get-today-login-details');
 
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
@@ -102,10 +102,10 @@ const registrationLimiter = rateLimit({
   legacyHeaders: false, // 不返回 X-RateLimit-*头部
 });
 
-// 为一般API设置全局限流规则 - 每个IP每10分钟最多50次请求
+// 为一般API设置全局限流规则 - 每个IP每5分钟最多100次请求
 const generalLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10分钟
-  max: 50,
+  windowMs: 5 * 60 * 1000, // 10分钟
+  max: 100,
   message: {
     success: false,
     error: '透你妈傻逼，请求这来多干啥？你IP被封了！'
@@ -321,9 +321,9 @@ function setupRoutes(app, db, JWT_SECRET) {
   
   // 获取Top活跃用户排行榜接口 - 用于显示登录次数最多的用户
   app.post('/api/get-top-active-users', generalLimiter, signatureValidationMiddleware, getTopActiveUsersModule.initialize(db));
-  
-  // 获取异常登录检测接口 - 用于检测频繁登录和异常时间段登录
-  app.post('/api/get-anomaly-login-detection', generalLimiter, signatureValidationMiddleware, getAnomalyLoginDetectionModule.initialize(db));
+
+  // 获取今日登录详情接口 - 用于获取今天所有用户的登录记录
+  app.post('/api/get-today-login-details', generalLimiter, signatureValidationMiddleware, getTodayLoginDetailsModule.initialize(db));
 
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
   app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));

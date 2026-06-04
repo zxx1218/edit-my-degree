@@ -70,7 +70,7 @@ const TopActiveUsers = ({ users, isLoading, period, onPeriodChange, onRefresh }:
           </div>
         ) : users.length > 0 ? (
           <div className="space-y-3">
-            {users.map((user, index) => {
+            {users.slice(0, 3).map((user, index) => {
               let badgeColor = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
               let icon = null;
               if (index === 0) {
