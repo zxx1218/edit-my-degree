@@ -178,8 +178,9 @@ function cleanupCache() {
       ipRequestCache.set(ip, recentRequests);
     }
   }
-  
-  console.safe(`[安全防护] IP请求缓存清理完成，当前缓存大小: ${ipRequestCache.size}`);
+  if(ipRequestCache.size > 0) {
+    console.safe(`[安全防护] IP请求缓存清理完成，当前缓存大小: ${ipRequestCache.size}`);
+  }
 }
 
 /**
