@@ -57,7 +57,7 @@ const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListPr
               <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <CardTitle className="text-xl">今日登录用户</CardTitle>
+              <CardTitle className="text-xl">今日登录情况</CardTitle>
               <CardDescription>
                 实时显示今天所有登录的用户信息（共 {loginDetails.length} 个用户）
               </CardDescription>
@@ -100,7 +100,7 @@ const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListPr
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="font-semibold text-base">{record.username}</div>
+                      <div className="font-semibold text-base">用户：{record.username}</div>
                       <Badge variant="secondary" className="text-xs">
                         登录 {record.loginCount} 次
                       </Badge>
