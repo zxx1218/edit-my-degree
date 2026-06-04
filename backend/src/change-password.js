@@ -14,38 +14,41 @@ function initialize(db) {
     try {
       const { username, oldPassword, newPassword } = req.body;
 
-      if (!username || !oldPassword || !newPassword) {
+      if (!username || !newPassword) {
         return res.status(400).json({
           success: false,
-          error: '请提供完整的信息'
+          error: '请提供用户名和新密码'
         });
       }
 
-      // 验证原密码是否正确
+      // 查找用户
       const [users] = await db.execute(
-        'SELECT * FROM users WHERE username = ? AND password = ?',
-        [username, oldPassword]
+        'SELECT * FROM users WHERE username = ?',
+        [username]
       );
 
       if (users.length === 0) {
-        // 先尝试查找用户是否存在
-        const [userCheck] = await db.execute(
-          'SELECT id FROM users WHERE username = ?',
-          [username]
-        );
+        // 用户不存在
+        logPasswordChange(null, username, ipAddress, userAgent, 'failed', { reason: '用户不存在' });
         
-        if (userCheck.length > 0) {
-          // 用户存在但密码错误
-          logPasswordChange(userCheck[0].id, username, ipAddress, userAgent, 'failed', { reason: '原密码错误' });
-        } else {
-          // 用户不存在
-          logPasswordChange(null, username, ipAddress, userAgent, 'failed', { reason: '用户不存在' });
-        }
-        
-        return res.status(401).json({
+        return res.status(404).json({
           success: false,
-          error: '用户名或原密码错误'
+          error: '用户不存在'
         });
+      }
+
+      // 如果提供了oldPassword，则验证原密码（普通用户改密）
+      // 如果未提供或为空，则跳过验证（管理员改密）
+      if (oldPassword && oldPassword.trim() !== '') {
+        if (users[0].password !== oldPassword) {
+          // 原密码错误
+          logPasswordChange(users[0].id, username, ipAddress, userAgent, 'failed', { reason: '原密码错误' });
+          
+          return res.status(401).json({
+            success: false,
+            error: '原密码错误'
+          });
+        }
       }
 
       // 更新密码

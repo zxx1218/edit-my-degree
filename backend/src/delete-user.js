@@ -11,6 +11,8 @@ function initialize(db) {
                       req.headers['x-real-ip'] || 'unknown';
     const userAgent = req.get('User-Agent') || 'Unknown';
 
+    let connection;
+
     try {
       const { username } = req.body;
 
@@ -36,36 +38,36 @@ function initialize(db) {
 
       const userId = users[0].id;
 
-      // 由于设置了 ON DELETE CASCADE，删除用户会自动删除相关数据
-      // 但为了明确记录，我们手动删除各个表的数据
-      
+      // 获取独立连接用于事务
+      connection = await db.getConnection();
+
       // 开启事务
-      await db.execute('START TRANSACTION');
+      await connection.beginTransaction();
 
       try {
         // 删除学生状态数据
-        await db.execute('DELETE FROM student_status WHERE user_id = ?', [userId]);
+        await connection.execute('DELETE FROM student_status WHERE user_id = ?', [userId]);
         
         // 删除教育背景数据
-        await db.execute('DELETE FROM education WHERE user_id = ?', [userId]);
+        await connection.execute('DELETE FROM education WHERE user_id = ?', [userId]);
         
         // 删除学位数据
-        await db.execute('DELETE FROM degree WHERE user_id = ?', [userId]);
+        await connection.execute('DELETE FROM degree WHERE user_id = ?', [userId]);
         
         // 删除考试数据
-        await db.execute('DELETE FROM exam WHERE user_id = ?', [userId]);
+        await connection.execute('DELETE FROM exam WHERE user_id = ?', [userId]);
         
         // 删除登录日志
-        await db.execute('DELETE FROM login_logs WHERE user_id = ?', [userId]);
+        await connection.execute('DELETE FROM login_logs WHERE user_id = ?', [userId]);
         
         // 删除充值卡使用记录（设置为NULL）
-        await db.execute('UPDATE cards SET used_by = NULL, used_at = NULL WHERE used_by = ?', [userId]);
+        await connection.execute('UPDATE cards SET used_by = NULL, used_at = NULL WHERE used_by = ?', [userId]);
         
         // 最后删除用户
-        await db.execute('DELETE FROM users WHERE id = ?', [userId]);
+        await connection.execute('DELETE FROM users WHERE id = ?', [userId]);
 
         // 提交事务
-        await db.execute('COMMIT');
+        await connection.commit();
 
         // 记录操作日志
         logOperation('delete_user', ipAddress, userAgent, 'success', { 
@@ -79,7 +81,7 @@ function initialize(db) {
         });
       } catch (error) {
         // 回滚事务
-        await db.execute('ROLLBACK');
+        await connection.rollback();
         throw error;
       }
     } catch (err) {
@@ -93,6 +95,11 @@ function initialize(db) {
         success: false,
         error: '服务器内部错误'
       });
+    } finally {
+      // 释放连接
+      if (connection) {
+        connection.release();
+      }
     }
   };
 }

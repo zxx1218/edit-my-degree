@@ -36,6 +36,7 @@ const getTopActiveUsersModule = require('../get-top-active-users');
 const getAnomalyLoginDetectionModule = require('../get-anomaly-login-detection');
 const getMessagesModule = require('../get-messages');
 const addMessageModule = require('../add-message');
+const deleteUserModule = require('../delete-user');
 
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
@@ -329,6 +330,9 @@ function setupRoutes(app, db, JWT_SECRET) {
   
   // 添加留言接口 - 用于用户提交新留言
   app.post('/api/add-message', generalLimiter, addMessageModule.initialize(db));
+
+  // 删除用户接口 - 用于管理员彻底删除用户及其所有相关数据
+  app.post('/api/delete-user', generalLimiter, signatureValidationMiddleware, deleteUserModule.initialize(db));
 
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));

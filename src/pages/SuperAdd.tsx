@@ -346,6 +346,62 @@ const SuperAdd = () => {
     }
   };
 
+  // 修改用户密码
+  const handleChangePassword = async (username: string, newPassword: string) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.changeUserPassword(token, { 
+        username, 
+        oldPassword: '', // 管理员改密不需要原密码，后端需要调整
+        newPassword 
+      });
+      
+      if (data.success) {
+        toast({ 
+          title: "修改成功", 
+          description: `已修改用户 ${username} 的密码` 
+        });
+        fetchUsers();
+      } else {
+        throw new Error(data.error || "修改密码失败");
+      }
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "修改失败", 
+        description: error.message 
+      });
+      throw error;
+    }
+  };
+
+  // 删除用户
+  const handleDeleteUser = async (username: string) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.deleteUser(token, { username });
+      
+      if (data.success) {
+        toast({ 
+          title: "删除成功", 
+          description: `用户 ${username} 及其所有数据已彻底删除` 
+        });
+        fetchUsers();
+      } else {
+        throw new Error(data.error || "删除用户失败");
+      }
+    } catch (error: any) {
+      toast({ 
+        variant: "destructive", 
+        title: "删除失败", 
+        description: error.message 
+      });
+      throw error;
+    }
+  };
+
   const handleCreateCards = async (type: string, values: number, count: number) => {
     if (!token) return;
     
@@ -476,6 +532,8 @@ const SuperAdd = () => {
           onSearchChange={setSearchQuery}
           isFetchingUsers={false}
           onFetchUsers={fetchUsers}
+          onChangePassword={handleChangePassword}
+          onDeleteUser={handleDeleteUser}
         />
 
         {/* 留言管理 */}

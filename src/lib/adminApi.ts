@@ -263,3 +263,35 @@ export const getAnomalyLoginDetection = async (token: string, body: any) => {
   
   return await response.json();
 };
+
+// 修改用户密码
+export const changeUserPassword = async (token: string, body: any) => {
+  const url = '/api/change-password';
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetch(`${API_BASE_URL}/change-password`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 删除用户
+export const deleteUser = async (token: string, body: any) => {
+  const url = '/api/delete-user';
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetch(`${API_BASE_URL}/delete-user`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
