@@ -140,7 +140,7 @@ const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit,
   const getVariantStyle = () => {
     if (variant === "student-status") {
       return {
-        background: "linear-gradient(to bottom right, rgb(31, 174, 127), rgb(61, 203, 145))",
+        background: "linear-gradient(to bottom right, rgb(19, 169, 117), rgb(62, 202, 145))",
       };
     }
     if (variant === "education") {
@@ -210,7 +210,7 @@ const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit,
             </span>
           )}
           {major && studyType && (
-            <span className="text-white/60" style={{ fontSize: "15px" }}>
+            <span className="text-white/60 mx-2 font-normal" style={{ fontSize: "17px" }}>
               |
             </span>
           )}
