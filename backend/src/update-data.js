@@ -95,6 +95,14 @@ function initialize(db) {
           return;
           
         case 'update':
+          // 验证更新数据是否为空
+          if (Object.keys(sanitizedData).length === 0) {
+            return res.status(400).json({
+              success: false,
+              error: '更新数据不能为空'
+            });
+          }
+          
           // 构造更新语句
           const updates = Object.keys(sanitizedData).map(key => `${key} = ?`).join(', ');
           const updateValues = Object.values(sanitizedData);
