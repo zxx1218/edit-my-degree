@@ -392,7 +392,7 @@ const Index = () => {
         <section>
           <SectionHeader
             title="学籍信息"
-            count={studentStatus.length}
+            count={studentStatus.length > 0 ? studentStatus.length : undefined}
             promptText="还有学籍没有显示出来？"
             actionText="尝试绑定"
             onAction={() => {
@@ -426,7 +426,7 @@ const Index = () => {
         <section>
           <SectionHeader
             title="学历信息"
-            count={educationRecords.length}
+            count={educationRecords.length > 0 ? educationRecords.length : undefined}
             promptText="还有学历没有显示出来？"
             actionText="尝试绑定"
             onAction={() => {
@@ -474,7 +474,7 @@ const Index = () => {
         <section>
           <SectionHeader
             title="学位信息"
-            count={degreeRecords.length}
+            count={degreeRecords.length > 0 ? degreeRecords.length : undefined}
             promptText="还有学位没有显示出来？"
             actionText="尝试绑定"
             onAction={() => {
@@ -520,7 +520,7 @@ const Index = () => {
         </section>
 
         <section>
-          <SectionHeader title="考研信息" count={examRecords.length} />
+          <SectionHeader title="考研信息" count={examRecords.length > 0 ? examRecords.length : undefined} />
           <div className="px-4 space-y-3">
             {examRecords.length > 0 ? (
               examRecords.map((record) => (

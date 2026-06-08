@@ -14,7 +14,7 @@ function initialize(db) {
       // 验证并转换limit为整数，防止SQL注入
       const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
       
-      // 查询指定时间内登录次数最多的用户（排除admin和zxx）
+      // 查询指定时间内登录次数最多的用户（排除admin、zxx和test用户）
       const [topUsers] = await db.execute(`
         SELECT 
           u.id,
@@ -26,7 +26,7 @@ function initialize(db) {
         FROM users u
         LEFT JOIN login_logs l ON u.id = l.user_id 
           AND l.login_time >= ?
-        WHERE u.username NOT IN ('admin', 'zxx')
+        WHERE u.username NOT IN ('admin', 'zxx', 'test')
         GROUP BY u.id, u.username
         HAVING total_logins > 0
         ORDER BY total_logins DESC

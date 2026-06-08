@@ -1,6 +1,6 @@
 interface SectionHeaderProps {
   title: string;
-  count: number;
+  count?: number;
   promptText?: string;
   actionText?: string;
   onAction?: () => void;
@@ -10,7 +10,10 @@ const SectionHeader = ({ title, count, promptText, actionText, onAction }: Secti
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <h2 className="text-lg text-foreground font-yahei">
-        <span className="font-medium">{title}</span> (<span className="font-times">{count}</span>)
+        <span className="font-medium">{title}</span>
+        {count !== undefined && count > 0 && (
+          <> (<span className="font-times">{count}</span>)</>
+        )}
       </h2>
       {(promptText || actionText) && (
         <div className="flex items-center gap-1 text-sm">

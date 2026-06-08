@@ -220,16 +220,13 @@ const Register = () => {
             <AlertDialogDescription asChild>
               <div className="space-y-3 text-sm">
                 <p>
-                  恭喜您注册成功！您的账号当前登录次数余额为 <span className="font-semibold text-destructive">0</span>
-                  ，需要充值后才能登录系统!
+                  恭喜您注册成功！
                 </p>
                 <div className="bg-muted/50 p-3 rounded-md space-y-2">
-                  <p className="font-medium text-foreground">充值步骤：</p>
+                  <p className="font-medium text-foreground">登录卡密使用步骤：</p>
                   <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                    <li>点击下方按钮或在登录页点击 “卡密购买” 购买充值卡密</li>
-                    <li>在登录页点击"卡密充值/续费"按钮</li>
-                    <li>输入您注册的账号和购买到的卡密</li>
-                    <li>充值成功后即可登录使用</li>
+                    <li>点击下方购买按钮或在登录页点击 “卡密购买” 购买登录卡密</li>
+                    <li>在登录页点击"卡密充值/续费"按钮使用卡密</li>
                   </ol>
                 </div>
               </div>
@@ -253,7 +250,7 @@ const Register = () => {
               }}
               className="w-full sm:w-auto"
             >
-              购买卡密
+              购买登录卡密
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
