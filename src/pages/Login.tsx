@@ -660,7 +660,7 @@ const Login = () => {
               <div className="font-semibold text-foreground">重要提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
                 <div>• 长按任意需修改的位置即可触发更改</div>
-                <div>• 第一次使用建议电脑登录填写后再使用手机</div>
+                <div>• 您构建的记录将永久保存在您账号内</div>
               </div>
             </AlertDescription>
           </Alert> 
@@ -675,7 +675,7 @@ const Login = () => {
                 className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1 hover:scale-105 transform font-medium"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
-                <span>客户留言板</span>
+                <span>用户留言板</span>
               </button>
             </div>
           </div>
@@ -688,7 +688,7 @@ const Login = () => {
                   <div className="p-2.5 bg-gradient-to-br from-primary/20 to-accent/20 rounded-xl shadow-sm">
                     <MessageSquare className="h-5 w-5 text-primary" />
                   </div>
-                  客户留言板
+                  用户留言板
                 </DialogTitle>
                 <DialogDescription className="text-sm mt-2 ml-1">
                   查看其他用户的留言和反馈，也可以留下您的宝贵意见

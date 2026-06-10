@@ -176,7 +176,7 @@ const MessageBoard = () => {
                 <MessageSquare className="h-8 w-8" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold">客户留言板</CardTitle>
+            <CardTitle className="text-3xl font-bold">用户留言板</CardTitle>
             <CardDescription className="text-white/80 text-base mt-2">
               查看其他用户的留言和反馈，也可以留下您的宝贵意见
             </CardDescription>
