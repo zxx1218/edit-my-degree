@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // 引入PDF生成器模块
@@ -245,6 +246,23 @@ const signatureValidationMiddleware = async (req, res, next) => {
   }
   
   // 签名验证通过
+  // 记录用户会话剩余时间日志（如果存在JWT token）
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.substring(7);
+      const decoded = jwt.verify(token, JWT_SECRET || process.env.JWT_SECRET || 'default_jwt_secret');
+      
+      // 获取前端会话时长配置
+      const sessionDuration = parseInt(process.env.VITE_SESSION_DURATION || '180000', 10);
+      const sessionDurationMinutes = Math.floor(sessionDuration / 60000);
+      
+      console.info(`[会话监控] 用户请求 - 用户名: ${decoded.username}, 用户ID: ${decoded.id}, 本次登录会话有效期: ${sessionDurationMinutes}分钟 (${sessionDuration}ms), 请求路径: ${req.path}`);
+    } catch (err) {
+      // Token无效或过期，不影响正常流程，由具体接口处理
+    }
+  }
+  
   // 异步查询 IP归属地（不阻塞主流程）
   queryIPLocation(clientIp).then(ipLocation => {
    console.info('签名验证通过', {

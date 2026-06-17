@@ -92,10 +92,17 @@ function initialize(pool, jwtSecret) {
         [user.id]
       );
       
+      // 获取前端会话时长配置（单位：毫秒）
+      const sessionDuration = parseInt(process.env.VITE_SESSION_DURATION || '180000', 10);
+      const sessionDurationMinutes = Math.floor(sessionDuration / 60000);
+      
       // 记录登录成功日志
       logLogin(user.id, username, ipAddress, userAgent, 'success', { 
         remaining_logins_before: user.remaining_logins,
-        remaining_logins_after: user.remaining_logins - 1
+        remaining_logins_after: user.remaining_logins - 1,
+        session_duration_ms: sessionDuration,
+        session_duration_minutes: sessionDurationMinutes,
+        session_expiry_info: `本次登录后会话有效期为${sessionDurationMinutes}分钟`
       });
       
       // 记录登录日志到login_logs表
