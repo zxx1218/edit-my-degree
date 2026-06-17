@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 import { de } from "date-fns/locale";
+import { DEGREE_LEVELS } from "@/lib/educationSort";
 
 interface StudentStatusDialogProps {
   open: boolean;
@@ -579,14 +580,21 @@ const StudentStatusDialog = ({
 
                 <div className="space-y-2">
                   <Label htmlFor="degreeLevel">层次 <span className="text-destructive">*</span></Label>
-                  <Input
-                    id="degreeLevel"
-                    value={formData.degreeLevel}
-                    onChange={(e) =>
-                      setFormData({ ...formData, degreeLevel: e.target.value })
-                    }
-                    placeholder="例：本科 \ 硕士研究生 \ 博士研究生"
-                  />
+                  <Select 
+                    value={formData.degreeLevel} 
+                    onValueChange={(value) => setFormData({ ...formData, degreeLevel: value })}
+                  >
+                    <SelectTrigger id="degreeLevel">
+                      <SelectValue placeholder="选择学历层次" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DEGREE_LEVELS.map((level) => (
+                        <SelectItem key={level} value={level}>
+                          {level}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">

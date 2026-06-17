@@ -27,7 +27,7 @@ interface EducationData {
 
 // Long press hook
 const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const start = useCallback(() => {
     timerRef.current = setTimeout(() => {
@@ -61,7 +61,7 @@ interface LongPressFieldProps {
 }
 
 const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const start = useCallback(() => {
     timerRef.current = setTimeout(() => {
@@ -347,23 +347,29 @@ const EducationDetail = () => {
                 {data.school}
               </h3>
               <div className="bg-black/20 backdrop-blur-sm px-2 py-0.4 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0">
-                {data.degreeLevel}
+                {/* 如果是自考本科，显示"本科" */}
+                {data.degreeLevel === "自考本科" ? "本科" : data.degreeLevel}
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
               <span className="cursor-pointer hover:opacity-80 select-none" {...majorLongPress}>
                 {data.major}
               </span>
-              <span
-                className="text-white/60"
-                style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
-              ></span>
-              <span
-                className="cursor-pointer hover:opacity-80 select-none"
-                {...studyTypeLongPress}
-              >
-                {data.studyType}
-              </span>
+              {/* 只有当不是自考本科时才显示分隔符和学习形式 */}
+              {data.degreeLevel !== "自考本科" && (
+                <>
+                  <span
+                    className="text-white/60"
+                    style={{ height: "1rem", borderLeft: "1px solid rgba(255, 255, 255, 0.6)" }}
+                  ></span>
+                  <span
+                    className="cursor-pointer hover:opacity-80 select-none"
+                    {...studyTypeLongPress}
+                  >
+                    {data.studyType}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

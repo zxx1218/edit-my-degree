@@ -8,6 +8,7 @@ export const DEGREE_LEVEL_ORDER = {
   "本科": 3,
   "学士": 3,
   "专科": 4,
+  "自考本科": 3, // 自考本科与本科同级
 };
 
 export type DegreeLevel = keyof typeof DEGREE_LEVEL_ORDER;
@@ -17,6 +18,7 @@ export const DEGREE_LEVELS: DegreeLevel[] = [
   "硕士研究生",
   "本科",
   "专科",
+  "自考本科",
 ];
 
 // 学位类型排序工具

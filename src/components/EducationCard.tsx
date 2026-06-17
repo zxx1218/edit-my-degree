@@ -13,7 +13,7 @@ interface EducationCardProps {
 
 const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit, onClick }: EducationCardProps) => {
   const [showEditIcon, setShowEditIcon] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPress = useRef(false);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
 
@@ -194,7 +194,8 @@ const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit,
         </h3>
         {variant !== "exam" && (
           <div className={`${getBadgeClasses()} px-2 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
-            {degreeLevel}
+            {/* 如果是自考本科，显示"本科" */}
+            {degreeLevel === "自考本科" ? "本科" : degreeLevel}
           </div>
         )}
       </div>
@@ -209,12 +210,13 @@ const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit,
               {major}
             </span>
           )}
-          {major && studyType && (
+          {/* 只有当不是自考本科时才显示分隔符和学习形式 */}
+          {major && studyType && degreeLevel !== "自考本科" && (
             <span className="text-white/60 mx-2 font-normal" style={{ fontSize: "17px" }}>
               |
             </span>
           )}
-          {studyType && (
+          {studyType && degreeLevel !== "自考本科" && (
             <span className="text-base font-times" style={{ fontSize: "15px" }}>
               {studyType}
             </span>
