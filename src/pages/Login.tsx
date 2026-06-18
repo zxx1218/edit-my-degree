@@ -328,7 +328,7 @@ const Login = () => {
         </Dialog>
         <CardHeader className="space-y-2 text-center pb-6">
           <CardTitle className="text-3xl font-bold">模拟档案</CardTitle>
-          <CardDescription className="text-base">请登录以继续使用模拟系统</CardDescription>
+          <CardDescription className="text-base">请尽情创造您的虚拟人生</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleLogin} className="space-y-5">
