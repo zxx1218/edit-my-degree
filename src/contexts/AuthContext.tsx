@@ -50,7 +50,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // 处理会话过期
   const handleSessionExpired = () => {
-    console.log("会话已过期，自动登出");
+    // 尝试获取当前用户信息
+    let userInfo: any = null;
+    try {
+      const currentUserStr = localStorage.getItem("currentUser");
+      if (currentUserStr) {
+        userInfo = JSON.parse(currentUserStr);
+      }
+    } catch (error) {
+      console.error("解析用户信息失败:", error);
+    }
+
+    console.info("[会话管理] 用户会话已过期，自动退出并跳转登录页", {
+      timestamp: new Date().toISOString(),
+      reason: "session_timeout",
+      user_id: userInfo?.id || "unknown",
+      username: userInfo?.username || "unknown"
+    });
+    
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
     localStorage.removeItem(SESSION_DURATION_KEY);
     setIsAuthenticated(false);
