@@ -86,23 +86,44 @@ function initialize(pool, jwtSecret) {
         });
       }
       
+      // 获取用户当前剩余登录次数（扣除本次登录前）
+      const remainingLoginsBefore = user.remaining_logins;
+      
+      // 根据当前剩余登录次数确定会话时长（单位：毫秒）
+      let sessionDuration;
+      if (remainingLoginsBefore == 1) {
+        // 当前剩余登录次数为1时，会话时长3分钟
+        sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_1 || '180000', 10);
+      } else if (remainingLoginsBefore <= 5) {
+        // 当前剩余登录次数大于1但小于等于5时，会话时长8分钟
+        sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_2 || '480000', 10);
+      } else if (remainingLoginsBefore <= 30) {
+        // 当前剩余登录次数大于5但小于等于30时，会话时长20分钟
+        sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_3 || '1200000', 10);
+      } else {
+        // 当前剩余登录次数大于30时，会话时长24小时
+        sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_4 || '86400000', 10);
+      }
+      
       // 减少登录次数
       await dbManager.execute(
         'UPDATE users SET remaining_logins = remaining_logins - 1 WHERE id = ?',
         [user.id]
       );
       
-      // 获取前端会话时长配置（单位：毫秒）
-      const sessionDuration = parseInt(process.env.VITE_SESSION_DURATION || '180000', 10);
+      // 获取扣除本次登录后的剩余登录次数
+      const remainingLoginsAfter = remainingLoginsBefore - 1;
+      
       const sessionDurationMinutes = Math.floor(sessionDuration / 60000);
       
       // 记录登录成功日志
       logLogin(user.id, username, ipAddress, userAgent, 'success', { 
-        remaining_logins_before: user.remaining_logins,
-        remaining_logins_after: user.remaining_logins - 1,
+        remaining_logins_before: remainingLoginsBefore,
+        remaining_logins_after: remainingLoginsAfter,
         session_duration_ms: sessionDuration,
         session_duration_minutes: sessionDurationMinutes,
-        session_expiry_info: `本次登录后会话有效期为${sessionDurationMinutes}分钟`
+        session_expiry_info: `本次登录后会话有效期为${sessionDurationMinutes}分钟`,
+        session_level: remainingLoginsBefore <= 1 ? 'level_1' : remainingLoginsBefore <= 5 ? 'level_2' : remainingLoginsBefore <= 30 ? 'level_3' : 'level_4'
       });
       
       // 记录登录日志到login_logs表
@@ -123,10 +144,11 @@ function initialize(pool, jwtSecret) {
         user: {
           id: user.id,
           username: user.username,
-          remaining_logins: user.remaining_logins - 1,
+          remaining_logins: remainingLoginsAfter,
           pdf_limit: user.pdf_limit || 0
         },
-        token
+        token,
+        sessionDuration: sessionDuration // 返回会话时长给前端
       });
     } catch (err) {
       console.error('[认证] 登录异常:', err.message, { 

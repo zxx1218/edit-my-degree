@@ -10,6 +10,7 @@ export interface LoginResponse {
   user: User;
   error?: string;
   token?: string;
+  sessionDuration?: number; // 会话时长（毫秒）
 }
 
 export interface UserData {

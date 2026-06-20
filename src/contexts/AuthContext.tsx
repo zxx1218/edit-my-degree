@@ -3,15 +3,16 @@ import { createContext, useContext, useState, useEffect, useRef, ReactNode } fro
 interface AuthContextType {
   isAuthenticated: boolean;
   isCheckingAuth: boolean;
-  login: () => void;
+  login: (sessionDuration?: number) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LOGIN_TIMESTAMP_KEY = "auth_login_timestamp";
-// 从环境变量获取会话持续时间，默认为3分钟(180000毫秒)
-const SESSION_DURATION = import.meta.env.VITE_SESSION_DURATION 
+const SESSION_DURATION_KEY = "auth_session_duration";
+// 从环境变量获取默认会话持续时间，默认为3分钟(180000毫秒)
+const DEFAULT_SESSION_DURATION = import.meta.env.VITE_SESSION_DURATION 
   ? parseInt(import.meta.env.VITE_SESSION_DURATION as string, 10) 
   : 3 * 60 * 1000;
 
@@ -29,12 +30,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // 设置会话过期定时器
-  const setupSessionTimer = (loginTime: number) => {
+  const setupSessionTimer = (loginTime: number, sessionDuration: number) => {
     clearTimer();
     
     const currentTime = Date.now();
     const timeDiff = currentTime - loginTime;
-    const remainingTime = SESSION_DURATION - timeDiff;
+    const remainingTime = sessionDuration - timeDiff;
 
     if (remainingTime > 0) {
       // 设置定时器，在剩余时间后自动登出
@@ -51,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const handleSessionExpired = () => {
     console.log("会话已过期，自动登出");
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
+    localStorage.removeItem(SESSION_DURATION_KEY);
     setIsAuthenticated(false);
     clearTimer();
     
@@ -61,18 +63,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 检查登录状态是否在指定时间内
   useEffect(() => {
     const loginTimestamp = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
-    if (loginTimestamp) {
+    const sessionDurationStr = localStorage.getItem(SESSION_DURATION_KEY);
+    
+    if (loginTimestamp && sessionDurationStr) {
       const loginTime = parseInt(loginTimestamp, 10);
+      const sessionDuration = parseInt(sessionDurationStr, 10);
       const currentTime = Date.now();
       const timeDiff = currentTime - loginTime;
 
-      if (timeDiff < SESSION_DURATION) {
+      if (timeDiff < sessionDuration) {
         // 在有效期内，保持登录状态并设置定时器
         setIsAuthenticated(true);
-        setupSessionTimer(loginTime);
+        setupSessionTimer(loginTime, sessionDuration);
       } else {
-        // 超过有效期，清除时间戳
+        // 超过有效期，清除时间戳和会话时长
         localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
+        localStorage.removeItem(SESSION_DURATION_KEY);
       }
     }
 
@@ -85,20 +91,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const login = () => {
-    // 登录时记录当前时间戳
+  const login = (sessionDuration?: number) => {
+    // 登录时记录当前时间戳和会话时长
     const loginTime = Date.now();
+    const duration = sessionDuration || DEFAULT_SESSION_DURATION;
+    
     localStorage.setItem(LOGIN_TIMESTAMP_KEY, loginTime.toString());
+    localStorage.setItem(SESSION_DURATION_KEY, duration.toString());
     setIsAuthenticated(true);
     
     // 设置会话过期定时器
-    setupSessionTimer(loginTime);
+    setupSessionTimer(loginTime, duration);
   };
 
   const logout = () => {
-    // 退出时清除时间戳和定时器
+    // 退出时清除时间戳、会话时长和定时器
     clearTimer();
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
+    localStorage.removeItem(SESSION_DURATION_KEY);
     setIsAuthenticated(false);
   };
 

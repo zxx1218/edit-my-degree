@@ -134,7 +134,8 @@ const Login = () => {
       if (result.success && result.user) {
         localStorage.setItem("currentUser", JSON.stringify(result.user));
         toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 3000 });
-        login();
+        // 传递后端返回的会话时长
+        login(result.sessionDuration);
         navigate("/");
       }
     } catch (error) {
