@@ -73,8 +73,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false);
     clearTimer();
     
-    // 直接跳转到登录页，不显示任何提示
-    window.location.href = "/login";
+    // 使用 setTimeout 确保日志能够完整输出后再跳转
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 100);
   };
 
   // 检查登录状态是否在指定时间内
