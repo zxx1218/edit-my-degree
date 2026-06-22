@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { logLogin, logAdminOperation } = require('./operation-logger');
+const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
 
@@ -126,10 +127,18 @@ function initialize(pool, jwtSecret) {
         session_level: remainingLoginsBefore <= 1 ? 'level_1' : remainingLoginsBefore <= 5 ? 'level_2' : remainingLoginsBefore <= 30 ? 'level_3' : 'level_4'
       });
       
-      // 记录登录日志到login_logs表
+      // 记录登录日志到login_logs表（包含IP和地理位置）
+      let ipLocation = null;
+      try {
+        ipLocation = await queryIPLocation(ipAddress);
+      } catch (err) {
+        console.warn('[认证] IP地理位置查询失败:', err.message);
+        ipLocation = '未知';
+      }
+      
       await dbManager.execute(
-        'INSERT INTO login_logs (user_id, username) VALUES (?, ?)',
-        [user.id, username]
+        'INSERT INTO login_logs (user_id, username, login_ip, ip_location) VALUES (?, ?, ?, ?)',
+        [user.id, username, ipAddress, ipLocation]
       );
       
       // 生成 JWT token

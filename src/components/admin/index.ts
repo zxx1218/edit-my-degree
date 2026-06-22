@@ -8,4 +8,4 @@ export { default as ActivityHeatmap } from './ActivityHeatmap';
 export { default as TopActiveUsers } from './TopActiveUsers';
 export { default as MessageList } from './MessageList';
 export { default as TodayLoginList } from './TodayLoginList';
-
+export { default as ProvinceMap } from './ProvinceMap';

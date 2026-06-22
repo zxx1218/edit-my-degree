@@ -295,3 +295,19 @@ export const deleteUser = async (token: string, body: any) => {
   
   return await response.json();
 };
+
+// 获取省份登录统计
+export const getProvinceLoginStats = async (token: string) => {
+  const url = '/api/get-province-login-stats';
+  const options = createSignedRequestOptions('POST', url, {});
+  
+  const response = await fetch(`${API_BASE_URL}/get-province-login-stats`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};

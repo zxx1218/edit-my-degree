@@ -146,6 +146,8 @@ async function createTables(db) {
       user_id VARCHAR(36) NOT NULL,
       username TEXT NOT NULL,
       login_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      login_ip VARCHAR(45),
+      ip_location TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )

@@ -38,6 +38,7 @@ const getMessagesModule = require('../get-messages');
 const addMessageModule = require('../add-message');
 const deleteUserModule = require('../delete-user');
 const getTodayLoginDetailsModule = require('../get-today-login-details');
+const getProvinceLoginStatsModule = require('../get-province-login-stats');
 
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
@@ -342,6 +343,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 获取今日登录详情接口 - 用于获取今天所有用户的登录记录
   app.post('/api/get-today-login-details', generalLimiter, signatureValidationMiddleware, getTodayLoginDetailsModule.initialize(db));
+
+  // 获取省份登录统计接口 - 用于展示各省份用户登录次数分布
+  app.post('/api/get-province-login-stats', generalLimiter, signatureValidationMiddleware, getProvinceLoginStatsModule.initialize(db));
 
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
   app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));

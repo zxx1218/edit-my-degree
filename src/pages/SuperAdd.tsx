@@ -14,6 +14,7 @@ import {
   TopActiveUsers,
   MessageList,
   TodayLoginList,
+  ProvinceMap,
 } from "@/components/admin";
 
 interface User {
@@ -567,6 +568,9 @@ const SuperAdd = () => {
           isLoading={isLoadingHeatmap}
           onRefresh={fetchHeatmapData}
         />
+
+        {/* 省份登录分布地图 */}
+        <ProvinceMap token={token} />
 
         {/* Top活跃用户排行榜 */}
         <TopActiveUsers

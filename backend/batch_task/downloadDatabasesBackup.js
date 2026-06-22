@@ -1,5 +1,5 @@
 /**
- * 专为家中服务器设计的数据库增量同步脚本
+ * 专为家中另一台用于备份的服务器设计的数据库增量同步脚本
  * 
  * 增量同步SFTP文件到本地目录
  * 
@@ -28,7 +28,7 @@ const { promisify } = require('util');
 // 配置信息
   const config = {
     host: 'cheerout.cn', // 远程服务器地址
-    port: 2222,
+    port: 22,
     username: 'root', // 登录服务器的用户名
     password: '991218aa', // 登录服务器的密码
     remoteDir: '/home/databasesBackUp/database/mysql/crontab_backup/degree_management', // 要下载的远程数据库备份目录路径
