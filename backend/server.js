@@ -111,7 +111,7 @@ initializeApp().then((success) => {
         console.safe(`\n========================================`);
         console.safe(`🚀 服务器启动成功`);
         console.safe(`📍 端口: ${PORT}`);
-        console.safe(`🔧 环境: ${process.env.NODE_ENV || 'development'}`);
+        console.safe(`🔧 环境: ${process.env.NODE_ENV}`);
         console.safe(`⏰ 启动时间: ${new Date().toLocaleString('zh-CN')}`);
         console.safe(`========================================\n`);
       

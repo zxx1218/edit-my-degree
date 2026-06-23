@@ -148,9 +148,9 @@ function initialize(db) {
           }
           
           // 调试日志：输出前5个IP的解析结果
-          if (processedCount <= 5) {
-            console.log(`[省份统计] IP=${record.ip}, 归属地="${location}", 提取省份="${province}"`);
-          }
+          // if (processedCount <= 5) {
+          //   console.log(`[省份统计] IP=${record.ip}, 归属地="${location}", 提取省份="${province}"`);
+          // }
         }
         
         // 累加该省份的登录次数

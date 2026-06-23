@@ -23,6 +23,7 @@ interface EducationData {
   principalName: string;
   certificateNumber: string;
   photo: string;
+  idNumber?: string;
 }
 
 // Long press hook
@@ -119,6 +120,7 @@ const EducationDetail = () => {
     principalName: "李路明",
     certificateNumber: "123456789012345678",
     photo: "",
+    idNumber: "",
   };
 
   const [data, setData] = useState<EducationData>(defaultData);
@@ -149,6 +151,7 @@ const EducationDetail = () => {
           principalName: detailRecord.principal_name || defaultData.principalName,
           certificateNumber: detailRecord.certificate_number || defaultData.certificateNumber,
           photo: detailRecord.photo || defaultData.photo,
+          idNumber: detailRecord.id_number || defaultData.idNumber,
         });
         return;
       }
@@ -175,6 +178,7 @@ const EducationDetail = () => {
             principalName: record.principal_name || defaultData.principalName,
             certificateNumber: record.certificate_number || defaultData.certificateNumber,
             photo: record.photo || defaultData.photo,
+            idNumber: record.id_number || defaultData.idNumber,
           });
         }
       } catch (error) {
@@ -376,23 +380,42 @@ const EducationDetail = () => {
 
         {/* Detail Info */}
         <div className="space-y-3">
-          {[
-            { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
-            { field: "graduationDate", label: "毕（结）业日期", value: data.graduationDate },
-            { field: "educationType", label: "学历类别", value: data.educationType },
-            { field: "duration", label: "学制", value: data.duration },
-            { field: "graduationStatus", label: "毕（结）业", value: data.graduationStatus },
-            { field: "principalName", label: "校（院）长姓名", value: data.principalName },
-            { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
-          ].map(({ field, label, value }) => (
-            <LongPressField
-              key={field}
-              field={field as keyof EducationData}
-              label={label}
-              value={value || "-"}
-              onLongPress={handleFieldClick}
-            />
-          ))}
+          {data.degreeLevel === "自考本科" ? (
+            // 自考本科的特殊显示顺序
+            [
+              { field: "idNumber", label: "证件号码", value: data.idNumber },
+              { field: "graduationDate", label: "毕（结）业日期", value: data.graduationDate },
+              { field: "graduationStatus", label: "毕（结）业", value: data.graduationStatus },
+              { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
+            ].map(({ field, label, value }) => (
+              <LongPressField
+                key={field}
+                field={field as keyof EducationData}
+                label={label}
+                value={value || "-"}
+                onLongPress={handleFieldClick}
+              />
+            ))
+          ) : (
+            // 其他学历类型的默认显示顺序
+            [
+              { field: "enrollmentDate", label: "入学日期", value: data.enrollmentDate },
+              { field: "graduationDate", label: "毕（结）业日期", value: data.graduationDate },
+              { field: "educationType", label: "学历类别", value: data.educationType },
+              { field: "duration", label: "学制", value: data.duration },
+              { field: "graduationStatus", label: "毕（结）业", value: data.graduationStatus },
+              { field: "principalName", label: "校（院）长姓名", value: data.principalName },
+              { field: "certificateNumber", label: "证书编号", value: data.certificateNumber },
+            ].map(({ field, label, value }) => (
+              <LongPressField
+                key={field}
+                field={field as keyof EducationData}
+                label={label}
+                value={value || "-"}
+                onLongPress={handleFieldClick}
+              />
+            ))
+          )}
         </div>
 
         {/* Button */}

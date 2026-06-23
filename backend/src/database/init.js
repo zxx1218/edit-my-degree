@@ -82,6 +82,7 @@ async function createTables(db) {
       graduation_status TEXT,
       principal_name TEXT,
       certificate_number TEXT,
+      id_number TEXT,
       photo LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
