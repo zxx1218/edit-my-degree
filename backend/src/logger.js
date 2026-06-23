@@ -2,6 +2,7 @@ const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 const util = require('util');
+const fs = require('fs');
 
 // 创建日志目录
 const logDir = path.join(__dirname, '..', 'logs');
@@ -188,5 +189,99 @@ console.error = (...args) => {
 console.safe = (...args) => {
   logger.safe(formatArgs(args));
 };
+
+/**
+ * 手动清理过期的日志文件
+ * 由于winston-daily-rotate-file的maxFiles在某些情况下不会立即清理，
+ * 特别是当某些天没有产生新日志时，需要手动清理
+ */
+function cleanupOldLogFiles() {
+  try {
+    // 从环境变量读取日志保留天数，默认3天
+    const retentionDays = parseInt(process.env.LOG_RETENTION_DAYS) || 3;
+    const now = new Date();
+    
+    // 获取今天的日期（去掉时间部分）
+    const todayStr = now.toISOString().split('T')[0];
+    const todayDate = new Date(todayStr + 'T00:00:00.000Z');
+    
+    // 计算截止日期：今天 - (保留天数 - 1)天
+    const cutoffDate = new Date(todayDate.getTime() - (retentionDays - 1) * 24 * 60 * 60 * 1000);
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+    
+    console.safe(`[日志清理] 开始清理，当前日期: ${todayStr}, 保留${retentionDays}天，截止日期: ${cutoffDateStr}`);
+    
+    if (!fs.existsSync(logDir)) {
+      return;
+    }
+    
+    const files = fs.readdirSync(logDir);
+    let deletedCount = 0;
+    
+    for (const file of files) {
+      // 匹配日志文件名格式: application-YYYY-MM-DD.log/warn/error/safe
+      const match = file.match(/^application-(\d{4}-\d{2}-\d{2})\.(log|warn|error|safe)$/);
+      if (!match) continue;
+      
+      const dateStr = match[1];
+      
+      // 如果文件日期早于截止日期，删除该文件
+      if (dateStr < cutoffDateStr) {
+        const filePath = path.join(logDir, file);
+        fs.unlinkSync(filePath);
+        deletedCount++;
+        console.safe(`[日志清理] 已删除过期日志文件: ${file} (日期: ${dateStr})`);
+      }
+    }
+    
+    if (deletedCount > 0) {
+      console.safe(`[日志清理] 清理完成，共删除 ${deletedCount} 个过期日志文件`);
+    } else {
+      console.safe(`[日志清理] 没有需要清理的过期文件`);
+    }
+  } catch (err) {
+    console.error('[日志清理] 清理过期日志文件失败:', err.message);
+  }
+}
+
+/**
+ * 启动定期日志清理任务
+ * 每天凌晨2点执行一次清理
+ * 在PM2集群模式下，仅在主进程（NODE_APP_INSTANCE === '0'）中执行
+ */
+function startLogCleanupTask() {
+  // 在PM2集群模式下，只在主进程中执行清理任务
+  const instanceId = process.env.NODE_APP_INSTANCE;
+  if (instanceId && instanceId !== '0') {
+    // 工作进程不执行清理任务
+    return;
+  }
+  
+  // 立即执行一次清理
+  cleanupOldLogFiles();
+  
+  // 设置定时任务：每天凌晨2点执行
+  const now = new Date();
+  const nextRun = new Date(now);
+  nextRun.setHours(2, 0, 0, 0);
+  
+  // 如果今天的2点已经过了，设置为明天2点
+  if (nextRun <= now) {
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+  
+  const timeUntilNextRun = nextRun.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    cleanupOldLogFiles();
+    // 之后每24小时执行一次
+    setInterval(cleanupOldLogFiles, 24 * 60 * 60 * 1000);
+  }, timeUntilNextRun);
+  
+  console.safe(`[日志清理] 定期清理任务已启动，下次执行时间: ${nextRun.toLocaleString('zh-CN')}`);
+}
+
+// 启动日志清理任务
+startLogCleanupTask();
 
 module.exports = logger;
