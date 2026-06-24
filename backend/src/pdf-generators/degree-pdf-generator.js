@@ -343,7 +343,7 @@ const generateDegreePdf = async (req, res) => {
         
         // 使用短码替代完整URL
         try {
-          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'degree', 365);
+          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'degree', 7);
           
           // 生成短码URL（更简洁）
           const shortUrl = `${process.env.VERIFICATION_BASE_URL}/qr/${shortCode}`;
@@ -353,7 +353,7 @@ const generateDegreePdf = async (req, res) => {
             x: 76.5,                             // 二维码 X 坐标
             y: 111,                              // 二维码 Y 坐标
             size: 68.5,                          // 二维码大小 (宽高)
-            quality: 'M'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%) - 使用M级平衡清晰度和可靠性
+            quality: 'L'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%) - 使用L级平衡清晰度和可靠性
           };
           
           logger.info(`📱 [学位 PDF] 使用 available 模式生成验证二维码（短码优化）`, {
@@ -385,7 +385,7 @@ const generateDegreePdf = async (req, res) => {
           x: 76.5,                             // 二维码 X 坐标
           y: 111,                              // 二维码 Y 坐标
           size: 68.5,                          // 二维码大小 (宽高)
-          quality: 'H'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%)
+          quality: 'L'                         // 容错级别：L(7%), M(15%), Q(25%), H(30%)
         };
         logger.info(`📱 [学位 PDF] 使用 maintenance 模式生成维护提示二维码`, {
           mode: qrCodeMode,

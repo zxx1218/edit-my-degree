@@ -376,7 +376,7 @@ const generateEducationPdf = async (req, res) => {
         
         // 使用短码替代完整URL
         try {
-          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'education', 365);
+          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'education', 7);
           
           // 生成短码URL（更简洁）
           const shortUrl = `${process.env.VERIFICATION_BASE_URL}/qr/${shortCode}`;
