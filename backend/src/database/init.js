@@ -194,6 +194,20 @@ async function createTables(db) {
       INDEX idx_ip_address (ip_address),
       INDEX idx_blocked_until (blocked_until)
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS qr_code_urls (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      short_code VARCHAR(20) NOT NULL UNIQUE,
+      full_url TEXT NOT NULL,
+      pdf_type ENUM('degree', 'education', 'student_status') NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMP,
+      scan_count INT NOT NULL DEFAULT 0,
+      last_scanned_at TIMESTAMP NULL,
+      INDEX idx_short_code (short_code),
+      INDEX idx_created_at (created_at)
+    )
     `
   ];
 

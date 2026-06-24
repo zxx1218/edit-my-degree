@@ -20,6 +20,19 @@ server
         limit_except GET POST PUT DELETE OPTIONS { deny all; }
     }
 
+    # 二维码短码重定向代理
+    location ^~ /qr/ {
+        proxy_pass http://127.0.0.1:20000;
+        
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+    }
+
     location / {
         if ($request_method = 'OPTIONS') {
             add_header Access-Control-Allow-Origin "http://cheerout.cn:9092";

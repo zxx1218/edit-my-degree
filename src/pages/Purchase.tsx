@@ -21,6 +21,10 @@ const faqItems = [
     answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗30积分，积分不使用永不过期。"
   },
   {
+    question: "可以多人同时使用一个账号登陆吗？",
+    answer: "可以，支持多设备同时登录同一账号。"
+  },
+  {
     question: "数据安全吗？",
     answer: "所有数据均采用加密存储，仅您本人可见。"
   },
@@ -77,7 +81,7 @@ const Purchase = () => {
       price: "¥3",
       description: "获取一张1次登录次数充值卡密",
       popular: false,
-      features: ["数据加密存储", "支持个人信息任意修改"],
+      features: ["数据永久存储", "支持个人信息任意修改"],
       icon: Zap,
       gradient: "from-sky-500 to-blue-500",
     },
@@ -87,7 +91,7 @@ const Purchase = () => {
       price: "¥9",
       description: "获取一张5次登录次数充值卡密",
       popular: false,
-      features: ["数据加密存储", "支持信息任意修改"],
+      features: ["数据永久存储", "支持信息任意修改", "支持多设备同时登录"],
       icon: Sparkles,
       gradient: "from-blue-500 to-cyan-500",
     },
@@ -97,7 +101,7 @@ const Purchase = () => {
       price: "¥29",
       description: "获取一张30次登录次数充值卡密",
       popular: true,
-      features: ["购买人数最多","数据加密存储", "支持信息任意修改"],
+      features: ["购买人数最多","数据永久存储", "支持信息任意修改", "支持多设备同时登录"],
       icon: Crown,
       gradient: "from-purple-500 to-pink-500",
     },
@@ -107,7 +111,7 @@ const Purchase = () => {
       price: "¥99",
       description: "获取一张不限制登录次数的充值卡密，额外赠送30个PDF下载积分",
       popular: false,
-      features: ["无限制登录次数","额外赠送30个PDF下载积分", "数据加密存储", "支持信息任意修改"],
+      features: ["无限制登录次数","额外赠送30个PDF下载积分", "数据永久存储", "支持信息任意修改", "支持多设备同时登录"],
       icon: Crown,
       gradient: "from-amber-500 to-orange-500",
     },

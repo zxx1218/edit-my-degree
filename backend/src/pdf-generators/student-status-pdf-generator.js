@@ -5,6 +5,7 @@ const path = require('path');
 const QRCode = require('qrcode');
 const logger = require('../logger');
 const minio = require('minio');
+const qrCodeManager = require('../qr-code-manager');
 
 // 初始化 MinIO 客户端
 const minioClient = new minio.Client({
@@ -72,6 +73,20 @@ const uploadPhotoToMinIO = async (base64Data, studentName) => {
 const generateStudentStatusPdf = async (req, res) => {
   try {
     logger.info('==========🚀 开始生成学籍在线验证报告 PDF...==========');
+    
+    // 从请求中获取数据库连接（由中间件注入）
+    const db = req.app.locals.db;
+    if (!db) {
+      logger.error('❌ 数据库连接不可用');
+      return res.status(500).json({
+        success: false,
+        error: '服务器配置错误'
+      });
+    }
+    
+    // 初始化二维码管理器
+    const qrManager = qrCodeManager.initialize(db);
+    
     // 从请求中获取数据
     const {
       name,
@@ -354,21 +369,46 @@ const generateStudentStatusPdf = async (req, res) => {
       
       let qrCodeConfig;
       if (qrCodeMode === 'available') {
-        // 生成正常验证二维码
-        qrCodeConfig = {
-          content: `${process.env.VERIFICATION_BASE_URL}/verification-studentStatus?${queryString}`, // 二维码内容
-          x: 76.5,                           // 二维码 X 坐标
-          y: 126,                            // 二维码 Y 坐标
-          size: 68.5,                        // 二维码大小 (宽高)
-          quality: 'L'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%)
-        };
-        logger.info(`📱 [学籍 PDF] 使用 available 模式生成验证二维码`, {
-          mode: qrCodeMode,
-          verificationUrl: process.env.VERIFICATION_BASE_URL,
-          position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
-          size: qrCodeConfig.size,
-          errorCorrectionLevel: qrCodeConfig.quality
-        });
+        // 生成完整URL
+        const fullUrl = `${process.env.VERIFICATION_BASE_URL}/verification-studentStatus?${queryString}`;
+        
+        // 使用短码替代完整URL
+        try {
+          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'student_status', 365);
+          
+          // 生成短码URL（更简洁）
+          const shortUrl = `${process.env.VERIFICATION_BASE_URL}/qr/${shortCode}`;
+          
+          qrCodeConfig = {
+            content: shortUrl, // 使用短码URL，大幅减少二维码密度
+            x: 76.5,                           // 二维码 X 坐标
+            y: 126,                            // 二维码 Y 坐标
+            size: 68.5,                        // 二维码大小 (宽高)
+            quality: 'M'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%) - 使用M级平衡清晰度和可靠性
+          };
+          
+          logger.info(`📱 [学籍 PDF] 使用 available 模式生成验证二维码（短码优化）`, {
+            mode: qrCodeMode,
+            shortCode: shortCode,
+            shortUrl: shortUrl,
+            originalLength: fullUrl.length,
+            optimizedLength: shortUrl.length,
+            reduction: `${((1 - shortUrl.length / fullUrl.length) * 100).toFixed(1)}%`,
+            position: { x: qrCodeConfig.x, y: qrCodeConfig.y },
+            size: qrCodeConfig.size,
+            errorCorrectionLevel: qrCodeConfig.quality
+          });
+        } catch (shortCodeError) {
+          logger.error(`❌ 生成短码失败，回退到完整URL: ${shortCodeError.message}`);
+          // 如果短码生成失败，回退到原始方式
+          qrCodeConfig = {
+            content: fullUrl,
+            x: 76.5,
+            y: 126,
+            size: 68.5,
+            quality: 'L'
+          };
+        }
       } else {
         // maintenance 模式：显示维护信息
         qrCodeConfig = {

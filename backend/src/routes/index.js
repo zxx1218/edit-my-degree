@@ -40,6 +40,9 @@ const deleteUserModule = require('../delete-user');
 const getTodayLoginDetailsModule = require('../get-today-login-details');
 const getProvinceLoginStatsModule = require('../get-province-login-stats');
 
+// 引入二维码重定向模块
+const qrRedirectModule = require('../qr-redirect');
+
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
 
@@ -280,6 +283,9 @@ const signatureValidationMiddleware = async (req, res, next) => {
 };
 
 function setupRoutes(app, db, JWT_SECRET) {
+  // 将数据库连接注入到app.locals，供PDF生成器使用
+  app.locals.db = db;
+  
   // 应用IP黑名单中间件
   app.use(ipBlacklistMiddleware);
   
@@ -367,8 +373,10 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 教育部学籍在线验证报告pdf生成接口
   app.post('/api/generate-student-status-pdf', generalLimiter, signatureValidationMiddleware, generateStudentStatusPdf);
-}
 
+  // 二维码重定向接口 - 用于处理扫码后的短码重定向（不需要签名验证，因为是公开访问）
+  app.get('/qr/:shortCode', qrRedirectModule.initialize(db));
+}
 module.exports = {
   setupRoutes,
   generalLimiter,
