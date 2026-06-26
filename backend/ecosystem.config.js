@@ -44,7 +44,7 @@ module.exports = {
       /**
        * 实例数量 - 设置为 "max" 表示自动匹配 CPU 核心数
        */
-      instances: "4",
+      instances: "2",
       
       /**
        * 集群模式 - 启用多进程集群

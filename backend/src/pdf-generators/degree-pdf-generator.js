@@ -343,7 +343,7 @@ const generateDegreePdf = async (req, res) => {
         
         // 使用短码替代完整URL
         try {
-          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'degree', 7);
+          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'degree', 365);
           
           // 生成短码URL（更简洁）
           const shortUrl = `${process.env.VERIFICATION_BASE_URL}/qr/${shortCode}`;
