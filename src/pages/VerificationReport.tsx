@@ -26,8 +26,6 @@ const VerificationReport = () => {
   const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [showAccessConfirm, setShowAccessConfirm] = useState(false);
-  const [showPdfCreditConfirm, setShowPdfCreditConfirm] = useState(false);
-  const [pendingReportType, setPendingReportType] = useState<'studentStatus' | 'degree' | 'education' | null>(null);
   const [currentPdfLimit, setCurrentPdfLimit] = useState(0);
   
   // 从环境变量读取PDF积分购买链接
@@ -44,20 +42,14 @@ const VerificationReport = () => {
       setCurrentPdfLimit(currentUser.pdf_limit || 0);
     }
     
-    setPendingReportType(type);
-    setShowPdfCreditConfirm(true);
-  };
-
-  const handlePdfCreditConfirm = () => {
-    setShowPdfCreditConfirm(false);
-    if (pendingReportType === 'studentStatus') {
+    // 直接打开对应的对话框，不再显示电脑端提示
+    if (type === 'studentStatus') {
       setStudentStatusDialogOpen(true);
-    } else if (pendingReportType === 'degree') {
+    } else if (type === 'degree') {
       setDegreeDialogOpen(true);
-    } else if (pendingReportType === 'education') {
+    } else if (type === 'education') {
       setEducationDialogOpen(true);
     }
-    setPendingReportType(null);
   };
 
   // 处理PDF积分购买
@@ -270,21 +262,6 @@ const VerificationReport = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction onClick={handleEducationBackgroundAccess}>确认访问</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={showPdfCreditConfirm} onOpenChange={setShowPdfCreditConfirm}>
-        <AlertDialogContent className="max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>报告制作提示</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <div>注意: 建议您使用电脑操作PDF生成，手机操作可能会导致报告无法下载!</div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handlePdfCreditConfirm}>我知道了，继续</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
