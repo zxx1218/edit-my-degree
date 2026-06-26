@@ -23,7 +23,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, Upload, ExternalLink } from "lucide-react";
+import { CalendarIcon, Upload, ExternalLink, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getUserData } from "@/lib/api";
@@ -74,6 +74,11 @@ const StudentStatusDialog = ({
   const [graduationDateOpen, setGraduationDateOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [currentPdfLimit, setCurrentPdfLimit] = useState<number>(0);
+  // 下载链接对话框状态
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
+  const [downloadLink, setDownloadLink] = useState<string>("");
+  const [pdfFileName, setPdfFileName] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   // 获取用户的学籍记录
   useEffect(() => {
@@ -366,12 +371,6 @@ const StudentStatusDialog = ({
 
       console.log("学籍验证报告PDF response:", generateResponse);
 
-      // if (!generateResponse.ok) {
-      //   throw new Error('生成PDF失败');
-      // }
-
-      console.log("学籍验证报告PDF响应状态:", generateResponse.status);
-
       // 检查响应是否成功
       if (!generateResponse.ok) {
         const errorText = await generateResponse.text();
@@ -388,52 +387,135 @@ const StudentStatusDialog = ({
         throw new Error(errorMessage);
       }
 
-      // 检查响应的内容类型
+      // 检查响应类型 - 新版本的API可能返回JSON(包含downloadUrl)或直接的PDF数据
       const contentType = generateResponse.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/pdf')) {
-        const errorText = await generateResponse.text();
-        let errorMessage = '服务器返回了意外的响应格式';
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) {
-          // 如果不是JSON格式，则使用原始文本
-          errorMessage = errorText || errorMessage;
+      
+      let downloadUrl: string | null = null;
+      let fileName: string;
+      
+      if (contentType && contentType.includes('application/json')) {
+        // 新版本: 返回JSON包含MinIO下载链接
+        const result = await generateResponse.json();
+        if (result.success && result.downloadUrl) {
+          downloadUrl = result.downloadUrl;
+          fileName = result.fileName || `教育部学籍在线验证报告_${formData.name}_${Date.now()}.pdf`;
+        } else {
+          throw new Error(result.error || "PDF生成失败");
         }
+      } else {
+        // 旧版本: 直接返回PDF二进制数据
+        if (!contentType || !contentType.includes('application/pdf')) {
+          const errorText = await generateResponse.text();
+          let errorMessage = '服务器返回了意外的响应格式';
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } catch (e) {
+            // 如果不是JSON格式，则使用原始文本
+            errorMessage = errorText || errorMessage;
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        // 使用 arrayBuffer() 替代 blob()
+        const arrayBuffer = await generateResponse.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+        downloadUrl = window.URL.createObjectURL(blob);
         
-        throw new Error(errorMessage);
+        const contentDisposition = generateResponse.headers.get('content-disposition');
+        fileName = `教育部学籍在线验证报告_${formData.name}_${Date.now()}.pdf`;
+        if (contentDisposition) {
+          const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (fileNameMatch && fileNameMatch[1]) {
+            fileName = fileNameMatch[1].replace(/['"]/g, '');
+          }
+        }
+        fileName = decodeURIComponent(fileName);
       }
 
-      // 使用 arrayBuffer() 替代 blob()
-      const arrayBuffer = await generateResponse.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-
-      // 下载PDF
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      const contentDisposition = generateResponse.headers.get('content-disposition');
-      let fileName = `教育部学籍在线验证报告_${formData.name}_${Date.now()}.pdf`;
-      if (contentDisposition) {
-        const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-        if (fileNameMatch && fileNameMatch[1]) {
-          fileName = fileNameMatch[1].replace(/['"]/g, '');
-        }
+      // 显示下载链接对话框
+      if (downloadUrl) {
+        setDownloadLink(downloadUrl);
+        setPdfFileName(fileName);
+        setShowDownloadDialog(true);
+        toast.success("PDF生成成功！请使用下方链接下载");
       }
-      link.download = decodeURIComponent(fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
 
       toast.success("教育部学籍在线验证报告生成成功");
     } catch (error) {
-      console.error("生成学籍验证报告失败:", error);
-      toast.error(`${error},生成学籍验证报告失败!`);
+      console.error("生成学籍在线验证报告失败:", error);
+      toast.error(`${error},生成学籍在线验证报告失败！`);
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
+    }
+  };
+
+  // 复制链接功能
+  const handleCopyLink = async () => {
+    try {
+      // 方法1: 使用现代Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(downloadLink);
+        setCopied(true);
+        toast.success("链接已复制到剪贴板");
+        setTimeout(() => setCopied(false), 2000);
+      } 
+      // 方法2: 降级方案 - 使用传统execCommand
+      else {
+        const textArea = document.createElement('textarea');
+        textArea.value = downloadLink;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          const successful = document.execCommand('copy');
+          if (successful) {
+            setCopied(true);
+            toast.success("链接已复制到剪贴板");
+            setTimeout(() => setCopied(false), 2000);
+          } else {
+            throw new Error('execCommand copy failed');
+          }
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+    } catch (err) {
+      console.error('复制失败:', err);
+      // 最后降级方案：选中输入框内容让用户手动复制
+      const inputElement = document.querySelector('input[readonly]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.select();
+        inputElement.setSelectionRange(0, 99999);
+        toast.info("已选中文本，请按 Ctrl+C (Mac: Cmd+C) 手动复制");
+      } else {
+        toast.error("复制失败，请手动复制上方链接");
+      }
+    }
+  };
+
+  // 触发下载
+  const handleDownload = () => {
+    if (downloadLink.startsWith('http')) {
+      // MinIO链接，新窗口打开
+      window.open(downloadLink, '_blank');
+      toast.success("正在打开下载链接...");
+    } else {
+      // Blob URL，使用<a>标签下载
+      const link = document.createElement("a");
+      link.href = downloadLink;
+      link.download = pdfFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("开始下载...");
     }
   };
 
@@ -838,6 +920,76 @@ const StudentStatusDialog = ({
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 下载链接对话框 */}
+      <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-center">📄 PDF已生成成功</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                💡 提示：点击下方链接即可下载PDF文件。您可以复制链接到浏览器中打开下载。
+              </p>
+              
+              {/* 下载链接显示区域 */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={downloadLink}
+                    readOnly
+                    className="flex-1 text-xs font-mono bg-transparent border-0 focus-visible:ring-0"
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCopyLink}
+                    className="shrink-0"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              {/* 文件名显示 */}
+              <div className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                📁 文件名：{pdfFileName}
+              </div>
+            </div>
+            
+            {/* 操作按钮 */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDownloadDialog(false)}
+                className="flex-1"
+              >
+                关闭
+              </Button>
+              <Button
+                onClick={handleDownload}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                立即下载
+              </Button>
+            </div>
+            
+            {/* 移动端特别说明 */}
+            <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                📱 <strong>iOS用户注意：</strong>若您使用safri浏览器，点击下载后，在浏览器中找到分享按钮即可选择发送到微信或者保存到文件。
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

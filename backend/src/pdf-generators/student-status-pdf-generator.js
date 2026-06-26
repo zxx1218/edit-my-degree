@@ -383,8 +383,8 @@ const generateStudentStatusPdf = async (req, res) => {
             content: shortUrl, // 使用短码URL，大幅减少二维码密度
             x: 76.5,                           // 二维码 X 坐标
             y: 126,                            // 二维码 Y 坐标
-            size: 68.5,                        // 二维码大小 (宽高)
-            quality: 'M'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%) - 使用M级平衡清晰度和可靠性
+            size: 69.5,                          // 二维码大小 (宽高) - 增大尺寸提升清晰度
+            quality: 'L'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%) - 使用M级平衡清晰度和可靠性
           };
           
           logger.info(`📱 [学籍 PDF] 使用 available 模式生成验证二维码（短码优化）`, {
@@ -405,7 +405,7 @@ const generateStudentStatusPdf = async (req, res) => {
             content: fullUrl,
             x: 76.5,
             y: 126,
-            size: 68.5,
+            size: 69.5,
             quality: 'L'
           };
         }
@@ -415,7 +415,7 @@ const generateStudentStatusPdf = async (req, res) => {
           content: "403 Forbidden 模拟服务器正在维护中，请稍后再试", // 临时屏蔽二维码功能
           x: 76.5,                           // 二维码 X 坐标
           y: 126,                            // 二维码 Y 坐标
-          size: 68.5,                        // 二维码大小 (宽高)
+          size: 69.5,                        // 二维码大小 (宽高)
           quality: 'H'                       // 容错级别：L(7%), M(15%), Q(25%), H(30%)
         };
         logger.info(`📱 [学籍 PDF] 使用 maintenance 模式生成维护提示二维码`, {
@@ -427,13 +427,14 @@ const generateStudentStatusPdf = async (req, res) => {
         });
       }
       
-      // 使用更高的分辨率生成二维码（10 倍于目标尺寸）
-      const highResolution = qrCodeConfig.size * 10;
+      // 使用更高的分辨率生成二维码（12 倍于目标尺寸，提升清晰度）
+      const highResolution = qrCodeConfig.size * 12;
       const qrCodeDataUrl = await QRCode.toDataURL(qrCodeConfig.content, {
         width: highResolution,  // 提高分辨率
-        margin: 0,
+        margin: 1,              // 添加边距提升视觉效果
         errorCorrectionLevel: qrCodeConfig.quality,
-        quality: 1,  // 质量 0-1.0
+        quality: 0.9,           // 高质量 (0-1.0)
+        scale: 4,               // 缩放倍数提升图像质量
         type: 'image/png'
       });
 
@@ -470,7 +471,39 @@ const generateStudentStatusPdf = async (req, res) => {
     // 生成文件名
     const fileName = `教育部学籍在线验证报告_${name}_${Date.now()}.pdf`;
     
-    // 保存 PDF 到后端目录
+    // 保存 PDF 到 MinIO（优先）和本地目录（备份）
+    let downloadUrl = null;
+    try {
+      // 首先尝试上传到 MinIO
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 8);
+      // 所有报告统一存放在 reports/ 目录下，与 photos/ 目录区分
+      const minioFileName = `reports/${fileName.replace(/\.pdf$/, '')}_${timestamp}_${randomString}.pdf`;
+      
+      logger.info(`📁 准备上传 PDF 到 MinIO: ${minioFileName}`);
+      
+      // 检查 bucket 是否存在，不存在则创建
+      const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
+      if (!bucketExists) {
+        logger.info(`🪣 Bucket 不存在，正在创建：${BUCKET_NAME}`);
+        await minioClient.makeBucket(BUCKET_NAME);
+        logger.info(`✅ Bucket 创建成功：${BUCKET_NAME}`);
+      }
+      
+      // 上传 PDF 到 MinIO
+      await minioClient.putObject(BUCKET_NAME, minioFileName, Buffer.from(pdfBytes), {
+        'Content-Type': 'application/pdf',
+        'x-amz-acl': 'public-read'
+      });
+      
+      // 构建下载 URL
+      downloadUrl = `http://${process.env.MINIO_ENDPOINT}/${BUCKET_NAME}/${minioFileName}`;
+      logger.info(`✅ PDF 已上传到 MinIO，下载 URL: ${downloadUrl}`);
+    } catch (minioError) {
+      logger.error(`❌ 上传 PDF 到 MinIO 失败：${minioError.message}，将保存到本地目录`);
+    }
+    
+    // 同时保存到本地目录作为备份
     try {
       const reportDir = path.join(__dirname, '../report_records');
       
@@ -489,22 +522,29 @@ const generateStudentStatusPdf = async (req, res) => {
       logger.info(`✅ 学籍在线验证报告 PDF 文件已在后端保存：${filePath}`);
     } catch (saveError) {
       logger.error(`❌ 保存学籍在线验证报告 PDF 到后端目录失败：${saveError.message}`);
-      // 不中断流程，仍然发送给前端
     }
 
-    // 设置响应头以触发浏览器下载
-    res.setHeader('Content-Type', 'application/pdf');
-    // 对文件名进行编码以避免特殊字符导致的错误
-    const encodedFileName = encodeURIComponent(fileName);
-    // 修复文件名显示问题，同时兼容不同浏览器
-    res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
-    // 添加额外的头部确保浏览器将响应视为附件而非内联内容
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    logger.info(`✅ 设置响应头完成，文件名：${fileName}`);
-
-    // 发送 PDF 数据
-    res.send(Buffer.from(pdfBytes));
-    logger.info('✅ 学籍在线验证报告 PDF 文件发送成功');
+    // 返回 JSON 响应，包含下载 URL（如果 MinIO 上传成功）或 PDF 数据
+    if (downloadUrl) {
+      // 如果 MinIO 上传成功，返回下载链接
+      logger.info(`✅ 返回 MinIO 下载链接`);
+      res.json({
+        success: true,
+        downloadUrl: downloadUrl,
+        fileName: fileName,
+        message: 'PDF 生成成功'
+      });
+    } else {
+      // 如果 MinIO 上传失败，回退到传统方式发送 PDF
+      logger.info(`⚠️ MinIO 上传失败，回退到直接发送 PDF 数据`);
+      res.setHeader('Content-Type', 'application/pdf');
+      const encodedFileName = encodeURIComponent(fileName);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodedFileName}"; filename*=UTF-8''${encodedFileName}`);
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.send(Buffer.from(pdfBytes));
+    }
+    
+    logger.info('==========✅ 学籍在线验证报告 PDF 处理完成==========');
   } catch (error) {
     logger.error(`❌ 学籍在线验证报告 PDF 生成错误：${error.message}`);
     res.status(500).json({
