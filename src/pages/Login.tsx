@@ -305,7 +305,7 @@ const Login = () => {
             <div className="py-4">
               <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
                 <li>购买登录次数充值卡后可继续使用系统</li>
-                <li>已有卡密可直接在本页点击“卡密充值/续费”进行充值</li>
+                <li>已有卡密可直接在本页点击“使用卡密”进行充值</li>
               </ul>
             </div>
             <DialogFooter>
@@ -352,9 +352,17 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                密码
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  密码
+                </Label>
+                <button
+                  onClick={() => setIsChangePasswordOpen(true)}
+                  className="text-xs text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 hover:scale-105 transform px-2 py-1 rounded-md hover:bg-blue-50"
+                >
+                  <span>修改密码</span>
+                </button>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -392,7 +400,7 @@ const Login = () => {
                   className="w-full h-11 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 transition-all"
                   onClick={() => setIsRechargeOpen(true)}
                 >
-                  卡密充值/续费
+                  使用卡密
                 </Button>
               </div>
             </div>
@@ -619,7 +627,7 @@ const Login = () => {
                       setIsRechargeOpen(false);
                       navigate("/query-logins");
                     }}
-                    className="text-blue-700 hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm"
+                    className="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm"
                   >
                     <span>🔍</span>
                     <span>点我查询当前剩余登录次数与 PDF 积分</span>
@@ -631,16 +639,8 @@ const Login = () => {
 
           <div className="flex justify-center gap-4 mt-4 text-sm">
             <button
-              onClick={() => setIsChangePasswordOpen(true)}
-              className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform"
-            >
-              <span>🔑</span>
-              <span>修改密码</span>
-            </button>
-            <span className="text-border">•</span>
-            <button
               onClick={() => navigate("/purchase")}
-              className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform"
+              className="text-emerald-600 hover:text-emerald-700 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform font-medium"
             >
               <span>💰</span>
               <span>卡密购买</span>
@@ -648,7 +648,7 @@ const Login = () => {
             <span className="text-border">•</span>
             <button
               onClick={() => navigate("/video")}
-              className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform"
+              className="text-violet-600 hover:text-violet-700 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform font-medium"
             >
               <span>📹</span>
               <span>演示视频</span>
@@ -667,13 +667,13 @@ const Login = () => {
           </Alert> 
 
           {/* QQ群信息和留言板链接 */}
-          <div className="mt-6 text-center text-xs text-muted-foreground/70 border-t border-border/50 pt-4">
+          <div className="mt-6 text-center text-xs border-t border-border/50 pt-4">
             <div className="flex items-center justify-center gap-3 flex-wrap">
-              <span>交流Q群：{import.meta.env.VITE_QQ_GROUP}</span>
-              <span>•</span>
+              <span className="text-slate-600 font-medium">交流Q群：{import.meta.env.VITE_QQ_GROUP}</span>
+              <span className="text-slate-400">•</span>
               <button
                 onClick={() => setIsMessageBoardOpen(true)}
-                className="text-primary hover:text-accent transition-colors inline-flex items-center gap-1 hover:scale-105 transform font-medium"
+                className="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 hover:scale-105 transform font-medium"
               >
                 <MessageSquare className="h-3.5 w-3.5" />
                 <span>用户留言板</span>

@@ -226,7 +226,7 @@ const Register = () => {
                   <p className="font-medium text-foreground">登录卡密使用步骤：</p>
                   <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
                     <li>点击下方购买按钮或在登录页点击 “卡密购买” 购买登录卡密</li>
-                    <li>在登录页点击"卡密充值/续费"按钮使用卡密</li>
+                    <li>在登录页点击"使用卡密"按钮将您的卡密次数充值到对应账号中</li>
                   </ol>
                 </div>
               </div>
