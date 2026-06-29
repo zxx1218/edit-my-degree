@@ -17,6 +17,10 @@ const faqItems = [
     answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。登录次数不使用永不过期"
   },
   {
+    question: "不同套餐的登录次数有什么区别？",
+    answer: "除1次登录的体验卡有效登录时长为5分钟，永久卡密额外赠送30个PDF积分外，不同套餐区别仅登录次数不同。"
+  },
+  {
     question: "PDF积分是什么？",
     answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗30积分，积分不使用永不过期。"
   },
@@ -121,7 +125,7 @@ const Purchase = () => {
       price: "¥30",
       description: "30个PDF下载积分，积分不使用永不过期",
       popular: true,
-      features: ["可制作一份PDF", "积分对三种PDF均可通用"],
+      features: ["支持二维码扫码", "可制作一份PDF", "积分对三种PDF均可通用"],
       icon: FileText,
       gradient: "from-emerald-500 to-teal-500",
     },
