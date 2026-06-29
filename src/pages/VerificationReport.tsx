@@ -27,6 +27,8 @@ const VerificationReport = () => {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [showAccessConfirm, setShowAccessConfirm] = useState(false);
   const [currentPdfLimit, setCurrentPdfLimit] = useState(0);
+  const [showPdfCostConfirm, setShowPdfCostConfirm] = useState(false);
+  const [pendingReportType, setPendingReportType] = useState<'studentStatus' | 'degree' | 'education' | null>(null);
   
   // 从环境变量读取PDF积分购买链接
   const cardPdfUrl = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
@@ -42,14 +44,27 @@ const VerificationReport = () => {
       setCurrentPdfLimit(currentUser.pdf_limit || 0);
     }
     
-    // 直接打开对应的对话框，不再显示电脑端提示
-    if (type === 'studentStatus') {
+    // 显示PDF积分消耗确认对话框
+    setPendingReportType(type);
+    setShowPdfCostConfirm(true);
+  };
+
+  // 处理PDF积分确认
+  const handlePdfCostConfirm = () => {
+    setShowPdfCostConfirm(false);
+    
+    if (!pendingReportType) return;
+    
+    // 直接打开对应的对话框
+    if (pendingReportType === 'studentStatus') {
       setStudentStatusDialogOpen(true);
-    } else if (type === 'degree') {
+    } else if (pendingReportType === 'degree') {
       setDegreeDialogOpen(true);
-    } else if (type === 'education') {
+    } else if (pendingReportType === 'education') {
       setEducationDialogOpen(true);
     }
+    
+    setPendingReportType(null);
   };
 
   // 处理PDF积分购买
@@ -247,16 +262,31 @@ const VerificationReport = () => {
 
       <LoadingDialog open={isLoadingData} message="正在加载数据" description="请稍候..." />
 
+      {/* PDF积分消耗确认对话框 */}
+      <AlertDialog open={showPdfCostConfirm} onOpenChange={setShowPdfCostConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>报告制作确认</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p className="text-sm">1. 报告二维码支持任意设备扫码验证</p>
+              <p className="text-sm">2. 制作此报告需要消耗 <span className="font-semibold text-foreground text-base">30个PDF积分</span></p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-end gap-2">
+            <AlertDialogCancel>取消制作</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePdfCostConfirm}>开始制作</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={showAccessConfirm} onOpenChange={setShowAccessConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>访问确认</AlertDialogTitle>
+            <AlertDialogTitle>网页版访问确认</AlertDialogTitle>
             <AlertDialogDescription>
-              1. 建议使用电脑访问该页面以获得更好的浏览体验
+              1. 网页版信息取决于您在系统中设置的学籍学历学位以及考研信息，请确保信息准确再访问该页面
               <br />
-              2. 网页版信息取决于您在系统中设置的学籍学历学位以及考研信息，请确保信息准确填写再访问该页面
-              <br />
-              3. 访问该页面需要消耗 <span className="font-semibold text-foreground">1次登录次数</span>，是否确认访问？
+              2. 访问该页面需要消耗 <span className="font-semibold text-foreground">1次登录次数</span>，是否确认访问？
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -265,6 +295,7 @@ const VerificationReport = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 };

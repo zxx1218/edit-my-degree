@@ -289,6 +289,27 @@ const Purchase = () => {
           </div>
         </div>
 
+        {/* FAQ常见问题 */}
+        <div className="max-w-4xl mx-auto mb-16">
+          <h2 className="text-3xl font-bold text-center mb-10">常见问题</h2>
+          <Card>
+            <CardContent className="pt-6">
+              <Accordion type="single" collapsible className="w-full">
+                {faqItems.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger className="text-left font-medium">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* 客服联系方式卡片 */}
         <Card className="max-w-2xl mx-auto border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5 backdrop-blur-sm">
           <CardHeader className="text-center pb-2">

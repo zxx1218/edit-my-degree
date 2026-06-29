@@ -364,23 +364,23 @@ const Index = () => {
       {/* 考证现状广告窗口 */}
       <div className="px-4 mt-3.5">
         <div 
-          className="bg-blue-500 rounded-[7px] overflow-hidden cursor-pointer transition-all duration-300"
+          className="bg-blue-500 rounded-[7px] overflow-hidden cursor-pointer transition-all duration-300 flex justify-center"
           onClick={() => {
-            // 可以在这里添加跳转逻辑，例如跳转到考证相关页面
+            // 可以在这里添加跳转逻辑,例如跳转到考证相关页面
             // toast.info("功能开发中", { duration: 1500 });
           }}
         >
           <img 
             src="/certification-banner.png" 
-            alt="考证现状"
-            className="w-full h-[90px] sm:h-[100px] object-cover"
+            alt="广告栏"
+            className="w-full h-auto object-cover aspect-[2649/599]"
             onError={(e) => {
-              // 如果图片加载失败，显示占位内容
+              // 如果图片加载失败,显示占位内容
               e.currentTarget.style.display = 'none';
               e.currentTarget.parentElement!.innerHTML = `
                 <div class="p-6 text-white">
                   <h3 class="text-xl font-bold mb-2">模拟广告栏</h3>
-                  <p class="text-sm opacity-90">需一张1200px*400px的图片</p>
+                  <p class="text-sm opacity-90">需一张2649px*599px的图片</p>
                 </div>
               `;
             }}
