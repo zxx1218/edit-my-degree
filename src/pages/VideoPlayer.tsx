@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PlayCircle, AlertTriangle, Info, BookOpen, CreditCard } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const VideoPlayer = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const VideoPlayer = () => {
       src: "t.mp4",
       title: "基础操作演示",
       description: "添加或修改学籍、学历、学位、考研信息等功能演示",
+      icon: <BookOpen className="h-5 w-5" />,
       instructions: [
         {
           number: "1",
@@ -34,6 +36,7 @@ const VideoPlayer = () => {
     //   src: "tt.mp4",
     //   title: "报告制作演示",
     //   description: "学籍、学历、学位在线验证报告生成功能以及网页版模拟档案操作演示",
+    //   icon: <FileText className="h-5 w-5" />,
     //   instructions: [
     //     {
     //       number: "1",
@@ -42,7 +45,7 @@ const VideoPlayer = () => {
     //     },
     //     {
     //       number: "2",
-    //       text: "每生成一份报告需消耗30个PDF积分，积分请在登录页点击“卡密购买”购买（永久版卡密自带30个积分赠送）",
+    //       text: "每生成一份报告需消耗30个PDF积分，积分请在登录页点击"卡密购买"购买（永久版卡密自带30个积分赠送）",
     //       isWarning: false,
     //     },
     //     {
@@ -57,6 +60,7 @@ const VideoPlayer = () => {
       src: "ttt.mp4",
       title: "账号注册与充值演示",
       description: "演示如何在系统内注册账号，以及注册后如何使用卡密为您的账号充值登录次数或PDF积分",
+      icon: <CreditCard className="h-5 w-5" />,
       instructions: [
         {
           number: "1",
@@ -85,66 +89,176 @@ const VideoPlayer = () => {
   const currentVideo = videoConfig[selectedVideo];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-4">
-          <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 md:p-6 lg:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* 顶部导航 */}
+        <div className="mb-6 flex items-center justify-between">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)} 
+            className="gap-2 hover:bg-primary/5 transition-all duration-200 shadow-sm"
+          >
             <ArrowLeft className="h-4 w-4" />
             返回
           </Button>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <PlayCircle className="h-4 w-4" />
+            <span>视频演示</span>
+          </div>
         </div>
 
-        <div className="bg-card rounded-lg shadow-lg overflow-hidden">
-          <div className="p-4 border-b flex gap-2 flex-wrap">
-            <Button
-              variant={selectedVideo === "demo1" ? "default" : "outline"}
-              onClick={() => setSelectedVideo("demo1")}
-            >
-              系统基础操作演示
-            </Button>
+        {/* 主容器 */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+          {/* 视频切换标签 */}
+          <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800">
+            {/* 提示信息 */}
+            <div className="mb-3 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <svg className="w-3 h-3 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                </svg>
+              </div>
+              <span className="font-medium">点击下方按钮切换不同的演示内容</span>
+            </div>
 
-             {/* <Button
-              variant={selectedVideo === "demo2" ? "default" : "outline"}
-              onClick={() => setSelectedVideo("demo2")}
-            >
-              在线验证报告制作演示
-            </Button> */}
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={() => setSelectedVideo("demo1")}
+                className={`relative px-5 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2.5 min-w-[160px] justify-center ${
+                  selectedVideo === "demo1"
+                    ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105 ring-2 ring-blue-300 dark:ring-blue-700"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 border-2 border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md"
+                }`}
+              >
+                <BookOpen className={`h-5 w-5 transition-transform duration-300 ${
+                  selectedVideo === "demo1" ? "scale-110" : ""
+                }`} />
+                <span className="text-sm">系统基础操作</span>
+                {selectedVideo === "demo1" && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+                )}
+              </button>
 
-            <Button
-              variant={selectedVideo === "demo3" ? "default" : "outline"}
-              onClick={() => setSelectedVideo("demo3")}
-            >
-              账号注册与充值演示
-            </Button>
+              {/* <button
+                onClick={() => setSelectedVideo("demo2")}
+                className={`relative px-5 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2.5 min-w-[160px] justify-center ${
+                  selectedVideo === "demo2"
+                    ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30 scale-105 ring-2 ring-purple-300 dark:ring-purple-700"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-slate-700 hover:text-purple-600 dark:hover:text-purple-400 border-2 border-slate-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md"
+                }`}
+              >
+                <FileText className={`h-5 w-5 transition-transform duration-300 ${
+                  selectedVideo === "demo2" ? "scale-110" : ""
+                }`} />
+                <span className="text-sm">在线验证报告制作</span>
+                {selectedVideo === "demo2" && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+                )}
+              </button> */}
+
+              <button
+                onClick={() => setSelectedVideo("demo3")}
+                className={`relative px-5 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2.5 min-w-[160px] justify-center ${
+                  selectedVideo === "demo3"
+                    ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30 scale-105 ring-2 ring-emerald-300 dark:ring-emerald-700"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400 border-2 border-slate-200 dark:border-slate-600 hover:border-emerald-300 dark:hover:border-emerald-600 hover:shadow-md"
+                }`}
+              >
+                <CreditCard className={`h-5 w-5 transition-transform duration-300 ${
+                  selectedVideo === "demo3" ? "scale-110" : ""
+                }`} />
+                <span className="text-sm">账号注册与充值</span>
+                {selectedVideo === "demo3" && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+                )}
+              </button>
+            </div>
           </div>
-          <div className="aspect-video w-full">
-            <iframe
-              key={selectedVideo}
-              src={currentVideo.src}
-              className="w-full h-full border-0"
-              allowFullScreen
-              title={currentVideo.title}
-            />
-          </div>
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-2">{currentVideo.title}</h1>
-            <p className="text-muted-foreground mb-4">{currentVideo.description}</p>
 
-            <div className="mt-6 space-y-3 text-sm">
-              {currentVideo.instructions.map((instruction) => (
-                <div key={instruction.number} className="flex gap-2">
-                  <span className={`font-semibold ${instruction.isWarning ? "text-destructive" : "text-primary"}`}>
-                    {instruction.number}.
-                  </span>
-                  <p className="text-foreground/80">
-                    {instruction.isWarning ? (
-                      <span className="font-semibold text-destructive">{instruction.text}</span>
-                    ) : (
-                      instruction.text
-                    )}
-                  </p>
+          {/* 视频播放器 */}
+          <div className="relative bg-black">
+            <div className="aspect-video w-full">
+              <video
+                key={selectedVideo}
+                controls
+                autoPlay
+                preload="metadata"
+                className="w-full h-full object-contain"
+                poster=""
+                onError={(e) => {
+                  console.error('视频加载失败:', e);
+                  toast.error("视频加载失败，请刷新页面重试");
+                }}
+                onLoadedData={() => {
+                  console.log('视频数据加载成功');
+                }}
+              >
+                <source src={currentVideo.src} type="video/mp4" />
+                <source src={currentVideo.src} type="video/webm" />
+                您的浏览器不支持视频播放
+              </video>
+            </div>
+          </div>
+
+          {/* 说明区域 */}
+          <div className="p-6 md:p-8 space-y-6">
+            {/* 标题和描述 */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                  {currentVideo.icon}
                 </div>
-              ))}
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  {currentVideo.title}
+                </h1>
+              </div>
+              <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
+                {currentVideo.description}
+              </p>
+            </div>
+
+            {/* 操作说明列表 */}
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 md:p-6 border border-slate-200 dark:border-slate-700">
+              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Info className="h-5 w-5 text-primary" />
+                操作说明
+              </h2>
+              <div className="space-y-4">
+                {currentVideo.instructions.map((instruction) => (
+                  <div 
+                    key={instruction.number} 
+                    className={`flex gap-3 p-3 rounded-lg transition-all duration-200 ${
+                      instruction.isWarning 
+                        ? "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800" 
+                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-md"
+                    }`}
+                  >
+                    <span 
+                      className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                        instruction.isWarning 
+                          ? "bg-red-500 text-white" 
+                          : "bg-primary text-primary-foreground"
+                      }`}
+                    >
+                      {instruction.number}
+                    </span>
+                    <div className="flex-1">
+                      {instruction.isWarning ? (
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <p className="font-semibold text-red-700 dark:text-red-400 leading-relaxed">
+                            {instruction.text}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-foreground/80 leading-relaxed">
+                          {instruction.text}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
