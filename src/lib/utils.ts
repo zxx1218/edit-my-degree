@@ -99,3 +99,44 @@ export const compressImage = (file: File, maxFileSize: number = 2 * 1024 * 1024,
     };
   });
 };
+
+import { getUserData, updateData } from "@/lib/api";
+import { 
+  sortByDegreeLevel, 
+  sortByDegreeType, 
+  insertRecordAtCorrectPosition, 
+  insertDegreeRecordAtCorrectPosition,
+  extractDegreeType,
+  DegreeLevel,
+  DegreeType 
+} from "@/lib/educationSort";
+
+/**
+ * 根据当前日期获取应该显示的banner图片路径
+ * @param totalImages banner图片总数
+ * @returns banner图片路径
+ */
+export const getDailyBanner = (totalImages: number): string => {
+  if (totalImages <= 0) {
+    return "/banner_0.png"; // 默认图片
+  }
+  
+  // 计算从1970年1月1日到现在的天数
+  const daysSinceEpoch = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+  
+  // 使用天数对图片总数取余，得到当天应该显示的图片索引
+  const imageIndex = daysSinceEpoch % totalImages;
+  
+  return `/banner_img/banner_${imageIndex}.png`;
+};
+
+/**
+ * 获取banner图片总数
+ * 这里需要根据实际图片数量进行配置
+ * @returns banner图片总数
+ */
+export const getTotalBannerImages = (): number => {
+  // TODO: 根据实际放入banner_img目录的图片数量修改此值
+  // 例如：如果有5张图片，返回5
+  return 2; // 默认为0，表示使用默认图片
+};

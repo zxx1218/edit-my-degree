@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -53,6 +53,30 @@ const Login = () => {
 
   const navigate = useNavigate();
   const { login } = useAuth();
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // 处理用户名输入框的回车事件
+  const handleUsernameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // 如果密码为空，聚焦到密码输入框
+      if (!password.trim()) {
+        passwordInputRef.current?.focus();
+      } else {
+        // 如果密码已填写，触发登录（需要验证表单）
+        handleLogin(e as any);
+      }
+    }
+  };
+
+  // 处理密码输入框的回车事件
+  const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // 密码输入框回车直接触发登录（需要验证表单）
+      handleLogin(e as any);
+    }
+  };
 
   // 获取留言列表
   const fetchMessages = async (page: number) => {
@@ -115,6 +139,18 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 表单验证：确保用户名和密码都已填写
+    if (!username.trim()) {
+      toast.error("请输入用户名", { duration: 2000 });
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast.error("请输入密码", { duration: 2000 });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -343,6 +379,7 @@ const Login = () => {
                 placeholder="请输入用户名"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={handleUsernameKeyDown}
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
                   target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
@@ -357,6 +394,7 @@ const Login = () => {
                   密码
                 </Label>
                 <button
+                  type="button"
                   onClick={() => setIsChangePasswordOpen(true)}
                   className="text-xs text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 hover:scale-105 transform px-2 py-1 rounded-md hover:bg-blue-50"
                 >
@@ -369,6 +407,8 @@ const Login = () => {
                 placeholder="请输入密码"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handlePasswordKeyDown}
+                ref={passwordInputRef}
                 onInput={(e) => {
                   const target = e.target as HTMLInputElement;
                   target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');

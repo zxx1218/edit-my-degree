@@ -18,6 +18,7 @@ import {
   DegreeLevel,
   DegreeType 
 } from "@/lib/educationSort";
+import { getDailyBanner, getTotalBannerImages } from "@/lib/utils";
 
 interface EducationRecord {
   id: string;
@@ -39,11 +40,19 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [bannerImage, setBannerImage] = useState<string>("/certification-banner.png");
   
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<any[]>([]);
+
+  // 初始化banner图片
+  useEffect(() => {
+    const totalImages = getTotalBannerImages();
+    const dailyBanner = getDailyBanner(totalImages);
+    setBannerImage(dailyBanner);
+  }, []);
 
   // 从数据库加载用户数据
   useEffect(() => {
@@ -371,18 +380,12 @@ const Index = () => {
           }}
         >
           <img 
-            src="/certification-banner.png" 
+            src={bannerImage} 
             alt="广告栏"
             className="w-full h-auto object-cover aspect-[2649/599]"
             onError={(e) => {
-              // 如果图片加载失败,显示占位内容
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.parentElement!.innerHTML = `
-                <div class="p-6 text-white">
-                  <h3 class="text-xl font-bold mb-2">模拟广告栏</h3>
-                  <p class="text-sm opacity-90">需一张2649px*599px的图片</p>
-                </div>
-              `;
+              // 如果图片加载失败,显示默认图片
+              e.currentTarget.src = "/banner_img/banner_0.png";
             }}
           />
         </div>
