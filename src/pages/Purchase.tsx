@@ -9,20 +9,16 @@ import { toast } from "sonner";
 
 const faqItems = [
   {
-    question: "如何购买套餐？",
-    answer: "目前支持通过微信、支付宝购买，点击上方套餐下方购买按钮即可前往商品购买页。如遇到麻烦，可通过下方售后QQ群联系我们。"
-  },
-  {
     question: "登录次数是什么意思？",
-    answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。登录次数不使用永不过期"
+    answer: "每次登录系统会消耗1次登录次数。次数用完后需要续费才能继续使用。登录次数不使用不会过期。"
   },
   {
     question: "不同套餐的登录次数有什么区别？",
-    answer: "除1次登录的体验卡有效登录时长为5分钟，永久卡密额外赠送30个PDF积分外，不同套餐区别仅登录次数不同。"
+    answer: "除 1 次登录的体验卡有效登录时长为5分钟，永久卡密额外赠送 30 个PDF积分外，不同套餐区别仅登录次数不同。"
   },
   {
     question: "PDF积分是什么？",
-    answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗30积分，积分不使用永不过期。"
+    answer: "PDF积分用于生成学历、学位、学籍等验证报告的PDF文件。制作一份PDF消耗 30 积分，积分不使用永不过期。"
   },
   {
     question: "可以多人同时使用一个账号登陆吗？",
@@ -34,11 +30,11 @@ const faqItems = [
   },
   {
     question: "忘记密码怎么办？",
-    answer: "由于数据是加密存储的，所以请牢记您的密码，如果忘记密码则无法找回。建议您将密码妥善保管，或使用密码管理工具保存。"
+    answer: "由于数据是加密存储的，所以请牢记您的密码，如果忘记密码则无法找回。请您将密码妥善保管。"
   },
   {
     question: "可以退款吗？",
-    answer: "虚拟商品一经售出概不退款，请在购买前确认您的需求。如有疑问可先咨询后再购买。有任何问题请联系我们。"
+    answer: "虚拟商品一经售出无法退款，请在购买前确认您的需求。如有疑问请先咨询后再购买。"
   }
 ];
 
@@ -81,7 +77,7 @@ const Purchase = () => {
   const plans = [
     {
       name: "体验版",
-      logins: "1次登录",
+      logins: "可登录1次",
       price: "¥3",
       description: "获取一张1次登录次数充值卡密",
       popular: false,
@@ -91,7 +87,7 @@ const Purchase = () => {
     },
     {
       name: "标准版",
-      logins: "5次登录",
+      logins: "可登录5次",
       price: "¥9",
       description: "获取一张5次登录次数充值卡密",
       popular: false,
@@ -101,11 +97,11 @@ const Purchase = () => {
     },
     {
       name: "进阶版",
-      logins: "30次登录",
+      logins: "可登录30次",
       price: "¥29",
       description: "获取一张30次登录次数充值卡密",
       popular: true,
-      features: ["购买人数最多","数据永久存储", "支持信息任意修改", "支持多设备同时登录"],
+      features: ["数据永久存储", "支持信息任意修改", "购买人数最多", "支持多设备同时登录"],
       icon: Crown,
       gradient: "from-purple-500 to-pink-500",
     },
@@ -115,17 +111,17 @@ const Purchase = () => {
       price: "¥99",
       description: "获取一张不限制登录次数的充值卡密，额外赠送30个PDF下载积分",
       popular: false,
-      features: ["无限制登录次数","额外赠送30个PDF下载积分", "数据永久存储", "支持信息任意修改", "支持多设备同时登录"],
+      features: ["数据永久存储", "支持信息任意修改", "不限制登录次数","额外赠送30个PDF下载积分", "支持多设备同时登录"],
       icon: Crown,
       gradient: "from-amber-500 to-orange-500",
     },
     {
       name: "PDF积分包",
-      logins: "30个PDF积分",
+      logins: "获得30个PDF积分",
       price: "¥30",
-      description: "30个PDF下载积分，积分不使用永不过期",
+      description: "获得含有30个PDF下载积分的卡密，不使用不过期",
       popular: true,
-      features: ["支持二维码扫码", "可制作一份PDF", "积分对三种PDF均可通用"],
+      features: ["制作后的PDF二维码支持扫码", "制作后的PDF支持下载", "积分对三种PDF均可通用"],
       icon: FileText,
       gradient: "from-emerald-500 to-teal-500",
     },
@@ -229,11 +225,11 @@ const Purchase = () => {
           </div>
         </div>
 
-        {/* PDF制作 */}
+        {/* PDF积分套餐 */}
         <div className="mb-16">
           <h2 className="text-3xl font-bold text-center mb-10 flex items-center justify-center gap-2">
             <FileText className="h-6 w-6 text-primary" />
-            PDF制作
+            PDF积分套餐
           </h2>
           <div className="max-w-md mx-auto">
             <Card 

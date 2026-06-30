@@ -106,7 +106,7 @@ const manageCards = (db) => async (req, res) => {
         if (cardInfo.used === 1) {
           return res.status(400).json({
             success: false,
-            error: '充值卡已被使用'
+            error: '该充值卡已使用过'
           });
         }
 

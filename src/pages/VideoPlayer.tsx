@@ -10,8 +10,8 @@ const VideoPlayer = () => {
   const videoConfig = {
     demo1: {
       src: "t.mp4",
-      title: "系统基础操作",
-      description: "添加学籍、学历、学位、考研信息等基础功能演示",
+      title: "基础操作演示",
+      description: "添加或修改学籍、学历、学位、考研信息等功能演示",
       instructions: [
         {
           number: "1",
@@ -23,28 +23,16 @@ const VideoPlayer = () => {
           text: "点击具体卡片进入详情页可以修改个人信息，若上传的照片过大会导致保存较慢，请耐心等待系统弹出照片保存成功的提示",
           isWarning: false,
         },
-        { number: "3", text: "系统没有使用时间限制，能否登陆只看登录次数余额", isWarning: false },
-        {
-          number: "4",
-          text: "点击具体卡片跳转详情页面需等待数据加载，稍等片刻即可进入（千万不要上传太大的照片，会导致加载变慢）",
-          isWarning: false,
+        { number: "3", 
+          text: "登录后没有使用时间限制，能否登陆只看登录次数余额", 
+          isWarning: false 
         },
-        {
-          number: "5",
-          text: "建议您先使用电脑登录后将所有信息设置好，再使用手机登录查看（电脑更方便打字与操作）",
-          isWarning: false,
-        },
-        {
-          number: "6",
-          text: "每制作一份需消耗30个PDF积分，永久版用户会赠送30个积分，其余用户若需PDF积分充值请下单充值",
-          isWarning: true,
-        },
-        { number: "7", text: "特别注意：在系统内修改的各项信息，不会同步到自己的真实模拟网上", isWarning: true },
+        { number: "4", text: "仅供娱乐，激励自身努力学习，保持积极向上态度面对人生！", isWarning: true },
       ],
     },
     // demo2: {
     //   src: "tt.mp4",
-    //   title: "在线验证报告制作演示",
+    //   title: "报告制作演示",
     //   description: "学籍、学历、学位在线验证报告生成功能以及网页版模拟档案操作演示",
     //   instructions: [
     //     {
@@ -67,8 +55,8 @@ const VideoPlayer = () => {
     // },
     demo3: {
       src: "ttt.mp4",
-      title: "账号注册与充值示范",
-      description: "演示如何在系统内注册账号，以及如何使用卡密为账号充值登录次数或PDF积分",
+      title: "账号注册与充值演示",
+      description: "演示如何在系统内注册账号，以及注册后如何使用卡密为您的账号充值登录次数或PDF积分",
       instructions: [
         {
           number: "1",
@@ -82,17 +70,12 @@ const VideoPlayer = () => {
         },
         {
           number: "3",
-          text: '在登录页面点击"充值/续费"按钮，选择对应充值类型，输入已注册的账号和购买的卡密进行充值',
+          text: '在登录页面点击"使用卡密"按钮，选择对应的卡密类型，输入已注册的账号和购买的卡密进行充值',
           isWarning: false,
         },
         {
           number: "4",
-          text: "充值成功后，对应的登录次数或PDF积分会自动添加到您的账户中，永久版用户登录次数为0时候会自动充值为999999",
-          isWarning: false,
-        },
-        {
-          number: "5",
-          text: "卡密就是一种预付费的充值码，类似于手机话费充值卡，您注册的账号就像是手机号码，使用充值卡密为账号充值后，账号就会获得相应的登录次数或PDF积分，一个账号可以充值多次，但一张卡密只能给一个账号充值一次！",
+          text: "卡密就是一种预付费的充值卡，同手机话费充值卡一样，使用充值卡密为账号充值后，账号就会获得卡密内的登录次数或者PDF积分！",
           isWarning: true,
         },
       ],
@@ -131,7 +114,7 @@ const VideoPlayer = () => {
               variant={selectedVideo === "demo3" ? "default" : "outline"}
               onClick={() => setSelectedVideo("demo3")}
             >
-              账号注册与充值示范
+              账号注册与充值演示
             </Button>
           </div>
           <div className="aspect-video w-full">
