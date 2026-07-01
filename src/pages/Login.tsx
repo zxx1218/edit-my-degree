@@ -168,6 +168,7 @@ const Login = () => {
       }
 
       if (result.success && result.user) {
+        // 保存用户信息到localStorage，包含is_trial_user字段
         localStorage.setItem("currentUser", JSON.stringify(result.user));
         toast.success(`登录成功！剩余登录次数：${result.user.remaining_logins}`, { duration: 3000 });
         // 传递后端返回的会话时长

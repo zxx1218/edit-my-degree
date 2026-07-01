@@ -154,7 +154,8 @@ function initialize(pool, jwtSecret) {
           id: user.id,
           username: user.username,
           remaining_logins: remainingLoginsAfter,
-          pdf_limit: user.pdf_limit || 0
+          pdf_limit: user.pdf_limit || 0,
+          is_trial_user: user.is_trial_user === 1 // 将数据库的TINYINT转换为布尔值
         },
         token,
         sessionDuration: sessionDuration // 返回会话时长给前端

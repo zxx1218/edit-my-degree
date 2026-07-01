@@ -3,6 +3,8 @@ export interface User {
   id: string;
   username: string;
   remaining_logins: number;
+  pdf_limit?: number;
+  is_trial_user?: boolean | null; // 是否为体验版用户
 }
 
 export interface LoginResponse {

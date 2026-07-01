@@ -38,7 +38,7 @@ DB_PORT=3306
 
 ## 当前需要执行的迁移
 
-### 迁移：添加 id_number 字段到 education 表
+### 迁移 1：添加 id_number 字段到 education 表
 
 **目的**：支持自考本科的证件号码显示功能
 
@@ -60,31 +60,49 @@ npm run migrate
 npm run migrate:single
 ```
 
+### 迁移 2：添加 is_trial_user 字段到 users 表（2026-07-01）
+
+**目的**：标记用户是否为体验版用户，用于会话过期时的差异化提示
+
+**影响**：
+- 表：`users`
+- 新增字段：`is_trial_user` (TINYINT(1) DEFAULT NULL)
+- 说明：NULL-未设置, 1-是体验用户, 0-非体验用户
+
+**业务规则**：
+- 当用户使用"添加1次登录次数"的卡密充值且当前剩余登录次数为0时，设置为1
+- 当用户使用"大于1次登录次数"的卡密充值时，无论当前值如何都设置为0
+- PDF充值不影响此字段
+
+**前端行为**：
+- 体验用户（is_trial_user=1）会话到期时显示toast提示："1次体验卡的有效时长是5分钟"
+- 非体验用户或NULL保持原有逻辑（直接跳转登录页）
+
+**执行命令**：
+
+```bash
+cd /home/ctkj/edit-my-degree/backend
+node src/database/migrations/20260701_193000_add_is_trial_user.js
+```
+
+或使用统一迁移命令：
+
+```bash
+npm run migrate
+```
+
 **预期输出**：
 
 ```
-✓ 环境变量加载成功
-DB_HOST: 192.168.1.201
-DB_USER: degree_management_test
-DB_PASSWORD: ***已设置***
-DB_NAME: degree_management_test
-开始执行迁移：为 education 表添加 id_number 字段...
-数据库连接池初始化成功
-✓ 成功为 education 表添加 id_number 字段
-数据库连接已关闭
-✓ 20260622_193000_add_id_number_to_education.js 执行成功
-
-============================================================
-所有迁移执行完成！
-============================================================
+成功添加 is_trial_user 字段到 users 表
+迁移完成
 ```
 
 如果字段已存在：
 
 ```
-开始执行迁移：为 education 表添加 id_number 字段...
-id_number 字段已存在，跳过迁移
-数据库连接已关闭
+is_trial_user 字段已存在，跳过添加
+迁移完成
 ```
 
 ## 注意事项

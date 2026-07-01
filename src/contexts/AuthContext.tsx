@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import { toast } from "sonner";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -61,12 +62,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("解析用户信息失败:", error);
     }
 
-    console.info("[会话管理] 用户会话已过期，自动退出并跳转登录页", {
-      timestamp: new Date().toISOString(),
-      reason: "session_timeout",
-      user_id: userInfo?.id || "unknown",
-      username: userInfo?.username || "unknown"
-    });
+    // 检查是否为体验用户
+    const isTrialUser = userInfo?.is_trial_user === true;
+
+    if (isTrialUser) {
+      // 体验用户：显示提示弹窗
+      console.info("[会话管理] 体验用户会话已过期", {
+        timestamp: new Date().toISOString(),
+        reason: "session_timeout",
+        user_id: userInfo?.id || "unknown",
+        username: userInfo?.username || "unknown"
+      });
+      
+      // 显示体验卡提示
+      toast.info("1次体验卡的有效时长是5分钟", {
+        duration: 4000,
+        description: "您的体验会话已结束，请购买正式套餐继续使用"
+      });
+    } else {
+      // 非体验用户或标记为空：保持原有逻辑
+      console.info("[会话管理] 用户会话已过期，自动退出并跳转登录页", {
+        timestamp: new Date().toISOString(),
+        reason: "session_timeout",
+        user_id: userInfo?.id || "unknown",
+        username: userInfo?.username || "unknown"
+      });
+    }
     
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
     localStorage.removeItem(SESSION_DURATION_KEY);

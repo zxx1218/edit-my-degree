@@ -112,7 +112,7 @@ const manageCards = (db) => async (req, res) => {
 
         // 查找用户
         const [usersResult] = await database.execute(
-          'SELECT id FROM users WHERE username = ?',
+          'SELECT id, remaining_logins, is_trial_user FROM users WHERE username = ?',
           [username]
         );
 
@@ -140,10 +140,34 @@ const manageCards = (db) => async (req, res) => {
 
           // 根据充值卡类型更新用户相应资源
           if (cardInfo.type === 'login') {
+            // 在更新登录次数之前，先获取当前剩余登录次数
+            const currentRemainingLogins = user.remaining_logins;
+            
             await connection.execute(
               'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
               [cardInfo.values, user.id]
             );
+            
+            // 根据充值规则更新is_trial_user字段
+            let trialUserUpdate = null;
+            
+            if (cardInfo.values === 1 && currentRemainingLogins === 0) {
+              // 使用1次登录卡且当前剩余登录次数为0，设置为体验用户
+              trialUserUpdate = 1;
+            } else if (cardInfo.values > 1) {
+              // 使用大于1次的登录卡，无论当前状态如何都设为非体验用户
+              trialUserUpdate = 0;
+            }
+            
+            // 如果需要更新is_trial_user字段
+            if (trialUserUpdate !== null) {
+              await connection.execute(
+                'UPDATE users SET is_trial_user = ? WHERE id = ?',
+                [trialUserUpdate, user.id]
+              );
+              
+              console.info(`[充值管理] 用户 ${username} 的is_trial_user更新为 ${trialUserUpdate === 1 ? 'true' : 'false'} (充值${cardInfo.values}次，充值前剩余${currentRemainingLogins}次)`);
+            }
           } else if (cardInfo.type === 'pdf') {
             await connection.execute(
               'UPDATE users SET pdf_limit = pdf_limit + ? WHERE id = ?',
@@ -155,7 +179,7 @@ const manageCards = (db) => async (req, res) => {
 
           // 获取更新后的用户信息用于消息提示
           const updatedUserResult = await connection.execute(
-            'SELECT remaining_logins, pdf_limit FROM users WHERE id = ?',
+            'SELECT remaining_logins, pdf_limit, is_trial_user FROM users WHERE id = ?',
             [user.id]
           );
 
@@ -165,7 +189,8 @@ const manageCards = (db) => async (req, res) => {
           const updatedUser = updatedUserResult[0];
           const loginRemaining = updatedUser[0].remaining_logins || 0;
           const pdfRemaining = updatedUser[0].pdf_limit || 0;
-          console.log(`用户 ${username} 的登录次数剩余 ${loginRemaining}，PDF积分剩余 ${pdfRemaining}`);
+          const isTrialUser = updatedUser[0].is_trial_user;
+          console.log(`用户 ${username} 的登录次数剩余 ${loginRemaining}，PDF积分剩余 ${pdfRemaining}，体验用户标记: ${isTrialUser}`);
           
           // 根据充值卡类型生成相应的消息
           let message = '充值成功';
