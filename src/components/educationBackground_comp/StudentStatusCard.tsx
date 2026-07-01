@@ -81,95 +81,95 @@ const StudentStatusCard = ({ record }: StudentStatusCardProps) => {
           <div className="grid grid-cols-2 gap-x-10 gap-y-6 text-sm">
             {/* 第1行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">姓名：</span>
-              <span className="text-gray-800 font-medium">{record.name}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">姓名：</span>
+              <span className="text-gray-800 font-medium flex-1">{record.name}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">性别：</span>
-              <span className="text-gray-800">{record.gender || "女"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">性别：</span>
+              <span className="text-gray-800 flex-1">{record.gender || "女"}</span>
             </div>
 
             {/* 第2行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">出生日期：</span>
-              <span className="text-gray-800">{record.birth_date || "2003年05月25日"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">出生日期：</span>
+              <span className="text-gray-800 flex-1">{record.birth_date || "2003年05月25日"}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">民族：</span>
-              <span className="text-gray-800">{record.nationality || "汉族"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">民族：</span>
+              <span className="text-gray-800 flex-1">{record.nationality || "汉族"}</span>
             </div>
 
             {/* 第3行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">证件号码：</span>
-              <span className="text-gray-800">{record.id_number || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">证件号码：</span>
+              <span className="text-gray-800 flex-1">{record.id_number || ""}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">学校名称：</span>
-              <span className="text-gray-800">{record.school}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">学校名称：</span>
+              <span className="text-gray-800 flex-1">{record.school}</span>
             </div>
 
             {/* 第4行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">层次：</span>
-              <span className="text-gray-800">{record.degree_level}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">层次：</span>
+              <span className="text-gray-800 flex-1">{record.degree_level}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">专业：</span>
-              <span className="text-gray-800">{record.major}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">专业：</span>
+              <span className="text-gray-800 flex-1">{record.major}</span>
             </div>
             
 
             {/* 第5行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">学制：</span>
-              <span className="text-gray-800">{record.duration || "3 年"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">学制：</span>
+              <span className="text-gray-800 flex-1">{record.duration || "3 年"}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">学历类别：</span>
-              <span className="text-gray-800">{record.education_type || "普通高等教育"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">学历类别：</span>
+              <span className="text-gray-800 flex-1">{record.education_type || "普通高等教育"}</span>
             </div>
             
 
             {/* 第6行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">学习形式：</span>
-              <span className="text-gray-800">{record.study_type || "全日制"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">学习形式：</span>
+              <span className="text-gray-800 flex-1">{record.study_type || "全日制"}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">分院：</span>
-              <span className="text-gray-800">{record.branch || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">分院：</span>
+              <span className="text-gray-800 flex-1">{record.branch || ""}</span>
             </div>
             
 
             {/* 第7行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">系所：</span>
-              <span className="text-gray-800">{record.department || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">系所：</span>
+              <span className="text-gray-800 flex-1">{record.department || ""}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">班级：</span>
-              <span className="text-gray-800">{record.class || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">班级：</span>
+              <span className="text-gray-800 flex-1">{record.class || ""}</span>
             </div>
 
             {/* 第8行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">学号：</span>
-              <span className="text-gray-800">{record.student_id || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">学号：</span>
+              <span className="text-gray-800 flex-1">{record.student_id || ""}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">入学日期：</span>
-              <span className="text-gray-800">{record.enrollment_date || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">入学日期：</span>
+              <span className="text-gray-800 flex-1">{record.enrollment_date || ""}</span>
             </div>
 
             {/* 第9行 */}
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">学籍状态：</span>
-              <span className="text-gray-800">{record.status || "不在籍（毕业）"}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">学籍状态：</span>
+              <span className="text-gray-800 flex-1">{record.status || "不在籍（毕业）"}</span>
             </div>
             <div className="flex items-start">
-              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3">离校日期：</span>
-              <span className="text-gray-800">{record.graduation_date || ""}</span>
+              <span className="text-gray-400 w-20 text-right flex-shrink-0 mr-3 whitespace-nowrap">离校日期：</span>
+              <span className="text-gray-800 flex-1">{record.graduation_date || ""}</span>
             </div>
             
           </div>

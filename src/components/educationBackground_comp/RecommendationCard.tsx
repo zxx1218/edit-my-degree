@@ -42,12 +42,12 @@ const RecommendationCard = ({ index }: RecommendationCardProps) => {
       {/* 专业推荐 */}
       <div className="p-4 border-b border-gray-100">
         <h3 className="font-semibold text-gray-800 flex justify-between items-center mb-3">
-          <span>专业推荐</span>
-          <span className="text-sm font-normal text-gray-500">
+          <span className="whitespace-nowrap">专业推荐</span>
+          <span className="text-sm font-normal text-gray-500 whitespace-nowrap">
             累计投票 <span className="text-orange-500 font-bold text-base">{randomValues.professionalVotes}</span>
           </span>
         </h3>
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-sm text-gray-600 mb-3 whitespace-nowrap">
           您已推荐 <span className="text-green-600">{randomValues.recommendedCount}</span> 个专业，还能推荐 <span className="text-green-600">{randomValues.remainingCount}</span> 个
         </p>
         <Button className="w-[70px] bg-[#25b887] hover:bg-[#209f74] text-white rounded-none h-7 text-xs">
@@ -58,26 +58,26 @@ const RecommendationCard = ({ index }: RecommendationCardProps) => {
       {/* 专业满意度 */}
       <div className="p-4 border-b border-gray-100">
         <h3 className="font-semibold text-gray-800 flex justify-between items-center mb-3">
-          <span>专业满意度</span>
-          <span className="text-sm font-normal text-gray-500">
+          <span className="whitespace-nowrap">专业满意度</span>
+          <span className="text-sm font-normal text-gray-500 whitespace-nowrap">
             累计投票 <span className="text-orange-500 font-bold text-base">{randomValues.professionalSatisfactionVotes}</span>
           </span>
         </h3>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500">综合</span>
+            <span className="text-gray-500 whitespace-nowrap">综合</span>
             <span className="text-green-600 font-medium">{randomValues.scores.comprehensive}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">办学条件</span>
+            <span className="text-gray-500 whitespace-nowrap">办学条件</span>
             <span className="text-green-600 font-medium">{randomValues.scores.conditions}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">就业</span>
+            <span className="text-gray-500 whitespace-nowrap">就业</span>
             <span className="text-green-600 font-medium">{randomValues.scores.employment}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">教学质量</span>
+            <span className="text-gray-500 whitespace-nowrap">教学质量</span>
             <span className="text-green-600 font-medium">{randomValues.scores.teaching}</span>
           </div>
         </div>
@@ -89,22 +89,22 @@ const RecommendationCard = ({ index }: RecommendationCardProps) => {
       {/* 院校满意度 */}
       <div className="p-4 border-b border-gray-100">
         <h3 className="font-semibold text-gray-800 flex justify-between items-center mb-3">
-          <span>院校满意度</span>
-          <span className="text-sm font-normal text-gray-500">
+          <span className="whitespace-nowrap">院校满意度</span>
+          <span className="text-sm font-normal text-gray-500 whitespace-nowrap">
             累计投票 <span className="text-orange-500 font-bold text-base">{randomValues.institutionSatisfactionVotes}</span>
           </span>
         </h3>
         <div className="grid grid-cols-3 gap-x-4 gap-y-2 mb-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-500">综合</span>
+            <span className="text-gray-500 whitespace-nowrap">综合</span>
             <span className="text-green-600 font-medium">{randomValues.scores.comprehensive}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">环境</span>
+            <span className="text-gray-500 whitespace-nowrap">环境</span>
             <span className="text-green-600 font-medium">{randomValues.scores.environment}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500">生活</span>
+            <span className="text-gray-500 whitespace-nowrap">生活</span>
             <span className="text-green-600 font-medium">{randomValues.scores.life}</span>
           </div>
         </div>

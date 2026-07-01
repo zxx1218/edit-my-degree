@@ -184,37 +184,46 @@ const EducationBackground = () => {
 
       {/* 主内容区域 */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex gap-4 mb-6 min-w-[600px]">
-          <Card className="overflow-hidden border-none h-[72px] rounded-none shadow-sm flex-1">
-            <img 
-              src="/background_banner_img/banner_0.png" 
-              alt="专业满意度" 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = "/temp.png";
-              }}
-            />
-          </Card>
-          <Card className="overflow-hidden border-none h-[72px] rounded-none shadow-sm flex-1">
-            <img 
-              src="/background_banner_img/banner_1.jpg" 
-              alt="职场实习" 
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = "/temp.png";
-              }}
-            />
-          </Card>
-        </div>
+        {/* Banner图片 - 仅在学籍和学历页面显示 */}
+        {activeTab !== "degree" && activeTab !== "exam" && (
+          <div className="flex gap-4 mb-6 min-w-[600px]">
+            <Card className="overflow-hidden border-none h-[72px] rounded-none shadow-sm flex-1">
+              <img 
+                src="/background_banner_img/banner_0.png" 
+                alt="专业满意度" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "/temp.png";
+                }}
+              />
+            </Card>
+            <Card className="overflow-hidden border-none h-[72px] rounded-none shadow-sm flex-1">
+              <img 
+                src="/background_banner_img/banner_1.jpg" 
+                alt="职场实习" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "/temp.png";
+                }}
+              />
+            </Card>
+          </div>
+        )}
         
-        {/* 学历数量提示 - 全宽显示 */}
-        {!hasNoData && (
+        {/* 学历数量提示 - 全宽显示（考研信息页面不显示） */}
+        {!hasNoData && activeTab !== "exam" && (
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-            <span>您一共有 {showStudentStatus ? studentStatusRecords.length : allRecords.length} 个{showStudentStatus ? "学籍" : "学历"}</span>
-            <span className="">还有{showStudentStatus ? "学籍" : "学历"}没有显示出来？</span>
-            <button className="text-[#2c74c4] hover:underline text-sm">尝试绑定{showStudentStatus ? "学籍" : "学历"}</button>
+            <span>您一共有 <span style={{ color: '#25b887' }}>{showStudentStatus ? studentStatusRecords.length : allRecords.length}</span> 个{activeTab === "info" ? "学籍" : activeTab === "education" ? "学历" : activeTab === "degree" ? "学位" : "学历"}</span>
+            <span className="">还有{activeTab === "info" ? "学籍" : activeTab === "education" ? "学历" : activeTab === "degree" ? "学位" : "学历"}没有显示出来？</span>
+            <button className="text-[#2c74c4] hover:underline text-sm">尝试绑定{activeTab === "info" ? "学籍" : activeTab === "education" ? "学历" : activeTab === "degree" ? "学位" : "学历"}</button>
             <span>|</span>
-            <button className="text-[#2c74c4] hover:underline text-sm">{showStudentStatus ? "学籍" : "学历"}查询范围</button>
+            <button className="text-[#2c74c4] hover:underline text-sm">{activeTab === "info" ? "学籍" : activeTab === "education" ? "学历" : activeTab === "degree" ? "学位" : "学历"}查询范围</button>
+            {activeTab === "degree" && (
+              <>
+                <span>|</span>
+                <button className="text-[#2c74c4] hover:underline text-sm">学位查询结果说明</button>
+              </>
+            )}
           </div>
         )}
 
@@ -242,11 +251,11 @@ const EducationBackground = () => {
               </Card>
             ) : (
               studentStatusRecords.map((record, index) => (
-                <div key={record.id} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  <div className="lg:col-span-3 flex">
+                <div key={record.id} className="grid grid-cols-4 gap-6 min-w-[1200px]">
+                  <div className="col-span-3 flex">
                     <StudentStatusCard record={record} />
                   </div>
-                  <div className="lg:col-span-1 flex">
+                  <div className="col-span-1 flex">
                     <RecommendationCard index={index} />
                   </div>
                 </div>
@@ -259,35 +268,36 @@ const EducationBackground = () => {
           ) : activeTab === "degree" ? (
             // 学位信息 - 每条学位对应一个推荐卡片
             allRecords.map((record, index) => (
-              <div key={record.id} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3 flex">
+              <div key={record.id} className="grid grid-cols-4 gap-6 min-w-[1200px]">
+                <div className="col-span-3 flex">
                   <DegreeInfoCard record={record} />
                 </div>
-                <div className="lg:col-span-1 flex">
+                <div className="col-span-1 flex">
                   <RecommendationCard index={index} />
                 </div>
               </div>
             ))
           ) : activeTab === "exam" ? (
-            // 考研信息 - 每条考研对应一个推荐卡片
-            allRecords.map((record, index) => (
-              <div key={record.id} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3 flex">
-                  <ExamInfoCard record={record} />
-                </div>
-                <div className="lg:col-span-1 flex">
-                  <RecommendationCard index={index} />
+            // 考研信息 - 不显示推荐卡片，占据整个屏幕
+            allRecords.map((record) => (
+              <div key={record.id} className="flex flex-col">
+                <ExamInfoCard record={record} />
+                {/* 考研信息说明 */}
+                <div className="mt-6">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">说明：</span>系统提供2006年以来入学的硕士研究生报名和成绩数据。
+                  </p>
                 </div>
               </div>
             ))
           ) : (
             // 学历信息 - 每条学历对应一个推荐卡片
             allRecords.map((record, index) => (
-              <div key={record.id} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3 flex">
+              <div key={record.id} className="grid grid-cols-4 gap-6 min-w-[1200px]">
+                <div className="col-span-3 flex">
                   <EducationInfoCard record={record} />
                 </div>
-                <div className="lg:col-span-1 flex">
+                <div className="col-span-1 flex">
                   <RecommendationCard index={index} />
                 </div>
               </div>

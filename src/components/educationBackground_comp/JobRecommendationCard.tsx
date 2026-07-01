@@ -38,11 +38,11 @@ const JobRecommendationCard = ({ jobs = defaultJobs }: JobRecommendationCardProp
   return (
     <Card className="p-6 rounded-none shadow-sm bg-white">
       <div className="flex items-center justify-between mb-4 pb-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-800">你想求职吗？这里有适合你的职位</h3>
+        <h3 className="text-lg font-semibold text-gray-800 whitespace-nowrap">你想求职吗？这里有适合你的职位</h3>
         <div className="flex gap-4 text-sm">
-          <button className="text-[#5cb87c] hover:text-[#4cae4c]">换一批</button>
+          <button className="text-[#5cb87c] hover:text-[#4cae4c] whitespace-nowrap">换一批</button>
           <span className="text-gray-300">|</span>
-          <button className="text-[#5cb87c] hover:text-[#4cae4c]">更多</button>
+          <button className="text-[#5cb87c] hover:text-[#4cae4c] whitespace-nowrap">更多</button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

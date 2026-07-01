@@ -12,7 +12,8 @@ interface AdminLoginProps {
 
 const SUPERADD_LOGIN_KEY = "superadd_login_timestamp";
 const SUPERADD_TOKEN_KEY = "superadd_token";
-const SUPERADD_SESSION_DURATION = 72 * 60 * 60 * 1000; // 72小时（毫秒）
+// 从环境变量读取管理员会话时长，默认30天（2592000000毫秒）
+const SUPERADD_SESSION_DURATION = parseInt(import.meta.env.VITE_SUPERADD_SESSION_DURATION || '2592000000', 10);
 
 const AdminLogin = ({ onVerify }: AdminLoginProps) => {
   const [verifyUsername, setVerifyUsername] = useState("");
