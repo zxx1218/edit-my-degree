@@ -39,6 +39,8 @@ const Login = () => {
   const [loginRechargeData, setLoginRechargeData] = useState({ username: "", cardId: "" });
   const [pdfRechargeData, setPdfRechargeData] = useState({ username: "", cardId: "" });
   const [isRecharging, setIsRecharging] = useState(false);
+  // 永久卡尊享弹窗状态
+  const [isPermanentCardDialogOpen, setIsPermanentCardDialogOpen] = useState(false);
 
   // 留言板相关状态
   const [isMessageBoardOpen, setIsMessageBoardOpen] = useState(false);
@@ -301,14 +303,18 @@ const Login = () => {
 
       toast.success(result.message || "充值成功", { duration: 4000 });
 
-      // 清空输入
-      if (type === "login") {
-        setLoginRechargeData({ username: "", cardId: "" });
+      // 判断是否为永久卡，弹出尊享提示
+      if (result.isPermanentCard) {
+        setIsPermanentCardDialogOpen(true);
       } else {
-        setPdfRechargeData({ username: "", cardId: "" });
+        // 清空输入
+        if (type === "login") {
+          setLoginRechargeData({ username: "", cardId: "" });
+        } else {
+          setPdfRechargeData({ username: "", cardId: "" });
+        }
+        setIsRechargeOpen(false);
       }
-
-      setIsRechargeOpen(false);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "充值失败，请重试";
       toast.error(errorMessage, { duration: 4000 });
@@ -895,6 +901,90 @@ const Login = () => {
           </Dialog>
         </CardContent>
       </Card>
+
+      {/* 永久卡尊享弹窗 - 放在Card外部确保正确显示 */}
+      <Dialog open={isPermanentCardDialogOpen} onOpenChange={setIsPermanentCardDialogOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl">
+          {/* 顶部渐变装饰 */}
+          <div className="relative h-28 bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-500 overflow-hidden">
+            {/* 装饰性光晕 */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.4),transparent_60%)]" />
+            {/* 皇冠图标背景 */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20">
+              <svg className="w-24 h-24 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/>
+              </svg>
+            </div>
+            {/* 皇冠图标 */}
+            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg border-4 border-amber-400">
+              <svg className="w-8 h-8 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/>
+              </svg>
+            </div>
+            {/* 装饰性星星 */}
+            <div className="absolute top-4 left-1/4 w-2 h-2 bg-white rounded-full animate-pulse" />
+            <div className="absolute top-6 right-1/4 w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.5s' }} />
+            <div className="absolute top-3 right-1/3 w-1 h-1 bg-white rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
+          </div>
+          
+          {/* 内容区域 */}
+          <div className="pt-10 pb-6 px-6 text-center">
+            <h2 className="text-xl font-bold text-gradient bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mb-2">
+              尊贵的永久卡会员
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              恭喜您成为永久卡用户
+            </p>
+            
+            {/* 提示信息卡片 */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 space-y-3 mb-4 border border-amber-100">
+              {/* 第一条提示 */}
+              <div className="flex items-start gap-3 text-left">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  1
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-amber-800">登录次数自动重置</p>
+                  <p className="text-xs text-amber-600 mt-0.5">当您的登录次数显示为0后，系统将自动重置为9999999次</p>
+                </div>
+              </div>
+              
+              {/* 分隔线 */}
+              <div className="h-px bg-amber-200 mx-2" />
+              
+              {/* 第二条提示 */}
+              <div className="flex items-start gap-3 text-left">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  2
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-amber-800">赠送PDF积分到账提醒</p>
+                  <p className="text-xs text-amber-600 mt-0.5">系统将在<span className="font-bold">5分钟内</span>自动赠送 <span className="font-bold text-amber-600">30个PDF积分</span> 到您的账户</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* 确认按钮 */}
+            <Button 
+              onClick={() => {
+                setIsPermanentCardDialogOpen(false);
+                // 清空输入
+                setLoginRechargeData({ username: "", cardId: "" });
+                setPdfRechargeData({ username: "", cardId: "" });
+                setIsRechargeOpen(false);
+              }}
+              className="w-full h-11 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 border-0"
+            >
+              <span className="mr-2">✨</span>
+              我已知晓
+              <span className="ml-2">✨</span>
+            </Button>
+          </div>
+          
+          {/* 底部装饰 */}
+          <div className="h-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400" />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

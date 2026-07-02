@@ -194,8 +194,14 @@ const manageCards = (db) => async (req, res) => {
           
           // 根据充值卡类型生成相应的消息
           let message = '充值成功';
+          let isPermanentCard = false;
+          
           if (cardInfo.type === 'login') {
             message += `，用户 ${username} 当前登录次数剩余 ${loginRemaining} 次`;
+            // 判断是否为永久卡（充值次数大于1000）
+            if (cardInfo.values > 1000) {
+              isPermanentCard = true;
+            }
           } else if (cardInfo.type === 'pdf') {
             message += `，用户 ${username} 当前PDF积分剩余 ${pdfRemaining} 分`;
           }
@@ -208,7 +214,8 @@ const manageCards = (db) => async (req, res) => {
               type: cardInfo.type,
               values: cardInfo.values
             },
-            user: updatedUser
+            user: updatedUser,
+            isPermanentCard: isPermanentCard
           });
         } catch (error) {
           await database.executeNonQuery('ROLLBACK');
