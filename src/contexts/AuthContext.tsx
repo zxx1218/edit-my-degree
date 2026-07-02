@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -20,6 +21,7 @@ const DEFAULT_SESSION_DURATION = import.meta.env.VITE_SESSION_DURATION
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showTrialDialog, setShowTrialDialog] = useState(false);
   const timerRef = useRef<number | null>(null);
 
   // 清除定时器
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isTrialUser = userInfo?.is_trial_user === true;
 
     if (isTrialUser) {
-      // 体验用户：显示提示弹窗
+      // 体验用户：显示确认弹窗
       console.info("[会话管理] 体验用户会话已过期", {
         timestamp: new Date().toISOString(),
         reason: "session_timeout",
@@ -74,11 +76,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         username: userInfo?.username || "unknown"
       });
       
-      // 显示体验卡提示
-      toast.info("1次体验卡的有效时长是5分钟", {
-        duration: 4000,
-        description: "您的体验会话已结束，请购买正式套餐继续使用"
-      });
+      // 显示体验卡提示弹窗
+      setShowTrialDialog(true);
     } else {
       // 非体验用户或标记为空：保持原有逻辑
       console.info("[会话管理] 用户会话已过期，自动退出并跳转登录页", {
@@ -87,14 +86,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user_id: userInfo?.id || "unknown",
         username: userInfo?.username || "unknown"
       });
+      
+      // 清除认证状态
+      localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
+      localStorage.removeItem(SESSION_DURATION_KEY);
+      setIsAuthenticated(false);
+      clearTimer();
+      
+      // 使用 setTimeout 确保日志能够完整输出后再跳转
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 100);
     }
+  };
+
+  // 处理体验用户弹窗确认
+  const handleTrialDialogConfirm = () => {
+    setShowTrialDialog(false);
     
+    // 清除认证状态
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
     localStorage.removeItem(SESSION_DURATION_KEY);
     setIsAuthenticated(false);
     clearTimer();
     
-    // 使用 setTimeout 确保日志能够完整输出后再跳转
+    // 跳转到登录页
     setTimeout(() => {
       window.location.href = "/login";
     }, 100);
@@ -155,6 +171,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ isAuthenticated, isCheckingAuth, login, logout }}>
       {children}
+      
+      {/* 体验用户会话过期提示弹窗 */}
+      <Dialog open={showTrialDialog} onOpenChange={setShowTrialDialog}>
+        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+          {/* 顶部渐变背景 */}
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-6 py-8 text-center">
+            <div className="text-white">
+              <div className="text-5xl mb-3">⏰</div>
+              <DialogTitle className="text-2xl font-bold text-white border-0 p-0 m-0">
+                体验卡已到期
+              </DialogTitle>
+            </div>
+          </div>
+          
+          {/* 内容区域 */}
+          <div className="px-6 py-6 space-y-4 bg-gradient-to-b from-white to-gray-50">
+            {/* 主要提示信息 */}
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 rounded-lg p-4">
+              <p className="text-base font-semibold text-gray-800 leading-relaxed">
+                1次登录体验卡的有效操作时长为5分钟
+              </p>
+            </div>
+            
+            {/* 详细说明 */}
+            <div className="space-y-3 text-sm text-gray-600">
+              <p className="leading-relaxed">
+                您的体验会话已经结束，如确有需要，请购买其他卡种。
+              </p>
+              <div className="flex items-start gap-2 bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <span className="text-blue-500 text-lg">💾</span>
+                <p className="text-blue-700 leading-relaxed flex-1">
+                  您本次修改的信息依然在您的账号内保留
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* 底部按钮区域 */}
+          <DialogFooter className="px-6 pb-6 pt-2 bg-white border-t border-gray-100">
+            <Button 
+              onClick={handleTrialDialogConfirm}
+              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              我知道了
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AuthContext.Provider>
   );
 };
