@@ -29,10 +29,10 @@ function initialize(db) {
    * 保存URL并生成短码
    * @param {string} fullUrl - 完整的URL
    * @param {string} pdfType - PDF类型: 'degree', 'education', 'student_status'
-   * @param {number} expiresInDays - 过期天数（可选，默认365天）
+   * @param {number} expiresInDays - 过期天数（可选，默认7天）
    * @returns {Promise<string>} 返回生成的短码
    */
-  async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays = 365) {
+  async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays = 7) {
     try {
       logger.info(`🔄 开始为 ${pdfType} PDF 生成二维码短码`);
       
