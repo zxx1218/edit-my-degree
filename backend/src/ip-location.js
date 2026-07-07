@@ -83,6 +83,60 @@ function getCache(cache, key) {
 }
 
 /**
+ * 清洗和标准化地理位置数据
+ * @param {string} rawLocation - 原始地理位置字符串
+ * @returns {string} - 标准化后的地理位置
+ */
+function normalizeLocation(rawLocation) {
+  if (!rawLocation || rawLocation === '未知') {
+    return '未知';
+  }
+  
+  // 移除无效字符和关键词
+  let cleaned = rawLocation
+    .replace(/[Xx×]/g, '')           // 移除X字符
+    .replace(/undefined/gi, '')      // 移除undefined
+    .replace(/null/gi, '')           // 移除null
+    .replace(/NaN/gi, '')            // 移除NaN
+    .trim();
+  
+  // 如果清洗后为空或太短，返回未知
+  if (!cleaned || cleaned.length < 2) {
+    return '未知';
+  }
+  
+  // 省份名称标准化映射表
+  const provinceMap = {
+    '北京': '北京市',
+    '天津': '天津市',
+    '上海': '上海市',
+    '重庆': '重庆市',
+    '广西': '广西壮族自治区',
+    '内蒙古': '内蒙古自治区',
+    '西藏': '西藏自治区',
+    '宁夏': '宁夏回族自治区',
+    '新疆': '新疆维吾尔自治区'
+  };
+  
+  // 应用省份映射
+  for (const [short, full] of Object.entries(provinceMap)) {
+    if (cleaned.startsWith(short) && !cleaned.startsWith(full)) {
+      cleaned = cleaned.replace(short, full);
+      break;
+    }
+  }
+  
+  // 移除重复的"省"、"市"等后缀
+  cleaned = cleaned
+    .replace(/省省/g, '省')
+    .replace(/市市/g, '市')
+    .replace(/自治区区/g, '自治区')
+    .trim();
+  
+  return cleaned;
+}
+
+/**
  * 查询 IP归属地
  * @param {string} ip - 客户端 IP 地址
  * @returns {Promise<string>} - 返回归属地信息
@@ -96,8 +150,8 @@ async function queryIPLocation(ip) {
 
   let location = null;
 
+  // 1. 优先使用淘宝 API
   try {
-    // 使用淘宝 IP 地址查询 API（国内访问更稳定）
     const response = await axios.get(`https://ip.taobao.com/outGetIpInfo?ip=${ip}&accessKey=alibaba-inc`, {
      timeout: 3000,
      validateStatus: () => true
@@ -107,16 +161,20 @@ async function queryIPLocation(ip) {
       const data = response.data.data;
       location = `${data.country}${data.region || ''}${data.city || ''}${data.isp || ''}`.trim();
       if (location) {
-        setCache(ipLocationCache, ip, { location });
-        return location;
+        location = normalizeLocation(location);
+        if (location !== '未知') {
+          setCache(ipLocationCache, ip, { location });
+          console.log(`✅ 淘宝API查询成功 [${ip}]: ${location}`);
+          return location;
+        }
       }
     }
   } catch (error) {
     console.warn(`淘宝 API 查询 IP归属地失败 [${ip}]:`, error.message);
   }
 
+  // 3. 最后备选：ip-api.com
   try {
-    // 备用方案：使用 ip-api.com
     const response = await axios.get(`http://ip-api.com/json/${ip}?lang=zh-CN&fields=status,country,regionName,city`, {
      timeout: 3000,
      validateStatus: () => true
@@ -125,8 +183,12 @@ async function queryIPLocation(ip) {
     if (response.data && response.data.status === 'success') {
       location = `${response.data.country}${response.data.regionName}${response.data.city}`;
       if (location) {
-        setCache(ipLocationCache, ip, { location });
-        return location;
+        location = normalizeLocation(location);
+        if (location !== '未知') {
+          setCache(ipLocationCache, ip, { location });
+          console.log(`✅ ip-api.com查询成功 [${ip}]: ${location}`);
+          return location;
+        }
       }
     }
   } catch (error) {
@@ -136,6 +198,7 @@ async function queryIPLocation(ip) {
   // 如果所有查询都失败或返回空结果，缓存"未知"
   location = '未知';
   setCache(ipLocationCache, ip, { location });
+  console.warn(`⚠️  所有API均查询失败 [${ip}]，返回"未知"`);
   return location;
 }
 
@@ -159,8 +222,8 @@ async function isChinaIP(ip) {
 
   let isChina = null;
 
+  // 优先使用淘宝 API
   try {
-    // 使用淘宝 IP 地址查询 API
     const response = await axios.get(`https://ip.taobao.com/outGetIpInfo?ip=${ip}&accessKey=alibaba-inc`, {
      timeout: 3000,
      validateStatus: () => true
@@ -177,7 +240,7 @@ async function isChinaIP(ip) {
     console.warn(`淘宝 API 判断中国 IP 失败 [${ip}]:`, error.message);
   }
 
-  // 备用方案：使用 ip-api.com
+  // 最后备选：ip-api.com
   try {
     const response = await axios.get(`http://ip-api.com/json/${ip}?lang=zh-CN&fields=status,country`, {
      timeout: 3000,

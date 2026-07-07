@@ -39,6 +39,7 @@ const addMessageModule = require('../add-message');
 const deleteUserModule = require('../delete-user');
 const getTodayLoginDetailsModule = require('../get-today-login-details');
 const getProvinceLoginStatsModule = require('../get-province-login-stats');
+const getUserCardHistoryModule = require('../get-user-card-history');
 
 // 引入二维码重定向模块
 const qrRedirectModule = require('../qr-redirect');
@@ -352,6 +353,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 获取省份登录统计接口 - 用于展示各省份用户登录次数分布
   app.post('/api/get-province-login-stats', generalLimiter, signatureValidationMiddleware, getProvinceLoginStatsModule.initialize(db));
+
+  // 获取用户卡密使用记录接口 - 用于查看用户使用过的卡密详情
+  app.post('/api/get-user-card-history', generalLimiter, signatureValidationMiddleware, getUserCardHistoryModule.initialize(db));
 
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
   app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));

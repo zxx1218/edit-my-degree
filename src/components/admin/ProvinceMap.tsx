@@ -68,6 +68,18 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
     userCount: item.userCount
   }));
 
+  // 处理Top省份列表：将"未知"分离出来，不参与前10排名
+  const unknownProvince = provinceData.find(item => item.province === '未知');
+  const knownProvinces = provinceData.filter(item => item.province !== '未知');
+  
+  // Top 10只显示已知省份
+  const topProvinces = knownProvinces.slice(0, 10);
+  
+  // 如果有"未知"数据，添加到第11位
+  const displayProvinces = unknownProvince 
+    ? [...topProvinces, unknownProvince]
+    : topProvinces;
+
   // ECharts配置
   const option = {
     title: {
@@ -209,20 +221,40 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
             <div className="space-y-2">
               <h4 className="font-semibold text-sm">Top 10 活跃省份</h4>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
-                {provinceData.slice(0, 10).map((item, index) => (
+                {displayProvinces.map((item, index) => (
                   <div
                     key={item.province}
-                    className="flex items-center justify-between p-2 rounded hover:bg-accent transition-colors"
+                    className={`flex items-center justify-between p-2 rounded transition-colors ${
+                      item.province === '未知' 
+                        ? 'bg-gray-50 dark:bg-gray-800/50 border-l-4 border-gray-300' 
+                        : 'hover:bg-accent'
+                    }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-muted-foreground w-6">
-                        #{index + 1}
+                      <span className={`text-xs font-medium w-6 ${
+                        item.province === '未知' 
+                          ? 'text-gray-500' 
+                          : 'text-muted-foreground'
+                      }`}>
+                        {item.province === '未知' ? '-' : `#${index + 1}`}
                       </span>
-                      <span className="font-medium">{item.province}</span>
+                      <span className={`font-medium ${
+                        item.province === '未知' 
+                          ? 'text-gray-600 dark:text-gray-400' 
+                          : ''
+                      }`}>
+                        {item.province}
+                      </span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
-                      <span className="text-muted-foreground">{item.userCount} 用户</span>
-                      <span className="font-semibold text-indigo-600">
+                      <span className={item.province === '未知' ? 'text-gray-500' : 'text-muted-foreground'}>
+                        {item.userCount} 用户
+                      </span>
+                      <span className={`font-semibold ${
+                        item.province === '未知' 
+                          ? 'text-gray-600 dark:text-gray-400' 
+                          : 'text-indigo-600'
+                      }`}>
                         {item.loginCount.toLocaleString()} 次
                       </span>
                     </div>

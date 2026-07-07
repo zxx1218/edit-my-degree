@@ -530,6 +530,7 @@ const SuperAdd = () => {
           onAddPdf={handleAddPdf}
           onDecreasePdf={handleDecreasePdf}
           onResetPdf={handleResetPdf}
+          token={token}
         />
 
         {/* 留言管理 */}
@@ -562,6 +563,9 @@ const SuperAdd = () => {
           onTopUsersPeriodChange={fetchTopActiveUsers}
           onRefreshTopUsers={() => fetchTopActiveUsers(topUsersPeriod)}
         />
+
+        {/* 省份登录分布地图 */}
+        <ProvinceMap token={token} />
 
         {/* 今日登录用户列表 */}
         <TodayLoginList

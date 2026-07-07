@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, List, Loader2, Ticket, Copy, Check, Download, ChevronLeft, ChevronRight, Search } from "lucide-react";
 
@@ -171,16 +170,41 @@ const CardManager = ({
               <p className="text-sm text-muted-foreground mb-4">批量生成充值卡密（最多100张）</p>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="card-type">卡类型</Label>
-                  <Select value={newCardType} onValueChange={setNewCardType}>
-                    <SelectTrigger className="h-10">
-                      <SelectValue placeholder="选择卡类型" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="login">登录次数充值卡</SelectItem>
-                      <SelectItem value="pdf">PDF积分充值卡</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>卡类型</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setNewCardType("login")}
+                      className={`relative px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                        newCardType === "login"
+                          ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md scale-[1.02] ring-2 ring-blue-300 dark:ring-blue-700"
+                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-sm"
+                      }`}
+                    >
+                      {newCardType === "login" && (
+                        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      )}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span>登录次数卡</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewCardType("pdf")}
+                      className={`relative px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                        newCardType === "pdf"
+                          ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md scale-[1.02] ring-2 ring-emerald-300 dark:ring-emerald-700"
+                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm"
+                      }`}
+                    >
+                      {newCardType === "pdf" && (
+                        <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      )}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span>PDF积分卡</span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="card-values">充值数量（每张卡）</Label>
@@ -257,17 +281,42 @@ const CardManager = ({
 
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="export-card-type">导出卡种类型</Label>
-                <Select value={exportCardType} onValueChange={setExportCardType}>
-                  <SelectTrigger id="export-card-type" className="h-10">
-                    <SelectValue placeholder="选择卡种类型" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">全部类型</SelectItem>
-                    <SelectItem value="login">登录次数充值卡</SelectItem>
-                    <SelectItem value="pdf">PDF积分充值卡</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>导出卡种类型</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setExportCardType("all")}
+                    className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                      exportCardType === "all"
+                        ? "bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-md scale-105 ring-2 ring-slate-400 dark:ring-slate-600"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 hover:text-slate-900 dark:hover:text-slate-100 hover:border-slate-300 dark:hover:border-slate-600"
+                    }`}
+                  >
+                    全部类型
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExportCardType("login")}
+                    className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                      exportCardType === "login"
+                        ? "bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md scale-105 ring-2 ring-blue-300 dark:ring-blue-700"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700"
+                    }`}
+                  >
+                    登录次数卡
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExportCardType("pdf")}
+                    className={`px-4 py-2.5 rounded-lg font-medium text-sm transition-all duration-300 ${
+                      exportCardType === "pdf"
+                        ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md scale-105 ring-2 ring-emerald-300 dark:ring-emerald-700"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-300 dark:hover:border-emerald-700"
+                    }`}
+                  >
+                    PDF积分卡
+                  </button>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button onClick={() => exportCardsToCSV(true)} variant="outline" size="sm" className="flex-1 border-2">

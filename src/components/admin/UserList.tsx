@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as adminApi from "@/lib/adminApi";
+import { format } from "date-fns";
 
 interface User {
   id: string;
@@ -22,6 +24,14 @@ interface User {
   password: string;
   remaining_logins: number;
   pdf_limit: number;
+}
+
+interface CardHistoryItem {
+  id: string;
+  type: string;
+  values: number;
+  used_at: string;
+  card_type_label: string;
 }
 
 interface UserListProps {
@@ -39,6 +49,7 @@ interface UserListProps {
   onAddPdf?: (username: string, amount: number) => Promise<void>;
   onDecreasePdf?: (username: string, amount: number) => Promise<void>;
   onResetPdf?: (username: string) => Promise<void>;
+  token?: string | null;
 }
 
 const USERS_PER_PAGE = 10;
@@ -57,6 +68,7 @@ const UserList = ({
   onAddPdf,
   onDecreasePdf,
   onResetPdf,
+  token,
 }: UserListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
@@ -72,6 +84,10 @@ const UserList = ({
   const [pdfOperation, setPdfOperation] = useState("add");
   const [pointsAmount, setPointsAmount] = useState("");
   const [isProcessingPoints, setIsProcessingPoints] = useState(false);
+
+  // 卡密历史记录状态
+  const [cardHistory, setCardHistory] = useState<CardHistoryItem[]>([]);
+  const [isLoadingCardHistory, setIsLoadingCardHistory] = useState(false);
 
   const { toast } = useToast();
 
@@ -133,7 +149,37 @@ const UserList = ({
     setPointsTab("login");
     setLoginOperation("add");
     setPdfOperation("add");
+    setCardHistory([]); // 清空之前的历史记录
     setPointsDialogOpen(true);
+    
+    // 自动加载该用户的卡密历史记录
+    if (token && user.username) {
+      fetchCardHistory(user.username);
+    }
+  };
+
+  // 获取用户卡密历史记录
+  const fetchCardHistory = async (username: string) => {
+    if (!token) return;
+    
+    setIsLoadingCardHistory(true);
+    try {
+      const data = await adminApi.getUserCardHistory(token, username);
+      if (data.success) {
+        setCardHistory(data.cards || []);
+      } else {
+        throw new Error(data.error || "获取卡密历史失败");
+      }
+    } catch (error: any) {
+      console.error("获取卡密历史出错:", error);
+      toast({
+        variant: "destructive",
+        title: "获取失败",
+        description: error.message || "无法加载卡密使用记录",
+      });
+    } finally {
+      setIsLoadingCardHistory(false);
+    }
   };
 
   // 处理积分操作
@@ -468,7 +514,7 @@ const UserList = ({
           </DialogHeader>
 
           <Tabs value={pointsTab} onValueChange={setPointsTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 h-11">
+            <TabsList className="grid w-full grid-cols-3 h-11">
               <TabsTrigger value="login" className="text-sm">
                 <LogIn className="mr-2 h-4 w-4" />
                 登录次数
@@ -476,6 +522,10 @@ const UserList = ({
               <TabsTrigger value="pdf" className="text-sm">
                 <CreditCard className="mr-2 h-4 w-4" />
                 PDF积分
+              </TabsTrigger>
+              <TabsTrigger value="history" className="text-sm">
+                <History className="mr-2 h-4 w-4" />
+                卡密记录
               </TabsTrigger>
             </TabsList>
 
@@ -633,6 +683,73 @@ const UserList = ({
                   </div>
                 </TabsContent>
               </Tabs>
+            </TabsContent>
+
+            {/* 卡密使用记录 */}
+            <TabsContent value="history" className="mt-4">
+              <div className="space-y-3">
+                {isLoadingCardHistory ? (
+                  <div className="flex flex-col items-center justify-center py-8 gap-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">正在加载卡密记录...</p>
+                  </div>
+                ) : cardHistory.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground border-2 rounded-lg bg-muted/30">
+                    <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>该用户尚未使用过任何卡密</p>
+                  </div>
+                ) : (
+                  <div className="max-h-80 overflow-auto space-y-2">
+                    {cardHistory.map((card, index) => (
+                      <div
+                        key={card.id}
+                        className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg border border-green-200 dark:border-green-800 hover:shadow-md transition-all animate-scale-in"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={card.type === 'login' ? 'default' : 'secondary'}
+                                className="flex items-center gap-1.5"
+                              >
+                                {card.type === 'login' ? (
+                                  <LogIn className="h-3 w-3" />
+                                ) : (
+                                  <CreditCard className="h-3 w-3" />
+                                )}
+                                {card.card_type_label}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground font-mono">
+                                ID: {card.id.substring(0, 8)}...
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="font-medium">充值数量:</span>
+                              <span className="text-primary font-bold">{card.values}</span>
+                              <span className="text-muted-foreground">
+                                {card.type === 'login' ? '次登录' : '积分'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>使用时间:</span>
+                              <span className="font-mono">
+                                {card.used_at ? format(new Date(card.used_at), 'yyyy-MM-dd HH:mm:ss') : '未知'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {cardHistory.length > 0 && (
+                  <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+                    共 {cardHistory.length} 条记录，按使用时间倒序排列
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
 

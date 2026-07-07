@@ -311,3 +311,19 @@ export const getProvinceLoginStats = async (token: string) => {
   
   return await response.json();
 };
+
+// 获取用户卡密使用记录
+export const getUserCardHistory = async (token: string, username: string) => {
+  const url = '/api/get-user-card-history';
+  const options = createSignedRequestOptions('POST', url, { username });
+  
+  const response = await fetch(`${API_BASE_URL}/get-user-card-history`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
