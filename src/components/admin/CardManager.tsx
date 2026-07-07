@@ -43,6 +43,7 @@ const CardManager = ({
   const [newCardValues, setNewCardValues] = useState("");
   const [newCardCount, setNewCardCount] = useState("");
   const [isCreatingCards, setIsCreatingCards] = useState(false);
+  const [exportCardType, setExportCardType] = useState<string>("all");
 
   const filteredCards = useMemo(() => {
     if (!cardSearchQuery.trim()) return cards;
@@ -78,8 +79,22 @@ const CardManager = ({
   };
 
   const exportCardsToCSV = (exportAll: boolean = true) => {
-    const cardsToExport = exportAll ? cards : cards.filter((c) => !c.used);
-    if (cardsToExport.length === 0) return;
+    let cardsToExport = cards;
+
+    // 根据使用状态筛选
+    if (!exportAll) {
+      cardsToExport = cardsToExport.filter((c) => !c.used);
+    }
+
+    // 根据卡种类型筛选
+    if (exportCardType !== "all") {
+      cardsToExport = cardsToExport.filter((c) => c.type === exportCardType);
+    }
+
+    if (cardsToExport.length === 0) {
+      alert("没有符合条件的充值卡可导出");
+      return;
+    }
 
     const headers = ["卡密ID", "类型", "充值数量", "状态", "使用者", "使用时间", "创建时间"];
     const csvContent = [
@@ -102,7 +117,9 @@ const CardManager = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `充值卡_${exportAll ? "全部" : "未使用"}_${new Date().toISOString().split("T")[0]}.csv`;
+    const typeLabel = exportCardType === "all" ? "全部类型" : exportCardType === "login" ? "登录卡" : "PDF卡";
+    const statusLabel = exportAll ? "全部" : "未使用";
+    link.download = `充值卡_${typeLabel}_${statusLabel}_${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -238,15 +255,30 @@ const CardManager = ({
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button onClick={() => exportCardsToCSV(true)} variant="outline" size="sm" className="flex-1 border-2">
-                <Download className="h-4 w-4 mr-2" />
-                导出全部CSV
-              </Button>
-              <Button onClick={() => exportCardsToCSV(false)} variant="outline" size="sm" className="flex-1 border-2">
-                <Download className="h-4 w-4 mr-2" />
-                导出未使用CSV
-              </Button>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="export-card-type">导出卡种类型</Label>
+                <Select value={exportCardType} onValueChange={setExportCardType}>
+                  <SelectTrigger id="export-card-type" className="h-10">
+                    <SelectValue placeholder="选择卡种类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部类型</SelectItem>
+                    <SelectItem value="login">登录次数充值卡</SelectItem>
+                    <SelectItem value="pdf">PDF积分充值卡</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => exportCardsToCSV(true)} variant="outline" size="sm" className="flex-1 border-2">
+                  <Download className="h-4 w-4 mr-2" />
+                  导出全部CSV
+                </Button>
+                <Button onClick={() => exportCardsToCSV(false)} variant="outline" size="sm" className="flex-1 border-2">
+                  <Download className="h-4 w-4 mr-2" />
+                  导出未使用CSV
+                </Button>
+              </div>
             </div>
 
             {isFetchingCards ? (

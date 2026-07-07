@@ -62,9 +62,9 @@ const manageCards = (db) => async (req, res) => {
       case 'list':
         // 获取充值卡列表
         const [cards] = await database.execute(
-          'SELECT id, type, `values`, used, used_by, used_at, created_at FROM cards ORDER BY created_at DESC'
+          'SELECT c.id, c.type, c.values, c.used, u.username as used_by, c.used_at, c.created_at FROM cards c LEFT JOIN users u ON c.used_by = u.id ORDER BY c.created_at DESC'
         );
-        
+
         return res.json({
           success: true,
           cards: cards.map(card => ({

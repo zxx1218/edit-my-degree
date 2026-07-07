@@ -32,7 +32,7 @@ function initialize(db) {
    * @param {number} expiresInDays - 过期天数（可选，默认7天）
    * @returns {Promise<string>} 返回生成的短码
    */
-  async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays = 7) {
+  async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays = 3) {
     try {
       logger.info(`🔄 开始为 ${pdfType} PDF 生成二维码短码`);
       
