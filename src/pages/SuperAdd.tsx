@@ -6,12 +6,9 @@ import * as adminApi from "@/lib/adminApi";
 import {
   AdminLogin,
   LoginStatsCard,
-  UserPointsManager,
   CardManager,
   UserList,
-  LoginStatsChart,
-  ActivityHeatmap,
-  TopActiveUsers,
+  StatsDashboard,
   MessageList,
   TodayLoginList,
   ProvinceMap,
@@ -508,16 +505,6 @@ const SuperAdd = () => {
           onRefresh={fetchTodayLoginCount}
         />
 
-        {/* 用户积分管理 */}
-        <UserPointsManager
-          onAddLogins={handleAddLogins}
-          onDecreaseLogins={handleDecreaseLogins}
-          onResetLogins={handleResetLogins}
-          onAddPdf={handleAddPdf}
-          onDecreasePdf={handleDecreasePdf}
-          onResetPdf={handleResetPdf}
-        />
-
         {/* 充值卡管理 */}
         <CardManager
           cards={cards}
@@ -537,13 +524,22 @@ const SuperAdd = () => {
           onFetchUsers={fetchUsers}
           onChangePassword={handleChangePassword}
           onDeleteUser={handleDeleteUser}
+          onAddLogins={handleAddLogins}
+          onDecreaseLogins={handleDecreaseLogins}
+          onResetLogins={handleResetLogins}
+          onAddPdf={handleAddPdf}
+          onDecreasePdf={handleDecreasePdf}
+          onResetPdf={handleResetPdf}
         />
 
         {/* 留言管理 */}
         <MessageList token={token} />
 
-        {/* 登录统计图表 */}
-        <LoginStatsChart
+        {/* 用户统计分析（热力图 + 登录统计 + Top活跃用户） */}
+        <StatsDashboard
+          heatmapData={heatmapData}
+          isLoadingHeatmap={isLoadingHeatmap}
+          onRefreshHeatmap={fetchHeatmapData}
           hourlyStats={hourlyStats}
           dailyStats={dailyStats}
           rangeSummary={rangeSummary}
@@ -553,32 +549,18 @@ const SuperAdd = () => {
           statsViewMode={statsViewMode}
           onDateChange={setSelectedDate}
           onViewModeChange={setStatsViewMode}
-          onRefresh={() => {
+          onRefreshChart={() => {
             if (statsViewMode === "day") {
               fetchHourlyStats();
             } else {
               fetchRangeStats(statsViewMode);
             }
           }}
-        />
-
-        {/* 用户活跃度热力图 */}
-        <ActivityHeatmap
-          heatmapData={heatmapData}
-          isLoading={isLoadingHeatmap}
-          onRefresh={fetchHeatmapData}
-        />
-
-        {/* 省份登录分布地图 */}
-        <ProvinceMap token={token} />
-
-        {/* Top活跃用户排行榜 */}
-        <TopActiveUsers
-          users={topActiveUsers}
-          isLoading={isLoadingTopUsers}
-          period={topUsersPeriod}
-          onPeriodChange={fetchTopActiveUsers}
-          onRefresh={() => fetchTopActiveUsers(topUsersPeriod)}
+          topUsers={topActiveUsers}
+          isLoadingTopUsers={isLoadingTopUsers}
+          topUsersPeriod={topUsersPeriod}
+          onTopUsersPeriodChange={fetchTopActiveUsers}
+          onRefreshTopUsers={() => fetchTopActiveUsers(topUsersPeriod)}
         />
 
         {/* 今日登录用户列表 */}

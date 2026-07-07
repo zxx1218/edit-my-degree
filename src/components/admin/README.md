@@ -9,19 +9,18 @@
 ```
 src/
 ├── pages/
-│   └── SuperAdd.tsx (529行) - 主页面，负责组合所有子组件
+│   └── SuperAdd.tsx - 主页面，负责组合所有子组件
 └── components/
     └── admin/
         ├── index.ts - 组件导出索引
         ├── AdminLogin.tsx - 管理员登录验证组件
         ├── LoginStatsCard.tsx - 今日登录统计卡片
-        ├── UserPointsManager.tsx - 用户积分管理组件
         ├── CardManager.tsx - 充值卡管理组件
         ├── UserList.tsx - 用户列表组件
-        ├── LoginStatsChart.tsx - 登录统计图表组件
-        ├── ActivityHeatmap.tsx - 用户活跃度热力图组件
-        ├── TopActiveUsers.tsx - Top活跃用户排行榜组件
-        └── AnomalyDetection.tsx - 异常登录检测组件
+        ├── StatsDashboard.tsx - 用户统计分析（热力图+登录统计+Top用户）
+        ├── MessageList.tsx - 留言管理组件
+        ├── TodayLoginList.tsx - 今日登录列表组件
+        └── ProvinceMap.tsx - 省份登录分布地图组件
 ```
 
 ## 组件说明
@@ -39,17 +38,7 @@ src/
   - `isLoading`: 加载状态
   - `onRefresh`: 刷新数据的回调
 
-### 3. UserPointsManager.tsx
-- **功能**: 管理用户的登录次数和PDF积分
-- **Props**:
-  - `onAddLogins`: 添加登录次数的回调
-  - `onDecreaseLogins`: 减少登录次数的回调
-  - `onResetLogins`: 重置登录次数的回调
-  - `onAddPdf`: 添加PDF积分的回调
-  - `onDecreasePdf`: 减少PDF积分的回调
-  - `onResetPdf`: 重置PDF积分的回调
-
-### 4. CardManager.tsx
+### 3. CardManager.tsx
 - **功能**: 充值卡的创建、查看和管理
 - **Props**:
   - `cards`: 充值卡列表
@@ -59,18 +48,29 @@ src/
   - `onCopyToClipboard`: 复制到剪贴板的回调
   - `copiedId`: 已复制的卡片ID
 
-### 5. UserList.tsx
-- **功能**: 显示用户列表，支持搜索
+### 4. UserList.tsx
+- **功能**: 显示用户列表，支持搜索、改密、删除、积分管理
 - **Props**:
   - `users`: 用户列表
   - `searchQuery`: 搜索关键词
   - `onSearchChange`: 搜索关键词变化的回调
   - `isFetchingUsers`: 加载状态
   - `onFetchUsers`: 获取用户列表的回调
+  - `onChangePassword`: 修改密码的回调
+  - `onDeleteUser`: 删除用户的回调
+  - `onAddLogins`: 添加登录次数的回调
+  - `onDecreaseLogins`: 减少登录次数的回调
+  - `onResetLogins`: 重置登录次数的回调
+  - `onAddPdf`: 添加PDF积分的回调
+  - `onDecreasePdf`: 减少PDF积分的回调
+  - `onResetPdf`: 重置PDF积分的回调
 
-### 6. LoginStatsChart.tsx
-- **功能**: 显示登录统计图表（日/周/月视图）
+### 5. StatsDashboard.tsx
+- **功能**: 集成用户活跃度热力图、登录统计图表和Top活跃用户排行榜，使用Tab分栏展示
 - **Props**:
+  - `heatmapData`: 热力图数据
+  - `isLoadingHeatmap`: 热力图加载状态
+  - `onRefreshHeatmap`: 刷新热力图的回调
   - `hourlyStats`: 每小时统计数据
   - `dailyStats`: 每日统计数据
   - `rangeSummary`: 范围统计摘要
@@ -80,32 +80,29 @@ src/
   - `statsViewMode`: 视图模式（day/week/month）
   - `onDateChange`: 日期变化的回调
   - `onViewModeChange`: 视图模式变化的回调
-  - `onRefresh`: 刷新数据的回调
+  - `onRefreshChart`: 刷新图表的回调
+  - `topUsers`: Top活跃用户列表
+  - `isLoadingTopUsers`: Top用户加载状态
+  - `topUsersPeriod`: 统计周期（天数）
+  - `onTopUsersPeriodChange`: 周期变化的回调
+  - `onRefreshTopUsers`: 刷新Top用户的回调
 
-### 7. ActivityHeatmap.tsx
-- **功能**: 显示用户活跃度热力图
+### 6. MessageList.tsx
+- **功能**: 留言管理组件
 - **Props**:
-  - `heatmapData`: 热力图数据
+  - `token`: 管理员认证token
+
+### 8. TodayLoginList.tsx
+- **功能**: 显示今日登录用户列表
+- **Props**:
+  - `loginDetails`: 登录详情列表
   - `isLoading`: 加载状态
   - `onRefresh`: 刷新数据的回调
 
-### 8. TopActiveUsers.tsx
-- **功能**: 显示Top活跃用户排行榜
+### 9. ProvinceMap.tsx
+- **功能**: 省份登录分布地图组件
 - **Props**:
-  - `users`: 活跃用户列表
-  - `isLoading`: 加载状态
-  - `period`: 统计周期（天数）
-  - `onPeriodChange`: 周期变化的回调
-  - `onRefresh`: 刷新数据的回调
-
-### 9. AnomalyDetection.tsx
-- **功能**: 检测和显示异常登录行为
-- **Props**:
-  - `data`: 异常检测数据
-  - `isLoading`: 加载状态
-  - `period`: 检测周期（天数）
-  - `onPeriodChange`: 周期变化的回调
-  - `onRefresh`: 刷新数据的回调
+  - `token`: 管理员认证token
 
 ## 优势
 
@@ -123,7 +120,7 @@ src/
 import {
   AdminLogin,
   LoginStatsCard,
-  UserPointsManager,
+  StatsDashboard,
   // ... 其他组件
 } from "@/components/admin";
 
@@ -143,7 +140,8 @@ import {
 - 组件之间通过 props 进行通信，保持单向数据流
 - 状态管理和数据获取逻辑保留在主页面 `SuperAdd.tsx` 中
 
-```
+---
+
 # 管理员组件
 
 本目录包含用于管理员后台的各种组件。
@@ -156,23 +154,14 @@ import {
 ### LoginStatsCard
 显示今日登录统计信息的卡片组件。
 
-### UserPointsManager
-用户积分管理组件，用于管理用户的登录次数和PDF积分。
-
 ### CardManager
 充值卡管理组件，用于创建和管理充值卡。
 
 ### UserList
-用户列表组件，显示所有用户信息并支持搜索。
+用户列表组件，显示所有用户信息并支持搜索、改密、删除、积分管理。
 
-### LoginStatsChart
-登录统计图表组件，展示每小时、每周或每月的登录统计数据。
-
-### ActivityHeatmap
-用户活跃度热力图组件，展示7天×24小时的登录密度分布。
-
-### TopActiveUsers
-Top活跃用户排行榜组件，显示登录次数最多的用户。
+### StatsDashboard
+用户统计分析组件，集成活跃度热力图、登录统计图表和Top活跃用户排行榜，使用Tab分栏展示。
 
 ### MessageList
 留言管理组件，用于查看和管理用户留言。
