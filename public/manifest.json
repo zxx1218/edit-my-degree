@@ -1,0 +1,29 @@
+{
+  "name": "模拟档案",
+  "short_name": "模拟档案",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#5cb87c",
+  "description": "管理您的学籍、学历、学位和考研信息",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "2048x2048",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
