@@ -699,7 +699,7 @@ const StudentStatusDialog = ({
                     onChange={(e) =>
                       setFormData({ ...formData, duration: e.target.value })
                     }
-                    placeholder="例：4 年（存在空格）"
+                    placeholder="例：4 年（数字与年之间存在空格）"
                   />
                 </div>
 
