@@ -382,7 +382,7 @@ const Index = () => {
           <img 
             src={bannerImage} 
             alt="广告栏"
-            className="w-full h-auto object-cover aspect-[2649/599]"
+            className="w-full h-auto object-cover aspect-[2649/520]"
             onError={(e) => {
               // 如果图片加载失败,显示默认图片
               e.currentTarget.src = "/banner_img/banner_0.png";
