@@ -1,9 +1,64 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
 const MaintenanceNotice = () => {
   const navigate = useNavigate();
+  const [countdown, setCountdown] = useState("");
+  const [nextMondayDate, setNextMondayDate] = useState("");
+
+  // 计算下周一0:00的时间
+  useEffect(() => {
+    const getNextMonday = () => {
+      const now = new Date();
+      const dayOfWeek = now.getDay(); // 0是周日，1-6是周一到周六
+      const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek); // 如果今天是周日，距离下周一还有1天
+      
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() + daysUntilMonday);
+      nextMonday.setHours(0, 0, 0, 0);
+      
+      return nextMonday;
+    };
+
+    const formatDateTime = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day} 00:00`;
+    };
+
+    const updateCountdown = () => {
+      const nextMonday = getNextMonday();
+      const now = new Date();
+      const diff = nextMonday.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setCountdown("即将开放");
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setCountdown(`${days}天 ${hours}时 ${minutes}分 ${seconds}秒`);
+    };
+
+    // 设置下周一的日期显示
+    const nextMonday = getNextMonday();
+    setNextMondayDate(formatDateTime(nextMonday));
+
+    // 立即更新一次
+    updateCountdown();
+
+    // 每秒更新倒计时
+    const timer = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 flex flex-col">
@@ -50,7 +105,7 @@ const MaintenanceNotice = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">
-                    积分卡密<span style={{ color: '#25b887' }} className="font-semibold">每周限量发售</span>！
+                    PDF <span style={{ color: '#25b887' }} className="font-semibold">每周限量制作500份</span>！
                   </p>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 leading-relaxed">
                     本周的报告库存已经用尽，敬请谅解！
@@ -66,13 +121,23 @@ const MaintenanceNotice = () => {
                   <Clock className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">重新发卡时间</p>
-                  <p className="text-lg font-bold text-gray-800 dark:text-gray-200">下周一 0:00</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-medium">重新发放时间</p>
+                  <p className="text-lg font-bold text-gray-800 dark:text-gray-200">下周一 {nextMondayDate}</p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 pl-[52px] leading-relaxed">
+              <p className="text-sm text-gray-600 dark:text-gray-400 pl-[52px] leading-relaxed mb-2">
                 如有需要，请届时关注更新！
               </p>
+              {countdown && (
+                <div className="pl-[52px] mt-3">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 rounded-lg border border-orange-200 dark:border-orange-800/50">
+                    <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                    <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">
+                      倒计时：{countdown}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -82,7 +147,7 @@ const MaintenanceNotice = () => {
               <span className="text-2xl">💡</span>
               <div className="flex-1">
                 <p className="text-sm text-amber-800 dark:text-amber-200 font-medium leading-relaxed">
-                  建议设置提醒，准时抢购卡密，避免错过哦~
+                  建议设置提醒，提前购入卡密，避免错过哦~
                 </p>
               </div>
             </div>
