@@ -341,9 +341,9 @@ const generateDegreePdf = async (req, res) => {
         // 生成完整URL
         const fullUrl = `${process.env.VERIFICATION_BASE_URL}/verification-degree?${queryString}`;
         
-        // 使用短码替代完整URL
+        // 使用短码替代完整URL（有效期从环境变量QR_CODE_EXPIRES_IN_DAYS读取，默认3天）
         try {
-          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'degree', 365);
+          const shortCode = await qrManager.saveUrlWithShortCode(fullUrl, 'degree');
           
           // 生成短码URL（更简洁）
           const shortUrl = `${process.env.VERIFICATION_BASE_URL}/qr/${shortCode}`;

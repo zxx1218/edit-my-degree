@@ -32,8 +32,13 @@ function initialize(db) {
    * @param {number} expiresInDays - 过期天数（可选，默认7天）
    * @returns {Promise<string>} 返回生成的短码
    */
-  async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays = 3) {
+  async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays) {
     try {
+      // 如果未传入有效期参数，使用环境变量配置的值
+      if (expiresInDays === undefined || expiresInDays === null) {
+        expiresInDays = parseInt(process.env.QR_CODE_EXPIRES_IN_DAYS) || 3;
+      }
+      
       logger.info(`🔄 开始为 ${pdfType} PDF 生成二维码短码`);
       
       // 生成唯一短码
