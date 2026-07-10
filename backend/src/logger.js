@@ -3,6 +3,7 @@ const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 const util = require('util');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 
 // 创建日志目录
 const logDir = path.join(__dirname, '..', 'logs');
@@ -101,6 +102,15 @@ const transports = [
       winston.format((info) => {
         // 只记录 error 级别
         if (info.level === 'error') {
+          // 异步发送邮件通知，不阻塞日志记录
+          setImmediate(() => {
+            try {
+              sendErrorEmail(info.message, info);
+            } catch (err) {
+              // 邮件发送失败不应影响日志记录
+              console.error('[邮件通知] 处理错误日志时发生异常:', err.message);
+            }
+          });
           return info;
         }
         return false;
@@ -189,6 +199,176 @@ console.error = (...args) => {
 console.safe = (...args) => {
   logger.safe(formatArgs(args));
 };
+
+/**
+ * 邮件发送器配置
+ * 从环境变量读取SMTP配置
+ */
+let emailTransporter = null;
+
+// 邮件发送频率控制
+const emailRateLimit = {
+  lastSentTime: 0,
+  minInterval: 60000, // 最小间隔时间（毫秒），默认1分钟
+  maxEmailsPerHour: 30, // 每小时最大邮件数
+  sentCount: 0,
+  resetTime: Date.now() + 3600000 // 1小时后重置计数
+};
+
+function getEmailTransporter() {
+  if (emailTransporter) {
+    return emailTransporter;
+  }
+
+  // 检查是否启用了邮件通知
+  const enableEmailNotification = process.env.ENABLE_ERROR_EMAIL_NOTIFICATION === 'true';
+  if (!enableEmailNotification) {
+    console.safe('[邮件通知] 邮件通知未启用，设置 ENABLE_ERROR_EMAIL_NOTIFICATION=true 以启用');
+    return null;
+  }
+
+  // 从环境变量读取SMTP配置
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const fromEmail = process.env.EMAIL_FROM || smtpUser;
+  const toEmail = process.env.ERROR_NOTIFICATION_EMAIL || 'zxx12182022@163.com';
+
+  if (!smtpHost || !smtpUser || !smtpPass) {
+    console.error('[邮件通知] SMTP配置不完整，请设置 SMTP_HOST, SMTP_USER, SMTP_PASS 环境变量');
+    return null;
+  }
+
+  try {
+    emailTransporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465, // true for 465, false for other ports
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
+    });
+
+    // 验证连接配置
+    emailTransporter.verify(function(error, success) {
+      if (error) {
+        console.error('[邮件通知] SMTP连接验证失败:', error.message);
+        emailTransporter = null;
+      } else {
+        console.safe(`[邮件通知] SMTP连接成功，错误日志将发送至: ${toEmail}`);
+      }
+    });
+
+    return emailTransporter;
+  } catch (err) {
+    console.error('[邮件通知] 创建邮件发送器失败:', err.message);
+    return null;
+  }
+}
+
+/**
+ * 发送邮件通知
+ * @param {string} errorMessage - 错误消息内容
+ * @param {object} metadata - 额外的元数据
+ */
+function sendErrorEmail(errorMessage, metadata = {}) {
+  const transporter = getEmailTransporter();
+  if (!transporter) {
+    return;
+  }
+
+  // 检查频率限制
+  const now = Date.now();
+  
+  // 每小时重置计数
+  if (now > emailRateLimit.resetTime) {
+    emailRateLimit.sentCount = 0;
+    emailRateLimit.resetTime = now + 3600000;
+  }
+  
+  // 检查是否超过每小时最大邮件数
+  if (emailRateLimit.sentCount >= emailRateLimit.maxEmailsPerHour) {
+    console.warn('[邮件通知] 已达到每小时最大邮件数限制，跳过发送');
+    return;
+  }
+  
+  // 检查最小间隔时间
+  if (now - emailRateLimit.lastSentTime < emailRateLimit.minInterval) {
+    console.safe('[邮件通知] 距离上次发送邮件时间过短，跳过发送');
+    return;
+  }
+
+  const toEmail = process.env.ERROR_NOTIFICATION_EMAIL || 'zxx12182022@163.com';
+  const timestamp = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  
+  // 构建邮件内容
+  let htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #f44336; color: white; padding: 20px; text-align: center;">
+        <h2 style="margin: 0;">⚠️ 系统错误告警</h2>
+      </div>
+      <div style="padding: 20px; background-color: #f9f9f9;">
+        <p><strong>📅 发生时间:</strong> ${timestamp}</p>
+        <p><strong>🖥️ 服务器:</strong> ${process.env.HOSTNAME || '未知'}</p>
+        <p><strong>📝 错误信息:</strong></p>
+        <div style="background-color: #fff; padding: 15px; border-left: 4px solid #f44336; margin: 10px 0;">
+          <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${errorMessage}</pre>
+        </div>
+  `;
+
+  // 添加额外的元数据
+  if (Object.keys(metadata).length > 0) {
+    htmlContent += `<p><strong>📊 详细信息:</strong></p>`;
+    htmlContent += `<div style="background-color: #fff; padding: 15px; border-left: 4px solid #ff9800; margin: 10px 0;">`;
+    htmlContent += `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${JSON.stringify(metadata, null, 2)}</pre>`;
+    htmlContent += `</div>`;
+  }
+
+  htmlContent += `
+      </div>
+      <div style="background-color: #e0e0e0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+        <p>此邮件由系统自动发送，请勿回复</p>
+        <p>如有问题请联系系统管理员</p>
+      </div>
+    </div>
+  `;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    to: toEmail,
+    subject: `【错误告警】${process.env.APP_NAME || '学位管理系统'} - ${timestamp}`,
+    html: htmlContent,
+    // 同时提供纯文本版本
+    text: `
+系统错误告警
+
+发生时间: ${timestamp}
+服务器: ${process.env.HOSTNAME || '未知'}
+
+错误信息:
+${errorMessage}
+
+${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata, null, 2) : ''}
+
+---
+此邮件由系统自动发送，请勿回复
+    `
+  };
+
+  // 发送邮件（异步，不阻塞主流程）
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('[邮件通知] 发送失败:', error.message);
+    } else {
+      // 更新发送记录
+      emailRateLimit.lastSentTime = Date.now();
+      emailRateLimit.sentCount++;
+      console.safe(`[邮件通知] 已发送错误告警邮件至 ${toEmail}, MessageID: ${info.messageId}, 本小时已发送: ${emailRateLimit.sentCount}/${emailRateLimit.maxEmailsPerHour}`);
+    }
+  });
+}
 
 /**
  * 手动清理过期的日志文件
