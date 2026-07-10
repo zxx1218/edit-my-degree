@@ -114,7 +114,7 @@ const generalLimiter = rateLimit({
   max: 100,
   message: {
     success: false,
-    error: '透你妈傻逼，请求这来多干啥？你IP被封了！'
+    error: '请求过多，IP已经封禁！'
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -157,7 +157,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼玩意，机器码封了，换主板吧'
+      error: '检测到恶意请求，机器码已经封禁！'
     });
   }
   
@@ -176,7 +176,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼玩意，机器码封了，换主板吧'
+      error: '检测到恶意请求，机器码已经封禁！'
     });
   }
   
@@ -193,7 +193,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼玩意，机器码封了，换主板吧'
+      error: '检测到恶意请求，机器码已经封禁！'
     });
   }
   
@@ -246,7 +246,7 @@ const signatureValidationMiddleware = async (req, res, next) => {
     });
     return res.status(401).json({
       success: false,
-      error: '傻逼玩意，机器码封了，换主板吧'
+      error: '检测到恶意请求，机器码已经封禁！'
     });
   }
   
