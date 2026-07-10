@@ -117,10 +117,11 @@ function initialize(pool, jwtSecret) {
       
       const sessionDurationMinutes = Math.floor(sessionDuration / 60000);
       
-      // 记录登录成功日志
+      // 记录登录成功日志（包含PDF积分信息）
       logLogin(user.id, username, ipAddress, userAgent, 'success', { 
         remaining_logins_before: remainingLoginsBefore,
         remaining_logins_after: remainingLoginsAfter,
+        pdf_limit: user.pdf_limit || 0,
         session_duration_ms: sessionDuration,
         session_duration_minutes: sessionDurationMinutes,
         session_expiry_info: `本次登录后会话有效期为${sessionDurationMinutes}分钟`,

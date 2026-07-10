@@ -23,9 +23,9 @@ function initialize(db) {
         });
       }
 
-      // 先查询用户当前的登录次数
+      // 先查询用户当前的登录次数和PDF积分
       const [users] = await db.execute(
-        'SELECT id, remaining_logins FROM users WHERE username = ?',
+        'SELECT id, remaining_logins, pdf_limit FROM users WHERE username = ?',
         [username]
       );
 
@@ -38,6 +38,16 @@ function initialize(db) {
       }
 
       const user = users[0];
+
+      // 检查用户是否有足够的登录次数
+      if (user.remaining_logins <= 0) {
+        console.warn(`[账户管理] 减少登录次数失败 - 登录次数不足: 用户=${username}, 当前剩余=${user.remaining_logins}, PDF积分=${user.pdf_limit}, IP: ${ipAddress}`);
+        return res.status(400).json({
+          success: false,
+          error: `登录次数不足，当前剩余：${user.remaining_logins}次，请先充值后再访问`,
+          message: '您的账号剩余可登录次数为 0 ，请购买或续费套餐后再登录！'
+        });
+      }
 
       // 计算新的登录次数，不能小于0
       const newLogins = Math.max(0, user.remaining_logins - decreaseLogins);
@@ -56,7 +66,7 @@ function initialize(db) {
         });
       }
 
-      console.info(`[账户管理] 登录次数减少成功 - 用户: ${username}, 原次数: ${user.remaining_logins}, 减少: ${actualDecreased}, 新次数: ${newLogins}, IP: ${ipAddress}`);
+      console.info(`[账户管理] 登录次数减少成功 - 用户: ${username}, 原次数: ${user.remaining_logins}, PDF积分: ${user.pdf_limit}, 减少: ${actualDecreased}, 新次数: ${newLogins}, IP: ${ipAddress}`);
 
       res.json({
         success: true,
