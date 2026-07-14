@@ -1,6 +1,6 @@
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
+require('dotenv').config({ path: '../../.env' }); // 加载根目录的.env文件
 
 // 引入PDF生成器模块
 const generateDegreePdf = require('../pdf-generators/degree-pdf-generator');

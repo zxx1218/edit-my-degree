@@ -72,10 +72,18 @@ export const manageCards = async (token: string, body: any) => {
   return await response.json();
 };
 
-// 更新用户登录次数
+// 更新用户登录次数（管理员操作）
 export const updateUserLogins = async (token: string, body: any) => {
   const url = '/api/update-user-logins';
-  const options = createSignedRequestOptions('POST', url, body);
+  
+  // 添加管理员标识和token
+  const requestBody = {
+    ...body,
+    isad: true,
+    adminToken: token
+  };
+  
+  const options = createSignedRequestOptions('POST', url, requestBody);
   
   const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
     ...options,
@@ -91,7 +99,15 @@ export const updateUserLogins = async (token: string, body: any) => {
 // 减少用户登录次数
 export const decreaseUserLogins = async (token: string, body: any) => {
   const url = '/api/decrease-user-logins';
-  const options = createSignedRequestOptions('POST', url, body);
+  
+  // 添加管理员标识和token
+  const requestBody = {
+    ...body,
+    isad: true,
+    adminToken: token
+  };
+  
+  const options = createSignedRequestOptions('POST', url, requestBody);
   
   const response = await fetch(`${API_BASE_URL}/decrease-user-logins`, {
     ...options,
@@ -120,10 +136,18 @@ export const resetUserLogins = async (token: string, body: any) => {
   return await response.json();
 };
 
-// 增加PDF限制
+// 增加PDF限制（管理员操作）
 export const increasePdfLimit = async (token: string, body: any) => {
   const url = '/api/increase-pdf-limit';
-  const options = createSignedRequestOptions('POST', url, body);
+  
+  // 添加管理员标识和token
+  const requestBody = {
+    ...body,
+    isad: true,
+    adminToken: token
+  };
+  
+  const options = createSignedRequestOptions('POST', url, requestBody);
   
   const response = await fetch(`${API_BASE_URL}/increase-pdf-limit`, {
     ...options,
@@ -136,10 +160,18 @@ export const increasePdfLimit = async (token: string, body: any) => {
   return await response.json();
 };
 
-// 减少PDF限制
+// 减少PDF限制（管理员操作）
 export const decreasePdfLimit = async (token: string, body: any) => {
   const url = '/api/decrease-pdf-limit';
-  const options = createSignedRequestOptions('POST', url, body);
+  
+  // 添加管理员标识和token
+  const requestBody = {
+    ...body,
+    isad: true,
+    adminToken: token
+  };
+  
+  const options = createSignedRequestOptions('POST', url, requestBody);
   
   const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
     ...options,
@@ -323,6 +355,41 @@ export const getUserCardHistory = async (token: string, username: string) => {
       ...options.headers,
       'Authorization': `Bearer ${token}`
     }
+  });
+  
+  return await response.json();
+};
+
+/**
+ * 加密充值卡ID（生成SBverify值）
+ * 使用浏览器原生的btoa函数进行Base64编码
+ */
+export function encryptCardId(cardId: string): string {
+  return btoa(unescape(encodeURIComponent(cardId)));
+}
+
+/**
+ * 使用充值卡进行充值（需要传递SBverify）
+ */
+export const useRechargeCard = async (params: {
+  username: string;
+  cardId: string;  // 原始充值卡ID
+}) => {
+  const url = '/api/manage-cards';
+  
+  // 加密充值卡ID
+  const SBverify = encryptCardId(params.cardId);
+  
+  const body = {
+    action: 'use',
+    username: params.username,
+    SBverify: SBverify  // 传递加密后的卡ID
+  };
+  
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetch(`${API_BASE_URL}/manage-cards`, {
+    ...options
   });
   
   return await response.json();

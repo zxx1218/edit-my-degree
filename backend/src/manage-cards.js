@@ -6,6 +6,8 @@ const initialize = (db) => {
 };
 
 const { v4: uuidv4 } = require('uuid');
+const cryptoUtils = require('./crypto-utils');
+const { sendIllegalApiCallAlert } = require('./email-notifier');
 
 // 导出充值卡管理函数，需要传入db参数
 const manageCards = (db) => async (req, res) => {
@@ -21,7 +23,9 @@ const manageCards = (db) => async (req, res) => {
   }
 
   try {
-    const { action, type, values, count, cardId, username } = req.body;
+    const { action, type, values, count, cardId, username, SBverify } = req.body;
+    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const userAgent = req.get('User-Agent') || 'Unknown';
 
     switch (action) {
       case 'create':
@@ -79,24 +83,102 @@ const manageCards = (db) => async (req, res) => {
         });
 
       case 'use':
-        // 使用充值卡
-        if (!cardId || !username) {
+        // 使用充值卡 - 必须提供SBverify字段
+        if (!SBverify) {
+          console.warn(`[安全警告] 充值卡使用缺少SBverify参数 - IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '缺少SBverify参数',
+            details: {
+              action: 'use',
+              missingField: 'SBverify',
+              providedFields: Object.keys(req.body)
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
           return res.status(400).json({
             success: false,
-            error: '缺少必要的参数：cardId, username'
+            error: '缺少必要的验证参数：SBverify'
+          });
+        }
+
+        if (!username) {
+          console.warn(`[安全警告] 充值卡使用缺少username参数 - IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '缺少username参数',
+            details: {
+              action: 'use',
+              missingField: 'username',
+              providedFields: Object.keys(req.body)
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
+          return res.status(400).json({
+            success: false,
+            error: '缺少必要的参数：username'
+          });
+        }
+
+        // 解密SBverify获取真实的充值卡ID
+        let decryptedCardId;
+        try {
+          decryptedCardId = cryptoUtils.decrypt(SBverify);
+        } catch (error) {
+          console.warn(`[安全警告] 充值卡解密失败 - IP: ${ipAddress}, User-Agent: ${userAgent}, 错误: ${error.message}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: 'SBverify解密失败',
+            details: {
+              action: 'use',
+              SBverifyLength: SBverify.length,
+              errorMessage: error.message
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
+          return res.status(400).json({
+            success: false,
+            error: '充值卡验证失败，请检查充值卡是否正确'
           });
         }
 
         // 首先检查充值卡是否存在
         const [cardExistsResult] = await database.execute(
           'SELECT id, type, `values`, used FROM cards WHERE id = ?',
-          [cardId]
+          [decryptedCardId]
         );
 
         if (cardExistsResult.length === 0) {
+          console.warn(`[安全警告] 使用不存在的充值卡 - 卡ID: ${decryptedCardId}, 用户: ${username}, IP: ${ipAddress}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '使用不存在的充值卡',
+            details: {
+              action: 'use',
+              cardId: decryptedCardId,
+              username: username
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
           return res.status(400).json({
             success: false,
-            error: '充值卡不存在'
+            error: '充值卡不存在或已失效'
           });
         }
 
@@ -104,6 +186,11 @@ const manageCards = (db) => async (req, res) => {
         
         // 检查充值卡是否已被使用
         if (cardInfo.used === 1) {
+          console.warn(`[安全警告] 尝试使用已使用的充值卡 - 卡ID: ${decryptedCardId}, 用户: ${username}, IP: ${ipAddress}`);
+          
+          // 发送非法调用告警邮件（可选，因为可能是用户误操作）
+          // sendIllegalApiCallAlert({...});
+          
           return res.status(400).json({
             success: false,
             error: '该充值卡已使用过'
@@ -112,7 +199,7 @@ const manageCards = (db) => async (req, res) => {
 
         // 查找用户
         const [usersResult] = await database.execute(
-          'SELECT id, remaining_logins, is_trial_user FROM users WHERE username = ?',
+          'SELECT id, remaining_logins, pdf_limit, is_trial_user FROM users WHERE username = ?',
           [username]
         );
 
@@ -132,10 +219,16 @@ const manageCards = (db) => async (req, res) => {
           // 开始事务处理 - 使用数据库管理器的executeNonQuery方法
           await database.executeNonQuery('START TRANSACTION');
           
+          // 记录充值前的状态
+          const beforeState = {
+            remaining_logins: user.remaining_logins,
+            pdf_limit: user.pdf_limit || 0
+          };
+          
           // 标记充值卡为已使用
           await connection.execute(
             'UPDATE cards SET used = TRUE, used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [user.id, cardId]
+            [user.id, decryptedCardId]
           );
 
           // 根据充值卡类型更新用户相应资源
@@ -192,6 +285,25 @@ const manageCards = (db) => async (req, res) => {
           const isTrialUser = updatedUser[0].is_trial_user;
           console.log(`用户 ${username} 的登录次数剩余 ${loginRemaining}，PDF积分剩余 ${pdfRemaining}，体验用户标记: ${isTrialUser}`);
           
+          // 记录充值后的状态
+          const afterState = {
+            remaining_logins: loginRemaining,
+            pdf_limit: pdfRemaining
+          };
+          
+          // 记录详细的审计日志（safe级别）
+          console.safe(`[审计日志] 充值卡充值成功 - 
+            操作类型: 自助充值,
+            充值卡ID: ${decryptedCardId},
+            充值卡类型: ${cardInfo.type},
+            充值面值: ${cardInfo.values},
+            目标用户: ${username}(ID:${user.id}),
+            登录次数: ${beforeState.remaining_logins} → ${afterState.remaining_logins},
+            PDF积分: ${beforeState.pdf_limit} → ${afterState.pdf_limit},
+            IP地址: ${ipAddress},
+            User-Agent: ${userAgent},
+            时间戳: ${new Date().toISOString()}`);
+          
           // 根据充值卡类型生成相应的消息
           let message = '充值成功';
           let isPermanentCard = false;
@@ -224,6 +336,20 @@ const manageCards = (db) => async (req, res) => {
         }
 
       default:
+        console.warn(`[安全警告] 无效的充值卡操作类型 - action: ${action}, IP: ${ipAddress}`);
+        
+        // 发送非法调用告警邮件
+        sendIllegalApiCallAlert({
+          req,
+          reason: '无效的操作类型',
+          details: {
+            action: action,
+            validActions: ['create', 'list', 'use']
+          }
+        }).catch(err => {
+          console.error('[邮件通知] 发送告警失败:', err.message);
+        });
+        
         return res.status(400).json({
           success: false,
           error: '无效的操作类型'

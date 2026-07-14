@@ -121,7 +121,7 @@ const Purchase = () => {
       price: "¥30",
       description: "获得含有30个PDF下载积分的卡密，不使用不过期",
       popular: true,
-      features: ["制作后的PDF二维码支持扫码", "制作后的PDF支持下载", "积分对三种PDF均可通用", "卡密每周限量120张，先到先得"],
+      features: ["制作后的PDF二维码支持扫码", "制作后的PDF支持下载", "积分对三种PDF均可通用", "卡密每周限量500张，售罄封版"],
       icon: FileText,
       gradient: "from-emerald-500 to-teal-500",
     },

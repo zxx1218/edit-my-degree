@@ -5,8 +5,8 @@
  * node test/test-error-email-notification.js
  */
 
-// 加载项目根目录的 .env 文件
-require('dotenv').config({ path: '../.env' });
+const nodemailer = require('nodemailer');
+require('dotenv').config({ path: '../.env' }); // 加载根目录的.env文件
 const logger = require('../src/logger');
 
 console.log('\n=== 开始测试错误日志邮件通知功能 ===\n');
