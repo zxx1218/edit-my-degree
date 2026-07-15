@@ -41,11 +41,17 @@ const getTodayLoginDetailsModule = require('../get-today-login-details');
 const getProvinceLoginStatsModule = require('../get-province-login-stats');
 const getUserCardHistoryModule = require('../get-user-card-history');
 
+// 引入IP黑名单管理模块
+const manageIpBlacklistModule = require('../manage-ip-blacklist');
+
 // 引入二维码重定向模块
 const qrRedirectModule = require('../qr-redirect');
 
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
+
+// 引入邮件通知模块
+const { sendSecurityAlert } = require('../email-notifier');
 
 // 从环境变量读取 IP 黑名单配置
 const IP_BLACKLIST = process.env.IP_BLACKLIST 
@@ -66,6 +72,22 @@ const ipBlacklistMiddleware = async (req, res, next) => {
       url: req.path,
       method: req.method,
       userAgent: req.get('User-Agent')
+    });
+    
+    // 发送安全告警邮件
+    sendSecurityAlert({
+      subject: '手动配置黑名单IP访问被拦截',
+      message: `系统检测到手动配置的黑名单IP ${clientIp} 尝试访问系统，已被拦截。`,
+      details: {
+        ipAddress: clientIp,
+        userAgent: req.get('User-Agent') || 'Unknown',
+        url: req.path,
+        method: req.method,
+        timestamp: new Date().toISOString(),
+        action: 'manual_blacklist_access_blocked'
+      }
+    }).catch(err => {
+      console.error('[路由] 发送手动黑名单IP访问告警邮件失败:', err.message);
     });
     
     return res.status(403).json({
@@ -356,6 +378,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 获取用户卡密使用记录接口 - 用于查看用户使用过的卡密详情（管理员）
   app.post('/api/get-user-card-history', generalLimiter, signatureValidationMiddleware, getUserCardHistoryModule.initialize(db, JWT_SECRET));
+
+  // IP黑名单管理接口 - 用于获取、更新和删除IP黑名单记录（管理员）
+  app.post('/api/manage-ip-blacklist', generalLimiter, signatureValidationMiddleware, manageIpBlacklistModule.initialize(db, JWT_SECRET));
 
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
   app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));

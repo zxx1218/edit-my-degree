@@ -3,6 +3,7 @@ const { logLogin, logAdminOperation } = require('./operation-logger');
 const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
+const { sendSecurityAlert } = require('./email-notifier');
 
 /**
  * 初始化认证模块
@@ -28,6 +29,22 @@ function initialize(pool, jwtSecret) {
       const blacklisted = await isIpBlacklisted(ipAddress);
       if (blacklisted) {
         logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
+        
+        // 发送安全告警邮件
+        sendSecurityAlert({
+          subject: '黑名单IP尝试登录',
+          message: `系统检测到已被封禁的IP地址 ${ipAddress} 尝试登录系统，可能存在安全风险。`,
+          details: {
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            action: 'login_attempt',
+            timestamp: new Date().toISOString(),
+            reason: '黑名单IP尝试登录'
+          }
+        }).catch(err => {
+          console.error('[认证] 发送黑名单IP登录告警邮件失败:', err.message);
+        });
+        
         return res.status(403).json({ 
           error: '你的机器码已经被封禁，拒绝访问',
           message: '由于异常活动，您的IP已被暂时限制访问。请稍后再试或联系管理员。'

@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { logRegister, logOperation } = require('./operation-logger');
+const { sendSecurityAlert } = require('./email-notifier');
 
 /**
  * 初始化注册模块
@@ -41,6 +42,26 @@ function initialize(db) {
           reason: 'IP注册频率超限',
           existingUsernames: recentRegistrations.map(r => r.username),
           registrationCount: recentRegistrations.length
+        });
+
+        // 发送安全告警邮件
+        sendSecurityAlert({
+          subject: 'IP注册频率超限被拦截',
+          message: `系统检测到IP地址 ${ipAddress} 在24小时内尝试注册多个账户（已注册${recentRegistrations.length}个），触发安全防护机制并被拦截。`,
+          details: {
+            ipAddress: ipAddress,
+            userAgent: userAgent,
+            attemptedUsername: username,
+            existingRegistrations: recentRegistrations.map(r => ({
+              id: r.id,
+              username: r.username
+            })),
+            registrationCount: recentRegistrations.length,
+            timestamp: new Date().toISOString(),
+            action: 'registration_blocked'
+          }
+        }).catch(err => {
+          console.error('[注册] 发送IP注册频率超限告警邮件失败:', err.message);
         });
 
         return res.status(403).json({

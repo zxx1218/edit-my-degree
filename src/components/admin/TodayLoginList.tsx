@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, RotateCcw, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 
 interface LoginDetail {
   username: string;
@@ -17,36 +16,6 @@ interface TodayLoginListProps {
 }
 
 const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListProps) => {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
-
-  // 自动滚动效果
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || loginDetails.length === 0) return;
-
-    let animationId: number;
-    let scrollSpeed = 0.5; // 滚动速度（像素/帧）
-    
-    const scroll = () => {
-      if (!isPaused && container) {
-        container.scrollTop += scrollSpeed;
-        
-        // 如果滚动到底部，重置到顶部
-        if (container.scrollTop >= container.scrollHeight - container.clientHeight) {
-          container.scrollTop = 0;
-        }
-      }
-      
-      animationId = requestAnimationFrame(scroll);
-    };
-
-    animationId = requestAnimationFrame(scroll);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
-  }, [loginDetails, isPaused]);
 
   return (
     <Card className="border-2 shadow-lg">
@@ -86,10 +55,7 @@ const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListPr
           </div>
         ) : loginDetails.length > 0 ? (
           <div 
-            ref={scrollContainerRef}
             className="border-2 rounded-lg max-h-80 overflow-y-auto bg-gradient-to-br from-muted/30 to-muted/50"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
           >
             <div className="space-y-2 p-3">
               {loginDetails.map((record, index) => (

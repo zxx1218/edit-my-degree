@@ -366,3 +366,76 @@ export const useRechargeCard = async (params: {
   
   return await response.json();
 };
+
+// IP黑名单管理API
+
+// 获取所有未过期的IP黑名单记录
+export const getIpBlacklist = async (token: string) => {
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'list' });
+  
+  const response = await fetch(`${API_BASE_URL}/manage-ip-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 更新IP黑名单记录
+export const updateIpBlacklist = async (token: string, body: any) => {
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'update', ...body });
+  
+  const response = await fetch(`${API_BASE_URL}/manage-ip-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 删除IP黑名单记录
+export const deleteIpBlacklist = async (token: string, id: string) => {
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'delete', id });
+  
+  const response = await fetch(`${API_BASE_URL}/manage-ip-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 新增IP黑名单记录
+export const addIpBlacklist = async (token: string, body: {
+  ipAddress: string;
+  reason: string;
+  blockedUntil: string;
+}) => {
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { 
+    action: 'add', 
+    ...body 
+  });
+  
+  const response = await fetch(`${API_BASE_URL}/manage-ip-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};

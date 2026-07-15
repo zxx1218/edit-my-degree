@@ -1,5 +1,6 @@
 const dbManager = require('./db-utils');
 const { logIpBlacklist } = require('./operation-logger');
+const { sendSecurityAlert } = require('./email-notifier');
 
 // IP请求记录缓存（内存中）
 // 格式: Map<ip, [timestamp1, timestamp2, ...]>
@@ -113,6 +114,26 @@ async function addToBlacklist(ipAddress, reason) {
     logIpBlacklist(ipAddress, 'blocked', reason, { 
       blockedUntil: blockedUntil.toISOString(),
       blockDurationDays: CONFIG.BLOCK_DURATION / 1000 / 60 / 60 / 24
+    });
+    
+    // 发送安全告警邮件
+    sendSecurityAlert({
+      subject: 'IP因频繁请求被自动封禁',
+      message: `系统检测到IP地址 ${ipAddress} 在短时间内发起大量请求，已触发频率限制机制并自动加入黑名单。`,
+      details: {
+        ipAddress: ipAddress,
+        reason: reason,
+        blockedUntil: blockedUntil.toISOString(),
+        blockDurationDays: Math.floor(CONFIG.BLOCK_DURATION / 1000 / 60 / 60 / 24),
+        timestamp: new Date().toISOString(),
+        config: {
+          timeWindowSeconds: CONFIG.TIME_WINDOW / 1000,
+          maxRequests: CONFIG.MAX_REQUESTS,
+          blockDurationDays: CONFIG.BLOCK_DURATION / 1000 / 60 / 60 / 24
+        }
+      }
+    }).catch(err => {
+      console.error('[安全防护] 发送IP封禁告警邮件失败:', err.message);
     });
   } catch (err) {
     console.safe('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });
