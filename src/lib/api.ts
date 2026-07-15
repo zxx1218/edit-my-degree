@@ -173,7 +173,17 @@ export const changePassword = async (username: string, oldPassword: string, newP
 // 减少 PDF 积分 API
 export const decreasePdfLimit = async (username: string, decreaseAmount: number) => {
   const options = createSignedRequestOptions('POST', '/api/decrease-pdf-limit', { username, decreaseAmount });
-  const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, options);
+  
+  // 获取JWT token用于认证
+  const authToken = localStorage.getItem("authToken");
+  
+  const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...(authToken && { "Authorization": `Bearer ${authToken}` }),
+    },
+  });
 
   const data = await response.json();
   

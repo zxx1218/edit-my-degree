@@ -122,6 +122,9 @@ const VerificationReport = () => {
       const signature = Math.abs(hash).toString(16);
       const appKey = import.meta.env.VITE_APP_KEY || 'default_app_key';
 
+      // 获取JWT token用于认证
+      const authToken = localStorage.getItem("authToken");
+
       // 调用本地 API 扣除登录次数
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"}/decrease-user-logins`,
@@ -132,6 +135,7 @@ const VerificationReport = () => {
             "X-Timestamp": timestamp,
             "X-Signature": signature,
             "X-App-Key": appKey,
+            ...(authToken && { "Authorization": `Bearer ${authToken}` }),
           },
           body: JSON.stringify({ username, decreaseLogins: 1 }),
         },

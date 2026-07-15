@@ -1,5 +1,5 @@
 /**
- * 减少用户登录次数接口（管理员操作）
+ * 减少用户登录次数接口（支持管理员和普通用户）
  * @param {Object} db - 数据库连接实例
  * @param {string} jwtSecret - JWT密钥
  */
@@ -32,13 +32,8 @@ function initialize(db, jwtSecret) {
         });
       }
       
-      // 检查用户是否为管理员（兼容两种命名方式）
-      if (!decoded.is_admin && !decoded.isAdmin) {
-        return res.status(403).json({
-          success: false,
-          error: '权限不足'
-        });
-      }
+      // 判断是否为管理员
+      const isAdmin = decoded.is_admin || decoded.isAdmin;
       
       const operatorUsername = decoded.username;
       const operatorId = decoded.id;
@@ -49,6 +44,14 @@ function initialize(db, jwtSecret) {
         return res.status(400).json({
           success: false,
           error: '用户名不能为空'
+        });
+      }
+
+      // 如果不是管理员，只能操作自己的账户
+      if (!isAdmin && username !== operatorUsername) {
+        return res.status(403).json({
+          success: false,
+          error: '权限不足，只能操作自己的账户'
         });
       }
 
@@ -113,9 +116,10 @@ function initialize(db, jwtSecret) {
       }
 
       // 记录详细的审计日志（safe级别）
-      console.safe(`[审计日志] 管理员减少登录次数 - 
+      const operationType = isAdmin ? '管理员直接操作' : '用户自助操作';
+      console.safe(`[审计日志] 减少登录次数 - 
         ========== 操作详情 ==========
-        操作类型: 管理员直接操作,
+        操作类型: ${operationType},
         操作者: ${operatorUsername}(ID:${operatorId}),
         目标用户: ${username}(ID:${user.id}),
         资源类型: 登录次数,
