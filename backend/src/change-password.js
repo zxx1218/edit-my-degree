@@ -1,10 +1,12 @@
+const jwt = require('jsonwebtoken');
 const { logPasswordChange } = require('./operation-logger');
 
 /**
  * 修改密码接口
  * @param {Object} db - 数据库连接实例
+ * @param {string} jwtSecret - JWT密钥
  */
-function initialize(db) {
+function initialize(db, jwtSecret) {
   return async (req, res) => {
     const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
                       (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
@@ -21,7 +23,7 @@ function initialize(db) {
         });
       }
 
-      // 查找用户
+      // 查找目标用户
       const [users] = await db.execute(
         'SELECT * FROM users WHERE username = ?',
         [username]
@@ -29,7 +31,9 @@ function initialize(db) {
 
       if (users.length === 0) {
         // 用户不存在
-        logPasswordChange(null, username, ipAddress, userAgent, 'failed', { reason: '用户不存在' });
+        logPasswordChange(null, username, ipAddress, userAgent, 'failed', { 
+          reason: '用户不存在'
+        });
         
         return res.status(404).json({
           success: false,
@@ -37,12 +41,81 @@ function initialize(db) {
         });
       }
 
-      // 如果提供了oldPassword，则验证原密码（普通用户改密）
-      // 如果未提供或为空，则跳过验证（管理员改密）
-      if (oldPassword && oldPassword.trim() !== '') {
-        if (users[0].password !== oldPassword) {
+      const targetUser = users[0];
+      let isAdmin = false;
+      let operatorUsername = username; // 默认为目标用户自己
+      let operatorId = targetUser.id;
+
+      // 尝试从请求头获取token进行身份验证
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        try {
+          const decoded = jwt.verify(token, jwtSecret || process.env.JWT_SECRET || 'default_jwt_secret');
+          operatorUsername = decoded.username;
+          operatorId = decoded.id;
+          
+          // 检查是否为管理员（兼容两种命名方式）
+          isAdmin = decoded.is_admin || decoded.isAdmin;
+        } catch (err) {
+          // Token无效，忽略token，继续按无token逻辑处理
+          console.warn('[密码修改] Token验证失败，按未登录处理:', err.message);
+        }
+      }
+
+      // 权限验证和密码检查
+      if (isAdmin) {
+        // 管理员操作：可以修改任意用户密码，无需原密码
+        console.info(`[账户管理] 管理员修改密码 - 管理员: ${operatorUsername}, 目标用户: ${username}, IP: ${ipAddress}`);
+      } else if (authHeader && authHeader.startsWith('Bearer ')) {
+        // 有token但不是管理员：只能修改自己的密码
+        if (operatorUsername !== username) {
+          logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'failed', { 
+            reason: '权限不足：普通用户只能修改自己的密码',
+            operator: operatorUsername
+          });
+          
+          return res.status(403).json({
+            success: false,
+            error: '您只能修改自己的密码'
+          });
+        }
+        
+        // 必须提供正确的原密码
+        if (!oldPassword || oldPassword.trim() === '') {
+          return res.status(400).json({
+            success: false,
+            error: '请提供原密码'
+          });
+        }
+        
+        if (targetUser.password !== oldPassword) {
           // 原密码错误
-          logPasswordChange(users[0].id, username, ipAddress, userAgent, 'failed', { reason: '原密码错误' });
+          logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'failed', { 
+            reason: '原密码错误',
+            operator: operatorUsername
+          });
+          
+          return res.status(401).json({
+            success: false,
+            error: '原密码错误'
+          });
+        }
+      } else {
+        // 无token的情况（如登录前修改密码）：必须提供正确的原密码
+        if (!oldPassword || oldPassword.trim() === '') {
+          return res.status(400).json({
+            success: false,
+            error: '请提供原密码'
+          });
+        }
+        
+        if (targetUser.password !== oldPassword) {
+          // 原密码错误
+          logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'failed', { 
+            reason: '原密码错误'
+          });
           
           return res.status(401).json({
             success: false,
@@ -54,11 +127,16 @@ function initialize(db) {
       // 更新密码
       await db.execute(
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [newPassword, users[0].id]
+        [newPassword, targetUser.id]
       );
 
       // 记录密码更改成功日志
-      logPasswordChange(users[0].id, username, ipAddress, userAgent, 'success');
+      logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'success', { 
+        isAdmin: isAdmin,
+        operator: operatorUsername,
+        operatorId: operatorId,
+        hasToken: !!authHeader
+      });
 
       res.json({
         success: true,

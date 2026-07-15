@@ -315,47 +315,47 @@ function setupRoutes(app, db, JWT_SECRET) {
   app.post('/api/get-user-data', generalLimiter, signatureValidationMiddleware, getUserDataModule.initialize(db));
   // 更新数据接口 - 用于对指定表执行插入、更新或删除操作
   app.post('/api/update-data', generalLimiter, signatureValidationMiddleware, updateDataModule.initialize(db));
-  // 更新用户登录次数接口 - 用于增加或减少用户剩余登录次数
-  app.post('/api/update-user-logins', generalLimiter, signatureValidationMiddleware, updateUserLoginsModule.initialize(db));
-  // 修改密码接口 - 用于用户更改自己的账户密码
-  app.post('/api/change-password', generalLimiter, signatureValidationMiddleware, changePasswordModule.initialize(db));
-  // 重置用户登录次数接口 - 用于将用户剩余登录次数重置为0
-  app.post('/api/reset-user-logins', generalLimiter, signatureValidationMiddleware, resetUserLoginsModule.initialize(db));
-  // 减少用户登录次数接口 - 用于减少指定用户的登录次数
-  app.post('/api/decrease-user-logins', generalLimiter, signatureValidationMiddleware, decreaseUserLoginsModule.initialize(db));
+  // 更新用户登录次数接口 - 用于增加或减少用户剩余登录次数（管理员）
+  app.post('/api/update-user-logins', generalLimiter, signatureValidationMiddleware, updateUserLoginsModule.initialize(db, JWT_SECRET));
+  // 修改密码接口 - 用于用户更改自己的账户密码（支持管理员改密）
+  app.post('/api/change-password', generalLimiter, signatureValidationMiddleware, changePasswordModule.initialize(db, JWT_SECRET));
+  // 重置用户登录次数接口 - 用于将用户剩余登录次数重置为0（管理员）
+  app.post('/api/reset-user-logins', generalLimiter, signatureValidationMiddleware, resetUserLoginsModule.initialize(db, JWT_SECRET));
+  // 减少用户登录次数接口 - 用于减少指定用户的登录次数（管理员）
+  app.post('/api/decrease-user-logins', generalLimiter, signatureValidationMiddleware, decreaseUserLoginsModule.initialize(db, JWT_SECRET));
   // 获取所有用户接口 - 用于管理员获取系统中的所有用户信息
   app.post('/api/get-all-users', generalLimiter, signatureValidationMiddleware, getAllUsersModule.initialize(db, JWT_SECRET));
   // 查询用户接口 - 用于根据条件查询特定用户信息
   app.post('/api/query-user', generalLimiter, signatureValidationMiddleware, queryUserModule.initialize(db));
-  // 减少PDF限制接口 - 用于减少用户PDF下载积分
-  app.post('/api/decrease-pdf-limit', generalLimiter, signatureValidationMiddleware, decreasePdfLimitModule.initialize(db));
-  // 获取今日登录统计接口 - 用于获取当天系统的登录统计数据
-  app.post('/api/get-today-login-count', generalLimiter, signatureValidationMiddleware, getTodayLoginCountModule.initialize(db));
-  // 增加PDF限制接口 - 用于增加用户PDF下载积分
-  app.post('/api/increase-pdf-limit', generalLimiter, signatureValidationMiddleware, increasePdfLimitModule.initialize(db));
-  // 重置PDF限制接口 - 用于重置用户PDF下载积分为默认值
-  app.post('/api/reset-pdf-limit', generalLimiter, signatureValidationMiddleware, resetPdfLimitModule.initialize(db));
-  // 获取每小时登录统计接口 - 用于获取指定日期每小时的登录统计数据
-  app.post('/api/get-hourly-login-stats', generalLimiter, signatureValidationMiddleware, getHourlyLoginStatsModule.initialize(db));
-  // 获取登录统计范围接口 - 用于获取一周或一月内的登录统计数据
-  app.post('/api/get-login-stats-range', generalLimiter, signatureValidationMiddleware, getLoginStatsRangeModule.initialize(db));
+  // 减少PDF限制接口 - 用于减少用户PDF下载积分（管理员）
+  app.post('/api/decrease-pdf-limit', generalLimiter, signatureValidationMiddleware, decreasePdfLimitModule.initialize(db, JWT_SECRET));
+  // 获取今日登录统计接口 - 用于获取当天系统的登录统计数据（管理员）
+  app.post('/api/get-today-login-count', generalLimiter, signatureValidationMiddleware, getTodayLoginCountModule.initialize(db, JWT_SECRET));
+  // 增加PDF限制接口 - 用于增加用户PDF下载积分（管理员）
+  app.post('/api/increase-pdf-limit', generalLimiter, signatureValidationMiddleware, increasePdfLimitModule.initialize(db, JWT_SECRET));
+  // 重置PDF限制接口 - 用于重置用户PDF下载积分为默认值（管理员）
+  app.post('/api/reset-pdf-limit', generalLimiter, signatureValidationMiddleware, resetPdfLimitModule.initialize(db, JWT_SECRET));
+  // 获取每小时登录统计接口 - 用于获取指定日期每小时的登录统计数据（管理员）
+  app.post('/api/get-hourly-login-stats', generalLimiter, signatureValidationMiddleware, getHourlyLoginStatsModule.initialize(db, JWT_SECRET));
+  // 获取登录统计范围接口 - 用于获取一周或一月内的登录统计数据（管理员）
+  app.post('/api/get-login-stats-range', generalLimiter, signatureValidationMiddleware, getLoginStatsRangeModule.initialize(db, JWT_SECRET));
   // 查询用户登录次数和 PDF 积分接口 - 用于用户查询自己的登录次数和 PDF 积分
   app.post('/api/query-user-logins-pdf', generalLimiter, queryUserLoginsPdfModule.initialize(db));
 
-  // 获取用户活跃度热力图接口 - 用于展示7天×24小时的登录密度分布
-  app.post('/api/get-user-activity-heatmap', generalLimiter, signatureValidationMiddleware, getUserActivityHeatmapModule.initialize(db));
+  // 获取用户活跃度热力图接口 - 用于展示7天×24小时的登录密度分布（管理员）
+  app.post('/api/get-user-activity-heatmap', generalLimiter, signatureValidationMiddleware, getUserActivityHeatmapModule.initialize(db, JWT_SECRET));
   
-  // 获取Top活跃用户排行榜接口 - 用于显示登录次数最多的用户
-  app.post('/api/get-top-active-users', generalLimiter, signatureValidationMiddleware, getTopActiveUsersModule.initialize(db));
+  // 获取Top活跃用户排行榜接口 - 用于显示登录次数最多的用户（管理员）
+  app.post('/api/get-top-active-users', generalLimiter, signatureValidationMiddleware, getTopActiveUsersModule.initialize(db, JWT_SECRET));
 
-  // 获取今日登录详情接口 - 用于获取今天所有用户的登录记录
-  app.post('/api/get-today-login-details', generalLimiter, signatureValidationMiddleware, getTodayLoginDetailsModule.initialize(db));
+  // 获取今日登录详情接口 - 用于获取今天所有用户的登录记录（管理员）
+  app.post('/api/get-today-login-details', generalLimiter, signatureValidationMiddleware, getTodayLoginDetailsModule.initialize(db, JWT_SECRET));
 
-  // 获取省份登录统计接口 - 用于展示各省份用户登录次数分布
-  app.post('/api/get-province-login-stats', generalLimiter, signatureValidationMiddleware, getProvinceLoginStatsModule.initialize(db));
+  // 获取省份登录统计接口 - 用于展示各省份用户登录次数分布（管理员）
+  app.post('/api/get-province-login-stats', generalLimiter, signatureValidationMiddleware, getProvinceLoginStatsModule.initialize(db, JWT_SECRET));
 
-  // 获取用户卡密使用记录接口 - 用于查看用户使用过的卡密详情
-  app.post('/api/get-user-card-history', generalLimiter, signatureValidationMiddleware, getUserCardHistoryModule.initialize(db));
+  // 获取用户卡密使用记录接口 - 用于查看用户使用过的卡密详情（管理员）
+  app.post('/api/get-user-card-history', generalLimiter, signatureValidationMiddleware, getUserCardHistoryModule.initialize(db, JWT_SECRET));
 
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
   app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));
@@ -364,7 +364,7 @@ function setupRoutes(app, db, JWT_SECRET) {
   app.post('/api/add-message', generalLimiter, addMessageModule.initialize(db));
 
   // 删除用户接口 - 用于管理员彻底删除用户及其所有相关数据
-  app.post('/api/delete-user', generalLimiter, signatureValidationMiddleware, deleteUserModule.initialize(db));
+  app.post('/api/delete-user', generalLimiter, signatureValidationMiddleware, deleteUserModule.initialize(db, JWT_SECRET));
 
   // 添加充值卡管理接口
   app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));

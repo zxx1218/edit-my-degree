@@ -76,14 +76,7 @@ export const manageCards = async (token: string, body: any) => {
 export const updateUserLogins = async (token: string, body: any) => {
   const url = '/api/update-user-logins';
   
-  // 添加管理员标识和token
-  const requestBody = {
-    ...body,
-    isad: true,
-    adminToken: token
-  };
-  
-  const options = createSignedRequestOptions('POST', url, requestBody);
+  const options = createSignedRequestOptions('POST', url, body);
   
   const response = await fetch(`${API_BASE_URL}/update-user-logins`, {
     ...options,
@@ -100,14 +93,7 @@ export const updateUserLogins = async (token: string, body: any) => {
 export const decreaseUserLogins = async (token: string, body: any) => {
   const url = '/api/decrease-user-logins';
   
-  // 添加管理员标识和token
-  const requestBody = {
-    ...body,
-    isad: true,
-    adminToken: token
-  };
-  
-  const options = createSignedRequestOptions('POST', url, requestBody);
+  const options = createSignedRequestOptions('POST', url, body);
   
   const response = await fetch(`${API_BASE_URL}/decrease-user-logins`, {
     ...options,
@@ -140,14 +126,7 @@ export const resetUserLogins = async (token: string, body: any) => {
 export const increasePdfLimit = async (token: string, body: any) => {
   const url = '/api/increase-pdf-limit';
   
-  // 添加管理员标识和token
-  const requestBody = {
-    ...body,
-    isad: true,
-    adminToken: token
-  };
-  
-  const options = createSignedRequestOptions('POST', url, requestBody);
+  const options = createSignedRequestOptions('POST', url, body);
   
   const response = await fetch(`${API_BASE_URL}/increase-pdf-limit`, {
     ...options,
@@ -164,14 +143,7 @@ export const increasePdfLimit = async (token: string, body: any) => {
 export const decreasePdfLimit = async (token: string, body: any) => {
   const url = '/api/decrease-pdf-limit';
   
-  // 添加管理员标识和token
-  const requestBody = {
-    ...body,
-    isad: true,
-    adminToken: token
-  };
-  
-  const options = createSignedRequestOptions('POST', url, requestBody);
+  const options = createSignedRequestOptions('POST', url, body);
   
   const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
     ...options,

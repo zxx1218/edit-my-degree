@@ -1,18 +1,59 @@
+const jwt = require('jsonwebtoken');
+
 let dbInstance = null;
 
 // 添加初始化方法
-const initialize = (db) => {
+const initialize = (db, jwtSecret) => {
   dbInstance = db;
-  return getUserCardHistory;
+  
+  // 返回一个包装函数，包含jwtSecret
+  return async (req, res) => {
+    try {
+      // 从请求头获取token
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          error: '未提供访问令牌'
+        });
+      }
+      const token = authHeader.substring(7);
+      
+      // 验证JWT token
+      let decoded;
+      try {
+        decoded = jwt.verify(token, jwtSecret || process.env.JWT_SECRET || 'default_jwt_secret');
+      } catch (err) {
+        return res.status(401).json({
+          success: false,
+          error: '无效的访问令牌'
+        });
+      }
+      
+      // 检查用户是否为管理员（兼容两种命名方式）
+      if (!decoded.is_admin && !decoded.isAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: '权限不足'
+        });
+      }
+      
+      // 调用原有的处理逻辑
+      await getUserCardHistoryHandler(req, res, dbInstance);
+    } catch (err) {
+      console.error('获取用户卡密历史出错:', err);
+      res.status(500).json({
+        success: false,
+        error: '服务器内部错误'
+      });
+    }
+  };
 };
 
 /**
- * 获取用户卡密使用记录
+ * 获取用户卡密使用记录的处理逻辑
  */
-const getUserCardHistory = async (req, res) => {
-  // 如果传入了db参数，则使用它；否则使用全局dbInstance
-  const database = dbInstance;
-  
+const getUserCardHistoryHandler = async (req, res, database) => {
   // 检查数据库连接是否有效
   if (!database || typeof database.execute !== 'function') {
     return res.status(500).json({
@@ -63,5 +104,5 @@ const getUserCardHistory = async (req, res) => {
   }
 };
 
-module.exports = getUserCardHistory;
+module.exports = getUserCardHistoryHandler;
 module.exports.initialize = initialize;

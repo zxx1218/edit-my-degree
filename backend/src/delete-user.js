@@ -1,10 +1,12 @@
+const jwt = require('jsonwebtoken');
 const { logOperation } = require('./operation-logger');
 
 /**
  * 删除用户接口
  * @param {Object} db - 数据库连接实例
+ * @param {string} jwtSecret - JWT密钥
  */
-function initialize(db) {
+function initialize(db, jwtSecret) {
   return async (req, res) => {
     const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
                       (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
@@ -14,6 +16,35 @@ function initialize(db) {
     let connection;
 
     try {
+      // 从请求头获取token
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          error: '未提供访问令牌'
+        });
+      }
+      const token = authHeader.substring(7);
+      
+      // 验证JWT token
+      let decoded;
+      try {
+        decoded = jwt.verify(token, jwtSecret || process.env.JWT_SECRET || 'default_jwt_secret');
+      } catch (err) {
+        return res.status(401).json({
+          success: false,
+          error: '无效的访问令牌'
+        });
+      }
+      
+      // 检查用户是否为管理员（兼容两种命名方式）
+      if (!decoded.is_admin && !decoded.isAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: '权限不足'
+        });
+      }
+
       const { username } = req.body;
 
       if (!username) {
@@ -72,7 +103,8 @@ function initialize(db) {
         // 记录操作日志
         logOperation('delete_user', ipAddress, userAgent, 'success', { 
           deletedUsername: username,
-          deletedUserId: userId 
+          deletedUserId: userId,
+          operator: decoded.username
         });
 
         res.json({

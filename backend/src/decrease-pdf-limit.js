@@ -1,18 +1,57 @@
 /**
  * 减少用户PDF积分接口（管理员操作）
  * @param {Object} db - 数据库连接实例
+ * @param {string} jwtSecret - JWT密钥
  */
 const cryptoUtils = require('./crypto-utils');
 const { sendIllegalApiCallAlert } = require('./email-notifier');
+const jwt = require('jsonwebtoken');
 
-function initialize(db) {
+/**
+ * 减少用户PDF积分接口（管理员操作）
+ * @param {Object} db - 数据库连接实例
+ * @param {string} jwtSecret - JWT密钥
+ */
+function initialize(db, jwtSecret) {
   return async (req, res) => {
     const operationLogger = require('./operation-logger');
     const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
     const userAgent = req.headers['user-agent'] || '未知设备';
     
     try {
-      const { username, decreaseAmount, isad, adminToken } = req.body;
+      // 从请求头获取token
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          error: '未提供访问令牌'
+        });
+      }
+      const token = authHeader.substring(7);
+      
+      // 验证JWT token
+      let decoded;
+      try {
+        decoded = jwt.verify(token, jwtSecret || process.env.JWT_SECRET || 'default_jwt_secret');
+      } catch (err) {
+        return res.status(401).json({
+          success: false,
+          error: '无效的访问令牌'
+        });
+      }
+      
+      // 检查用户是否为管理员（兼容两种命名方式）
+      if (!decoded.is_admin && !decoded.isAdmin) {
+        return res.status(403).json({
+          success: false,
+          error: '权限不足'
+        });
+      }
+      
+      const operatorUsername = decoded.username;
+      const operatorId = decoded.id;
+      
+      const { username, decreaseAmount } = req.body;
 
       if (!username) {
         return res.status(400).json({
@@ -27,81 +66,6 @@ function initialize(db) {
           error: '减少数量必须为正整数'
         });
       }
-      
-      // 验证管理员身份
-      let operatorInfo;
-      if (isad === true) {
-        // 管理员操作，必须提供adminToken
-        if (!adminToken) {
-          console.error(`[安全错误] PDF积分减少管理员操作缺少adminToken - IP: ${ipAddress}, User-Agent: ${userAgent}`);
-          
-          // 发送非法调用告警邮件
-          sendIllegalApiCallAlert({
-            req,
-            reason: 'PDF积分减少缺少adminToken',
-            details: {
-              action: 'decrease-pdf-limit',
-              isad: isad,
-              missingField: 'adminToken'
-            }
-          }).catch(err => {
-            console.error('[邮件通知] 发送告警失败:', err.message);
-          });
-          
-          return res.status(401).json({
-            success: false,
-            error: '管理员操作需要提供有效的adminToken'
-          });
-        }
-        
-        try {
-          operatorInfo = cryptoUtils.verifyAdminToken(adminToken);
-        } catch (error) {
-          console.error(`[安全错误] PDF积分减少管理员Token验证失败 - 错误: ${error.message}, IP: ${ipAddress}, User-Agent: ${userAgent}`);
-          
-          // 发送非法调用告警邮件
-          sendIllegalApiCallAlert({
-            req,
-            reason: 'PDF积分减少adminToken验证失败',
-            details: {
-              action: 'decrease-pdf-limit',
-              isad: isad,
-              errorMessage: error.message,
-              adminTokenLength: adminToken.length
-            }
-          }).catch(err => {
-            console.error('[邮件通知] 发送告警失败:', err.message);
-          });
-          
-          return res.status(401).json({
-            success: false,
-            error: `管理员身份验证失败: ${error.message}`
-          });
-        }
-      } else {
-        // 非管理员操作，使用JWT Token验证
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-          return res.status(401).json({
-            success: false,
-            error: '未提供有效的认证令牌'
-          });
-        }
-        
-        const token = authHeader.substring(7);
-        try {
-          const jwt = require('jsonwebtoken');
-          operatorInfo = jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret');
-        } catch (error) {
-          return res.status(401).json({
-            success: false,
-            error: '认证令牌无效或已过期'
-          });
-        }
-      }
-      
-      const operatorUsername = operatorInfo.username;
-      const operatorId = operatorInfo.id;
 
       // 先查询用户当前的PDF积分和登录次数
       const [users] = await db.execute(
@@ -160,7 +124,7 @@ function initialize(db) {
       // 记录详细的审计日志（safe级别）
       console.safe(`[审计日志] 管理员减少PDF积分 - 
         ========== 操作详情 ==========
-        操作类型: ${isad === true ? '管理员直接操作' : '普通用户操作'},
+        操作类型: 管理员直接操作,
         操作者: ${operatorUsername}(ID:${operatorId}),
         目标用户: ${username},
         资源类型: PDF积分,

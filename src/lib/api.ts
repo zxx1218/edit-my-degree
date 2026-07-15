@@ -144,9 +144,22 @@ export const updateData = async (
 };
 
 // 修改密码API
-export const changePassword = async (username: string, oldPassword: string, newPassword: string) => {
+export const changePassword = async (username: string, oldPassword: string, newPassword: string, token?: string) => {
   const options = createSignedRequestOptions('POST', '/api/change-password', { username, oldPassword, newPassword });
-  const response = await fetch(`${API_BASE_URL}/change-password`, options);
+  
+  // 如果有token，添加到请求头
+  const headers: Record<string, string> = {
+    ...options.headers
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/change-password`, {
+    ...options,
+    headers
+  });
 
   const data = await response.json();
   
