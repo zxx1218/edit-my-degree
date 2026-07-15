@@ -246,11 +246,15 @@ const Login = () => {
     try {
       // 生成签名所需参数
       const timestamp = Date.now().toString();
+      
+      // 对充值卡ID进行Base64编码（生成SBverify）
+      const cardId = data.cardId.trim();
+      const SBverify = btoa(unescape(encodeURIComponent(cardId)));
+      
       const params = {
         action: "use",
-        cardId: data.cardId.trim(),
         username: data.username.trim(),
-        type,
+        SBverify: SBverify,  // 使用加密后的卡ID
       };
       
       // 生成签名

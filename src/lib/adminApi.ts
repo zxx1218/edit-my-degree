@@ -96,7 +96,7 @@ export const updateUserLogins = async (token: string, body: any) => {
   return await response.json();
 };
 
-// 减少用户登录次数
+// 减少用户登录次数（管理员操作）
 export const decreaseUserLogins = async (token: string, body: any) => {
   const url = '/api/decrease-user-logins';
   

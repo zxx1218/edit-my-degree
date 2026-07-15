@@ -48,8 +48,8 @@ function verifyAdminToken(token, jwtSecret) {
   try {
     const decoded = jwt.verify(token, jwtSecret || process.env.JWT_SECRET || 'default_jwt_secret');
     
-    // 验证是否为管理员
-    if (!decoded.is_admin) {
+    // 验证是否为管理员（兼容两种命名方式）
+    if (!decoded.is_admin && !decoded.isAdmin) {
       throw new Error('该Token不属于管理员账户');
     }
     

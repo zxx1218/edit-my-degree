@@ -4,6 +4,7 @@
  */
 const jwt = require('jsonwebtoken');
 const cryptoUtils = require('./crypto-utils');
+const { sendIllegalApiCallAlert } = require('./email-notifier');
 
 function initialize(db) {
   return async (req, res) => {
@@ -15,28 +16,56 @@ function initialize(db) {
 
       // 验证管理员身份
       let operatorInfo;
-      
       if (isad === true) {
-        // 管理员操作，需要adminToken
+        // 管理员操作，必须提供adminToken
         if (!adminToken) {
-          console.warn(`[安全警告] 管理员操作缺少adminToken - IP: ${ipAddress}`);
+          console.warn(`[安全警告] 登录次数减少管理员操作缺少adminToken - IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '登录次数减少缺少adminToken',
+            details: {
+              action: 'decrease-user-logins',
+              isad: isad,
+              missingField: 'adminToken'
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
           return res.status(401).json({
             success: false,
-            error: '需要提供有效的adminToken'
+            error: '管理员操作需要提供有效的adminToken'
           });
         }
         
         try {
           operatorInfo = cryptoUtils.verifyAdminToken(adminToken);
-        } catch (err) {
-          console.warn(`[安全警告] 管理员Token验证失败 - IP: ${ipAddress}, 错误: ${err.message}`);
+        } catch (error) {
+          console.warn(`[安全警告] 登录次数减少管理员Token验证失败 - 错误: ${error.message}, IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '登录次数减少adminToken验证失败',
+            details: {
+              action: 'decrease-user-logins',
+              isad: isad,
+              errorMessage: error.message,
+              adminTokenLength: adminToken.length
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
           return res.status(401).json({
             success: false,
-            error: '管理员Token无效或已过期'
+            error: `管理员身份验证失败: ${error.message}`
           });
         }
       } else {
-        // 普通JWT Token验证
+        // 非管理员操作，使用JWT Token验证
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
           return res.status(401).json({
@@ -47,8 +76,9 @@ function initialize(db) {
         
         const token = authHeader.substring(7);
         try {
+          const jwt = require('jsonwebtoken');
           operatorInfo = jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret');
-        } catch (err) {
+        } catch (error) {
           return res.status(401).json({
             success: false,
             error: '认证令牌无效或已过期'
@@ -128,17 +158,21 @@ function initialize(db) {
 
       // 记录详细的审计日志（safe级别）
       console.safe(`[审计日志] 管理员减少登录次数 - 
+        ========== 操作详情 ==========
         操作类型: ${isad === true ? '管理员直接操作' : '普通用户操作'},
         操作者: ${operatorUsername}(ID:${operatorId}),
         目标用户: ${username}(ID:${user.id}),
         资源类型: 登录次数,
+        ========== 变更详情 ==========
         变更前值: ${user.remaining_logins},
         变更量: -${actualDecreased},
         变更后值: ${newLogins},
         PDF积分: ${user.pdf_limit},
+        ========== 请求信息 ==========
         IP地址: ${ipAddress},
         User-Agent: ${userAgent},
-        时间戳: ${new Date().toISOString()}`);
+        时间戳: ${new Date().toISOString()},
+        ==============================`);
 
       console.info(`[账户管理] 登录次数减少成功 - 操作者: ${operatorUsername}, 用户: ${username}, 原次数: ${user.remaining_logins}, PDF积分: ${user.pdf_limit}, 减少: ${actualDecreased}, 新次数: ${newLogins}, IP: ${ipAddress}`);
 

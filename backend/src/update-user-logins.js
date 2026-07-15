@@ -3,6 +3,7 @@
  * @param {Object} db - 数据库连接实例
  */
 const cryptoUtils = require('./crypto-utils');
+const { sendIllegalApiCallAlert } = require('./email-notifier');
 
 function initialize(db) {
   return async (req, res) => {
@@ -31,7 +32,21 @@ function initialize(db) {
       if (isad === true) {
         // 管理员操作，必须提供adminToken
         if (!adminToken) {
-          console.warn(`[安全警告] 管理员操作缺少adminToken - IP: ${ipAddress}`);
+          console.warn(`[安全警告] 登录次数调整管理员操作缺少adminToken - IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '登录次数调整缺少adminToken',
+            details: {
+              action: 'update-user-logins',
+              isad: isad,
+              missingField: 'adminToken'
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
           return res.status(401).json({
             success: false,
             error: '管理员操作需要提供有效的adminToken'
@@ -41,7 +56,22 @@ function initialize(db) {
         try {
           operatorInfo = cryptoUtils.verifyAdminToken(adminToken);
         } catch (error) {
-          console.warn(`[安全警告] 管理员Token验证失败 - 错误: ${error.message}, IP: ${ipAddress}`);
+          console.warn(`[安全警告] 登录次数调整管理员Token验证失败 - 错误: ${error.message}, IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          
+          // 发送非法调用告警邮件
+          sendIllegalApiCallAlert({
+            req,
+            reason: '登录次数调整adminToken验证失败',
+            details: {
+              action: 'update-user-logins',
+              isad: isad,
+              errorMessage: error.message,
+              adminTokenLength: adminToken.length
+            }
+          }).catch(err => {
+            console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
           return res.status(401).json({
             success: false,
             error: `管理员身份验证失败: ${error.message}`
@@ -149,17 +179,21 @@ function initialize(db) {
       
       // 记录详细的审计日志（safe级别）
       console.safe(`[审计日志] 管理员调整登录次数 - 
+        ========== 操作详情 ==========
         操作类型: ${isad === true ? '管理员直接操作' : '普通用户操作'},
         操作者: ${operatorUsername}(ID:${operatorId}),
         目标用户: ${user.username}(ID:${user.id}),
         资源类型: 登录次数,
+        ========== 变更详情 ==========
         变更前值: ${oldLogins},
-        变更量: ${addLogins},
+        变更量: ${addLogins > 0 ? '+' + addLogins : addLogins},
         变更后值: ${newLogins},
         PDF积分: ${oldPdfLimit},
+        ========== 请求信息 ==========
         IP地址: ${ipAddress},
         User-Agent: ${userAgent},
-        时间戳: ${new Date().toISOString()}`);
+        时间戳: ${new Date().toISOString()},
+        ==============================`);
       
       console.info(`[账户管理] 登录次数更新成功 - 操作者: ${operatorUsername}, 用户: ${user.username}, 原次数: ${oldLogins}, 增加: ${addLogins}, 新次数: ${newLogins}, IP: ${ipAddress}`);
       
