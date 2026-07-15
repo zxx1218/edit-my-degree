@@ -19,7 +19,7 @@ function initialize(db) {
       if (isad === true) {
         // 管理员操作，必须提供adminToken
         if (!adminToken) {
-          console.warn(`[安全警告] 登录次数减少管理员操作缺少adminToken - IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          console.error(`[安全错误] 登录次数减少管理员操作缺少adminToken - IP: ${ipAddress}, User-Agent: ${userAgent}`);
           
           // 发送非法调用告警邮件
           sendIllegalApiCallAlert({
@@ -43,7 +43,7 @@ function initialize(db) {
         try {
           operatorInfo = cryptoUtils.verifyAdminToken(adminToken);
         } catch (error) {
-          console.warn(`[安全警告] 登录次数减少管理员Token验证失败 - 错误: ${error.message}, IP: ${ipAddress}, User-Agent: ${userAgent}`);
+          console.error(`[安全错误] 登录次数减少管理员Token验证失败 - 错误: ${error.message}, IP: ${ipAddress}, User-Agent: ${userAgent}`);
           
           // 发送非法调用告警邮件
           sendIllegalApiCallAlert({
