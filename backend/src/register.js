@@ -28,6 +28,27 @@ function initialize(db) {
         });
       }
 
+      // 验证用户名长度：至少3个字符
+      if (username.length < 3) {
+        logRegister(null, username, ipAddress, userAgent, 'failed', { reason: '用户名长度不足' });
+        
+        return res.status(400).json({
+          success: false,
+          error: '用户名至少需要3个字符'
+        });
+      }
+
+      // 验证用户名格式：只能包含数字、字母和下划线
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!usernameRegex.test(username)) {
+        logRegister(null, username, ipAddress, userAgent, 'failed', { reason: '用户名格式不正确' });
+        
+        return res.status(400).json({
+          success: false,
+          error: '用户名只能由数字、字母和下划线组成'
+        });
+      }
+
       // 【第二层防护】检查该 IP 在过去 24 小时内是否已经注册过
      const [recentRegistrations] = await db.execute(
         `SELECT id, username FROM users 

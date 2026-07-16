@@ -77,6 +77,19 @@ const Register = () => {
       return;
     }
 
+    // 验证用户名长度：至少3个字符
+    if (username.length < 3) {
+      toast.error("用户名至少需要3个字符", { duration: 1500 });
+      return;
+    }
+
+    // 验证用户名格式：只能包含数字、字母和下划线
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+      toast.error("用户名只能由数字、字母和下划线组成", { duration: 1500 });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error("两次输入的密码不一致", { duration: 1500 });
       return;
@@ -129,21 +142,36 @@ const Register = () => {
         <CardContent>
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="请输入用户名（不能包含中文）"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onInput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                }}
-                required
-                minLength={3}
-              />
-              <p className="text-xs text-muted-foreground">用户名至少 3 个字符，不能包含中文</p>
+              <Label htmlFor="username" className="flex items-center gap-2 text-sm font-medium">
+                <span className="text-slate-700 dark:text-slate-300">用户名</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500">（至少3个字符）</span>
+              </Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="例如: user_123"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    // 只允许输入数字、字母和下划线
+                    target.value = target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                  }}
+                  required
+                  minLength={3}
+                  className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
+                  a-z 0-9 _
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 flex items-start gap-1.5">
+                <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>仅支持字母、数字和下划线，长度至少3个字符</span>
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">密码</Label>
