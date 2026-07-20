@@ -188,12 +188,27 @@ console.info = (...args) => {
 
 console.warn = (...args) => {
   logger.warn(formatArgs(args));
-  originalWarn.apply(console, args);
+  try {
+    originalWarn.apply(console, args);
+  } catch (err) {
+    // 忽略 EIO 错误（通常发生在进程关闭时 stdout/stderr 流已关闭）
+    if (err.code !== 'EIO') {
+      throw err;
+    }
+  }
 };
 
 console.error = (...args) => {
   logger.error(formatArgs(args));
-  originalError.apply(console, args);
+  try {
+    originalError.apply(console, args);
+  } catch (err) {
+    // 忽略 EIO 错误（通常发生在进程关闭时 stdout/stderr 流已关闭）
+    // 这种情况下日志已经记录到文件，不需要再输出到控制台
+    if (err.code !== 'EIO') {
+      throw err;
+    }
+  }
 };
 
 console.safe = (...args) => {
