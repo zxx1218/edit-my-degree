@@ -39,7 +39,6 @@ const useLongPress = (onLongPress: () => void, delay = 500) => {
 
 interface StudentData {
   name: string;
-  personalInfo: string;
   gender: string;
   birthDate: string;
   school: string;
@@ -141,7 +140,6 @@ const StudentStatusDetail = () => {
   // 默认值
   const defaultData: StudentData = {
     name: "浆果儿",
-    personalInfo: "女    2002年12月17日",
     gender: "女",
     birthDate: "2002年12月17日",
     school: "清华大学",
@@ -177,7 +175,6 @@ const StudentStatusDetail = () => {
       if (detailRecord) {
         setData({
           name: detailRecord.name || defaultData.name,
-          personalInfo: detailRecord.personal_info || defaultData.personalInfo,
           gender: detailRecord.gender || defaultData.gender,
           birthDate: detailRecord.birth_date || defaultData.birthDate,
           school: detailRecord.school || defaultData.school,
@@ -209,7 +206,6 @@ const StudentStatusDetail = () => {
         if (record) {
           setData({
             name: record.name || defaultData.name,
-            personalInfo: record.personal_info || defaultData.personalInfo,
             gender: record.gender || defaultData.gender,
             birthDate: record.birth_date || defaultData.birthDate,
             school: record.school || defaultData.school,
@@ -251,7 +247,8 @@ const StudentStatusDetail = () => {
 
   // Long press handlers for each editable field
   const nameLongPress = useLongPress(() => handleFieldClick("name", "姓名"));
-  const personalInfoLongPress = useLongPress(() => handleFieldClick("personalInfo", "个人信息"));
+  const genderLongPress = useLongPress(() => handleFieldClick("gender", "性别"));
+  const birthDateLongPress = useLongPress(() => handleFieldClick("birthDate", "出生日期"));
   const schoolLongPress = useLongPress(() => handleFieldClick("school", "学校名称"));
   const majorLongPress = useLongPress(() => handleFieldClick("major", "专业"));
   const studyTypeLongPress = useLongPress(() => handleFieldClick("studyType", "学习形式"));
@@ -271,17 +268,7 @@ const StudentStatusDetail = () => {
         .replace(/^_/, "");
 
       // Prepare update data
-      let updatePayload: any = { [dbField]: newValue };
-
-      // Special handling for personalInfo field
-      if (field === "personalInfo") {
-        // Parse personalInfo to extract gender and birth_date
-        const parts = newValue.split(" | ");
-        if (parts.length >= 2) {
-          updatePayload.gender = parts[0].trim();
-          updatePayload.birth_date = parts[1].trim();
-        }
-      }
+      const updatePayload: any = { [dbField]: newValue };
 
       await updateData("student_status", "update", userId, updatePayload, id);
 
@@ -428,11 +415,16 @@ const StudentStatusDetail = () => {
               >
                 {data.name}
               </h2>
-              <div
-                className="text-sm cursor-pointer hover:opacity-80 select-none"
-                {...personalInfoLongPress}
-              >
-                {data.personalInfo.replace(/\s/g, "\u00A0")}
+              <div className="flex items-center gap-3 text-sm">
+                <span className="cursor-pointer hover:opacity-80 select-none" {...genderLongPress}>
+                  {data.gender}
+                </span>
+                <span
+                  className="cursor-pointer hover:opacity-80 select-none"
+                  {...birthDateLongPress}
+                >
+                  {data.birthDate}
+                </span>
               </div>
             </div>
           </div>

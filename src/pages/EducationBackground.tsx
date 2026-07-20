@@ -85,7 +85,15 @@ const EducationBackground = () => {
           const sortedEducation = sortByDegreeLevel(
             (data.education || []).map((record: any) => ({
               ...record,
-              degreeLevel: record.degree_level
+              degreeLevel: record.degree_level,
+              principalName: record.principal_name,
+              certificateNumber: record.certificate_number,
+              enrollmentDate: record.enrollment_date,
+              graduationDate: record.graduation_date,
+              studyType: record.study_type,
+              educationType: record.education_type,
+              graduationStatus: record.graduation_status,
+              idNumber: record.id_number
             }))
           );
           

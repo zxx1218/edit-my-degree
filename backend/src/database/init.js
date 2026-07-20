@@ -56,7 +56,6 @@ async function createTables(db) {
       department TEXT,
       class TEXT,
       student_id TEXT,
-      personal_info TEXT,
       admission_photo LONGTEXT,
       degree_photo LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
