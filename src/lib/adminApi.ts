@@ -439,3 +439,21 @@ export const addIpBlacklist = async (token: string, body: {
   
   return await response.json();
 };
+
+// PDF生成管理API
+
+// 获取所有PDF生成记录
+export const managePdfGeneration = async (token: string, body: any) => {
+  const url = '/api/manage-pdf-generation';
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetch(`${API_BASE_URL}/manage-pdf-generation`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};

@@ -302,7 +302,7 @@ const IpBlacklistManager = ({ token }: IpBlacklistManagerProps) => {
   return (
     <Card className="shadow-lg border-2">
       <CardHeader>
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
               <Shield className="h-5 w-5 text-red-600 dark:text-red-400" />
@@ -312,18 +312,20 @@ const IpBlacklistManager = ({ token }: IpBlacklistManagerProps) => {
               <CardDescription>查看和管理被封禁的IP地址</CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={handleAddClick} variant="default" size="sm" className="bg-red-600 hover:bg-red-700 border-2">
-              <Plus className="h-4 w-4 mr-2" />
-              新增黑名单
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button onClick={handleAddClick} variant="default" size="sm" className="bg-red-600 hover:bg-red-700 border-2 flex-1 sm:flex-none">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">新增黑名单</span>
+              <span className="sm:hidden">新增</span>
             </Button>
-            <Button onClick={fetchBlacklist} variant="outline" size="sm" className="border-2" disabled={isLoading}>
+            <Button onClick={fetchBlacklist} variant="outline" size="sm" className="border-2 flex-1 sm:flex-none" disabled={isLoading}>
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
               ) : (
-                <Search className="h-4 w-4 mr-2" />
+                <Search className="h-4 w-4 sm:mr-2" />
               )}
-              刷新列表
+              <span className="hidden sm:inline">刷新列表</span>
+              <span className="sm:hidden">刷新</span>
             </Button>
           </div>
         </div>
@@ -343,20 +345,20 @@ const IpBlacklistManager = ({ token }: IpBlacklistManagerProps) => {
         {/* 统计信息 */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
           <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800 text-center">
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{blacklist.length}</div>
+            <div className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">{blacklist.length}</div>
             <div className="text-xs text-muted-foreground">总数</div>
           </div>
           <div className="p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg border border-orange-200 dark:border-orange-800 text-center">
-            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+            <div className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
               {blacklist.filter(item => item.hoursRemaining < 24).length}
             </div>
-            <div className="text-xs text-muted-foreground">24小时内到期</div>
+            <div className="text-xs text-muted-foreground">24小时内过期</div>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-center hidden md:block">
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800 text-center col-span-2 md:col-span-1">
+            <div className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">
               {blacklist.filter(item => item.hoursRemaining >= 720).length}
             </div>
-            <div className="text-xs text-muted-foreground">长期封禁(≥30天)</div>
+            <div className="text-xs text-muted-foreground">长期封禁</div>
           </div>
         </div>
 
@@ -369,69 +371,71 @@ const IpBlacklistManager = ({ token }: IpBlacklistManagerProps) => {
             </div>
           </div>
         ) : paginatedItems.length > 0 ? (
-          <div className="space-y-3">
-            {paginatedItems.map((item, index) => (
-              <div
-                key={item.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border-2 hover:shadow-md transition-all bg-gradient-to-r from-background to-muted/20 border-border/50 hover:border-red-300 dark:hover:border-red-700 animate-scale-in"
-                style={{ animationDelay: `${index * 30}ms` }}
-              >
-                {/* IP信息和详情 */}
-                <div className="flex-1 min-w-0 space-y-2 mb-3 sm:mb-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm font-semibold text-red-600 dark:text-red-400">
-                      {item.ipAddress}
-                    </span>
-                    <Badge
-                      variant={item.hoursRemaining < 24 ? "destructive" : "secondary"}
-                      className="text-xs"
-                    >
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formatRemainingTime(item.hoursRemaining)}
-                    </Badge>
+          <div className="border-2 rounded-lg p-3 max-h-[500px] overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+            <div className="space-y-2">
+              {paginatedItems.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border-2 hover:shadow-md transition-all bg-gradient-to-r from-background to-muted/20 border-border/50 hover:border-red-300 dark:hover:border-red-700 animate-scale-in"
+                  style={{ animationDelay: `${index * 30}ms` }}
+                >
+                  {/* IP信息和详情 */}
+                  <div className="flex-1 min-w-0 space-y-2 mb-3 sm:mb-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-mono text-sm font-semibold text-red-600 dark:text-red-400 break-all">
+                        {item.ipAddress}
+                      </span>
+                      <Badge
+                        variant={item.hoursRemaining < 24 ? "destructive" : "secondary"}
+                        className="text-xs flex-shrink-0"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formatRemainingTime(item.hoursRemaining)}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p className="line-clamp-2">
+                        <span className="font-medium">原因:</span> {item.reason}
+                      </p>
+                      <p className="hidden sm:block">
+                        <span className="font-medium">封禁至:</span>{" "}
+                        {format(new Date(item.blockedUntil), "yyyy-MM-dd HH:mm:ss")}
+                      </p>
+                      <p className="hidden sm:block">
+                        <span className="font-medium">创建于:</span>{" "}
+                        {format(new Date(item.createdAt), "yyyy-MM-dd HH:mm:ss")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p className="line-clamp-2">
-                      <span className="font-medium">原因:</span> {item.reason}
-                    </p>
-                    <p>
-                      <span className="font-medium">封禁至:</span>{" "}
-                      {format(new Date(item.blockedUntil), "yyyy-MM-dd HH:mm:ss")}
-                    </p>
-                    <p>
-                      <span className="font-medium">创建于:</span>{" "}
-                      {format(new Date(item.createdAt), "yyyy-MM-dd HH:mm:ss")}
-                    </p>
-                  </div>
-                </div>
 
-                {/* 操作按钮 */}
-                <div className="flex items-center gap-2 sm:flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditClick(item)}
-                    className="flex-1 sm:flex-none border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700"
-                  >
-                    <Edit className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">编辑</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteClick(item)}
-                    className="flex-1 sm:flex-none border-2 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-700"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">删除</span>
-                  </Button>
+                  {/* 操作按钮 */}
+                  <div className="flex items-center gap-2 sm:flex-shrink-0 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditClick(item)}
+                      className="flex-1 sm:flex-none border-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-700 px-2 sm:px-3"
+                    >
+                      <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">编辑</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteClick(item)}
+                      className="flex-1 sm:flex-none border-2 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-700 px-2 sm:px-3"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
+                      <span className="hidden sm:inline">删除</span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
 
             {/* 分页 */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
                 <p className="text-sm text-muted-foreground">
                   第 {currentPage} / {totalPages} 页
                 </p>

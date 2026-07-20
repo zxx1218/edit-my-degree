@@ -143,60 +143,180 @@ import {
 
 ---
 
-# 管理员组件
+# 管理员组件说明
 
-本目录包含用于管理员后台的各种组件。
+本文档说明了系统中所有管理员专用组件的功能和使用方法。
 
 ## 组件列表
 
-### AdminLogin
-管理员登录组件，提供身份验证功能。
+### 1. AdminLogin
+管理员登录组件，提供JWT认证功能。
 
-### LoginStatsCard
+### 2. LoginStatsCard
 显示今日登录统计信息的卡片组件。
 
-### CardManager
-充值卡管理组件，用于创建和管理充值卡。
+### 3. CardManager
+充值卡管理组件，支持创建、查看和管理登录卡和PDF积分卡。
 
-### UserList
-用户列表组件，显示所有用户信息并支持搜索、改密、删除、积分管理。
+### 4. UserList
+用户列表管理组件，支持查看、搜索和管理所有用户。
 
-### StatsDashboard
-用户统计分析组件，集成活跃度热力图、登录统计图表和Top活跃用户排行榜，使用Tab分栏展示。
+### 5. MessageList
+留言管理组件，用于查看和回复用户留言。
 
-### MessageList
-留言管理组件，用于查看和管理用户留言。
+### 6. TodayLoginList
+今日登录详情列表，展示今天所有登录用户的详细信息。
 
-### TodayLoginList
-今日登录详情组件，显示今天所有用户的登录记录。
+### 7. ProvinceMap
+省份登录分布地图，可视化展示各省份的登录情况。
 
-### ProvinceMap
-省份登录分布地图组件，使用中国地图展示各省份用户登录次数的热力图分布。
+### 8. StatsDashboard
+统计分析仪表板，包含用户活跃度热力图、登录统计图表和Top活跃用户排行。
 
-### IpBlacklistManager
-IP黑名单管理组件，用于查看、新增、编辑和删除系统中的IP黑名单记录。
+### 9. IpBlacklistManager
+IP黑名单管理组件，用于管理被封禁的IP地址。
 
-#### 功能特性
-- 📋 查看所有未过期的IP黑名单记录
-- ➕ 新增IP地址到黑名单（支持IPv4和IPv6）
-- ✏️ 编辑现有记录的封禁原因和截止时间
-- 🗑️ 删除黑名单记录
-- 🔍 按IP地址或封禁原因搜索
-- 📄 分页显示（每页5条记录）
-- 📊 实时统计信息（总数、24小时内到期、长期封禁）
-- ⚠️ 二次确认机制（编辑和删除操作）
-- 📱 移动端响应式设计
+**功能特性：**
+- ✅ 查看所有未过期的IP黑名单记录
+- ✅ 编辑黑名单记录的封禁原因和截止时间
+- ✅ 删除黑名单记录
+- ✅ 新增IP到黑名单
+- ✅ 搜索和分页功能
+- ✅ 实时统计信息展示
+- ✅ JWT认证和管理员权限验证
+- ✅ 审计日志记录
+- ✅ 移动端适配
 
-#### 技术实现
-- 使用 shadcn/ui Dialog 组件实现对话框
-- IP地址格式验证（IPv4和IPv6正则表达式）
-- 后端JWT认证和管理员权限验证
-- 请求签名验证防止篡改
-- 审计日志记录所有操作
+**API端点：**
+- `POST /api/manage-ip-blacklist` - IP黑名单管理接口
 
-#### 使用方法
-```tsx
-import { ProvinceMap } from "@/components/admin";
+**使用方法：**
+```typescript
+import { IpBlacklistManager } from "@/components/admin";
 
-<ProvinceMap token={adminToken} />
+<IpBlacklistManager token={token} />
 ```
+
+### 10. PdfGenerationManager
+PDF生成管理组件，用于查看和管理所有PDF生成记录及二维码信息。
+
+**功能特性：**
+- ✅ 查看所有PDF生成记录（学位、学历、学籍验证）
+- ✅ 显示生成用户信息（用户名、姓名）
+- ✅ 显示二维码短码和类型
+- ✅ 显示生成时间和过期时间
+- ✅ 显示扫码情况（扫描次数、最后扫描时间）
+- ✅ 显示二维码状态（有效、即将过期、已过期）
+- ✅ 修改二维码过期时间
+- ✅ 按类型筛选（全部/学位/学历/学籍）
+- ✅ 搜索功能（用户名、姓名、短码）
+- ✅ 分页显示
+- ✅ 统计信息展示
+- ✅ JWT认证和管理员权限验证
+- ✅ 移动端适配
+
+**API端点：**
+- `POST /api/manage-pdf-generation` - PDF生成管理接口
+
+**请求参数：**
+
+获取列表：
+```json
+{
+  "action": "list"
+}
+```
+
+更新过期时间：
+```json
+{
+  "action": "update",
+  "id": "uuid",
+  "expiresAt": "2024-12-31T23:59:59.000Z"
+}
+```
+
+**响应格式：**
+
+列表响应：
+```json
+{
+  "success": true,
+  "records": [
+    {
+      "id": "uuid",
+      "short_code": "ABC123",
+      "pdf_type": "degree",
+      "pdf_type_label": "学位验证",
+      "created_at": "2024-01-15T10:30:00.000Z",
+      "expires_at": "2024-01-22T10:30:00.000Z",
+      "scan_count": 5,
+      "last_scanned_at": "2024-01-16T14:20:00.000Z",
+      "username": "zhangsan",
+      "name": "张三",
+      "is_expired": false,
+      "remaining_days": 7
+    }
+  ]
+}
+```
+
+更新响应：
+```json
+{
+  "success": true,
+  "message": "二维码过期时间已更新",
+  "newExpiresAt": "2024-12-31 23:59:59"
+}
+```
+
+**数据库表结构：**
+
+qr_code_urls表：
+- `id` (VARCHAR(36)) - 主键
+- `short_code` (VARCHAR(20)) - 短码，唯一
+- `full_url` (TEXT) - 完整URL
+- `pdf_type` (ENUM) - PDF类型：degree/education/student_status
+- `created_at` (TIMESTAMP) - 创建时间
+- `expires_at` (TIMESTAMP) - 过期时间
+- `scan_count` (INT) - 扫描次数
+- `last_scanned_at` (TIMESTAMP) - 最后扫描时间
+
+**UI设计：**
+- 使用表格展示数据，支持横向滚动
+- 短码使用等宽字体显示
+- 类型使用彩色徽章区分（蓝色-学位、绿色-学历、紫色-学籍）
+- 状态使用颜色标识（绿色-有效、橙色-即将过期、红色-已过期）
+- 编辑对话框使用模态框
+- 统计卡片展示关键指标
+- 响应式设计，支持移动端
+
+**使用方法：**
+```typescript
+import { PdfGenerationManager } from "@/components/admin";
+
+<PdfGenerationManager token={token} />
+```
+
+**技术实现：**
+- 后端：Node.js + Express + MySQL
+- 前端：React + TypeScript + Tailwind CSS
+- 从full_url中提取username信息
+- 自动计算剩余天数和过期状态
+- 时间格式化使用date-fns库
+- 完整的错误处理和加载状态
+
+---
+
+## 安全考虑
+
+所有管理员组件都需要：
+1. JWT Token认证
+2. 管理员权限验证
+3. 请求签名验证
+4. 速率限制保护
+5. 审计日志记录
+
+## 访问路径
+
+管理员登录后访问SuperAdd页面即可看到所有管理组件，无需额外配置。
