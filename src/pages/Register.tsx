@@ -150,7 +150,7 @@ const Register = () => {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="例如: user_123"
+                  placeholder="请输入用户名"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   onInput={(e) => {
@@ -170,7 +170,7 @@ const Register = () => {
                 <svg className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>仅支持字母、数字和下划线，长度至少3个字符</span>
+                <span>用户名长度至少3个字符，不支持特殊字符</span>
               </p>
             </div>
             <div className="space-y-2">
