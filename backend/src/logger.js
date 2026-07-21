@@ -227,7 +227,10 @@ const emailRateLimit = {
   minInterval: 60000, // 最小间隔时间（毫秒），默认1分钟
   maxEmailsPerHour: 30, // 每小时最大邮件数
   sentCount: 0,
-  resetTime: Date.now() + 3600000 // 1小时后重置计数
+  resetTime: Date.now() + 3600000, // 1小时后重置计数
+  consecutiveFailures: 0, // 连续失败次数
+  circuitBreakerActive: false, // 熔断器状态
+  circuitBreakerUntil: 0 // 熔断器解除时间
 };
 
 function getEmailTransporter() {
@@ -294,9 +297,24 @@ function sendErrorEmail(errorMessage, metadata = {}) {
     return;
   }
 
-  // 检查频率限制
+  // 检查熔断器状态
   const now = Date.now();
-  
+  if (emailRateLimit.circuitBreakerActive && now < emailRateLimit.circuitBreakerUntil) {
+    // 熔断器激活期间，只记录一次警告
+    if (!emailRateLimit.circuitBreakerLogged) {
+      console.safe(`[邮件通知] 熔断器已激活，暂停邮件发送直到 ${new Date(emailRateLimit.circuitBreakerUntil).toLocaleTimeString('zh-CN')}`);
+      emailRateLimit.circuitBreakerLogged = true;
+    }
+    return;
+  } else if (emailRateLimit.circuitBreakerActive && now >= emailRateLimit.circuitBreakerUntil) {
+    // 熔断器解除
+    emailRateLimit.circuitBreakerActive = false;
+    emailRateLimit.consecutiveFailures = 0;
+    emailRateLimit.circuitBreakerLogged = false;
+    console.safe('[邮件通知] 熔断器已解除，恢复邮件发送');
+  }
+
+  // 检查频率限制
   // 每小时重置计数
   if (now > emailRateLimit.resetTime) {
     emailRateLimit.sentCount = 0;
@@ -375,9 +393,24 @@ ${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata
   // 发送邮件（异步，不阻塞主流程）
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.error('[邮件通知] 发送失败:', error.message);
+      // 增加连续失败计数
+      emailRateLimit.consecutiveFailures++;
+      
+      // 如果连续失败超过5次，激活熔断器，暂停1小时
+      if (emailRateLimit.consecutiveFailures >= 5) {
+        emailRateLimit.circuitBreakerActive = true;
+        emailRateLimit.circuitBreakerUntil = Date.now() + 3600000; // 1小时后解除
+        emailRateLimit.circuitBreakerLogged = false;
+        
+        // 使用warn级别而不是error，避免再次触发邮件发送
+        logger.warn(`[邮件通知] 连续${emailRateLimit.consecutiveFailures}次发送失败，熔断器已激活，暂停1小时。错误: ${error.message}`);
+      } else {
+        // 使用warn级别记录失败，避免递归触发
+        logger.warn(`[邮件通知] 发送失败 (${emailRateLimit.consecutiveFailures}/5): ${error.message}`);
+      }
     } else {
-      // 更新发送记录
+      // 发送成功，重置失败计数
+      emailRateLimit.consecutiveFailures = 0;
       emailRateLimit.lastSentTime = Date.now();
       emailRateLimit.sentCount++;
       console.safe(`[邮件通知] 已发送错误告警邮件至 ${toEmail}, MessageID: ${info.messageId}, 本小时已发送: ${emailRateLimit.sentCount}/${emailRateLimit.maxEmailsPerHour}`);
