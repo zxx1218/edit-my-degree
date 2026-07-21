@@ -2,6 +2,63 @@ const { v4: uuidv4 } = require('uuid');
 const { logOperation } = require('./operation-logger');
 
 /**
+ * 获取表的字段列表（带缓存）
+ */
+const tableColumnsCache = new Map();
+
+async function getTableColumns(db, tableName) {
+  // 检查缓存
+  if (tableColumnsCache.has(tableName)) {
+    return tableColumnsCache.get(tableName);
+  }
+  
+  try {
+    const [columns] = await db.execute(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+      [tableName]
+    );
+    
+    const columnNames = columns.map(col => col.COLUMN_NAME);
+    tableColumnsCache.set(tableName, columnNames);
+    return columnNames;
+  } catch (err) {
+    console.error(`[数据操作] 获取表 ${tableName} 的字段列表失败:`, err.message);
+    return [];
+  }
+}
+
+/**
+ * 过滤掉不存在的字段
+ */
+async function filterValidFields(db, tableName, data) {
+  const validColumns = await getTableColumns(db, tableName);
+  
+  if (validColumns.length === 0) {
+    // 如果无法获取字段列表，返回原始数据
+    return data;
+  }
+  
+  const filteredData = {};
+  const invalidFields = [];
+  
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      if (validColumns.includes(key)) {
+        filteredData[key] = data[key];
+      } else {
+        invalidFields.push(key);
+      }
+    }
+  }
+  
+  if (invalidFields.length > 0) {
+    console.warn(`[数据操作] 过滤掉无效字段 - 表: ${tableName}, 无效字段: ${invalidFields.join(', ')}`);
+  }
+  
+  return filteredData;
+}
+
+/**
  * 更新数据接口
  * @param {Object} db - 数据库连接实例
  */
@@ -69,13 +126,16 @@ function initialize(db) {
       
       const sanitizedData = sanitizeData(data);
       
+      // 过滤掉数据库中不存在的字段
+      const validData = await filterValidFields(db, table, sanitizedData);
+      
       switch (action) {
         case 'insert':
           // 生成UUID作为记录ID
           const recordId = uuidv4();
           
           // 构造插入语句
-          const insertData = { id: recordId, ...sanitizedData, user_id: userId };
+          const insertData = { id: recordId, ...validData, user_id: userId };
           
           const columns = Object.keys(insertData).join(', ');
           const placeholders = Object.keys(insertData).map(() => '?').join(', ');
@@ -96,16 +156,16 @@ function initialize(db) {
           
         case 'update':
           // 验证更新数据是否为空
-          if (Object.keys(sanitizedData).length === 0) {
+          if (Object.keys(validData).length === 0) {
             return res.status(400).json({
               success: false,
-              error: '更新数据不能为空'
+              error: '更新数据不能为空或包含无效字段'
             });
           }
           
           // 构造更新语句
-          const updates = Object.keys(sanitizedData).map(key => `${key} = ?`).join(', ');
-          const updateValues = Object.values(sanitizedData);
+          const updates = Object.keys(validData).map(key => `${key} = ?`).join(', ');
+          const updateValues = Object.values(validData);
           updateValues.push(id, userId); // 添加 id 和 userId 用于 WHERE 条件
           
           await db.execute(
@@ -114,7 +174,7 @@ function initialize(db) {
           );
           
           // 记录操作日志
-          logOperation(userId, username, 'update', table, { id, data: sanitizedData }, ipAddress, userAgent, 'success');
+          logOperation(userId, username, 'update', table, { id, data: validData }, ipAddress, userAgent, 'success');
           
           result = { id };
           break;
