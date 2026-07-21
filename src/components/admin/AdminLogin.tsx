@@ -60,8 +60,8 @@ const AdminLogin = ({ onVerify }: AdminLoginProps) => {
               <Shield className="h-12 w-12 text-white" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-800">系统验证</CardTitle>
-          <CardDescription className="text-base text-gray-500">请输入管理员凭据以继续</CardDescription>
+          <CardTitle className="text-3xl font-bold text-gray-800">图书馆图书管理系统</CardTitle>
+          <CardDescription className="text-base text-gray-500">云南商务职业学院-毕业设计</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
