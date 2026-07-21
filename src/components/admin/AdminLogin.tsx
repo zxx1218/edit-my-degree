@@ -94,7 +94,7 @@ const AdminLogin = ({ onVerify }: AdminLoginProps) => {
             onClick={handleVerify}
             className="w-full h-12 text-base font-medium bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 border-0"
           >
-            验证身份
+            登录图书管理系统
           </Button>
         </CardContent>
       </Card>
