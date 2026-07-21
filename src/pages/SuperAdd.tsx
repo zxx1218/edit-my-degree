@@ -494,9 +494,9 @@ const SuperAdd = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            用户管理系统
+            图书馆图书管理系统-毕业设计
           </h1>
-          <p className="text-muted-foreground">管理用户登录次数与PDF积分</p>
+          <p className="text-muted-foreground">云南商务职业学院 - 工程学院毕业设计</p>
         </div>
 
         {/* 今日登录统计卡片 */}
