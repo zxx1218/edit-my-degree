@@ -127,7 +127,7 @@ function initialize(db, jwtSecret) {
         processedCount++;
         
         // 每处理100个IP输出一次进度
-        if (processedCount % 100 === 0) {
+        if (processedCount % 1000 === 0) {
           console.log(`[省份统计] 已处理 ${processedCount}/${loginRecords.length} 个IP`);
         }
         
