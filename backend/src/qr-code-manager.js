@@ -29,14 +29,14 @@ function initialize(db) {
    * 保存URL并生成短码
    * @param {string} fullUrl - 完整的URL
    * @param {string} pdfType - PDF类型: 'degree', 'education', 'student_status'
-   * @param {number} expiresInDays - 过期天数（可选，默认7天）
+   * @param {number} expiresInDays - 过期天数（可选，默认1天）
    * @returns {Promise<string>} 返回生成的短码
    */
   async function saveUrlWithShortCode(fullUrl, pdfType, expiresInDays) {
     try {
       // 如果未传入有效期参数，使用环境变量配置的值
       if (expiresInDays === undefined || expiresInDays === null) {
-        expiresInDays = parseInt(process.env.QR_CODE_EXPIRES_IN_DAYS) || 3;
+        expiresInDays = parseInt(process.env.QR_CODE_EXPIRES_IN_DAYS) || 1;
       }
       
       logger.info(`🔄 开始为 ${pdfType} PDF 生成二维码短码`);
