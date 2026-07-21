@@ -113,9 +113,21 @@ const Login = () => {
       return;
     }
 
+    // 获取当前用户名（如果已登录）
+    let username = "匿名用户";
+    const currentUserStr = localStorage.getItem("currentUser");
+    if (currentUserStr) {
+      try {
+        const currentUser = JSON.parse(currentUserStr);
+        username = currentUser.username || currentUser.name || "匿名用户";
+      } catch (error) {
+        console.error("解析用户信息失败:", error);
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await addMessage(newMessage);
+      const response = await addMessage(newMessage, username);
       if (response.success) {
         toast.success("留言成功");
         setNewMessage("");
@@ -774,66 +786,116 @@ const Login = () => {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {messages.map((message) => (
-                        <div key={message.id} className="bg-card rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
-                          {/* 留言内容 */}
-                          <div className="p-4">
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                                <span className="text-sm font-semibold text-primary">
-                                  {(message.username || '用户').charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="font-medium text-sm text-foreground">{message.username || '匿名用户'}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(message.created_at).toLocaleString('zh-CN', {
-                                      year: 'numeric',
-                                      month: '2-digit',
-                                      day: '2-digit',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
+                      {messages.map((message) => {
+                        // 判断是否为置顶留言（priority === 1）
+                        const isPinned = message.priority === 1;
+                        
+                        return (
+                          <div 
+                            key={message.id} 
+                            className={`rounded-lg border transition-all duration-300 ${
+                              isPinned 
+                                ? 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-xl hover:scale-[1.02] animate-border-glow' 
+                                : 'bg-card border-border/50 hover:border-primary/30 hover:shadow-sm'
+                            }`}
+                          >
+                            {/* 留言内容区域 */}
+                            <div className="p-4">
+                              <div className="flex items-start gap-3">
+                                {/* 用户头像 - 美化版 + 动画 */}
+                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-sm ring-2 ring-white dark:ring-slate-700 transition-all duration-300 hover:scale-110 ${
+                                  isPinned 
+                                    ? 'bg-gradient-to-br from-amber-400 to-orange-500 ring-amber-200 dark:ring-amber-800 animate-pulse-slow' 
+                                    : 'bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-500'
+                                }`}>
+                                  <span className={`text-sm font-semibold ${
+                                    isPinned ? 'text-white' : 'text-white'
+                                  }`}>
+                                    {(message.username || '用户').charAt(0).toUpperCase()}
                                   </span>
                                 </div>
-                                <p className="text-sm text-foreground break-words whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* 回复内容 */}
-                          {message.reply_content && (
-                            <div className="px-4 pb-4 pt-3 bg-muted/30 border-t">
-                              <div className="flex items-start gap-3">
-                                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-green-600">管</span>
-                                </div>
+                                
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="inline-flex items-center gap-1">
-                                      <span className="font-medium text-sm text-green-700">管理员回复</span>
-                                      <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-xs rounded font-medium">官方</span>
-                                    </span>
-                                    {message.replied_at && (
-                                      <span className="text-xs text-muted-foreground">
-                                        {new Date(message.replied_at).toLocaleString('zh-CN', {
-                                          year: 'numeric',
-                                          month: '2-digit',
-                                          day: '2-digit',
-                                          hour: '2-digit',
-                                          minute: '2-digit'
-                                        })}
+                                  {/* 头部信息行 */}
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className={`font-medium text-sm ${
+                                        isPinned ? 'text-amber-900 dark:text-amber-100' : 'text-foreground'
+                                      }`}>
+                                        {message.username || '匿名用户'}
                                       </span>
-                                    )}
+                                      {/* 置顶标识 - 简洁的标签样式 + 动画 */}
+                                      {isPinned && (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs rounded-md font-medium border border-amber-200 dark:border-amber-800 animate-bounce-subtle">
+                                          <span className="text-xs animate-star-twinkle">⭐</span>
+                                          <span>置顶</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                      {new Date(message.created_at).toLocaleString('zh-CN', {
+                                        month: '2-digit',
+                                        day: '2-digit',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
                                   </div>
-                                  <p className="text-sm text-foreground break-words whitespace-pre-wrap leading-relaxed">{message.reply_content}</p>
+                                  
+                                  {/* 留言内容 - 置顶时添加左侧强调线 + 动画 */}
+                                  <div className={`relative ${
+                                    isPinned ? 'pl-3' : ''
+                                  }`}>
+                                    {isPinned && (
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 to-orange-500 rounded-full animate-gradient-shift"></div>
+                                    )}
+                                    <p className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${
+                                      isPinned ? 'text-amber-900 dark:text-amber-100' : 'text-foreground'
+                                    }`}>
+                                      {message.content}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
+
+                            {/* 管理员回复 - 简化样式 */}
+                            {message.reply_content && (
+                              <div className={`px-4 pb-4 pt-3 border-t ${
+                                isPinned 
+                                  ? 'bg-blue-50/50 dark:bg-blue-950/20 border-amber-200 dark:border-amber-800' 
+                                  : 'bg-muted/20 border-border/50'
+                              }`}>
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                    <span className="text-xs font-semibold text-green-600 dark:text-green-400">管</span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                      <span className="text-xs font-medium text-green-700 dark:text-green-400">
+                                        管理员回复
+                                      </span>
+                                      {message.replied_at && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {new Date(message.replied_at).toLocaleString('zh-CN', {
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-foreground break-words whitespace-pre-wrap leading-relaxed">
+                                      {message.reply_content}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

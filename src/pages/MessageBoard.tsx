@@ -40,9 +40,16 @@ const MessageBoard = () => {
     setIsLoadingMessages(true);
     try {
       const response = await getMessages(page, pageSize);
-      console.log('获取留言响应:', response); // 调试信息
+      console.log('=== 获取留言响应 ===', response);
       if (response.success) {
-        console.log('留言数据:', response.messages); // 调试信息
+        console.log('=== 留言数据详情 ===', {
+          totalMessages: response.total,
+          currentPage: response.page,
+          totalPages: response.totalPages,
+          messagesCount: response.messages.length,
+          firstMessage: response.messages[0],
+          hasPriorityField: response.messages.length > 0 && 'priority' in response.messages[0]
+        });
         setMessages(response.messages);
         setCurrentPage(response.page);
         setTotalPages(response.totalPages);
@@ -51,7 +58,6 @@ const MessageBoard = () => {
         toast.error(response.error || "获取留言失败");
       }
     } catch (error) {
-      console.error("获取留言失败:", error);
       toast.error("获取留言失败，请稍后重试");
     } finally {
       setIsLoadingMessages(false);
@@ -70,9 +76,27 @@ const MessageBoard = () => {
       return;
     }
 
+    // 获取当前用户名
+    const currentUserStr = localStorage.getItem("currentUser");
+    if (!currentUserStr) {
+      toast.error("请先登录");
+      navigate("/login");
+      return;
+    }
+
+    let username = "";
+    try {
+      const currentUser = JSON.parse(currentUserStr);
+      username = currentUser.username || currentUser.name || "匿名用户";
+    } catch (error) {
+      console.error("解析用户信息失败:", error);
+      toast.error("获取用户信息失败");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await addMessage(newMessage);
+      const response = await addMessage(newMessage, username);
       if (response.success) {
         toast.success("留言成功");
         setNewMessage("");
@@ -197,115 +221,164 @@ const MessageBoard = () => {
                   <p className="text-lg text-muted-foreground">暂无留言，快来留下第一条吧！</p>
                 </div>
               ) : (
-                messages.map((message, index) => (
-                  <div
-                    key={message.id}
-                    className="group relative bg-gradient-to-br from-white via-gray-50 to-indigo-50/30 dark:from-slate-800 dark:via-slate-900 dark:to-indigo-950/30 rounded-xl p-5 border-2 border-gray-100 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-2xl transition-all duration-300 animate-fade-in backdrop-blur-sm"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    {/* 装饰性元素 */}
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-200/20 to-purple-200/20 dark:from-indigo-800/10 dark:to-purple-800/10 rounded-bl-full pointer-events-none"></div>
-                    
-                    {/* 用户信息头部 */}
-                    <div className="flex items-start justify-between mb-3 relative z-10">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full shadow-lg ring-2 ring-white dark:ring-slate-700">
-                          <User className="h-5 w-5 text-white" />
+                messages.map((message, index) => {
+                  // 判断是否为置顶留言（priority === 1）
+                  const isPinned = message.priority === 1;
+                  
+                  // 调试信息输出
+                  console.log(`留言 ${index + 1}:`, {
+                    id: message.id,
+                    username: message.username,
+                    priority: message.priority,
+                    priorityType: typeof message.priority,
+                    isPinned: isPinned,
+                    createdAt: message.created_at
+                  });
+                  
+                  return (
+                    <div
+                      key={message.id}
+                      className={`group relative rounded-xl p-5 border-2 transition-all duration-300 animate-fade-in backdrop-blur-sm ${
+                        isPinned 
+                          ? 'bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 dark:from-yellow-900/20 dark:via-orange-900/20 dark:to-red-900/20 border-yellow-400 hover:border-yellow-500 hover:shadow-2xl ring-2 ring-yellow-300/50' 
+                          : 'bg-gradient-to-br from-white via-gray-50 to-indigo-50/30 dark:from-slate-800 dark:via-slate-900 dark:to-indigo-950/30 border-gray-100 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-2xl'
+                      }`}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {/* 置顶徽章 - 移动端优化 */}
+                      {isPinned && (
+                        <div className="absolute top-2 left-2 sm:-top-2 sm:-left-2 z-20 animate-pulse">
+                          <div className="bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full shadow-lg flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold">
+                            <span className="text-xs sm:text-sm">📌</span>
+                            <span className="hidden xs:inline sm:inline">置顶</span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-base text-gray-800 dark:text-gray-100">{message.username}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
-                            {new Date(message.created_at).toLocaleString('zh-CN', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                      )}
+
+                      {/* 装饰性元素 - 移动端缩小 */}
+                      <div className={`absolute top-0 right-0 w-12 h-12 sm:w-20 sm:h-20 rounded-bl-full pointer-events-none ${
+                        isPinned 
+                          ? 'bg-gradient-to-br from-yellow-200/30 to-orange-200/30 dark:from-yellow-800/10 dark:to-orange-800/10' 
+                          : 'bg-gradient-to-br from-indigo-200/20 to-purple-200/20 dark:from-indigo-800/10 dark:to-purple-800/10'
+                      }`}></div>
+                      
+                      {/* 用户信息头部 - 移动端优化内边距 */}
+                      <div className="p-3 sm:p-5 relative z-10">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className={`p-2 sm:p-2.5 rounded-full shadow-lg ring-2 ring-white dark:ring-slate-700 ${
+                              isPinned 
+                                ? 'bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500' 
+                                : 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'
+                            }`}>
+                              <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <p className="font-bold text-sm sm:text-base text-gray-800 dark:text-gray-100 truncate">{message.username}</p>
+                                {isPinned && (
+                                  <span className="text-[10px] sm:text-xs font-semibold text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap">
+                                    📌 置顶
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                                <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
+                                {new Date(message.created_at).toLocaleString('zh-CN', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 留言内容 - 移动端优化 */}
+                        <div className={`relative z-10 rounded-lg p-3 sm:p-4 mb-3 border shadow-sm hover:shadow-md transition-shadow ${
+                          isPinned 
+                            ? 'bg-white/80 dark:bg-slate-800/80 border-yellow-300/50' 
+                            : 'bg-white/70 dark:bg-slate-800/70 border-gray-200/50 dark:border-slate-600/50'
+                        }`}>
+                          <div className={`absolute -left-1 top-3 sm:top-4 w-1 h-6 sm:h-8 rounded-full opacity-60 ${
+                            isPinned 
+                              ? 'bg-gradient-to-b from-yellow-400 to-orange-500' 
+                              : 'bg-gradient-to-b from-indigo-400 to-purple-500'
+                          }`}></div>
+                          <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words whitespace-pre-wrap leading-relaxed pl-1.5 sm:pl-2">
+                            {message.content}
                           </p>
                         </div>
-                      </div>
-                    </div>
 
-                    {/* 留言内容 */}
-                    <div className="relative z-10 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm rounded-lg p-4 mb-3 border border-gray-200/50 dark:border-slate-600/50 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="absolute -left-1 top-4 w-1 h-8 bg-gradient-to-b from-indigo-400 to-purple-500 rounded-full opacity-60"></div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 break-words whitespace-pre-wrap leading-relaxed pl-2">
-                        {message.content}
-                      </p>
-                    </div>
-
-                    {/* 调试信息 - 显示原始数据 */}
-                    <div className="text-xs text-gray-400 mb-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
-                      Debug: reply_content type={typeof message.reply_content}, value="{message.reply_content}", hasTrim={!!(message.reply_content && message.reply_content.trim())}
-                    </div>
-
-                    {/* 管理员回复 */}
-                    {message.reply_content && message.reply_content.trim() && (
-                      <div className="ml-4 sm:ml-8 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-lg p-4 border-l-4 border-blue-500 shadow-md animate-fade-in">
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded-full">
-                            <ShieldCheck className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">管理员回复</span>
+                        {/* 管理员回复 - 移动端优化 */}
+                        {message.reply_content && message.reply_content.trim() && (
+                          <div className="ml-2 sm:ml-8 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 rounded-lg p-3 sm:p-4 border-l-4 border-blue-500 shadow-md animate-fade-in">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <div className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-900/40 px-2 py-1 rounded-full">
+                                <ShieldCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-blue-600 dark:text-blue-400" />
+                                <span className="text-[10px] sm:text-xs font-semibold text-blue-700 dark:text-blue-300">管理员回复</span>
+                              </div>
+                              {message.replied_at && (
+                                <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                                  {new Date(message.replied_at).toLocaleString('zh-CN', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 break-words whitespace-pre-wrap leading-relaxed">
+                              {message.reply_content}
+                            </p>
                           </div>
-                          {message.replied_at && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {new Date(message.replied_at).toLocaleString('zh-CN', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 break-words whitespace-pre-wrap leading-relaxed">
-                          {message.reply_content}
-                        </p>
-                      </div>
-                    )}
+                        )}
 
-                    {/* 操作按钮（仅管理员可见） */}
-                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenReplyDialog(message)}
-                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
-                      >
-                        <Reply className="h-4 w-4 mr-1" />
-                        回复
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteMessage(message.id)}
-                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        {/* 操作按钮（仅管理员可见）- 移动端优化位置和显示 */}
+                        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1.5 sm:gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenReplyDialog(message)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 h-7 sm:h-auto px-2 sm:px-3 text-[10px] sm:text-xs"
+                          >
+                            <Reply className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                            <span className="hidden sm:inline">回复</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteMessage(message.id)}
+                            className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-7 sm:h-auto px-2 sm:px-3 text-[10px] sm:text-xs"
+                          >
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
-            {/* 分页控制 */}
+            {/* 分页控制 - 移动端优化 */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0 mt-6 pt-4 border-t">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => fetchMessages(currentPage - 1)}
                   disabled={currentPage === 1 || isLoadingMessages}
-                  className="gap-1"
+                  className="gap-1 w-full sm:w-auto text-xs"
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3.5 w-3.5" />
                   上一页
                 </Button>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground text-center">
                   第 {currentPage} / {totalPages} 页（共 {totalMessages} 条）
                 </span>
                 <Button
@@ -313,51 +386,51 @@ const MessageBoard = () => {
                   size="sm"
                   onClick={() => fetchMessages(currentPage + 1)}
                   disabled={currentPage === totalPages || isLoadingMessages}
-                  className="gap-1"
+                  className="gap-1 w-full sm:w-auto text-xs"
                 >
                   下一页
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* 留言输入框 */}
+        {/* 留言输入框 - 移动端优化 */}
         <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" />
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               发表留言
             </CardTitle>
-            <CardDescription>分享您的想法和建议</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">分享您的想法和建议</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <Textarea
               placeholder="写下您的留言..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               maxLength={500}
-              rows={4}
-              className="resize-none border-2 focus:border-indigo-500 transition-colors"
+              rows={3}
+              className="resize-none border-2 focus:border-indigo-500 transition-colors text-sm"
             />
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+              <span className="text-xs sm:text-sm text-muted-foreground order-2 sm:order-1">
                 {newMessage.length}/500
               </span>
               <Button
                 onClick={handleSubmitMessage}
                 disabled={isSubmitting || !newMessage.trim()}
-                className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 w-full sm:w-auto order-1 sm:order-2 text-sm"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-3.5 w-3.5 sm:h-4 sm:w-4 border-b-2 border-white"></div>
                     提交中...
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4" />
+                    <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     提交留言
                   </>
                 )}

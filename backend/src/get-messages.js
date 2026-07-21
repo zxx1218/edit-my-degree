@@ -5,7 +5,7 @@ function initialize(db) {
     const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
     
     try {
-      const { action, page = 1, pageSize = 10, messageId, replyContent, content, username } = req.body;
+      const { action, page = 1, pageSize = 10, messageId, replyContent, content, username, priority } = req.body;
       
       // 回复留言
       if (action === 'replyMessage') {
@@ -83,6 +83,51 @@ function initialize(db) {
         });
       }
 
+      // 设置留言优先级
+      if (action === 'setPriority') {
+        // 验证参数
+        if (!messageId) {
+          return res.status(400).json({
+            success: false,
+            error: '留言ID不能为空'
+          });
+        }
+
+        // priority可以为null（清除优先级）或正整数
+        if (priority !== null && (typeof priority !== 'number' || priority < 1)) {
+          return res.status(400).json({
+            success: false,
+            error: '优先级必须为正整数或null'
+          });
+        }
+
+        // 检查留言是否存在
+        const [existingMessages] = await db.execute(
+          'SELECT id FROM messages WHERE id = ?',
+          [messageId]
+        );
+
+        if (existingMessages.length === 0) {
+          return res.status(404).json({
+            success: false,
+            error: '留言不存在'
+          });
+        }
+
+        // 更新留言优先级
+        await db.execute(
+          'UPDATE messages SET priority = ? WHERE id = ?',
+          [priority, messageId]
+        );
+
+        console.info(`[留言板] 设置优先级 - ID: ${messageId}, Priority: ${priority}, IP: ${ipAddress}`);
+
+        return res.json({
+          success: true,
+          message: priority === null ? '已清除优先级' : `优先级设置为 ${priority}`
+        });
+      }
+
       // 默认：获取留言列表
       // 验证分页参数 - 严格的类型转换和安全验证
       const pageNum = Math.max(1, parseInt(page) || 1);
@@ -95,11 +140,18 @@ function initialize(db) {
       );
       const total = countResult[0].total;
       
-      // 查询留言列表（按时间倒序）
-      // 注意：MySQL预处理语句不支持在LIMIT和OFFSET中使用?占位符
-      // 采用字符串拼接方式，但必须经过严格的类型转换和范围验证以防止SQL注入
+      // 查询留言列表（按优先级和时间排序）
+      // 排序规则：
+      // 1. priority有值的留言优先展示（按priority升序）
+      // 2. priority为NULL的留言按created_at降序排在后面
       const [messages] = await db.execute(
-        `SELECT id, username, content, reply_content, replied_at, created_at FROM messages ORDER BY created_at DESC LIMIT ${pageSizeNum} OFFSET ${offset}`
+        `SELECT id, username, content, reply_content, replied_at, priority, created_at 
+         FROM messages 
+         ORDER BY 
+           CASE WHEN priority IS NOT NULL THEN 0 ELSE 1 END,
+           priority ASC,
+           created_at DESC 
+         LIMIT ${pageSizeNum} OFFSET ${offset}`
       );
       
       console.info(`[留言板] 获取留言列表 - 页码: ${pageNum}, 每页: ${pageSizeNum}, 总数: ${total}, IP: ${ipAddress}`);
@@ -112,6 +164,7 @@ function initialize(db) {
           content: msg.content,
           reply_content: msg.reply_content,
           replied_at: msg.replied_at,
+          priority: msg.priority,
           created_at: msg.created_at
         })),
         total,

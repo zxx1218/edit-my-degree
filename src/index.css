@@ -139,4 +139,93 @@ All colors MUST be HSL.
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* 置顶留言动画效果 */
+  
+  /* 边框发光动画 */
+  @keyframes border-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(251, 191, 36, 0.3), 0 0 10px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(251, 191, 36, 0.5), 0 0 25px rgba(251, 191, 36, 0.3);
+    }
+  }
+  
+  .animate-border-glow {
+    animation: border-glow 3s ease-in-out infinite;
+  }
+
+  /* 慢速脉冲动画（用于头像） */
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(1.05);
+    }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 2.5s ease-in-out infinite;
+  }
+
+  /* 轻微弹跳动画（用于置顶标签） */
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+  
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+
+  /* 星星闪烁动画 */
+  @keyframes star-twinkle {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    25% {
+      opacity: 0.7;
+      transform: scale(0.9) rotate(-5deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1) rotate(5deg);
+    }
+    75% {
+      opacity: 0.8;
+      transform: scale(0.95) rotate(-3deg);
+    }
+  }
+  
+  .animate-star-twinkle {
+    animation: star-twinkle 2s ease-in-out infinite;
+    display: inline-block;
+  }
+
+  /* 渐变流动动画（用于左侧强调线） */
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
 }

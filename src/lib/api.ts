@@ -222,6 +222,7 @@ export interface Message {
   content: string;
   reply_content?: string | null;
   replied_at?: string | null;
+  priority?: number | null; // 留言优先级，数字越小越靠前，1表示置顶
   created_at: string;
 }
 
@@ -241,6 +242,21 @@ export const getMessages = async (page: number = 1, pageSize: number = 10): Prom
 
   const data = await response.json();
   
+  // 调试信息
+  console.log('=== API原始响应 ===', data);
+  
+  // 转换后端返回格式为前端期望格式
+  if (data.success && data.data) {
+    return {
+      success: true,
+      messages: data.data,
+      total: data.pagination?.total || 0,
+      page: data.pagination?.page || page,
+      pageSize: data.pagination?.pageSize || pageSize,
+      totalPages: data.pagination?.totalPages || 0
+    };
+  }
+  
   return data;
 };
 
@@ -251,8 +267,8 @@ export interface AddMessageResponse {
   error?: string;
 }
 
-export const addMessage = async (content: string): Promise<AddMessageResponse> => {
-  const options = createSignedRequestOptions('POST', '/api/add-message', { content });
+export const addMessage = async (content: string, username: string): Promise<AddMessageResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/add-message', { content, username });
   const response = await fetch(`${API_BASE_URL}/add-message`, options);
 
   const data = await response.json();
@@ -285,6 +301,22 @@ export interface DeleteMessageResponse {
 
 export const deleteMessage = async (messageId: string): Promise<DeleteMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'deleteMessage', messageId });
+  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+
+  const data = await response.json();
+  
+  return data;
+};
+
+// 设置留言优先级 API
+export interface SetPriorityResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export const setPriority = async (messageId: string, priority: number | null): Promise<SetPriorityResponse> => {
+  const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'setPriority', messageId, priority });
   const response = await fetch(`${API_BASE_URL}/get-messages`, options);
 
   const data = await response.json();

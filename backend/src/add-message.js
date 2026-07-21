@@ -5,7 +5,7 @@ function initialize(db) {
     const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
     
     try {
-      const { content } = req.body;
+      const { content, username } = req.body;
       
       // 验证留言内容
       if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -24,15 +24,23 @@ function initialize(db) {
         });
       }
       
+      // 验证用户名
+      if (!username || typeof username !== 'string' || username.trim().length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: '用户名不能为空'
+        });
+      }
+      
       const id = uuidv4();
       
-      // 插入留言
+      // 插入留言（包含username字段）
       await db.execute(
-        'INSERT INTO messages (id, content) VALUES (?, ?)',
-        [id, content.trim()]
+        'INSERT INTO messages (id, username, content) VALUES (?, ?, ?)',
+        [id, username.trim(), content.trim()]
       );
       
-      console.info(`[留言板] 留言添加成功 - ID: ${id}, 内容长度: ${content.length}字符, IP: ${ipAddress}`);
+      console.info(`[留言板] 留言添加成功 - ID: ${id}, 用户: ${username}, 内容长度: ${content.length}字符, IP: ${ipAddress}`);
       
       res.json({
         success: true,
