@@ -630,6 +630,20 @@ const Login = () => {
                         })
                       }
                     />
+                    {/* 卡密格式提示 */}
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs space-y-1.5">
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-600 dark:text-blue-400 font-medium flex-shrink-0 mt-0.5">💡</span>
+                        <div className="text-blue-700 dark:text-blue-300 leading-relaxed">
+                          <p className="font-medium mb-1">卡密使用提示：</p>
+                          <ol className="list-decimal list-inside space-y-1 pl-1">
+                            <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
+                            <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
+                            <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <Button className="w-full" onClick={() => handleRecharge("login")} disabled={isRecharging}>
                     {isRecharging ? "充值中..." : "确认充值"}
@@ -669,6 +683,19 @@ const Login = () => {
                         })
                       }
                     />
+                    {/* 卡密格式提示 */}
+                    <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-lg p-3 text-xs space-y-1.5">
+                      <div className="flex items-start gap-2">
+                        <span className="text-violet-600 dark:text-violet-400 font-medium flex-shrink-0 mt-0.5">💡</span>
+                        <div className="text-violet-700 dark:text-violet-300 leading-relaxed">
+                          <p className="font-medium mb-1">卡密使用提示：</p>
+                          <ol className="list-decimal list-inside space-y-1 pl-1">
+                            <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
+                            <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <Button className="w-full" onClick={() => handleRecharge("pdf")} disabled={isRecharging}>
                     {isRecharging ? "充值中..." : "确认充值"}
