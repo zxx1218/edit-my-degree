@@ -756,7 +756,7 @@ const Login = () => {
             <AlertDescription className="ml-2 text-sm space-y-2">
               <div className="font-semibold text-foreground">重要提示 💡</div>
               <div className="text-muted-foreground space-y-1 leading-relaxed">
-                <div>• 长按任意需修改的位置即可触发更改</div>
+                <div>• 长按您想要修改的位置即可触发更改</div>
                 <div>• 您构建的记录将永久保存在您账号内</div>
               </div>
             </AlertDescription>
