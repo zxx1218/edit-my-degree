@@ -578,7 +578,7 @@ const Login = () => {
           <Dialog open={isRechargeOpen} onOpenChange={setIsRechargeOpen}>
             <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>充值/续费</DialogTitle>
+                <DialogTitle>使用卡密</DialogTitle>
                 <DialogDescription>请选择充值类型并输入相关信息</DialogDescription>
               </DialogHeader>
               <Tabs defaultValue="login" className="w-full">
@@ -598,11 +598,11 @@ const Login = () => {
                 </TabsList>
                 <TabsContent value="login" className="space-y-4 pt-4 animate-fade-in">
                   <div className="space-y-2">
-                    <Label htmlFor="login-username">已注册账号</Label>
+                    <Label htmlFor="login-username">需充值的账号</Label>
                     <Input
                       id="login-username"
                       type="text"
-                      placeholder="请输入已注册的账号"
+                      placeholder="请输入您的账号（登录用的用户名）"
                       value={loginRechargeData.username}
                       onChange={(e) =>
                         setLoginRechargeData({
@@ -617,7 +617,7 @@ const Login = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-card">登录次数充值卡密</Label>
+                    <Label htmlFor="login-card">卡密</Label>
                     <Input
                       id="login-card"
                       type="text"
@@ -651,11 +651,11 @@ const Login = () => {
                 </TabsContent>
                 <TabsContent value="pdf" className="space-y-4 pt-4 animate-fade-in">
                   <div className="space-y-2">
-                    <Label htmlFor="pdf-username">已注册账号</Label>
+                    <Label htmlFor="pdf-username">需充值的账号</Label>
                     <Input
                       id="pdf-username"
                       type="text"
-                      placeholder="请输入已注册的账号"
+                      placeholder="请输入您的账号（登录用的用户名）"
                       value={pdfRechargeData.username}
                       onChange={(e) =>
                         setPdfRechargeData({
@@ -670,7 +670,7 @@ const Login = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="pdf-card">PDF 积分充值卡密</Label>
+                    <Label htmlFor="pdf-card">卡密</Label>
                     <Input
                       id="pdf-card"
                       type="text"
@@ -692,6 +692,7 @@ const Login = () => {
                           <ol className="list-decimal list-inside space-y-1 pl-1">
                             <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
                             <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
+                            <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
                           </ol>
                         </div>
                       </div>

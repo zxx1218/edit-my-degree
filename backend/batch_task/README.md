@@ -1,158 +1,372 @@
-# 批量任务脚本说明
+# 批量任务模块 (Batch Task Module)
 
-本目录包含用于批量处理和维护数据库的Node.js脚本。
+## 📋 概述
 
-## 📋 脚本列表
+批量任务模块是独立于主后端服务的任务调度系统，用于执行定时批量操作，如IP地理位置更新、数据备份等。
 
-### 1. findAbnormalLoginUsers.js - 查找剩余登录次数异常的用户 ⭐ NEW
+### 特点
+- ✅ 独立运行，不影响主服务
+- ✅ 支持定时任务调度
+- ✅ 使用PM2进行进程管理
+- ✅ 独立的配置文件
+- ✅ 完善的日志记录
+- ✅ 防止并发执行
 
-**功能说明：**
-- 从指定日期开始检索users表内所有有登录次数的用户（remaining_logins > 0）
-- 检索每个用户使用过的登录次数充值卡（type='login'且used=TRUE）
-- 计算用户所有使用过的登录次数充值卡的总充值数量
-- 筛选出：用户当前剩余登录次数 >= 使用过的充值卡总数量 且 剩余次数 > 0 的用户
-- 输出这些用户的详细信息（用户名、剩余次数、充值卡总数等）
+## 📁 目录结构
 
-**业务逻辑：**
-- 正常情况下，用户使用的充值卡总数应该等于或大于当前剩余次数
-- 如果剩余次数 >= 充值卡总数，说明可能存在数据异常（如手动修改数据库）
-- 此脚本用于排查这类异常情况
-
-**使用方法：**
-```bash
-cd /home/ctkj/edit-my-degree/backend
-node batch_task/findAbnormalLoginUsers.js [起始日期]
+```
+backend/batch_task/
+├── .env                    # 批量任务配置文件
+├── scheduler.js            # 定时任务调度器（主入口）
+├── updateIPLocation.js     # IP地理位置更新任务
+├── start.sh                # 启动脚本
+├── stop.sh                 # 停止脚本
+├── restart.sh              # 重启脚本
+├── logs/                   # 日志目录
+│   ├── out.log            # 标准输出日志
+│   └── error.log          # 错误日志
+└── README.md              # 本文档
 ```
 
-**参数说明：**
-- 起始日期格式：YYYY-MM-DD（可选，默认为今天）
-- 示例：`node batch_task/findAbnormalLoginUsers.js 2024-01-01`
+## 🚀 快速开始
 
-**输出结果：**
-- 控制台显示详细的统计信息和异常用户列表
-- 自动生成CSV文件保存到 `batch_task/output/` 目录
-- CSV文件名格式：`abnormal_users_YYYY-MM-DD_timestamp.csv`
+### 1. 安装依赖
 
-**CSV字段说明：**
-- 用户名：用户的登录名
-- 剩余登录次数：当前remaining_logins字段的值
-- PDF积分：当前pdf_limit字段的值
-- 使用过的充值卡总数：该用户使用的所有type='login'充值卡的values总和
-- 差值(剩余-充值)：remaining_logins - total_login_cards
-- 创建时间：用户账号创建时间
-- 更新时间：用户信息最后更新时间
-- 是否异常：是/否
-
-**注意事项：**
-- 确保 `.env` 文件中数据库配置正确
-- 只读操作，不会修改任何数据
-- 利用现有的数据库连接池管理
-- 大数据量时会自动分批处理并显示进度
-
----
-
-### 2. updateIPLocation.js - 批量更新IP地理位置
-
-**功能说明：**
-- 查询所有需要更新的登录记录（ip_location包含"未知"或"X"字符）
-- 调用更精确的IP归属地API进行查询
-- 批量更新数据库中的ip_location字段
-- 提供详细的处理进度和统计信息
-
-**使用方法：**
 ```bash
 cd /home/ctkj/edit-my-degree/backend
-node batch_task/updateIPLocation.js
+npm install node-cron
 ```
 
-**注意事项：**
-- 确保 `.env` 文件中数据库配置正确
-- 利用现有的24小时IP缓存机制，避免重复查询
-- 采用分批处理，每批100条记录，避免API限流
+### 2. 配置环境变量
 
----
+编辑 `backend/batch_task/.env` 文件，确保以下配置正确：
 
-### 3. downloadDatabasesBackup.js - 下载数据库备份
-
-**功能说明：**
-- 从MinIO存储桶下载数据库备份文件
-- 支持指定备份文件路径
-- 自动创建本地备份目录
-
-**使用方法：**
 ```bash
-cd /home/ctkj/edit-my-degree/backend
-node batch_task/downloadDatabasesBackup.js [备份文件名]
+# 数据库配置
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=991218aa
+DB_NAME=degree_management
+DB_PORT=3306
+
+# 定时任务配置（已预设为每天0:30、12:30、17:30执行）
+UPDATE_IP_LOCATION_CRON_1=30 0 * * *
+UPDATE_IP_LOCATION_CRON_2=30 12 * * *
+UPDATE_IP_LOCATION_CRON_3=30 17 * * *
+CRON_TIMEZONE=Asia/Shanghai
 ```
 
----
+### 3. 设置脚本权限
 
-### 4. clearMinioReports.js - 清理MinIO报告文件
-
-**功能说明：**
-- 清理过期的PDF报告文件
-- 支持按天数筛选
-- 提供清理统计信息
-
-**使用方法：**
 ```bash
-cd /home/ctkj/edit-my-degree/backend
-node batch_task/clearMinioReports.js [保留天数]
+cd /home/ctkj/edit-my-degree/backend/batch_task
+chmod +x start.sh stop.sh restart.sh
 ```
 
----
+### 4. 启动服务
 
-## 🔧 通用规范
+```bash
+# 启动批量任务调度器（默认生产环境）
+./start.sh
 
-### 脚本开发要求
+# 或指定环境
+./start.sh development
+```
 
-1. **头部注释**：详细说明功能、使用方法、注意事项
-2. **环境变量加载**：`require('dotenv').config({ path: '../../.env' })`
-3. **兼容性处理**：
+### 5. 查看状态
+
+```bash
+# 查看进程状态
+pm2 status
+
+# 查看实时日志
+pm2 logs batch-task-scheduler
+
+# 查看最近50行日志
+pm2 logs batch-task-scheduler --lines 50
+
+# 监控面板
+pm2 monit
+```
+
+### 6. 停止服务
+
+```bash
+./stop.sh
+```
+
+### 7. 重启服务
+
+```bash
+./restart.sh
+```
+
+## ⏰ 定时任务配置
+
+### Cron表达式格式
+
+```
+分 时 日 月 周
+*  *  *  *  *
+│  │  │  │  │
+│  │  │  │  └─ 星期几 (0-7, 0和7都表示周日)
+│  │  │  └──── 月份 (1-12)
+│  │  └─────── 日期 (1-31)
+│  └────────── 小时 (0-23)
+└───────────── 分钟 (0-59)
+```
+
+### 常用示例
+
+| 描述 | Cron表达式 |
+|------|-----------|
+| 每天0:30 | `30 0 * * *` |
+| 每天12:30 | `30 12 * * *` |
+| 每天17:30 | `30 17 * * *` |
+| 每小时整点 | `0 * * * *` |
+| 每5分钟 | `*/5 * * * *` |
+| 每周一9:00 | `0 9 * * 1` |
+| 每月1号0:00 | `0 0 1 * *` |
+
+### 当前配置
+
+IP地理位置更新任务每天执行三次：
+- **凌晨 0:30** - 处理前一天的登录IP
+- **中午 12:30** - 处理上午的登录IP
+- **下午 17:30** - 处理下午的登录IP
+
+如需修改时间，编辑 `.env` 文件中的对应配置项。
+
+## 📝 添加新任务
+
+### 步骤1: 创建任务脚本
+
+在 `backend/batch_task/` 目录下创建新的任务文件，例如 `clearOldData.js`：
+
 ```javascript
+/**
+ * 清理旧数据任务示例
+ */
+
+require('dotenv').config({ path: './.env' });
+
 if (!console.safe) {
   console.safe = console.log;
 }
+
+const dbManager = require('../src/db-utils');
+
+async function main() {
+  console.log('🚀 开始执行清理旧数据任务...');
+  
+  try {
+    await dbManager.initializePool();
+    
+    // 执行你的业务逻辑
+    const query = 'DELETE FROM some_table WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)';
+    const [result] = await dbManager.execute(query);
+    
+    console.log(`✅ 清理完成，删除了 ${result.affectedRows} 条记录`);
+    
+    return { 
+      success: true, 
+      message: '清理完成',
+      deletedCount: result.affectedRows
+    };
+    
+  } catch (error) {
+    console.error('❌ 任务执行失败:', error.message);
+    return { success: false, message: error.message };
+  } finally {
+    await dbManager.close();
+  }
+}
+
+// 导出主函数
+module.exports = { main };
+
+// 支持直接运行
+if (require.main === module) {
+  main().catch(error => {
+    console.error('未捕获的错误:', error);
+    process.exit(1);
+  });
+}
 ```
-4. **导入dbManager**：`const dbManager = require('../src/db-utils');`
-5. **配置参数**：使用CONFIG对象定义批处理大小、延迟等
-6. **统计信息**：使用stats对象记录处理进度
-7. **资源清理**：脚本结束时调用`await dbManager.close()`
 
-### 执行环境
+### 步骤2: 在调度器中注册任务
 
-- Node.js 版本：建议 v16+
-- 依赖包：确保已运行 `npm install`
-- 数据库：MySQL 8.0+
-- 配置文件：根目录的 `.env` 文件
+编辑 `scheduler.js`，添加以下内容：
 
-### 最佳实践
+```javascript
+// 导入新任务
+const clearOldDataTask = require('./clearOldData');
 
-1. **测试先行**：在测试环境验证脚本功能
-2. **数据备份**：执行写操作前备份数据库
-3. **分批处理**：大数据量时使用分批处理，避免内存溢出
-4. **进度输出**：提供清晰的进度和统计信息
-5. **错误处理**：完善的try-catch和资源清理
-6. **日志记录**：使用console.safe输出关键信息
+// 在 taskRunningStatus 中添加状态跟踪
+const taskRunningStatus = {
+  updateIPLocation: false,
+  clearOldData: false  // 新增
+};
+
+// 注册定时任务
+function registerClearOldDataTask() {
+  const cronExp = process.env.CLEAR_OLD_DATA_CRON || '0 2 * * *';  // 每天凌晨2点
+  
+  cron.schedule(cronExp, () => {
+    printSeparator('清理旧数据任务');
+    safeExecuteTask('clearOldData', clearOldDataTask.main);
+  }, {
+    scheduled: true,
+    timezone: TIMEZONE
+  });
+  
+  console.log(`   ✅ 清理旧数据任务已注册: ${cronExp}`);
+}
+
+// 在主函数中调用
+async function main() {
+  // ... existing code ...
+  registerUpdateIPLocationTask();
+  registerClearOldDataTask();  // 新增
+  // ... existing code ...
+}
+```
+
+### 步骤3: 在 .env 中添加配置
+
+```bash
+# 清理旧数据任务配置
+CLEAR_OLD_DATA_CRON=0 2 * * *
+```
+
+### 步骤4: 重启服务
+
+```bash
+./restart.sh
+```
+
+## 🔧 故障排查
+
+### 问题1: 任务未执行
+
+**检查清单：**
+1. 确认调度器正在运行：`pm2 status`
+2. 检查日志是否有错误：`pm2 logs batch-task-scheduler`
+3. 验证Cron表达式是否正确
+4. 确认时区设置为 `Asia/Shanghai`
+5. 检查任务是否因前一次执行未完成而被跳过
+
+### 问题2: 数据库连接失败
+
+**解决方案：**
+1. 检查 `.env` 中的数据库配置是否正确
+2. 确认MySQL服务正在运行
+3. 测试数据库连接：`mysql -h localhost -u root -p`
+4. 检查防火墙设置
+
+### 问题3: PM2进程异常退出
+
+**解决方案：**
+1. 查看详细日志：`pm2 logs batch-task-scheduler --err`
+2. 检查内存使用：`pm2 monit`
+3. 重启服务：`./restart.sh`
+4. 查看系统资源：`top` 或 `htop`
+
+### 问题4: 任务执行时间过长
+
+**优化建议：**
+1. 调整批次大小（BATCH_SIZE）
+2. 增加批次间延迟（DELAY_BETWEEN_BATCHES）
+3. 检查API限流策略
+4. 考虑分片处理大数据集
+
+## 📊 监控与日志
+
+### 日志位置
+
+```
+backend/batch_task/logs/
+├── out.log       # 标准输出和任务执行日志
+└── error.log     # 错误日志
+```
+
+### 查看日志
+
+```bash
+# 实时查看所有日志
+pm2 logs batch-task-scheduler
+
+# 仅查看错误日志
+pm2 logs batch-task-scheduler --err
+
+# 查看最近100行
+pm2 logs batch-task-scheduler --lines 100
+
+# 清空日志
+pm2 flush batch-task-scheduler
+```
+
+### 日志内容示例
+
+```
+[2026-07-23 00:30:00] 🚀 开始执行任务: updateIPLocation
+[2026-07-23 00:30:01] 🔍 正在查询需要更新的记录...
+[2026-07-23 00:30:02] ✅ 找到 150 个需要更新的唯一IP地址
+[2026-07-23 00:30:02] 🚀 开始处理...
+[2026-07-23 00:35:30] ✅ 任务 [updateIPLocation] 执行成功
+   耗时: 330.45秒
+   统计: { total: 150, processed: 150, success: 145, failed: 0, skipped: 5 }
+```
+
+## 🔐 安全注意事项
+
+1. **配置文件保护**
+   - `.env` 文件包含敏感信息，不要提交到版本控制
+   - 确保文件权限正确：`chmod 600 .env`
+
+2. **API密钥管理**
+   - 定期轮换API密钥
+   - 不要在代码中硬编码密钥
+
+3. **访问控制**
+   - 限制对日志文件的访问
+   - 定期清理旧日志
+
+4. **错误处理**
+   - 所有任务都有错误捕获机制
+   - 关键错误会记录详细堆栈信息
+
+## 🎯 最佳实践
+
+1. **任务设计**
+   - 保持任务单一职责
+   - 实现幂等性（可重复执行）
+   - 提供详细的进度反馈
+
+2. **性能优化**
+   - 使用分批处理避免内存溢出
+   - 合理设置延迟避免API限流
+   - 利用缓存减少重复查询
+
+3. **错误处理**
+   - 捕获所有异常
+   - 记录详细错误信息
+   - 确保资源正确释放
+
+4. **监控告警**
+   - 定期检查任务执行状态
+   - 设置失败通知机制
+   - 监控系统资源使用
+
+## 📞 技术支持
+
+如有问题，请：
+1. 查看日志文件定位问题
+2. 检查配置文件是否正确
+3. 参考本文档的故障排查章节
+4. 联系系统管理员
 
 ---
 
-## 📝 添加新脚本
-
-如需添加新的批量任务脚本，请遵循以下步骤：
-
-1. 在 `backend/batch_task/` 目录下创建新的 `.js` 文件
-2. 按照上述规范编写代码
-3. 在本README中添加脚本说明
-4. 在测试环境充分测试
-5. 提交代码前确认无语法错误
-
----
-
-## ⚠️ 注意事项
-
-- 所有脚本都必须在 `backend` 目录下执行
-- 确保 `.env` 配置文件存在且配置正确
-- 生产环境执行前务必先在测试环境验证
-- 涉及数据修改的操作需要先获得审批
-- 定期清理 `output` 目录下的临时文件
+**最后更新**: 2025-05-13  
+**维护者**: 系统开发团队

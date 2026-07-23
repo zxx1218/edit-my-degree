@@ -13,8 +13,13 @@
  * - ip_location包含"未知"或含有"X"字符
  * 
  * 使用方法：
- * cd /home/ctkj/edit-my-degree/backend
- * node batch_task/updateIPLocation.js
+ * # 手动执行
+ * cd /home/ctkj/edit-my-degree/backend/batch_task
+ * node updateIPLocation.js
+ * 
+ * # 定时执行（通过 scheduler.js）
+ * cd /home/ctkj/edit-my-degree/backend/batch_task
+ * node scheduler.js
  * 
  * 注意事项：
  * - 确保.env文件中数据库配置正确
@@ -23,7 +28,8 @@
  * - 支持断点续传，可多次执行
  */
 
-require('dotenv').config({ path: '../../.env' });
+// 加载配置文件（从当前目录加载）
+require('dotenv').config({ path: './.env' });
 
 // 兼容性处理：非PM2环境下添加console.safe polyfill
 if (!console.safe) {
@@ -33,11 +39,11 @@ if (!console.safe) {
 const dbManager = require('../src/db-utils');
 const { queryIPLocation } = require('../src/ip-location');
 
-// 配置参数
+// 配置参数（优先从环境变量读取，否则使用默认值）
 const CONFIG = {
-  BATCH_SIZE: 100,              // 每批处理的记录数
-  DELAY_BETWEEN_BATCHES: 200,   // 批次间延迟（毫秒），避免API限流
-  DELAY_BETWEEN_IPS: 50         // 单个IP查询间的延迟（毫秒）
+  BATCH_SIZE: parseInt(process.env.BATCH_SIZE) || 100,              // 每批处理的记录数
+  DELAY_BETWEEN_BATCHES: parseInt(process.env.DELAY_BETWEEN_BATCHES) || 200,   // 批次间延迟（毫秒）
+  DELAY_BETWEEN_IPS: parseInt(process.env.DELAY_BETWEEN_IPS) || 50         // 单个IP查询间的延迟（毫秒）
 };
 
 // 统计信息
@@ -176,14 +182,16 @@ async function processSingleIP(record, index, total) {
 }
 
 /**
- * 主函数
+ * 主函数 - 执行IP地理位置更新任务
+ * 可以被直接调用或被定时任务调度
  */
 async function main() {
   stats.startTime = Date.now();
   
-  console.log('╔═══════════════════════════════════════════════════════════╗');
+  console.log('\n╔═══════════════════════════════════════════════════════════╗');
   console.log('║         批量更新 login_logs 表 IP 地理位置信息            ║');
   console.log('╚═══════════════════════════════════════════════════════════╝\n');
+  console.log(`⏰ 任务启动时间: ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`);
   
   try {
     // 初始化数据库连接
@@ -198,7 +206,7 @@ async function main() {
     if (stats.total === 0) {
       console.log('ℹ️  没有需要更新的记录，任务结束。');
       await dbManager.shutdown();
-      process.exit(0);
+      return { success: true, message: '没有需要更新的记录', stats };
     }
     
     console.log('📊 处理配置:');
@@ -232,15 +240,28 @@ async function main() {
     console.log(`   - ❌ 失败数: ${stats.failed}`);
     console.log(`   - ⏱️  总耗时: ${formatTime(totalTime)}`);
     console.log(`   - 📊 平均速度: ${(stats.total / (totalTime / 1000)).toFixed(2)} IP/秒\n`);
+    console.log(`⏰ 任务完成时间: ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n`);
     
     if (stats.failed > 0) {
       console.warn('⚠️  有部分IP处理失败，请检查日志了解详情');
     }
     
+    return { 
+      success: true, 
+      message: '任务执行完成', 
+      stats: { ...stats, totalTime },
+      duration: totalTime
+    };
+    
   } catch (error) {
     console.error('\n❌ 任务执行失败:', error.message);
     console.error(error.stack);
-    process.exit(1);
+    return { 
+      success: false, 
+      message: error.message, 
+      stats,
+      error: error.stack
+    };
   } finally {
     // 关闭数据库连接
     console.log('\n🔌 正在关闭数据库连接...');
@@ -249,8 +270,18 @@ async function main() {
   }
 }
 
-// 执行主函数
-main().catch(error => {
-  console.error('未捕获的错误:', error);
-  process.exit(1);
-});
+// 导出主函数，供定时任务调度器调用
+module.exports = {
+  main,
+  formatTime,
+  CONFIG,
+  stats
+};
+
+// 如果是直接运行此脚本（而非被导入），则执行主函数
+if (require.main === module) {
+  main().catch(error => {
+    console.error('未捕获的错误:', error);
+    process.exit(1);
+  });
+}
