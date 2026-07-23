@@ -367,9 +367,11 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
                           <div className="font-medium truncate max-w-[100px] sm:max-w-none" title={record.name || "-"}>
                             {record.name || "-"}
                           </div>
-                          <div className="text-xs text-muted-foreground truncate max-w-[80px] sm:max-w-none" title={record.username || "-"}>
-                            {record.username || "-"}
-                          </div>
+                          {record.username && (
+                            <div className="text-xs text-muted-foreground truncate max-w-[80px] sm:max-w-none" title={record.username}>
+                              {record.username}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-3 py-3 text-xs sm:text-sm hidden md:table-cell whitespace-nowrap">
@@ -450,13 +452,6 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
           </div>
         )}
 
-        {/* 说明文字 */}
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-800 rounded-b-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-medium">说明：</span>
-            此模块展示所有PDF生成记录的详细信息，包括生成用户、二维码状态和扫码情况。您可以修改二维码的过期时间来延长或缩短其有效期。
-          </p>
-        </div>
       </CardContent>
 
       {/* 编辑对话框 */}
