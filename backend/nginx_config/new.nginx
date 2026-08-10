@@ -15,8 +15,19 @@ server {
     index index.html index.htm default.htm default.html;
     root /home/www/mainWeb/degree_front;
 
-    # 接口代理
+    # ========== 全局并发限制（不影响请求频率限制） ==========
+    # 每个IP最多10个并发连接
+    limit_conn perip 10;
+    # 整个域名最多1000个并发连接
+    limit_conn perserver 1000;
+
+    # ========== API接口（严格限制） ==========
     location ^~ /api {
+        # API接口限流：每分钟60个请求，突发20个
+        limit_req zone=api_limit burst=20 nodelay;
+        # API接口并发限制：每个IP最多15个并发
+        limit_conn perip 15;
+        
         proxy_pass http://127.0.0.1:20000;
         
         proxy_set_header Host $host;
@@ -27,14 +38,24 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Connection "";
         
-        # 确认后端是否需要 PATCH 等方法，如果需要请添加
+        # 限制HTTP方法
         limit_except GET POST PUT DELETE PATCH OPTIONS { 
             deny all; 
         }
+        
+        # API超时配置
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
-    # 二维码短码重定向代理
+    # ========== 二维码短码重定向代理（适中限制） ==========
     location ^~ /qr/ {
+        # 使用API的限流策略：每分钟60个请求，突发10个
+        limit_req zone=api_limit burst=10 nodelay;
+        # 并发限制：每个IP最多15个并发
+        limit_conn perip 15;
+        
         proxy_pass http://127.0.0.1:20000;
         
         proxy_set_header Host $host;
@@ -46,31 +67,47 @@ server {
         proxy_set_header Connection "";
     }
 
-    # 前端路由支持
+    # ========== 前端页面（限制刷新频率） ==========
     location / {
+        # 页面限流：每分钟30个页面请求，突发5个
+        # 这样用户快速刷新页面会触发限制，但正常访问不受影响
+        limit_req zone=page_limit burst=5 nodelay;
+        # 并发限制：每个IP最多8个并发
+        limit_conn perip 8;
+        
         try_files $uri $uri/ /index.html;
     }
 
-    # 静态资源缓存 - 图片
+    # ========== 静态资源 - 图片（几乎不限） ==========
     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$ {
+        # 静态资源几乎不限流：每分钟300个请求，突发50个
+        limit_req zone=static_limit burst=50 nodelay;
+        # 并发限制：每个IP最多20个并发
+        limit_conn perip 20;
+        
         expires 30d;
         access_log off;
         error_log off;
     }
 
-    # 静态资源缓存 - JS/CSS
+    # ========== 静态资源 - JS/CSS（几乎不限） ==========
     location ~ .*\.(js|css)?$ {
+        # 静态资源几乎不限流：每分钟300个请求，突发50个
+        limit_req zone=static_limit burst=50 nodelay;
+        # 并发限制：每个IP最多20个并发
+        limit_conn perip 20;
+        
         expires 12h;
         access_log off;
         error_log off;
     }
 
-    # 安全：禁止访问隐藏文件
+    # ========== 安全：禁止访问隐藏文件 ==========
     location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md) {
         return 404;
     }
 
-    # 安全：允许 .well-known 但禁止脚本执行
+    # ========== 安全：允许 .well-known 但禁止脚本执行 ==========
     location ~ \.well-known {
         allow all;
     }
@@ -79,7 +116,7 @@ server {
         return 403;
     }
 
-    # 日志记录
+    # ========== 日志记录 ==========
     access_log /www/wwwlogs/edit_my_degree_nginx_access.log;
     error_log /www/wwwlogs/edit_my_degree_nginx_error.log;
 }
