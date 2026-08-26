@@ -14,15 +14,15 @@ const faqItems = [
   },
   {
     question: "不同套餐的登录次数有什么区别？",
-    answer: "除 1 次登录的体验卡有效登录时长为5分钟，永久卡密额外赠送 30 个PDF积分外，不同套餐区别仅登录次数不同。"
+    answer: "除永久卡密额外赠送 30 个PDF积分外，不同套餐区别仅登录次数不同。"
   },
   {
     question: "如何下载APP？",
-    answer: "苹果手机在safri浏览器访问登录页后，点击右下角三个点，再点击“共享”，点击“添加到主屏幕”即可形成APP。"
+    answer: "苹果手机在safri浏览器访问登录页后，点击右下角三个点，再点击“共享”，点击“添加到主屏幕”即可形成APP。安卓手机暂未支持APP化。"
   },
   {
     question: "可以多人同时使用一个账号登陆吗？",
-    answer: "可以，支持多设备同时登录同一账号。"
+    answer: "可以，支持多设备同时登录同一账号，但每台设备都会消耗一次登录次数。"
   },
   {
     question: "如何去掉浏览器访问时的地址栏？",
@@ -154,8 +154,10 @@ const Purchase = () => {
             <Zap className="h-6 w-6 text-primary" />
             登录次数套餐
           </h2>
-          <div className="grid md:grid-cols-4 gap-6 lg:gap-8">
-            {plans.slice(0, 4).map((plan, index) => {
+          {/* 如果需要四列 下面这行改为 md:grid-cols-4 */}
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            {/* 如果需要四列 下面这行改为 slice(0, 4) */}
+            {plans.slice(1, 4).map((plan, index) => {
               const Icon = plan.icon;
               return (
                 <Card

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && rm -rf /home/www/mainWeb/dist && mv dist /home/www/mainWeb/degree_front",
+    "build": "vite build && rm -rf /home/www/mainWeb/degree_front && mv dist /home/www/mainWeb/degree_front",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
