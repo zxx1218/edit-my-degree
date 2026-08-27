@@ -454,24 +454,14 @@ const Login = () => {
               >
                 {isLoading ? "登录中..." : "登录"}
               </Button>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-11 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all"
-                  onClick={() => navigate("/register")}
-                >
-                  注册账号
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-11 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 transition-all"
-                  onClick={() => setIsRechargeOpen(true)}
-                >
-                  使用卡密
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all"
+                onClick={() => navigate("/register")}
+              >
+                注册账号
+              </Button>
             </div>
           </form>
 
@@ -704,20 +694,8 @@ const Login = () => {
                 </TabsContent>
               </Tabs>
               
-              {/* 查询次数和购买卡密入口 */}
+              {/* 查询次数入口 */}
               <div className="mt-4 pt-4 border-t border-border space-y-2">
-                <div className="text-center">
-                  <button
-                    onClick={() => {
-                      setIsRechargeOpen(false);
-                      navigate("/purchase");
-                    }}
-                    className="text-green-600 hover:text-green-700 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm font-medium"
-                  >
-                    <span>💳</span>
-                    <span>卡密购买</span>
-                  </button>
-                </div>
                 <div className="text-center">
                   <button
                     onClick={() => {
@@ -734,24 +712,6 @@ const Login = () => {
             </DialogContent>
           </Dialog>
 
-          <div className="flex justify-center gap-4 mt-4 text-sm">
-            <button
-              onClick={() => navigate("/purchase")}
-              className="text-emerald-600 hover:text-emerald-700 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform font-medium"
-            >
-              <span>💰</span>
-              <span>卡密购买</span>
-            </button>
-            <span className="text-border">•</span>
-            <button
-              onClick={() => navigate("/video")}
-              className="text-violet-600 hover:text-violet-700 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform font-medium"
-            >
-              <span>📹</span>
-              <span>演示视频</span>
-            </button>
-          </div>
-
           <Alert className="mt-6 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="ml-2 text-sm space-y-2">
@@ -763,18 +723,10 @@ const Login = () => {
             </AlertDescription>
           </Alert> 
 
-          {/* QQ群信息和留言板链接 */}
+          {/* QQ群信息 */}
           <div className="mt-6 text-center text-xs border-t border-border/50 pt-4">
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <span className="text-slate-600 font-medium">交流Q群：{import.meta.env.VITE_QQ_GROUP}</span>
-              <span className="text-slate-400">•</span>
-              <button
-                onClick={() => setIsMessageBoardOpen(true)}
-                className="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 hover:scale-105 transform font-medium"
-              >
-                <MessageSquare className="h-3.5 w-3.5" />
-                <span>用户留言板</span>
-              </button>
             </div>
           </div>
 

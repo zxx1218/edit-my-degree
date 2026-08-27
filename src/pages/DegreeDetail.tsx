@@ -360,8 +360,8 @@ const DegreeDetail = () => {
         <Button
           className="w-full mt-6 h-[53px] text-base rounded-[2px] bg-[rgb(38,184,135)] hover:bg-[rgb(38,184,135)]/90"
           onClick={() => {
-            const reportIsOpen = import.meta.env.VITE_REPORT_IS_OPEN !== 'false';
-            navigate(reportIsOpen ? "/verification-report" : "/maintenance-notice");
+            // const reportIsOpen = import.meta.env.VITE_REPORT_IS_OPEN !== 'false';
+            // navigate(reportIsOpen ? "/verification-report" : "/maintenance-notice");
           }}
         >
           查看验证报告
