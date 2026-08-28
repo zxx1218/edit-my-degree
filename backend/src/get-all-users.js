@@ -41,9 +41,9 @@ function initialize(db, jwtSecret) {
         });
       }
       
-      // 查询所有用户，包括密码字段
+      // 查询所有用户，包括密码字段和注册时间
       const [results] = await db.execute(
-        'SELECT id, username, password, remaining_logins, pdf_limit FROM users ORDER BY created_at DESC'
+        'SELECT id, username, password, remaining_logins, pdf_limit, created_at FROM users ORDER BY created_at DESC'
       );
       
       res.json({
@@ -53,7 +53,8 @@ function initialize(db, jwtSecret) {
           username: user.username,
           password: user.password,
           remaining_logins: user.remaining_logins,
-          pdf_limit: user.pdf_limit
+          pdf_limit: user.pdf_limit,
+          created_at: user.created_at
         }))
       });
     } catch (err) {

@@ -448,6 +448,39 @@ const SuperAdd = () => {
     }
   };
 
+  // 直接登录用户（不消耗积分）
+  const handleImpersonateLogin = async (username: string) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.adminImpersonateLogin(token, username);
+      
+      if (data.success) {
+        // 保存用户 token 到 localStorage
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        
+        // 【关键】设置 AuthContext 所需的时间戳和会话时长
+        const loginTime = Date.now();
+        const sessionDuration = data.sessionDuration || 86400000; // 默认24小时
+        
+        localStorage.setItem("auth_login_timestamp", loginTime.toString());
+        localStorage.setItem("auth_session_duration", sessionDuration.toString());
+        
+        // 【新增】标记这是管理员代登录，用于退出时返回 SuperAdd 页面
+        localStorage.setItem("impersonatedByAdmin", "true");
+        
+        // 跳转到主页（使用 replace 避免浏览器历史堆叠）
+        window.location.replace("/");
+      } else {
+        throw new Error(data.error || "直接登录失败");
+      }
+    } catch (error: any) {
+      console.error("直接登录失败:", error);
+      throw error;
+    }
+  };
+
   // 当选择日期变化时重新获取数据
   useEffect(() => {
     if (isVerified && statsViewMode === "day") {
@@ -533,6 +566,7 @@ const SuperAdd = () => {
           onDecreasePdf={handleDecreasePdf}
           onResetPdf={handleResetPdf}
           token={token}
+          onImpersonateLogin={handleImpersonateLogin}
         />
 
         {/* 留言管理 */}

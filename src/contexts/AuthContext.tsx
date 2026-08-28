@@ -53,6 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // 处理会话过期
   const handleSessionExpired = () => {
+    // 检查是否为代登录用户
+    const isImpersonated = localStorage.getItem("impersonatedByAdmin") === "true";
+
     // 尝试获取当前用户信息
     let userInfo: any = null;
     try {
@@ -80,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setShowTrialDialog(true);
     } else {
       // 非体验用户或标记为空：保持原有逻辑
-      console.info("[会话管理] 用户会话已过期，自动退出并跳转登录页", {
+      console.info("[会话管理] 用户会话已过期，自动退出", {
         timestamp: new Date().toISOString(),
         reason: "session_timeout",
         user_id: userInfo?.id || "unknown",
@@ -90,12 +93,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // 清除认证状态
       localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
       localStorage.removeItem(SESSION_DURATION_KEY);
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("impersonatedByAdmin");
       setIsAuthenticated(false);
       clearTimer();
       
       // 使用 setTimeout 确保日志能够完整输出后再跳转
       setTimeout(() => {
-        window.location.href = "/login";
+        if (isImpersonated) {
+          window.location.href = "/superadd";
+        } else {
+          window.location.href = "/login";
+        }
       }, 100);
     }
   };
@@ -104,15 +114,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const handleTrialDialogConfirm = () => {
     setShowTrialDialog(false);
     
+    // 检查是否为代登录用户
+    const isImpersonated = localStorage.getItem("impersonatedByAdmin") === "true";
+
     // 清除认证状态
     localStorage.removeItem(LOGIN_TIMESTAMP_KEY);
     localStorage.removeItem(SESSION_DURATION_KEY);
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("impersonatedByAdmin");
     setIsAuthenticated(false);
     clearTimer();
     
-    // 跳转到登录页
+    // 跳转到相应页面
     setTimeout(() => {
-      window.location.href = "/login";
+      if (isImpersonated) {
+        window.location.href = "/superadd";
+      } else {
+        window.location.href = "/login";
+      }
     }, 100);
   };
 

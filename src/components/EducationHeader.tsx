@@ -22,10 +22,24 @@ const EducationHeader = () => {
   };
 
   const handleConfirmLogout = () => {
+    // 检查是否是从 SuperAdd 页面代登录过来的
+    const isImpersonated = localStorage.getItem("impersonatedByAdmin") === "true";
+    
     // 清除用户登录状态
     localStorage.removeItem("currentUser");
-    // 跳转到登录页面
-    navigate("/login");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("auth_login_timestamp");
+    localStorage.removeItem("auth_session_duration");
+    localStorage.removeItem("impersonatedByAdmin"); // 清除代登录标记
+    
+    if (isImpersonated) {
+      // 如果是代登录，返回 SuperAdd 页面
+      navigate("/superadd");
+    } else {
+      // 否则跳转到登录页面
+      navigate("/login");
+    }
+    
     // 关闭对话框
     setShowLogoutDialog(false);
   };

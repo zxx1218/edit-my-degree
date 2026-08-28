@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ interface User {
   password: string;
   remaining_logins: number;
   pdf_limit: number;
+  created_at?: string;
 }
 
 interface CardHistoryItem {
@@ -50,6 +51,8 @@ interface UserListProps {
   onDecreasePdf?: (username: string, amount: number) => Promise<void>;
   onResetPdf?: (username: string) => Promise<void>;
   token?: string | null;
+  // 直接登录回调
+  onImpersonateLogin?: (username: string) => Promise<void>;
 }
 
 const USERS_PER_PAGE = 10;
@@ -69,6 +72,7 @@ const UserList = ({
   onDecreasePdf,
   onResetPdf,
   token,
+  onImpersonateLogin,
 }: UserListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
@@ -89,7 +93,99 @@ const UserList = ({
   const [cardHistory, setCardHistory] = useState<CardHistoryItem[]>([]);
   const [isLoadingCardHistory, setIsLoadingCardHistory] = useState(false);
 
+  // 复制状态
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const { toast } = useToast();
+
+  // 复制文本到剪贴板（兼容 iOS Safari）
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      // 首先尝试使用现代 Clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // 降级方案：使用 execCommand
+        fallbackCopyTextToClipboard(text);
+      }
+      
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (error) {
+      console.error("复制失败:", error);
+      // 如果 Clipboard API 失败，尝试降级方案
+      try {
+        fallbackCopyTextToClipboard(text);
+        setCopiedField(field);
+        setTimeout(() => setCopiedField(null), 2000);
+      } catch (fallbackError) {
+        console.error("降级复制也失败:", fallbackError);
+        toast({
+          variant: "destructive",
+          title: "复制失败",
+          description: `请长按"${text}"手动选择复制`,
+        });
+      }
+    }
+  };
+
+  // 降级复制方法（兼容 iOS Safari 等旧版浏览器）
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // 设置样式使 textarea 不可见
+    textArea.style.position = "fixed";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+    textArea.style.opacity = "0";
+    
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand("copy");
+      if (!successful) {
+        throw new Error("execCommand copy failed");
+      }
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  };
+
+  // 直接登录用户（不消耗积分）
+  const handleImpersonateLogin = async (user: User) => {
+    if (!onImpersonateLogin) {
+      toast({
+        variant: "destructive",
+        title: "功能不可用",
+        description: "直接登录功能未配置",
+      });
+      return;
+    }
+
+    try {
+      await onImpersonateLogin(user.username);
+      toast({
+        title: "登录成功",
+        description: `已直接登录到用户 ${user.username} 的账号`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "登录失败",
+        description: error.message || "请稍后重试",
+      });
+    }
+  };
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
@@ -301,53 +397,113 @@ const UserList = ({
                 {paginatedUsers.map((user, index) => (
                   <div
                     key={user.id}
-                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3 sm:gap-0"
+                    className="flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3"
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
-                    <div className="flex-1 min-w-0 space-y-1 w-full sm:w-auto">
-                      <span className="font-bold text-lg block truncate">{user.username}</span>
-                      <span className="text-xs text-muted-foreground font-mono">密码: {user.password}</span>
+                    {/* 用户基本信息 */}
+                    <div className="w-full">
+                      <div className="flex items-center gap-2 mb-1.5 group">
+                        <span className="font-bold text-base sm:text-lg truncate cursor-pointer hover:text-primary transition-colors" onClick={() => copyToClipboard(user.username, `username-${user.id}`)} title="点击复制用户名">
+                          {user.username}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => copyToClipboard(user.username, `username-${user.id}`)}
+                          title="复制用户名"
+                        >
+                          {copiedField === `username-${user.id}` ? (
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                          ) : (
+                            <Copy className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                        <span className="text-muted-foreground font-mono flex items-center gap-1.5 group/password cursor-pointer hover:text-foreground transition-colors" onClick={() => copyToClipboard(user.password, `password-${user.id}`)} title="点击复制密码">
+                          <span className="font-medium">密码:</span> 
+                          <span>{user.password}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 opacity-0 group-hover/password:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(user.password, `password-${user.id}`);
+                            }}
+                            title="复制密码"
+                          >
+                            {copiedField === `password-${user.id}` ? (
+                              <Check className="h-3 w-3 text-green-500" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </span>
+                        {user.created_at && (
+                          <span className="text-muted-foreground">
+                            <span className="font-medium">注册时间:</span> {format(new Date(user.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="ml-0 sm:ml-4 flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                      <Badge variant="default" className="flex items-center gap-1.5 px-3 py-1 justify-start">
-                        <LogIn className="h-3.5 w-3.5" />
-                        <span className="font-medium">登录次数: {user.remaining_logins}</span>
+
+                    {/* 统计信息徽章 - 移动端横向排列 */}
+                    <div className="flex gap-2 w-full">
+                      <Badge variant="default" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                        <LogIn className="h-3 w-3" />
+                        <span className="font-medium">登录: {user.remaining_logins}</span>
                       </Badge>
-                      <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1 justify-start">
-                        <CreditCard className="h-3.5 w-3.5" />
-                        <span className="font-medium">PDF积分: {user.pdf_limit}</span>
+                      <Badge variant="secondary" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                        <CreditCard className="h-3 w-3" />
+                        <span className="font-medium">PDF: {user.pdf_limit}</span>
                       </Badge>
                     </div>
-                    <div className="ml-0 sm:ml-4 flex gap-1.5 sm:gap-2 w-full sm:w-auto">
+
+                    {/* 操作按钮 - 移动端两个一行排列，桌面端横向排列 */}
+                    <div className="grid grid-cols-2 sm:flex sm:gap-2 w-full gap-2">
+                      {onImpersonateLogin && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleImpersonateLogin(user)}
+                          className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                          title="直接登录（不消耗积分）"
+                        >
+                          <LogOut className="h-4 w-4 mr-1.5 shrink-0" />
+                          <span className="truncate">登录</span>
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenPointsDialog(user)}
-                        className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 flex-1 sm:flex-none px-2 sm:px-3"
+                        className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 h-9 px-2 text-xs justify-center sm:flex-1"
                         title="管理积分"
                       >
-                        <Coins className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">积分</span>
+                        <Coins className="h-4 w-4 mr-1.5 shrink-0" />
+                        <span className="truncate">积分</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenChangePassword(user)}
-                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 flex-1 sm:flex-none px-2 sm:px-3"
+                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 h-9 px-2 text-xs justify-center sm:flex-1"
                         title="修改密码"
                       >
-                        <KeyRound className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">改密</span>
+                        <KeyRound className="h-4 w-4 mr-1.5 shrink-0" />
+                        <span className="truncate">改密</span>
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenDeleteDialog(user)}
-                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 flex-1 sm:flex-none px-2 sm:px-3"
+                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-9 px-2 text-xs justify-center sm:flex-1"
                         title="删除用户"
                       >
-                        <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">删除</span>
+                        <Trash2 className="h-4 w-4 mr-1.5 shrink-0" />
+                        <span className="truncate">删除</span>
                       </Button>
                     </div>
                   </div>
@@ -357,8 +513,8 @@ const UserList = ({
 
             {/* 分页控件 */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between pt-4 border-t flex-wrap gap-3">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   第 {currentPage} / {totalPages} 页
                 </p>
                 <div className="flex items-center gap-2">
@@ -367,6 +523,7 @@ const UserList = ({
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
+                    className="text-xs sm:text-sm h-9"
                   >
                     <ChevronLeft className="h-4 w-4" />
                     上一页
@@ -376,6 +533,7 @@ const UserList = ({
                     size="sm"
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
+                    className="text-xs sm:text-sm h-9"
                   >
                     下一页
                     <ChevronRight className="h-4 w-4" />
