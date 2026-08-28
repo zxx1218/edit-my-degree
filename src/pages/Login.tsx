@@ -454,14 +454,24 @@ const Login = () => {
               >
                 {isLoading ? "登录中..." : "登录"}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all"
-                onClick={() => navigate("/register")}
-              >
-                注册账号
-              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-all"
+                  onClick={() => navigate("/register")}
+                >
+                  注册账号
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 transition-all"
+                  onClick={() => setIsRechargeOpen(true)}
+                >
+                  使用卡密
+                </Button>
+              </div>
             </div>
           </form>
 
@@ -569,144 +579,75 @@ const Login = () => {
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>使用卡密</DialogTitle>
-                <DialogDescription>请选择充值类型并输入相关信息</DialogDescription>
+                <DialogDescription>请输入您的账号和充值卡密</DialogDescription>
               </DialogHeader>
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-lg">
-                  <TabsTrigger 
-                    value="login" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
-                  >
-                    🔑 登录次数充值
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="pdf" 
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
-                  >
-                    📑 PDF 积分充值
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="login" className="space-y-4 pt-4 animate-fade-in">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-username">需充值的账号</Label>
-                    <Input
-                      id="login-username"
-                      type="text"
-                      placeholder="请输入您的账号（登录用的用户名）"
-                      value={loginRechargeData.username}
-                      onChange={(e) =>
-                        setLoginRechargeData({
-                          ...loginRechargeData,
-                          username: e.target.value,
-                        })
-                      }
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-card">卡密</Label>
-                    <Input
-                      id="login-card"
-                      type="text"
-                      placeholder="请输入登录次数充值卡密"
-                      value={loginRechargeData.cardId}
-                      onChange={(e) =>
-                        setLoginRechargeData({
-                          ...loginRechargeData,
-                          cardId: e.target.value,
-                        })
-                      }
-                    />
-                    {/* 卡密格式提示 */}
-                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs space-y-1.5">
-                      <div className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 font-medium flex-shrink-0 mt-0.5">💡</span>
-                        <div className="text-blue-700 dark:text-blue-300 leading-relaxed">
-                          <p className="font-medium mb-1">卡密使用提示：</p>
-                          <ol className="list-decimal list-inside space-y-1 pl-1">
-                            <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
-                            <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
-                            <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
-                          </ol>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="w-full" onClick={() => handleRecharge("login")} disabled={isRecharging}>
-                    {isRecharging ? "充值中..." : "确认充值"}
-                  </Button>
-                </TabsContent>
-                <TabsContent value="pdf" className="space-y-4 pt-4 animate-fade-in">
-                  <div className="space-y-2">
-                    <Label htmlFor="pdf-username">需充值的账号</Label>
-                    <Input
-                      id="pdf-username"
-                      type="text"
-                      placeholder="请输入您的账号（登录用的用户名）"
-                      value={pdfRechargeData.username}
-                      onChange={(e) =>
-                        setPdfRechargeData({
-                          ...pdfRechargeData,
-                          username: e.target.value,
-                        })
-                      }
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pdf-card">卡密</Label>
-                    <Input
-                      id="pdf-card"
-                      type="text"
-                      placeholder="请输入 PDF 积分充值卡密"
-                      value={pdfRechargeData.cardId}
-                      onChange={(e) =>
-                        setPdfRechargeData({
-                          ...pdfRechargeData,
-                          cardId: e.target.value,
-                        })
-                      }
-                    />
-                    {/* 卡密格式提示 */}
-                    <div className="bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 rounded-lg p-3 text-xs space-y-1.5">
-                      <div className="flex items-start gap-2">
-                        <span className="text-violet-600 dark:text-violet-400 font-medium flex-shrink-0 mt-0.5">💡</span>
-                        <div className="text-violet-700 dark:text-violet-300 leading-relaxed">
-                          <p className="font-medium mb-1">卡密使用提示：</p>
-                          <ol className="list-decimal list-inside space-y-1 pl-1">
-                            <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
-                            <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
-                            <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
-                          </ol>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="w-full" onClick={() => handleRecharge("pdf")} disabled={isRecharging}>
-                    {isRecharging ? "充值中..." : "确认充值"}
-                  </Button>
-                </TabsContent>
-              </Tabs>
-              
-              {/* 查询次数入口 */}
-              <div className="mt-4 pt-4 border-t border-border space-y-2">
-                <div className="text-center">
-                  <button
-                    onClick={() => {
-                      setIsRechargeOpen(false);
-                      navigate("/query-logins");
+              <div className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="login-username">需充值的账号</Label>
+                  <Input
+                    id="login-username"
+                    type="text"
+                    placeholder="请输入您的账号（登录用的用户名）"
+                    value={loginRechargeData.username}
+                    onChange={(e) =>
+                      setLoginRechargeData({
+                        ...loginRechargeData,
+                        username: e.target.value,
+                      })
+                    }
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
                     }}
-                    className="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm"
-                  >
-                    <span>🔍</span>
-                    <span>点我查询当前剩余登录次数与 PDF 积分</span>
-                  </button>
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-card">卡密</Label>
+                  <Input
+                    id="login-card"
+                    type="text"
+                    placeholder="请输入登录次数充值卡密"
+                    value={loginRechargeData.cardId}
+                    onChange={(e) =>
+                      setLoginRechargeData({
+                        ...loginRechargeData,
+                        cardId: e.target.value,
+                      })
+                    }
+                  />
+                  {/* 卡密格式提示 */}
+                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-xs space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 font-medium flex-shrink-0 mt-0.5">💡</span>
+                      <div className="text-blue-700 dark:text-blue-300 leading-relaxed">
+                        <p className="font-medium mb-1">卡密使用提示：</p>
+                        <ol className="list-decimal list-inside space-y-1 pl-1">
+                          <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
+                          <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
+                          <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <Button className="w-full" onClick={() => handleRecharge("login")} disabled={isRecharging}>
+                  {isRecharging ? "充值中..." : "确认充值"}
+                </Button>
+
+                {/* 查询次数入口 */}
+                <div className="pt-4 border-t border-border">
+                  <div className="text-center">
+                    <button
+                      onClick={() => {
+                        setIsRechargeOpen(false);
+                        navigate("/query-logins");
+                      }}
+                      className="text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1.5 hover:scale-105 transform text-sm"
+                    >
+                      <span>🔍</span>
+                      <span>点我查询当前剩余登录次数与 PDF 积分</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </DialogContent>

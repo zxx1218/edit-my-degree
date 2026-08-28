@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       host: "::",
-      port: 9092,
+      port: 9888,
       // 添加代理配置解决跨域问题
       proxy: {
         '/api': {
