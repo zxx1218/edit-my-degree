@@ -48,11 +48,12 @@ function initialize(db, jwtSecret) {
       
       const todayStr = formatDate(today);
 
-      // 查询今日所有登录记录，包含用户名和登录时间
+      // 查询今日所有登录记录，包含用户名、登录时间和登录类型
       const [loginDetails] = await db.execute(`
         SELECT 
           u.username,
-          l.login_time
+          l.login_time,
+          l.login_type
         FROM login_logs l
         JOIN users u ON l.user_id = u.id
         WHERE DATE(l.login_time) = ?
@@ -68,19 +69,25 @@ function initialize(db, jwtSecret) {
             loginTimes: []
           });
         }
-        userMap.get(record.username).loginTimes.push(record.login_time);
+        userMap.get(record.username).loginTimes.push({
+          time: record.login_time,
+          type: record.login_type || 'normal' // 默认为普通登录
+        });
       });
 
       // 转换为数组格式
       const aggregatedData = Array.from(userMap.values()).map(user => ({
         username: user.username,
         loginCount: user.loginTimes.length,
-        loginTimes: user.loginTimes.map(time => {
-          const date = new Date(time);
+        loginTimes: user.loginTimes.map(item => {
+          const date = new Date(item.time);
           const hours = String(date.getHours()).padStart(2, '0');
           const minutes = String(date.getMinutes()).padStart(2, '0');
           const seconds = String(date.getSeconds()).padStart(2, '0');
-          return `${hours}:${minutes}:${seconds}`;
+          return {
+            time: `${hours}:${minutes}:${seconds}`,
+            type: item.type
+          };
         })
       }));
 

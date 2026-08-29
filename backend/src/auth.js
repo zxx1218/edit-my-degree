@@ -145,7 +145,7 @@ function initialize(pool, jwtSecret) {
         session_level: remainingLoginsBefore <= 1 ? 'level_1' : remainingLoginsBefore <= 5 ? 'level_2' : remainingLoginsBefore <= 30 ? 'level_3' : 'level_4'
       });
       
-      // 记录登录日志到login_logs表（包含IP和地理位置）
+      // 记录登录日志到login_logs表（包含IP、地理位置和登录类型）
       let ipLocation = null;
       try {
         ipLocation = await queryIPLocation(ipAddress);
@@ -155,8 +155,8 @@ function initialize(pool, jwtSecret) {
       }
       
       await dbManager.execute(
-        'INSERT INTO login_logs (user_id, username, login_ip, ip_location) VALUES (?, ?, ?, ?)',
-        [user.id, username, ipAddress, ipLocation]
+        'INSERT INTO login_logs (user_id, username, login_ip, ip_location, login_type) VALUES (?, ?, ?, ?, ?)',
+        [user.id, username, ipAddress, ipLocation, 'normal']
       );
       
       // 生成 JWT token

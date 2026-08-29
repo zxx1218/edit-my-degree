@@ -22,7 +22,9 @@ import {
   Clock,
   QrCode,
   Eye,
-  Calendar
+  Calendar,
+  Download,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import * as adminApi from "@/lib/adminApi";
@@ -41,6 +43,7 @@ interface PdfGenerationRecord {
   name: string | null;
   is_expired: boolean;
   remaining_days: number | null;
+  full_url?: string; // 添加full_url字段用于PDF预览
 }
 
 interface PdfGenerationManagerProps {
@@ -59,6 +62,12 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
   const [editExpiresAt, setEditExpiresAt] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  
+  // 新增：PDF预览相关状态
+  const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState<PdfGenerationRecord | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
 
   const { toast } = useToast();
 
@@ -164,6 +173,75 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
       });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // 打开PDF预览对话框（懒加载）
+  const handlePreviewClick = async (record: PdfGenerationRecord) => {
+    console.log("尝试预览PDF，记录数据:", record);
+    
+    setPreviewRecord(record);
+    setIsPreviewDialogOpen(true);
+    setPdfUrl(null); // 重置之前的URL
+    
+    // 只有点击后才从MinIO获取PDF
+    if (record.full_url && record.full_url.startsWith('http')) {
+      console.log("找到有效的PDF链接:", record.full_url);
+      setIsLoadingPdf(true);
+      try {
+        // 直接设置MinIO URL，浏览器会处理跨域和加载
+        setPdfUrl(record.full_url);
+      } catch (error) {
+        console.error("加载PDF失败:", error);
+        toast({
+          variant: "destructive",
+          title: "加载失败",
+          description: "无法加载PDF文件，请检查网络连接",
+        });
+      } finally {
+        setIsLoadingPdf(false);
+      }
+    } else {
+      console.warn("PDF链接无效或缺失", {
+        full_url: record.full_url,
+        short_code: record.short_code,
+        id: record.id
+      });
+      
+      // 提供更详细的错误信息
+      let errorMessage = "该记录没有有效的PDF链接";
+      if (!record.full_url) {
+        errorMessage = "数据库中未存储PDF链接，可能是旧版本生成的记录";
+      } else if (!record.full_url.startsWith('http')) {
+        errorMessage = "PDF链接格式不正确";
+      }
+      
+      toast({
+        variant: "destructive",
+        title: "无法预览",
+        description: errorMessage,
+      });
+    }
+  };
+
+  // 关闭预览对话框并清理资源
+  const handleClosePreview = () => {
+    setIsPreviewDialogOpen(false);
+    setPreviewRecord(null);
+    if (pdfUrl) {
+      // 如果是blob URL，需要清理
+      if (pdfUrl.startsWith('blob:')) {
+        window.URL.revokeObjectURL(pdfUrl);
+      }
+      setPdfUrl(null);
+    }
+  };
+
+  // 下载PDF
+  const handleDownloadPdf = () => {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
+      toast.success("正在打开下载...");
     }
   };
 
@@ -404,14 +482,26 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
                         {getStatusBadge(record)}
                       </td>
                       <td className="px-3 py-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditClick(record)}
-                          className="h-7 w-7 sm:h-8 sm:w-8 p-0"
-                        >
-                          <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </Button>
+                        <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePreviewClick(record)}
+                            className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
+                            title="查看PDF"
+                          >
+                            <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(record)}
+                            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                            title="编辑过期时间"
+                          >
+                            <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -512,6 +602,81 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
               ) : (
                 "确认更新"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PDF预览对话框 */}
+      <Dialog open={isPreviewDialogOpen} onOpenChange={handleClosePreview}>
+        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] max-h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <span className="truncate">
+                  {previewRecord?.pdf_type_label} - {previewRecord?.name || '未知'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {pdfUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDownloadPdf}
+                    className="gap-2 h-8"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">下载</span>
+                  </Button>
+                )}
+              </div>
+            </DialogTitle>
+            <DialogDescription className="text-xs mt-2">
+              短码: <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{previewRecord?.short_code}</code>
+              {previewRecord && (
+                <span className="ml-2">
+                  | 生成时间: {formatDateTime(previewRecord.created_at)}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 relative bg-gray-100 dark:bg-gray-900 overflow-hidden">
+            {isLoadingPdf ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
+                  <p className="text-muted-foreground">正在加载PDF...</p>
+                </div>
+              </div>
+            ) : pdfUrl ? (
+              <iframe
+                src={pdfUrl}
+                className="w-full h-full border-0"
+                title="PDF预览"
+                onError={() => {
+                  toast({
+                    variant: "destructive",
+                    title: "加载失败",
+                    description: "无法加载PDF，请尝试下载后查看",
+                  });
+                }}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-muted-foreground">
+                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p>PDF加载失败</p>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="px-6 py-4 border-t bg-background">
+            <Button variant="outline" onClick={handleClosePreview} className="gap-2">
+              <X className="h-4 w-4" />
+              关闭
             </Button>
           </DialogFooter>
         </DialogContent>

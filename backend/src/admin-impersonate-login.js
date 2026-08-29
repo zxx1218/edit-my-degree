@@ -81,6 +81,21 @@ function initialize(db, jwtSecret) {
         jwtSecret || process.env.JWT_SECRET || 'default_jwt_secret'
       );
 
+      // 记录管理员代登录日志到login_logs表
+      let ipLocation = null;
+      try {
+        const queryIPLocation = require('./ip-location-query');
+        ipLocation = await queryIPLocation(ipAddress);
+      } catch (err) {
+        console.warn('[管理员代登录] IP地理位置查询失败:', err.message);
+        ipLocation = '未知';
+      }
+      
+      await db.execute(
+        'INSERT INTO login_logs (user_id, username, login_ip, ip_location, login_type) VALUES (?, ?, ?, ?, ?)',
+        [targetUser.id, username, ipAddress, ipLocation, 'admin_impersonate']
+      );
+
       // 记录审计日志
       logOperation(
         adminUsername,

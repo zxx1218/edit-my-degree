@@ -148,6 +148,7 @@ async function createTables(db) {
       login_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       login_ip VARCHAR(45),
       ip_location TEXT,
+      login_type VARCHAR(20) DEFAULT 'normal' COMMENT '登录类型：normal-普通用户登录, admin_impersonate-管理员代登录',
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )

@@ -134,6 +134,7 @@ const managePdfGenerationHandler = async (req, res, database) => {
           return {
             id: record.id,
             short_code: record.short_code,
+            full_url: record.full_url, // 添加full_url字段供前端预览使用
             pdf_type: record.pdf_type,
             created_at: record.created_at,
             expires_at: record.expires_at,
