@@ -1,11 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, RotateCcw, Loader2, Monitor, User } from "lucide-react";
+import { Users, RotateCcw, Loader2, Monitor, User, Globe } from "lucide-react";
 
 interface LoginTime {
   time: string;
-  type: 'normal' | 'admin_impersonate';
+  type: 'normal' | 'admin_impersonate' | 'web_chsi';
 }
 
 interface LoginDetail {
@@ -84,9 +84,13 @@ const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListPr
                           style={{
                             backgroundColor: item.type === 'admin_impersonate' 
                               ? 'rgba(239, 68, 68, 0.1)' 
+                              : item.type === 'web_chsi'
+                              ? 'rgba(16, 185, 129, 0.1)'
                               : 'rgba(59, 130, 246, 0.1)',
                             color: item.type === 'admin_impersonate' 
                               ? 'rgb(239, 68, 68)' 
+                              : item.type === 'web_chsi'
+                              ? 'rgb(16, 185, 129)'
                               : 'rgb(59, 130, 246)'
                           }}
                         >
@@ -96,6 +100,14 @@ const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListPr
                               <span>{item.time}</span>
                               <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1">
                                 管理员代登
+                              </Badge>
+                            </>
+                          ) : item.type === 'web_chsi' ? (
+                            <>
+                              <Globe className="h-3 w-3" />
+                              <span>{item.time}</span>
+                              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1">
+                                网页版学信网
                               </Badge>
                             </>
                           ) : (

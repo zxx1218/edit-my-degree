@@ -38,7 +38,7 @@ function initialize(db, jwtSecret) {
       const operatorUsername = decoded.username;
       const operatorId = decoded.id;
       
-      const { username, decreaseLogins } = req.body;
+      const { username, decreaseLogins, loginType } = req.body;
 
       if (!username) {
         return res.status(400).json({
@@ -113,6 +113,32 @@ function initialize(db, jwtSecret) {
           success: false,
           error: '用户未找到'
         });
+      }
+
+      // 如果指定了loginType参数（如web_chsi），记录登录日志
+      if (loginType === 'web_chsi') {
+        try {
+          // 查询IP地理位置
+          let ipLocation = null;
+          try {
+            const queryIPLocation = require('./ip-location-query');
+            ipLocation = await queryIPLocation(ipAddress);
+          } catch (err) {
+            console.warn('[减少登录次数] IP地理位置查询失败:', err.message);
+            ipLocation = '未知';
+          }
+          
+          // 记录网页版学信网登录日志
+          await db.execute(
+            'INSERT INTO login_logs (user_id, username, login_ip, ip_location, login_type) VALUES (?, ?, ?, ?, ?)',
+            [user.id, username, ipAddress, ipLocation, 'web_chsi']
+          );
+          
+          console.info(`[账户管理] 记录网页版学信网登录 - 用户: ${username}, IP: ${ipAddress}, 位置: ${ipLocation}`);
+        } catch (logErr) {
+          console.error('[账户管理] 记录网页版学信网登录日志失败:', logErr.message);
+          // 不阻断主流程，继续返回成功
+        }
       }
 
       // 记录详细的审计日志（safe级别）

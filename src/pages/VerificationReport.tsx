@@ -125,7 +125,7 @@ const VerificationReport = () => {
       // 获取JWT token用于认证
       const authToken = localStorage.getItem("authToken");
 
-      // 调用本地 API 扣除登录次数
+      // 调用本地 API 扣除登录次数（传递loginType参数标记为网页版学信网登录）
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"}/decrease-user-logins`,
         {
@@ -137,7 +137,7 @@ const VerificationReport = () => {
             "X-App-Key": appKey,
             ...(authToken && { "Authorization": `Bearer ${authToken}` }),
           },
-          body: JSON.stringify({ username, decreaseLogins: 1 }),
+          body: JSON.stringify({ username, decreaseLogins: 1, loginType: 'web_chsi' }),
         },
       );
 
