@@ -119,7 +119,6 @@ const UserList = ({
         setCopiedField(field);
         setTimeout(() => setCopiedField(null), 2000);
       } catch (fallbackError) {
-        console.error("降级复制也失败:", fallbackError);
         toast({
           variant: "destructive",
           title: "复制失败",
@@ -227,7 +226,7 @@ const UserList = ({
       setSelectedUser(null);
       setNewPassword("");
     } catch (error) {
-      console.error("修改密码失败:", error);
+      // 忽略错误，由调用方处理
     } finally {
       setIsProcessing(false);
     }
@@ -267,7 +266,6 @@ const UserList = ({
         throw new Error(data.error || "获取卡密历史失败");
       }
     } catch (error: any) {
-      console.error("获取卡密历史出错:", error);
       toast({
         variant: "destructive",
         title: "获取失败",
@@ -341,7 +339,7 @@ const UserList = ({
       setDeleteDialogOpen(false);
       setSelectedUser(null);
     } catch (error) {
-      console.error("删除用户失败:", error);
+      // 忽略错误，由调用方处理
     } finally {
       setIsProcessing(false);
     }

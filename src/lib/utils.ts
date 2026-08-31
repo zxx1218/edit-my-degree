@@ -14,12 +14,8 @@ export function cn(...inputs: ClassValue[]) {
  */
 export const compressImage = (file: File, maxFileSize: number = 2 * 1024 * 1024, quality: number = 0.8): Promise<string> => {
   return new Promise((resolve, reject) => {
-    // 记录原始文件大小
-    console.log(`用户上传照片大小: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-    
     // 如果文件小于最大限制，则直接使用原图
     if (file.size <= maxFileSize) {
-      console.log(`照片大小未超过限制(${(maxFileSize / 1024 / 1024).toFixed(2)} MB)，无需压缩`);
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = (error) => reject(error);
@@ -27,7 +23,6 @@ export const compressImage = (file: File, maxFileSize: number = 2 * 1024 * 1024,
       return;
     }
 
-    console.log(`照片大小超过限制(${(maxFileSize / 1024 / 1024).toFixed(2)} MB)，开始压缩`);
     
     // 文件太大，需要压缩
     const canvas = document.createElement('canvas');
@@ -76,8 +71,6 @@ export const compressImage = (file: File, maxFileSize: number = 2 * 1024 * 1024,
           const finalSize = compressedDataUrl.length;
           const originalSize = file.size;
           const reduction = ((originalSize - finalSize) / originalSize) * 100;
-          
-          console.log(`照片压缩完成: 原始 ${(originalSize / 1024 / 1024).toFixed(2)} MB -> 压缩后 ${(finalSize / 1024 / 1024).toFixed(2)} MB，减少了 ${reduction.toFixed(2)}%`);
           
           // 清理对象URL
           URL.revokeObjectURL(img.src);

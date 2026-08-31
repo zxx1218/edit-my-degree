@@ -98,7 +98,7 @@ const Index = () => {
               data.studentStatus = result.data;
             }
           } catch (error) {
-            console.error("Error creating default student status:", error);
+            // 忽略创建默认学籍的错误
           }
         }
 
@@ -108,7 +108,6 @@ const Index = () => {
         setDegreeRecords(sortByDegreeType(data.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
         setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
       } catch (error) {
-        console.error("Error loading user data:", error);
         toast.error("加载数据失败", { duration: 1500 });
       } finally {
         setLoading(false);
@@ -215,7 +214,6 @@ const Index = () => {
         toast.success("已添加新记录", { duration: 1500 });
       }
     } catch (error) {
-      console.error("Error adding record:", error);
       toast.error("添加记录失败", { duration: 1500 });
     }
   };
@@ -254,7 +252,6 @@ const Index = () => {
 
       toast.success("已删除记录", { duration: 1500 });
     } catch (error) {
-      console.error("Error deleting record:", error);
       toast.error("删除记录失败", { duration: 1500 });
     }
   };
@@ -289,7 +286,6 @@ const Index = () => {
         navigate(`/exam/${record.id}`, { state: { record, detailRecord } });
       }
     } catch (error) {
-      console.error("Error loading detail data:", error);
       toast.error("加载详情失败", { duration: 1500 });
     } finally {
       setLoadingDetail(false);
@@ -353,7 +349,6 @@ const Index = () => {
 
       toast.success("信息已更新", { duration: 1500 });
     } catch (error) {
-      console.error("Error updating record:", error);
       toast.error("更新失败", { duration: 1500 });
     }
   };

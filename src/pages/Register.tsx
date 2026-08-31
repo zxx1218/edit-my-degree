@@ -121,7 +121,6 @@ const Register = () => {
       const errorMessage = error instanceof Error ? error.message : "注册失败，请重试";
       toast.error(errorMessage, { duration: 1500 });
       refreshCaptcha();
-      console.error("Register error:", error);
     } finally {
       setIsLoading(false);
     }

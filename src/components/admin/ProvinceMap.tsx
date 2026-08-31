@@ -26,7 +26,7 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
         echarts.registerMap('china', chinaGeoJson);
         setMapLoaded(true);
       } catch (error) {
-        console.error('加载中国地图数据失败:', error);
+        // 忽略地图加载错误
       }
     };
     
@@ -48,7 +48,7 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
         setTotalProvinces(data.totalProvinces || 0);
       }
     } catch (error) {
-      console.error("获取省份登录统计时出错:", error);
+      // 忽略获取统计数据的错误
     } finally {
       setIsLoading(false);
     }

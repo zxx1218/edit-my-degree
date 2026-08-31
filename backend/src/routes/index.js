@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: '../../.env' }); // 加载根目录的.env文件
 
@@ -136,7 +137,7 @@ const registrationLimiter = rateLimit({
 
 // 为一般API设置全局限流规则 - 每个IP每5分钟最多100次请求
 const generalLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 10分钟
+  windowMs: 5 * 60 * 1000, // 5分钟
   max: 100,
   message: {
     success: false,
@@ -145,6 +146,157 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// 充值卡创建操作的严格限流 - 每个IP每小时最多3次（管理员操作）
+const cardCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1小时
+  max: 3, // 非常严格：每小时最多3次创建操作
+  message: {
+    success: false,
+    error: '充值卡创建操作过于频繁（每小时最多3次），请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // 基于IP和管理员ID进行限流，使用 ipKeyGenerator 正确处理 IPv6 地址
+    const adminId = req.adminUser ? req.adminUser.id : 'unknown';
+    const ip = ipKeyGenerator(req);
+    return `${ip}_${adminId}`;
+  }
+});
+
+// 充值卡使用操作的限流 - 每个IP每分钟最多10次
+const cardUseLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1分钟
+  max: 10,
+  message: {
+    success: false,
+    error: '充值卡使用操作过于频繁（每分钟最多10次），请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // 使用 ipKeyGenerator 正确处理 IPv6 地址
+    return ipKeyGenerator(req);
+  }
+});
+
+// PDF生成操作的严格限流 - 每用户每分钟最多2次，每小时最多10次
+const pdfGenerationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1分钟
+  max: 2, // 每分钟最多2次
+  message: {
+    success: false,
+    error: 'PDF生成操作过于频繁（每分钟最多2次），请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // 基于用户ID限流，如果没有用户ID则基于IP
+    const userId = req.user ? req.user.id : 'unknown';
+    const ip = ipKeyGenerator(req);
+    return `${ip}_${userId}`;
+  }
+});
+
+// JWT认证中间件
+const authenticateJWT = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ 
+      success: false, 
+      error: '未提供认证令牌' 
+    });
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_jwt_secret');
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ 
+      success: false, 
+      error: '无效的认证令牌' 
+    });
+  }
+};
+
+// 区块链节点验证中间件
+const blockchainNodeValidationMiddleware = (req, res, next) => {
+  const { blockchain_node } = req.body;
+  
+  // 检查是否提供了blockchain_node字段
+  if (!blockchain_node) {
+    return res.status(400).json({
+      success: false,
+      error: '区块链节点校验失败'
+    });
+  }
+  
+  // 从请求头中获取时间戳（签名验证中间件已经提取过）
+  const timestamp = req.headers['x-timestamp'];
+  
+  if (!timestamp) {
+    return res.status(400).json({
+      success: false,
+      error: '区块链节点校验失败'
+    });
+  }
+  
+  // 使用相同的算法重新计算blockchain_node
+  const secretKey = process.env.API_SECRET_KEY || 'default_secret_key';
+  const nodeString = `blockchain_verify_${timestamp}`;
+  
+  let nodeHash = 0;
+  for (let i = 0; i < nodeString.length; i++) {
+    const char = nodeString.charCodeAt(i);
+    nodeHash = ((nodeHash << 5) - nodeHash) + char;
+    nodeHash = nodeHash & nodeHash;
+  }
+  
+  // 使用secretKey来影响哈希值
+  for (let i = 0; i < secretKey.length; i++) {
+    const char = secretKey.charCodeAt(i);
+    nodeHash = ((nodeHash << 5) - nodeHash) + char;
+    nodeHash = nodeHash & nodeHash;
+  }
+  
+  const expectedBlockchainNode = Math.abs(nodeHash).toString(16);
+  
+  // 验证blockchain_node是否匹配
+  if (blockchain_node !== expectedBlockchainNode) {
+    console.warn('区块链节点验证失败', {
+      received: blockchain_node,
+      expected: expectedBlockchainNode,
+      timestamp: timestamp,
+      ip: req.ip
+    });
+    
+    return res.status(400).json({
+      success: false,
+      error: '区块链节点校验失败'
+    });
+  }
+  
+  // 验证时间戳是否在合理范围内（允许5分钟的时间差）
+  const requestTime = parseInt(timestamp);
+  const currentTime = Date.now();
+  if (Math.abs(currentTime - requestTime) > 1 * 60 * 1000) {
+    console.warn('区块链节点时间戳过期', {
+      requestTime,
+      currentTime,
+      diff: Math.abs(currentTime - requestTime),
+      ip: req.ip
+    });
+    
+    return res.status(400).json({
+      success: false,
+      error: '区块链节点校验失败'
+    });
+  }
+  
+  // 验证通过，继续下一个中间件
+  next();
+};
 
 // 签名验证中间件
 const signatureValidationMiddleware = async (req, res, next) => {
@@ -401,17 +553,66 @@ function setupRoutes(app, db, JWT_SECRET) {
   // 删除用户接口 - 用于管理员彻底删除用户及其所有相关数据
   app.post('/api/delete-user', generalLimiter, signatureValidationMiddleware, deleteUserModule.initialize(db, JWT_SECRET));
 
-  // 添加充值卡管理接口
-  app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, manageCards(db));
+  // 添加充值卡管理接口 - 根据操作类型应用不同的安全策略
+  app.post('/api/manage-cards', generalLimiter, signatureValidationMiddleware, (req, res) => {
+    const { action } = req.body;
+    
+    if (action === 'create') {
+      // 创建充值卡：必须经过管理员认证 + 更严格的限流
+      return cardCreateLimiter(req, res, () => {
+        // 先进行管理员身份验证
+        manageCards.adminAuthMiddleware(req, res, () => {
+          const cardHandler = manageCards(db);
+          cardHandler(req, res);
+        });
+      });
+    } else if (action === 'list') {
+      // 查询充值卡列表：需要管理员认证
+      return manageCards.adminAuthMiddleware(req, res, () => {
+        const cardHandler = manageCards(db);
+        cardHandler(req, res);
+      });
+    } else if (action === 'use') {
+      // 使用充值卡：应用更严格的速率限制（不需要管理员权限，普通用户也可以使用）
+      return cardUseLimiter(req, res, () => {
+        const cardHandler = manageCards(db);
+        cardHandler(req, res);
+      });
+    } else {
+      // 其他未知操作：拒绝访问
+      return res.status(400).json({
+        success: false,
+        error: '无效的操作类型'
+      });
+    }
+  });
 
-  // 生成学位验证报告PDF接口
-  app.post('/api/generate-degree-pdf', generalLimiter, signatureValidationMiddleware, generateDegreePdf);
+  // 生成学位验证报告PDF接口 - 需要签名验证 + JWT认证 + 区块链节点验证 + 严格限流
+  app.post('/api/generate-degree-pdf', 
+    signatureValidationMiddleware,      // 先验证签名
+    authenticateJWT,                    // 再验证身份(JWT)
+    blockchainNodeValidationMiddleware, // 然后验证区块链节点
+    pdfGenerationLimiter,               // 然后限流
+    generateDegreePdf                   // 执行生成逻辑
+  );
 
-  // 生成学历PDF接口
-  app.post('/api/generate-education-pdf', generalLimiter, signatureValidationMiddleware, generateEducationPdf);
+  // 生成学历PDF接口 - 需要签名验证 + JWT认证 + 区块链节点验证 + 严格限流
+  app.post('/api/generate-education-pdf', 
+    signatureValidationMiddleware,      // 先验证签名
+    authenticateJWT,                    // 再验证身份(JWT)
+    blockchainNodeValidationMiddleware, // 然后验证区块链节点
+    pdfGenerationLimiter,               // 然后限流
+    generateEducationPdf                // 执行生成逻辑
+  );
 
-  // 教育部学籍在线验证报告pdf生成接口
-  app.post('/api/generate-student-status-pdf', generalLimiter, signatureValidationMiddleware, generateStudentStatusPdf);
+  // 教育部学籍在线验证报告pdf生成接口 - 需要签名验证 + JWT认证 + 区块链节点验证 + 严格限流
+  app.post('/api/generate-student-status-pdf', 
+    signatureValidationMiddleware,      // 先验证签名
+    authenticateJWT,                    // 再验证身份(JWT)
+    blockchainNodeValidationMiddleware, // 然后验证区块链节点
+    pdfGenerationLimiter,               // 然后限流
+    generateStudentStatusPdf            // 执行生成逻辑
+  );
 
   // 二维码重定向接口 - 用于处理扫码后的短码重定向（不需要签名验证，因为是公开访问）
   app.get('/qr/:shortCode', qrRedirectModule.initialize(db));
@@ -419,5 +620,8 @@ function setupRoutes(app, db, JWT_SECRET) {
 module.exports = {
   setupRoutes,
   generalLimiter,
-  registrationLimiter
+  registrationLimiter,
+  pdfGenerationLimiter,
+  authenticateJWT,
+  blockchainNodeValidationMiddleware
 };

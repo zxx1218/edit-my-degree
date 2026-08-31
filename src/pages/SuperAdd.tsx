@@ -87,7 +87,7 @@ const SuperAdd = () => {
         setDistinctUsers(data.distinct_users);
       }
     } catch (error) {
-      console.error("获取登录统计时出错:", error);
+      // 忽略获取统计数据的错误
     } finally {
       setIsLoadingLoginCount(false);
     }
@@ -106,7 +106,7 @@ const SuperAdd = () => {
         setHourlyStats(data.hourlyStats || []);
       }
     } catch (error) {
-      console.error("获取每小时登录统计时出错:", error);
+      // 忽略获取每小时统计的错误
     } finally {
       setIsLoadingHourlyStats(false);
     }
@@ -128,7 +128,6 @@ const SuperAdd = () => {
         throw new Error(data?.error || "获取周/月登录统计失败");
       }
     } catch (error: any) {
-      console.error("获取周/月登录统计时出错:", error);
       toast({
         variant: "destructive",
         title: "获取统计失败",
@@ -149,7 +148,7 @@ const SuperAdd = () => {
         setHeatmapData(data.heatmap || []);
       }
     } catch (error) {
-      console.error("获取用户活跃度热力图时出错:", error);
+      // 忽略获取热力图的错误
     } finally {
       setIsLoadingHeatmap(false);
     }
@@ -167,7 +166,7 @@ const SuperAdd = () => {
         setTopUsersPeriod(days);
       }
     } catch (error) {
-      console.error("获取Top活跃用户时出错:", error);
+      // 忽略获取Top用户的错误
     } finally {
       setIsLoadingTopUsers(false);
     }
@@ -184,7 +183,7 @@ const SuperAdd = () => {
         setTodayLoginDetails(data.loginDetails || []);
       }
     } catch (error) {
-      console.error("获取今日登录详情时出错:", error);
+      // 忽略获取今日详情的错误
     } finally {
       setIsLoadingTodayLoginDetails(false);
     }
@@ -443,7 +442,6 @@ const SuperAdd = () => {
       setTimeout(() => setCopiedId(null), 2000);
       toast({ title: "已复制", description: "卡密已复制到剪贴板" });
     } catch (error) {
-      console.error("复制失败:", error);
       toast({ variant: "destructive", title: "复制失败", description: "请手动复制卡密" });
     }
   };
@@ -476,7 +474,6 @@ const SuperAdd = () => {
         throw new Error(data.error || "直接登录失败");
       }
     } catch (error: any) {
-      console.error("直接登录失败:", error);
       throw error;
     }
   };

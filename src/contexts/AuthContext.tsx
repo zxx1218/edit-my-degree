@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userInfo = JSON.parse(currentUserStr);
       }
     } catch (error) {
-      console.error("解析用户信息失败:", error);
+      // 忽略解析错误
     }
 
     // 检查是否为体验用户
@@ -72,23 +72,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (isTrialUser) {
       // 体验用户：显示确认弹窗
-      console.info("[会话管理] 体验用户会话已过期", {
-        timestamp: new Date().toISOString(),
-        reason: "session_timeout",
-        user_id: userInfo?.id || "unknown",
-        username: userInfo?.username || "unknown"
-      });
       
       // 显示体验卡提示弹窗
       setShowTrialDialog(true);
     } else {
       // 非体验用户或标记为空：保持原有逻辑
-      console.info("[会话管理] 用户会话已过期，自动退出", {
-        timestamp: new Date().toISOString(),
-        reason: "session_timeout",
-        user_id: userInfo?.id || "unknown",
-        username: userInfo?.username || "unknown"
-      });
       
       // 清除认证状态
       localStorage.removeItem(LOGIN_TIMESTAMP_KEY);

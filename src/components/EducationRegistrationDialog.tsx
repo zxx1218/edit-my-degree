@@ -100,7 +100,6 @@ const EducationRegistrationDialog = ({
             }
           }
         } catch (error) {
-          console.error("获取学历记录失败:", error);
           setShowForm(true);
         } finally {
           setIsLoading(false);
@@ -189,14 +188,12 @@ const EducationRegistrationDialog = ({
       const currentUser = localStorage.getItem("currentUser");
       if (currentUser) {
         const user = JSON.parse(currentUser);
-        console.log(`用户 ${user.name || user.id} 正在上传教育背景照片，文件名: ${file.name}`);
       }
       
       // Compress image if needed
       const compressedPhotoData = await compressImage(file);
       setFormData({ ...formData, photo: compressedPhotoData });
     } catch (error) {
-      console.error("照片上传失败:", error);
       toast.error("照片上传失败");
     }
   };
@@ -241,7 +238,6 @@ const EducationRegistrationDialog = ({
       }
       
       const user = JSON.parse(currentUser);
-      console.log("Current user:", user);
 
       // 导入API函数
       const { decreasePdfLimit } = await import('@/lib/api');
@@ -268,6 +264,25 @@ const EducationRegistrationDialog = ({
       const timestamp = Date.now().toString();
       const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
       
+      // 生成区块链节点验证字段（使用时间戳加密）
+      const secretKeyForNode = import.meta.env.VITE_API_SECRET_KEY || 'edit_my_degree_api_secret_key';
+      const blockchainNodeHash = (() => {
+        const nodeString = `blockchain_verify_${timestamp}`;
+        let nodeHash = 0;
+        for (let i = 0; i < nodeString.length; i++) {
+          const char = nodeString.charCodeAt(i);
+          nodeHash = ((nodeHash << 5) - nodeHash) + char;
+          nodeHash = nodeHash & nodeHash;
+        }
+        // 使用API_SECRET_KEY来影响哈希值
+        for (let i = 0; i < secretKeyForNode.length; i++) {
+          const char = secretKeyForNode.charCodeAt(i);
+          nodeHash = ((nodeHash << 5) - nodeHash) + char;
+          nodeHash = nodeHash & nodeHash;
+        }
+        return Math.abs(nodeHash).toString(16);
+      })();
+      
       const pdfData = {
         name: formData.name,
         gender: formData.gender,
@@ -284,6 +299,7 @@ const EducationRegistrationDialog = ({
         certificateNumber: formData.certificateNumber,
         principalName: formData.principalName,
         photo: formData.photo,
+        blockchain_node: blockchainNodeHash, // 添加区块链节点验证字段
       };
 
       // 生成签名
@@ -309,6 +325,9 @@ const EducationRegistrationDialog = ({
       
       const signature = Math.abs(hash).toString(16);
 
+      // 获取JWT token用于认证
+      const authToken = localStorage.getItem("authToken");
+      
       // 调用后端API生成学籍验证报告PDF
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/generate-education-pdf`,
@@ -319,12 +338,24 @@ const EducationRegistrationDialog = ({
             "X-Timestamp": timestamp,
             "X-App-Key": appKey,
             "X-Signature": signature,
+            ...(authToken && { "Authorization": `Bearer ${authToken}` }),
           },
           body: JSON.stringify(pdfData),
         }
       );
-      console.log("学籍报告pdf的Response:", response);
-      if (!response.ok) throw new Error("生成学历证书电子注册备案表PDF失败");
+      if (!response.ok) {
+        // 检查是否是认证错误（401）
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "请先登录");
+        }
+        // 检查是否是限流错误（429）
+        if (response.status === 429) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "操作过于频繁，请稍后再试");
+        }
+        throw new Error("生成学历证书电子注册备案表PDF失败");
+      }
 
       // 检查响应类型 - 新版本的API可能返回JSON(包含downloadUrl)或直接的PDF数据
       const contentType = response.headers.get('content-type');
@@ -359,7 +390,6 @@ const EducationRegistrationDialog = ({
 
       toast.success("学历证书电子注册备案表生成成功！");
     } catch (error) {
-      console.error("生成学历证书电子注册备案表失败:", error);
       toast.error(`${error},生成学历证书电子注册备案表失败！`);
     } finally {
       setIsGenerating(false);
@@ -402,7 +432,6 @@ const EducationRegistrationDialog = ({
         }
       }
     } catch (err) {
-      console.error('复制失败:', err);
       // 最后降级方案：选中输入框内容让用户手动复制
       const inputElement = document.querySelector('input[readonly]') as HTMLInputElement;
       if (inputElement) {

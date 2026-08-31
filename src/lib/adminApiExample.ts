@@ -183,7 +183,6 @@ export async function exampleAdminUpdateLogins() {
   // 1. 管理员登录
   const loginResult = await adminLogin('admin', 'admin_password');
   if (!loginResult.success) {
-    console.error('管理员登录失败:', loginResult.error);
     return;
   }
   
@@ -195,11 +194,6 @@ export async function exampleAdminUpdateLogins() {
     addLogins: 10
   });
   
-  if (updateResult.success) {
-    console.log('调整成功:', updateResult);
-  } else {
-    console.error('调整失败:', updateResult.error);
-  }
 }
 
 /**
@@ -213,9 +207,4 @@ export async function exampleUseRechargeCard() {
     cardId: cardId
   });
   
-  if (result.success) {
-    console.log('充值成功:', result.message);
-  } else {
-    console.error('充值失败:', result.error);
-  }
 }

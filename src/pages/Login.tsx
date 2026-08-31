@@ -94,7 +94,6 @@ const Login = () => {
         toast.error(response.error || "获取留言失败");
       }
     } catch (error) {
-      console.error("获取留言失败:", error);
       toast.error("获取留言失败，请稍后重试");
     } finally {
       setIsLoadingMessages(false);
@@ -121,7 +120,7 @@ const Login = () => {
         const currentUser = JSON.parse(currentUserStr);
         username = currentUser.username || currentUser.name || "匿名用户";
       } catch (error) {
-        console.error("解析用户信息失败:", error);
+        // 忽略解析错误
       }
     }
 
@@ -137,7 +136,6 @@ const Login = () => {
         toast.error(response.error || "留言失败");
       }
     } catch (error) {
-      console.error("留言失败:", error);
       toast.error("留言失败，请稍后重试");
     } finally {
       setIsSubmitting(false);
@@ -198,7 +196,6 @@ const Login = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "网络连接失败，请检查网络后重试";
       toast.error(errorMessage, { duration: 4000 });
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -240,7 +237,6 @@ const Login = () => {
       }
     } catch (error) {
       toast.error("密码修改失败，请重试", { duration: 3000 });
-      console.error("Change password error:", error);
     } finally {
       setIsChangingPassword(false);
     }
@@ -340,7 +336,6 @@ const Login = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "充值失败，请重试";
       toast.error(errorMessage, { duration: 4000 });
-      console.error("Recharge error:", error);
     } finally {
       setIsRecharging(false);
     }

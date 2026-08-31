@@ -40,16 +40,7 @@ const MessageBoard = () => {
     setIsLoadingMessages(true);
     try {
       const response = await getMessages(page, pageSize);
-      console.log('=== 获取留言响应 ===', response);
       if (response.success) {
-        console.log('=== 留言数据详情 ===', {
-          totalMessages: response.total,
-          currentPage: response.page,
-          totalPages: response.totalPages,
-          messagesCount: response.messages.length,
-          firstMessage: response.messages[0],
-          hasPriorityField: response.messages.length > 0 && 'priority' in response.messages[0]
-        });
         setMessages(response.messages);
         setCurrentPage(response.page);
         setTotalPages(response.totalPages);
@@ -89,7 +80,6 @@ const MessageBoard = () => {
       const currentUser = JSON.parse(currentUserStr);
       username = currentUser.username || currentUser.name || "匿名用户";
     } catch (error) {
-      console.error("解析用户信息失败:", error);
       toast.error("获取用户信息失败");
       return;
     }
@@ -106,7 +96,6 @@ const MessageBoard = () => {
         toast.error(response.error || "留言失败");
       }
     } catch (error) {
-      console.error("留言失败:", error);
       toast.error("留言失败，请稍后重试");
     } finally {
       setIsSubmitting(false);
@@ -146,7 +135,6 @@ const MessageBoard = () => {
         toast.error(response.error || "回复失败");
       }
     } catch (error) {
-      console.error("回复失败:", error);
       toast.error("回复失败，请稍后重试");
     } finally {
       setIsReplying(false);
@@ -169,7 +157,6 @@ const MessageBoard = () => {
         toast.error(response.error || "删除失败");
       }
     } catch (error) {
-      console.error("删除失败:", error);
       toast.error("删除失败，请稍后重试");
     }
   };
@@ -224,16 +211,6 @@ const MessageBoard = () => {
                 messages.map((message, index) => {
                   // 判断是否为置顶留言（priority === 1）
                   const isPinned = message.priority === 1;
-                  
-                  // 调试信息输出
-                  console.log(`留言 ${index + 1}:`, {
-                    id: message.id,
-                    username: message.username,
-                    priority: message.priority,
-                    priorityType: typeof message.priority,
-                    isPinned: isPinned,
-                    createdAt: message.created_at
-                  });
                   
                   return (
                     <div

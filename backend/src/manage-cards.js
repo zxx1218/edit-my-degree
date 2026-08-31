@@ -6,8 +6,86 @@ const initialize = (db) => {
 };
 
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
 const cryptoUtils = require('./crypto-utils');
 const { sendIllegalApiCallAlert } = require('./email-notifier');
+
+/**
+ * 管理员身份验证中间件
+ * 验证JWT token并确认用户具有管理员权限
+ */
+const adminAuthMiddleware = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.warn(`[安全防护] 充值卡管理接口缺少认证Token - IP: ${req.ip}`);
+      
+      // 发送非法调用告警邮件
+      sendIllegalApiCallAlert({
+        req,
+        reason: '充值卡管理缺少认证Token',
+        details: {
+          action: req.body.action,
+          missingField: 'Authorization Token'
+        }
+      }).catch(err => {
+        console.error('[邮件通知] 发送告警失败:', err.message);
+      });
+      
+      return res.status(401).json({
+        success: false,
+        error: '未提供认证令牌'
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    const JWT_SECRET = process.env.JWT_SECRET || 'default_jwt_secret';
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // 兼容 isAdmin 和 is_admin 两种命名
+    if (!decoded.isAdmin && !decoded.is_admin) {
+      console.warn(`[安全防护] 非管理员尝试访问充值卡管理接口 - 用户: ${decoded.username}, IP: ${req.ip}`);
+      
+      // 发送非法调用告警邮件
+      sendIllegalApiCallAlert({
+        req,
+        reason: '非管理员尝试访问充值卡管理接口',
+        details: {
+          username: decoded.username,
+          userId: decoded.id,
+          action: req.body.action
+        }
+      }).catch(err => {
+        console.error('[邮件通知] 发送告警失败:', err.message);
+      });
+      
+      return res.status(403).json({
+        success: false,
+        error: '权限不足，需要管理员权限'
+      });
+    }
+    
+    // 将解码后的用户信息附加到请求对象
+    req.adminUser = decoded;
+    
+    next();
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      console.warn(`[安全防护] 认证Token已过期 - IP: ${req.ip}`);
+      return res.status(401).json({
+        success: false,
+        error: '认证令牌已过期'
+      });
+    }
+    
+    console.error(`[安全防护] Token验证失败 - IP: ${req.ip}, 错误: ${error.message}`);
+    return res.status(401).json({
+      success: false,
+      error: '无效的认证令牌'
+    });
+  }
+};
 
 // 导出充值卡管理函数，需要传入db参数
 const manageCards = (db) => async (req, res) => {
@@ -26,9 +104,16 @@ const manageCards = (db) => async (req, res) => {
     const { action, type, values, count, cardId, username, SBverify } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
     const userAgent = req.get('User-Agent') || 'Unknown';
+    
+    // 获取管理员信息（如果已通过中间件验证）
+    const adminUser = req.adminUser;
+    const adminUsername = adminUser ? adminUser.username : 'unknown';
 
     switch (action) {
       case 'create':
+        // 【安全检查】记录管理员操作日志
+        console.safe(`[充值管理] 管理员创建充值卡 - 管理员: ${adminUsername}, 类型: ${type}, 面值: ${values}, 数量: ${count}, IP: ${ipAddress}`);
+        
         // 创建充值卡
         if (!type || !values || !count) {
           return res.status(400).json({
@@ -37,10 +122,46 @@ const manageCards = (db) => async (req, res) => {
           });
         }
 
-        if (count > 100) {
+        // 验证充值卡类型
+        if (type !== 'login' && type !== 'pdf') {
           return res.status(400).json({
             success: false,
-            error: '单次创建数量不能超过100张'
+            error: '无效的充值卡类型，只能是 login 或 pdf'
+          });
+        }
+
+        // 验证充值卡面值范围
+        const MAX_CARD_VALUE = 10000;
+        if (values <= 0 || values > MAX_CARD_VALUE) {
+          return res.status(400).json({
+            success: false,
+            error: `充值卡数值必须在1-${MAX_CARD_VALUE}之间`
+          });
+        }
+
+        // 更严格的数量限制
+        const MAX_CREATE_COUNT = 50;
+        if (count > MAX_CREATE_COUNT) {
+          console.warn(`[安全警告] 管理员尝试大批量创建充值卡 - 管理员: ${adminUsername}, 数量: ${count}, IP: ${ipAddress}`);
+          return res.status(400).json({
+            success: false,
+            error: `单次创建数量不能超过${MAX_CREATE_COUNT}张，如需更多请分批操作`
+          });
+        }
+
+        // 额外的安全检查：验证values和count是否为正整数
+        if (!Number.isInteger(values) || !Number.isInteger(count)) {
+          return res.status(400).json({
+            success: false,
+            error: '充值卡面值和数量必须为正整数'
+          });
+        }
+
+        // 防止负数或零值
+        if (values <= 0 || count <= 0) {
+          return res.status(400).json({
+            success: false,
+            error: '充值卡面值和数量必须为正数'
           });
         }
 
@@ -336,27 +457,17 @@ const manageCards = (db) => async (req, res) => {
         }
 
       default:
-        console.warn(`[安全警告] 无效的充值卡操作类型 - action: ${action}, IP: ${ipAddress}`);
-        
-        // 发送非法调用告警邮件
-        sendIllegalApiCallAlert({
-          req,
-          reason: '无效的操作类型',
-          details: {
-            action: action,
-            validActions: ['create', 'list', 'use']
-          }
-        }).catch(err => {
-          console.error('[邮件通知] 发送告警失败:', err.message);
-        });
-        
         return res.status(400).json({
           success: false,
           error: '无效的操作类型'
         });
     }
   } catch (err) {
-    console.error('充值卡管理接口出错:', err);
+    console.error('[充值管理] 操作异常:', err.message, { 
+      action: req.body?.action,
+      ip: req.ip,
+      stack: err.stack 
+    });
     res.status(500).json({
       success: false,
       error: '服务器内部错误'
@@ -367,3 +478,4 @@ const manageCards = (db) => async (req, res) => {
 // 导出initialize方法
 module.exports = manageCards;
 module.exports.initialize = initialize;
+module.exports.adminAuthMiddleware = adminAuthMiddleware;

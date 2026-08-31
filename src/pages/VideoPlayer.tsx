@@ -186,11 +186,10 @@ const VideoPlayer = () => {
                 className="w-full h-full object-contain"
                 poster=""
                 onError={(e) => {
-                  console.error('视频加载失败:', e);
                   toast.error("视频加载失败，请刷新页面重试");
                 }}
                 onLoadedData={() => {
-                  console.log('视频数据加载成功');
+                  // 视频数据加载成功
                 }}
               >
                 <source src={currentVideo.src} type="video/mp4" />

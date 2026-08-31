@@ -77,47 +77,54 @@ const TodayLoginList = ({ loginDetails, isLoading, onRefresh }: TodayLoginListPr
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {record.loginTimes.map((item, timeIndex) => (
-                        <span
-                          key={timeIndex}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md"
-                          style={{
-                            backgroundColor: item.type === 'admin_impersonate' 
-                              ? 'rgba(239, 68, 68, 0.1)' 
-                              : item.type === 'web_chsi'
-                              ? 'rgba(16, 185, 129, 0.1)'
-                              : 'rgba(59, 130, 246, 0.1)',
-                            color: item.type === 'admin_impersonate' 
-                              ? 'rgb(239, 68, 68)' 
-                              : item.type === 'web_chsi'
-                              ? 'rgb(16, 185, 129)'
-                              : 'rgb(59, 130, 246)'
-                          }}
-                        >
-                          {item.type === 'admin_impersonate' ? (
-                            <>
-                              <User className="h-3 w-3" />
-                              <span>{item.time}</span>
-                              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1">
-                                管理员代登
-                              </Badge>
-                            </>
-                          ) : item.type === 'web_chsi' ? (
-                            <>
-                              <Globe className="h-3 w-3" />
-                              <span>{item.time}</span>
-                              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1">
-                                网页版学信网
-                              </Badge>
-                            </>
-                          ) : (
-                            <>
-                              <Monitor className="h-3 w-3" />
-                              <span>{item.time}</span>
-                            </>
-                          )}
-                        </span>
-                      ))}
+                      {record.loginTimes && Array.isArray(record.loginTimes) && record.loginTimes.map((item, timeIndex) => {
+                        // 防御性检查：确保 item 是对象且有 time 属性
+                        if (!item || typeof item !== 'object') return null;
+                        const timeStr = typeof item.time === 'string' ? item.time : String(item.time || '');
+                        const itemType = item.type || 'normal';
+
+                        return (
+                          <span
+                            key={timeIndex}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md"
+                            style={{
+                              backgroundColor: itemType === 'admin_impersonate' 
+                                ? 'rgba(239, 68, 68, 0.1)' 
+                                : itemType === 'web_chsi'
+                                ? 'rgba(16, 185, 129, 0.1)'
+                                : 'rgba(59, 130, 246, 0.1)',
+                              color: itemType === 'admin_impersonate' 
+                                ? 'rgb(239, 68, 68)' 
+                                : itemType === 'web_chsi'
+                                ? 'rgb(16, 185, 129)'
+                                : 'rgb(59, 130, 246)'
+                            }}
+                          >
+                            {itemType === 'admin_impersonate' ? (
+                              <>
+                                <User className="h-3 w-3" />
+                                <span>{timeStr}</span>
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1">
+                                  管理员代登
+                                </Badge>
+                              </>
+                            ) : itemType === 'web_chsi' ? (
+                              <>
+                                <Globe className="h-3 w-3" />
+                                <span>{timeStr}</span>
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 ml-1">
+                                  网页版学信网
+                                </Badge>
+                              </>
+                            ) : (
+                              <>
+                                <Monitor className="h-3 w-3" />
+                                <span>{timeStr}</span>
+                              </>
+                            )}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

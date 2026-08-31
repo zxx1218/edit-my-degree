@@ -25,13 +25,6 @@ const EducationHeader = () => {
     // 检查是否是从 SuperAdd 页面代登录过来的
     const isImpersonated = localStorage.getItem("impersonatedByAdmin") === "true";
     
-    // 添加调试日志
-    console.log("[退出登录] 检查代登录标记:", {
-      isImpersonated,
-      impersonatedValue: localStorage.getItem("impersonatedByAdmin"),
-      currentUser: localStorage.getItem("currentUser")
-    });
-    
     // 清除用户登录状态
     localStorage.removeItem("currentUser");
     localStorage.removeItem("authToken");
@@ -41,11 +34,9 @@ const EducationHeader = () => {
     
     if (isImpersonated) {
       // 如果是代登录，返回 SuperAdd 页面
-      console.log("[退出登录] 跳转到 SuperAdd 页面");
       navigate("/superadd");
     } else {
       // 否则跳转到登录页面
-      console.log("[退出登录] 跳转到登录页面");
       navigate("/login");
     }
     

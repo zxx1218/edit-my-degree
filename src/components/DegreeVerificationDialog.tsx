@@ -111,7 +111,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, ExternalLink, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { getUserData } from "@/lib/api";
 import LoadingDialog from "./LoadingDialog";
 
@@ -180,7 +179,6 @@ const DegreeVerificationDialog = ({
             }
           }
         } catch (error) {
-          console.error("获取学位记录失败:", error);
           setShowForm(true);
         } finally {
           setIsLoading(false);
@@ -266,20 +264,12 @@ const DegreeVerificationDialog = ({
     }
 
     try {
-      // Log user info and file details
-      const currentUser = localStorage.getItem("currentUser");
-      if (currentUser) {
-        const user = JSON.parse(currentUser);
-        console.log(`用户 ${user.name || user.id} 正在上传学位验证照片，文件名: ${file.name}`);
-      }
-      
       // Import compressImage utility
       const { compressImage } = await import('@/lib/utils');
       // Compress image if needed
       const compressedPhotoData = await compressImage(file);
       setFormData({ ...formData, photo: compressedPhotoData });
     } catch (error) {
-      console.error("照片上传失败:", error);
       toast.error("照片上传失败，请重试");
     }
   };
@@ -315,7 +305,6 @@ const DegreeVerificationDialog = ({
       }
       
       const user = JSON.parse(currentUser);
-      console.log("Current user:", user);
 
       // 导入API函数
       const { decreasePdfLimit } = await import('@/lib/api');
@@ -338,6 +327,29 @@ const DegreeVerificationDialog = ({
       setShowLoadingDialog(true);
       setIsGenerating(true);
 
+      // 准备签名参数
+      const timestamp = Date.now().toString();
+      const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
+      
+      // 生成区块链节点验证字段（使用时间戳加密）
+      const secretKeyForNode = import.meta.env.VITE_API_SECRET_KEY || 'edit_my_degree_api_secret_key';
+      const blockchainNodeHash = (() => {
+        const nodeString = `blockchain_verify_${timestamp}`;
+        let nodeHash = 0;
+        for (let i = 0; i < nodeString.length; i++) {
+          const char = nodeString.charCodeAt(i);
+          nodeHash = ((nodeHash << 5) - nodeHash) + char;
+          nodeHash = nodeHash & nodeHash;
+        }
+        // 使用API_SECRET_KEY来影响哈希值
+        for (let i = 0; i < secretKeyForNode.length; i++) {
+          const char = secretKeyForNode.charCodeAt(i);
+          nodeHash = ((nodeHash << 5) - nodeHash) + char;
+          nodeHash = nodeHash & nodeHash;
+        }
+        return Math.abs(nodeHash).toString(16);
+      })();
+
       const pdfData = {
         name: formData.name,
         gender: formData.gender,
@@ -348,12 +360,9 @@ const DegreeVerificationDialog = ({
         major: formData.major,
         certificateNumber: formData.certificateNumber,
         photo: formData.photo,
+        blockchain_node: blockchainNodeHash, // 添加区块链节点验证字段
       };
 
-      // 准备签名参数
-      const timestamp = Date.now().toString();
-      const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
-      
       // 生成签名
       const method = 'POST';
       const apiUrl = '/api/generate-degree-pdf';
@@ -377,6 +386,9 @@ const DegreeVerificationDialog = ({
       
       const signature = Math.abs(hash).toString(16);
 
+      // 获取JWT token用于认证
+      const authToken = localStorage.getItem("authToken");
+      
       // Call the PDF generation API
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/generate-degree-pdf`,
@@ -387,12 +399,23 @@ const DegreeVerificationDialog = ({
             "X-Timestamp": timestamp,
             "X-App-Key": appKey,
             "X-Signature": signature,
+            ...(authToken && { "Authorization": `Bearer ${authToken}` }),
           },
           body: JSON.stringify(pdfData),
         }
       );
 
       if (!response.ok) {
+        // 检查是否是认证错误（401）
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "请先登录");
+        }
+        // 检查是否是限流错误（429）
+        if (response.status === 429) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "操作过于频繁，请稍后再试");
+        }
         throw new Error("PDF生成失败");
       }
 
@@ -440,7 +463,6 @@ const DegreeVerificationDialog = ({
         photo: "",
       });
     } catch (error) {
-      console.error("学位在线验证报告PDF生成错误:", error);
       toast.error(`${error},学位在线验证报告PDF生成失败！`);
     } finally {
       setIsGenerating(false);
@@ -483,7 +505,6 @@ const DegreeVerificationDialog = ({
         }
       }
     } catch (err) {
-      console.error('复制失败:', err);
       // 最后降级方案：选中输入框内容让用户手动复制
       const inputElement = document.querySelector('input[readonly]') as HTMLInputElement;
       if (inputElement) {

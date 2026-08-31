@@ -61,7 +61,6 @@ const MessageList = ({ token }: MessageListProps) => {
         toast.error(response.error || "获取留言失败");
       }
     } catch (error) {
-      console.error("获取留言失败:", error);
       toast.error("获取留言失败，请稍后重试");
     } finally {
       setIsLoading(false);
@@ -101,7 +100,6 @@ const MessageList = ({ token }: MessageListProps) => {
         toast.error(response.error || "回复失败");
       }
     } catch (error) {
-      console.error("回复失败:", error);
       toast.error("回复失败，请稍后重试");
     } finally {
       setIsReplying(false);
@@ -124,7 +122,6 @@ const MessageList = ({ token }: MessageListProps) => {
         toast.error(response.error || "删除失败");
       }
     } catch (error) {
-      console.error("删除失败:", error);
       toast.error("删除失败，请稍后重试");
     }
   };
@@ -162,7 +159,6 @@ const MessageList = ({ token }: MessageListProps) => {
         toast.error(response.error || "设置优先级失败");
       }
     } catch (error) {
-      console.error("设置优先级失败:", error);
       toast.error("设置优先级失败，请稍后重试");
     } finally {
       setIsSettingPriority(false);

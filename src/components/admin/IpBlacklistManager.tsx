@@ -76,7 +76,6 @@ const IpBlacklistManager = ({ token }: IpBlacklistManagerProps) => {
         throw new Error(data.error || "获取黑名单列表失败");
       }
     } catch (error: any) {
-      console.error("获取黑名单列表时出错:", error);
       toast({
         variant: "destructive",
         title: "获取失败",

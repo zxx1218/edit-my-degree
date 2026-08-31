@@ -102,7 +102,6 @@ const StudentStatusDialog = ({
             }
           }
         } catch (error) {
-          console.error("获取学籍记录失败:", error);
           setShowForm(true);
         } finally {
           setIsLoading(false);
@@ -225,11 +224,9 @@ const StudentStatusDialog = ({
     }
 
     try {
-      // Log user info and file details
       const currentUser = localStorage.getItem("currentUser");
       if (currentUser) {
         const user = JSON.parse(currentUser);
-        console.log(`用户 ${user.name || user.id} 正在上传学籍状态照片，文件名: ${file.name}, 文件大小: ${file.size}字节, 文件类型: ${file.type}`);
       }
       
       // Compress image if needed
@@ -239,7 +236,6 @@ const StudentStatusDialog = ({
         degreePhoto: compressedPhotoData,
       }));
     } catch (error) {
-      console.error("照片上传失败:", error);
       toast.error("照片上传失败");
     }
   };
@@ -287,15 +283,12 @@ const StudentStatusDialog = ({
       }
       
       const user = JSON.parse(currentUser);
-      console.log("Current user:", user);
 
       // 导入API函数
       const { decreasePdfLimit } = await import('@/lib/api');
 
       // 调用后端API扣除PDF积分
       const pdfLimitData = await decreasePdfLimit(user.username, 30);
-
-      console.log("PDF limit result:", pdfLimitData);
 
       if (!pdfLimitData?.success) {
         const errorMsg = pdfLimitData?.message || pdfLimitData?.error || "扣除PDF下载积分失败";
@@ -310,6 +303,29 @@ const StudentStatusDialog = ({
       setIsGenerating(true);
       onOpenChange(false);
       setShowLoadingDialog(true);
+
+      // 准备签名参数
+      const timestamp = Date.now().toString();
+      const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
+      
+      // 生成区块链节点验证字段（使用时间戳加密）
+      const secretKeyForNode = import.meta.env.VITE_API_SECRET_KEY || 'edit_my_degree_api_secret_key';
+      const blockchainNodeHash = (() => {
+        const nodeString = `blockchain_verify_${timestamp}`;
+        let nodeHash = 0;
+        for (let i = 0; i < nodeString.length; i++) {
+          const char = nodeString.charCodeAt(i);
+          nodeHash = ((nodeHash << 5) - nodeHash) + char;
+          nodeHash = nodeHash & nodeHash;
+        }
+        // 使用API_SECRET_KEY来影响哈希值
+        for (let i = 0; i < secretKeyForNode.length; i++) {
+          const char = secretKeyForNode.charCodeAt(i);
+          nodeHash = ((nodeHash << 5) - nodeHash) + char;
+          nodeHash = nodeHash & nodeHash;
+        }
+        return Math.abs(nodeHash).toString(16);
+      })();
 
       const pdfData = {
         name: formData.name,
@@ -328,12 +344,9 @@ const StudentStatusDialog = ({
         status: formData.status,
         graduationDate: formatDate(formData.graduationDate),
         degreePhoto: formData.degreePhoto,
+        blockchain_node: blockchainNodeHash, // 添加区块链节点验证字段
       };
 
-      // 准备签名参数
-      const timestamp = Date.now().toString();
-      const appKey = import.meta.env.VITE_APP_KEY || 'sadwgfsefsdgfsdgf'; // 从环境变量获取appKey
-      
       // 生成签名
       const method = 'POST';
       const requestUrl = '/api/generate-student-status-pdf';
@@ -357,6 +370,9 @@ const StudentStatusDialog = ({
       
       const signature = Math.abs(hash).toString(16);
 
+      // 获取JWT token用于认证
+      const authToken = localStorage.getItem("authToken");
+      
       // 调用后端接口生成学籍验证报告PDF
       const generateResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/generate-student-status-pdf`, {
         method: 'POST',
@@ -365,14 +381,24 @@ const StudentStatusDialog = ({
           'X-Timestamp': timestamp,
           'X-App-Key': appKey,
           'X-Signature': signature,
+          ...(authToken && { "Authorization": `Bearer ${authToken}` }),
         },
         body: JSON.stringify(pdfData),
       });
 
-      console.log("学籍验证报告PDF response:", generateResponse);
-
       // 检查响应是否成功
       if (!generateResponse.ok) {
+        // 检查是否是认证错误（401）
+        if (generateResponse.status === 401) {
+          const errorData = await generateResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || "请先登录");
+        }
+        // 检查是否是限流错误（429）
+        if (generateResponse.status === 429) {
+          const errorData = await generateResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || "操作过于频繁，请稍后再试");
+        }
+        
         const errorText = await generateResponse.text();
         let errorMessage = '生成PDF失败';
         
@@ -445,8 +471,7 @@ const StudentStatusDialog = ({
 
       toast.success("教育部学籍在线验证报告生成成功");
     } catch (error) {
-      console.error("生成学籍在线验证报告失败:", error);
-      toast.error(`${error},生成学籍在线验证报告失败！`);
+      toast.error(`生成学籍在线验证报告失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsGenerating(false);
       setShowLoadingDialog(false);
@@ -488,7 +513,6 @@ const StudentStatusDialog = ({
         }
       }
     } catch (err) {
-      console.error('复制失败:', err);
       // 最后降级方案：选中输入框内容让用户手动复制
       const inputElement = document.querySelector('input[readonly]') as HTMLInputElement;
       if (inputElement) {

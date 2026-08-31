@@ -214,7 +214,6 @@ const ExamDetail = () => {
           });
         }
       } catch (error) {
-        console.error("Error loading data:", error);
         toast({
           title: "加载失败",
           description: "无法加载数据，使用默认值",
@@ -279,13 +278,6 @@ const ExamDetail = () => {
     }
 
     try {
-      // Log user info and file details
-      const currentUser = localStorage.getItem("currentUser");
-      if (currentUser) {
-        const user = JSON.parse(currentUser);
-        console.log(`用户 ${user.name || user.id} 正在上传照片，文件名: ${file.name}`);
-      }
-      
       // Compress image if needed
       const compressedPhotoData = await compressImage(file);
       setData({ ...data, photo: compressedPhotoData });
@@ -307,7 +299,6 @@ const ExamDetail = () => {
         });
       }
     } catch (error) {
-      console.error("Error processing image:", error);
       toast({
         title: "处理失败",
         description: "图片处理过程中出现错误，请重试",

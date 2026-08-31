@@ -242,9 +242,6 @@ export const getMessages = async (page: number = 1, pageSize: number = 10): Prom
 
   const data = await response.json();
   
-  // 调试信息
-  console.log('=== API原始响应 ===', data);
-  
   // 转换后端返回格式为前端期望格式
   if (data.success && data.data) {
     return {

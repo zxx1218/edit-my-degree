@@ -84,7 +84,6 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
         throw new Error(data.error || "获取PDF生成记录失败");
       }
     } catch (error: any) {
-      console.error("获取PDF生成记录时出错:", error);
       toast({
         variant: "destructive",
         title: "获取失败",
@@ -178,21 +177,17 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
 
   // 打开PDF预览对话框（懒加载）
   const handlePreviewClick = async (record: PdfGenerationRecord) => {
-    console.log("尝试预览PDF，记录数据:", record);
-    
     setPreviewRecord(record);
     setIsPreviewDialogOpen(true);
     setPdfUrl(null); // 重置之前的URL
     
     // 只有点击后才从MinIO获取PDF
     if (record.full_url && record.full_url.startsWith('http')) {
-      console.log("找到有效的PDF链接:", record.full_url);
       setIsLoadingPdf(true);
       try {
         // 直接设置MinIO URL，浏览器会处理跨域和加载
         setPdfUrl(record.full_url);
       } catch (error) {
-        console.error("加载PDF失败:", error);
         toast({
           variant: "destructive",
           title: "加载失败",
@@ -202,11 +197,6 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
         setIsLoadingPdf(false);
       }
     } else {
-      console.warn("PDF链接无效或缺失", {
-        full_url: record.full_url,
-        short_code: record.short_code,
-        id: record.id
-      });
       
       // 提供更详细的错误信息
       let errorMessage = "该记录没有有效的PDF链接";

@@ -111,7 +111,6 @@ const EducationBackground = () => {
           setExamRecords(data.exam || []);
         }
       } catch (error) {
-        console.error("Error loading user data:", error);
         toast.error("加载数据失败");
       } finally {
         setLoading(false);

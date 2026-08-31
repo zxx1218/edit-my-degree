@@ -36,11 +36,8 @@ const VerificationReport = () => {
   const handleReportClick = (type: 'studentStatus' | 'degree' | 'education') => {
     // Get current PDF limit before showing confirmation dialog
     const currentUserStr = localStorage.getItem("currentUser");
-    console.log("currentUser from localStorage:", currentUserStr);
     if (currentUserStr) {
       const currentUser = JSON.parse(currentUserStr);
-      console.log("currentUser object:", currentUser);
-      console.log("pdf_limit value:", currentUser.pdf_limit);
       setCurrentPdfLimit(currentUser.pdf_limit || 0);
     }
     
@@ -162,7 +159,6 @@ const VerificationReport = () => {
       }
     } catch (error) {
       setIsLoadingData(false);
-      console.error("访问页面失败:", error);
       toast.error("访问失败，请稍后重试");
     }
   };

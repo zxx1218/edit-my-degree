@@ -52,7 +52,6 @@ const QueryLogins = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "网络连接失败，请检查网络后重试";
       toast.error(errorMessage, { duration: 4000 });
-      console.error("Query error:", error);
     } finally {
       setIsLoading(false);
     }
