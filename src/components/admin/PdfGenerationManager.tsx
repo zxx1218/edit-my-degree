@@ -261,7 +261,9 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
   const handleDownloadPdf = () => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
-      toast.success("正在打开下载...");
+      toast({
+        title: "正在打开下载...",
+      });
     }
   };
 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -392,10 +392,12 @@ const UserList = ({
           <>
             <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
               <div className="space-y-2">
-                {paginatedUsers.map((user, index) => (
+                {paginatedUsers.map((user, index) => {
+                  const isTodayRegistered = user.created_at && new Date(user.created_at).toDateString() === new Date().toDateString();
+                  return (
                   <div
                     key={user.id}
-                    className="flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3"
+                    className={`flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3 ${isTodayRegistered ? 'ring-2 ring-green-500/50 ring-offset-2' : ''}`}
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
                     {/* 用户基本信息 */}
@@ -404,6 +406,12 @@ const UserList = ({
                         <span className="font-bold text-base sm:text-lg truncate cursor-pointer hover:text-primary transition-colors" onClick={() => copyToClipboard(user.username, `username-${user.id}`)} title="点击复制用户名">
                           {user.username}
                         </span>
+                        {isTodayRegistered && (
+                          <Badge className="bg-green-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
+                            <Sparkles className="h-3 w-3" />
+                            今日新注册
+                          </Badge>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -505,7 +513,8 @@ const UserList = ({
                       </Button>
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
             </div>
 

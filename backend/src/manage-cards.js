@@ -361,6 +361,15 @@ const manageCards = (db) => async (req, res) => {
               'UPDATE users SET remaining_logins = remaining_logins + ? WHERE id = ?',
               [cardInfo.values, user.id]
             );
+
+            // 【特殊逻辑】如果充值的是 9999999 次登录卡密，自动赠送 30 PDF 积分
+            if (cardInfo.values === 9999999) {
+              await connection.execute(
+                'UPDATE users SET pdf_limit = pdf_limit + 30 WHERE id = ?',
+                [user.id]
+              );
+              console.info(`[充值管理] 触发永久卡赠送逻辑 - 用户 ${username} 自动获得 30 PDF 积分`);
+            }
             
             // 根据充值规则更新is_trial_user字段
             let trialUserUpdate = null;

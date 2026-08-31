@@ -44,6 +44,7 @@ const Purchase = () => {
   
   // 从环境变量读取配置，提供默认值以防未配置
   const qqGroup = import.meta.env.VITE_QQ_GROUP || "1034981273";
+  const fullGroupNumber = "1034981273"; // 一群（已满员）
   const card_login = import.meta.env.VITE_CARD_LOGIN_URL || "http://4ox.cn/bq3kuv";
   const card_PDF = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
 
@@ -101,7 +102,7 @@ const Purchase = () => {
       price: "¥29",
       description: "获取一张30次登录次数充值卡密",
       popular: true,
-      features: ["数据永久存储", "支持信息任意修改", "购买人数最多", "支持多设备同时登录"],
+      features: ["数据永久存储", "支持信息任意修改", "购买人数最多", "支持多人多设备同时登录"],
       icon: Crown,
       gradient: "from-purple-500 to-pink-500",
     },
@@ -111,7 +112,7 @@ const Purchase = () => {
       price: "¥99",
       description: "获取一张不限制登录次数的充值卡密，额外赠送30个PDF下载积分",
       popular: false,
-      features: ["数据永久存储", "支持信息任意修改", "不限制登录次数","额外赠送30个PDF下载积分", "支持多设备同时登录"],
+      features: ["数据永久存储", "支持信息任意修改", "不限制登录次数","额外赠送30个PDF下载积分", "支持多人多设备同时登录"],
       icon: Crown,
       gradient: "from-amber-500 to-orange-500",
     },
@@ -321,17 +322,20 @@ const Purchase = () => {
             <p className="text-sm text-muted-foreground text-center">
               如需<span className="font-medium text-foreground">合作/代理</span>或遇到任何问题，欢迎加入QQ群联系我们
             </p>
-            <div className="flex items-center justify-center gap-3 p-4 bg-background/80 backdrop-blur-sm rounded-lg border shadow-sm">
+            
+            {/* 二群（当前可用） */}
+            <div className="flex items-center justify-center gap-3 p-4 bg-background/90 backdrop-blur-sm rounded-lg border shadow-md border-primary/30 ring-1 ring-primary/10">
               <span className="text-lg font-mono font-semibold tracking-wide">{qqGroup}</span>
+              <Badge variant="outline" className="ml-2 text-green-600 border-green-500 bg-green-50">可加入</Badge>
               <Button
-                variant="outline"
+                variant="default"
                 size="sm"
                 onClick={handleCopyQQ}
-                className="gap-1.5 hover:bg-primary/10 transition-colors"
+                className="gap-1.5 shadow-sm"
               >
                 {copied ? (
                   <>
-                    <Check className="h-4 w-4 text-primary" />
+                    <Check className="h-4 w-4" />
                     已复制
                   </>
                 ) : (
@@ -341,6 +345,12 @@ const Purchase = () => {
                   </>
                 )}
               </Button>
+            </div>
+
+            {/* 一群（已满员 - 弱化显示） */}
+            <div className="flex items-center justify-center gap-2 py-1 opacity-60 hover:opacity-80 transition-opacity">
+              <span className="text-xs text-muted-foreground">注：一群 ({fullGroupNumber})</span>
+              <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 border-red-200 text-red-500 bg-red-50/50">已满</Badge>
             </div>
           </CardContent>
         </Card>
