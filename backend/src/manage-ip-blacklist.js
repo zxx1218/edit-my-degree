@@ -39,7 +39,7 @@ function initialize(db, JWT_SECRET) {
            TIMESTAMPDIFF(HOUR, NOW(), blocked_until) as hours_remaining 
            FROM ip_blacklist 
            WHERE blocked_until > NOW() 
-           ORDER BY blocked_until DESC`
+           ORDER BY created_at DESC`
         );
 
         return res.json({

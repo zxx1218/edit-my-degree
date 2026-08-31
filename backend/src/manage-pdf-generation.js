@@ -204,6 +204,48 @@ const managePdfGenerationHandler = async (req, res, database) => {
       });
     }
 
+    // 删除PDF生成记录
+    if (action === 'delete') {
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          error: '缺少必要的参数：id'
+        });
+      }
+
+      // 先查询记录信息用于日志
+      const [records] = await database.execute(
+        'SELECT short_code, pdf_type FROM qr_code_urls WHERE id = ?',
+        [id]
+      );
+
+      if (records.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: '记录不存在'
+        });
+      }
+
+      const recordInfo = records[0];
+
+      // 删除记录
+      await database.execute(
+        'DELETE FROM qr_code_urls WHERE id = ?',
+        [id]
+      );
+
+      logger.info(`✅ 已删除PDF生成记录`, {
+        id,
+        shortCode: recordInfo.short_code,
+        pdfType: recordInfo.pdf_type
+      });
+
+      return res.json({
+        success: true,
+        message: 'PDF生成记录已删除'
+      });
+    }
+
     return res.status(400).json({
       success: false,
       error: '无效的操作类型'

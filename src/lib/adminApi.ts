@@ -458,6 +458,22 @@ export const managePdfGeneration = async (token: string, body: any) => {
   return await response.json();
 };
 
+// 删除PDF生成记录
+export const deletePdfGenerationRecord = async (token: string, id: string) => {
+  const url = '/api/manage-pdf-generation';
+  const options = createSignedRequestOptions('POST', url, { action: 'delete', id });
+  
+  const response = await fetch(`${API_BASE_URL}/manage-pdf-generation`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
 // 管理员直接登录用户（不消耗积分）
 export const adminImpersonateLogin = async (token: string, username: string) => {
   const url = '/api/admin-impersonate-login';
