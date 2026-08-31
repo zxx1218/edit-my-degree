@@ -69,11 +69,6 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
   const [previewRecord, setPreviewRecord] = useState<PdfGenerationRecord | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
-  
-  // 删除确认对话框状态
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<PdfGenerationRecord | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const { toast } = useToast();
 
@@ -181,6 +176,35 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
     }
   };
 
+  // 删除记录
+  const handleDelete = async (id: string, shortCode: string) => {
+    if (!token) return;
+
+    if (!window.confirm(`确定要删除短码为 ${shortCode} 的PDF生成记录吗？此操作不可恢复。`)) {
+      return;
+    }
+
+    try {
+      const data = await adminApi.deletePdfGeneration(token, id);
+
+      if (data.success) {
+        toast({
+          title: "删除成功",
+          description: `已删除短码为 ${shortCode} 的记录`,
+        });
+        fetchRecords();
+      } else {
+        throw new Error(data.error || "删除失败");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "删除失败",
+        description: error.message,
+      });
+    }
+  };
+
   // 打开PDF预览对话框（懒加载）
   const handlePreviewClick = async (record: PdfGenerationRecord) => {
     setPreviewRecord(record);
@@ -237,46 +261,7 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
   const handleDownloadPdf = () => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
-      toast({
-        title: "正在打开下载...",
-        description: "PDF文件将在新窗口中打开",
-      });
-    }
-  };
-
-  // 打开删除确认对话框
-  const handleDeleteClick = (record: PdfGenerationRecord) => {
-    setRecordToDelete(record);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // 确认删除记录
-  const handleConfirmDelete = async () => {
-    if (!token || !recordToDelete) return;
-
-    setIsDeleting(true);
-    try {
-      const data = await adminApi.deletePdfGenerationRecord(token, recordToDelete.id);
-
-      if (data.success) {
-        toast({
-          title: "删除成功",
-          description: `已删除短码为 ${recordToDelete.short_code} 的PDF生成记录`,
-        });
-        setIsDeleteDialogOpen(false);
-        setRecordToDelete(null);
-        fetchRecords();
-      } else {
-        throw new Error(data.error || "删除失败");
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "删除失败",
-        description: error.message,
-      });
-    } finally {
-      setIsDeleting(false);
+      toast.success("正在打开下载...");
     }
   };
 
@@ -539,7 +524,7 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteClick(record)}
+                            onClick={() => handleDelete(record.id, record.short_code)}
                             className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                             title="删除记录"
                           >
@@ -721,87 +706,6 @@ const PdfGenerationManager = ({ token }: PdfGenerationManagerProps) => {
             <Button variant="outline" onClick={handleClosePreview} className="gap-2">
               <X className="h-4 w-4" />
               关闭
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 删除确认对话框 */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="h-5 w-5" />
-              确认删除记录
-            </DialogTitle>
-            <DialogDescription>
-              您确定要删除以下PDF生成记录吗？此操作不可撤销。
-            </DialogDescription>
-          </DialogHeader>
-          
-          {recordToDelete && (
-            <div className="space-y-4 py-4">
-              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">短码：</span>
-                  <code className="text-xs bg-background px-2 py-1 rounded font-mono">
-                    {recordToDelete.short_code}
-                  </code>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">PDF类型：</span>
-                  <Badge className={getTypeBadgeColor(recordToDelete.pdf_type)}>
-                    {recordToDelete.pdf_type_label}
-                  </Badge>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">用户：</span>
-                  <span className="font-medium">
-                    {recordToDelete.name || recordToDelete.username || '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">生成时间：</span>
-                  <span>{formatDateTime(recordToDelete.created_at)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">扫描次数：</span>
-                  <span className="font-medium">{recordToDelete.scan_count} 次</span>
-                </div>
-              </div>
-              
-              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  ⚠️ 删除后，该二维码将永久失效，用户无法再通过此二维码访问PDF文件。
-                </p>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
-              取消
-            </Button>
-            <Button 
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  删除中...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  确认删除
-                </>
-              )}
             </Button>
           </DialogFooter>
         </DialogContent>

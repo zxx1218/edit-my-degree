@@ -1,5 +1,18 @@
 const jwt = require('jsonwebtoken');
 const logger = require('./logger');
+const minio = require('minio');
+
+// 初始化 MinIO 客户端
+const endPoint = process.env.MINIO_ENDPOINT || 'cheerot.cn:19000';
+const [host, port] = endPoint.split(':');
+const minioClient = new minio.Client({
+  endPoint: host,
+  port: parseInt(port) || 19000,
+  useSSL: process.env.MINIO_USE_SSL === 'true' || false,
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY
+});
+const BUCKET_NAME = process.env.MINIO_BUCKET || 'editmydegree';
 
 let dbInstance = null;
 
@@ -213,9 +226,9 @@ const managePdfGenerationHandler = async (req, res, database) => {
         });
       }
 
-      // 先查询记录信息用于日志
+      // 先获取记录信息，以便提取MinIO文件名
       const [records] = await database.execute(
-        'SELECT short_code, pdf_type FROM qr_code_urls WHERE id = ?',
+        'SELECT full_url FROM qr_code_urls WHERE id = ?',
         [id]
       );
 
@@ -226,23 +239,50 @@ const managePdfGenerationHandler = async (req, res, database) => {
         });
       }
 
-      const recordInfo = records[0];
+      const record = records[0];
+      
+      // 尝试从 full_url 中提取 MinIO 对象名称并删除文件
+      try {
+        if (record.full_url && record.full_url.startsWith('http')) {
+          // URL 格式通常是: http://endpoint/bucket/objectName
+          // 我们需要提取 objectName
+          const urlObj = new URL(record.full_url);
+          const pathParts = urlObj.pathname.split('/').filter(p => p);
+          
+          // 假设路径结构是 /bucket/objectName
+          // 如果 pathParts 长度 >= 2，则 objectName 是从第二部分开始的剩余部分
+          if (pathParts.length >= 2) {
+            const objectName = pathParts.slice(1).join('/');
+            
+            // 检查 bucket 是否匹配（可选，增加安全性）
+            const urlBucket = pathParts[0];
+            if (urlBucket === BUCKET_NAME) {
+              logger.info(`🗑️ 准备从 MinIO 删除文件: ${objectName}`);
+              await minioClient.removeObject(BUCKET_NAME, objectName);
+              logger.info(`✅ MinIO 文件删除成功: ${objectName}`);
+            } else {
+              logger.warn(`⚠️ URL中的 bucket (${urlBucket}) 与配置的 bucket (${BUCKET_NAME}) 不匹配，跳过 MinIO 删除`);
+            }
+          }
+        }
+      } catch (minioError) {
+        logger.error(`❌ 从 MinIO 删除文件失败: ${minioError.message}`);
+        // 即使 MinIO 删除失败，我们仍然继续删除数据库记录，但会记录警告
+      }
 
-      // 删除记录
+      // 删除数据库记录
       await database.execute(
         'DELETE FROM qr_code_urls WHERE id = ?',
         [id]
       );
 
       logger.info(`✅ 已删除PDF生成记录`, {
-        id,
-        shortCode: recordInfo.short_code,
-        pdfType: recordInfo.pdf_type
+        id
       });
 
       return res.json({
         success: true,
-        message: 'PDF生成记录已删除'
+        message: 'PDF生成记录及关联文件已删除'
       });
     }
 
