@@ -131,11 +131,10 @@ const manageCards = (db) => async (req, res) => {
         }
 
         // 验证充值卡面值范围
-        const MAX_CARD_VALUE = 10000;
-        if (values <= 0 || values > MAX_CARD_VALUE) {
+        if (values <= 0) {
           return res.status(400).json({
             success: false,
-            error: `充值卡数值必须在1-${MAX_CARD_VALUE}之间`
+            error: '充值卡数值必须大于0'
           });
         }
 

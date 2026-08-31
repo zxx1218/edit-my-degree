@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, List, Loader2, Ticket, Copy, Check, Download, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { UserPlus, List, Loader2, Ticket, Copy, Check, Download, ChevronLeft, ChevronRight, Search, Gift } from "lucide-react";
 
 interface CardItem {
   id: string;
@@ -353,6 +353,9 @@ const CardManager = ({
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-sm truncate">{card.id}</span>
+                          {card.values === 9999999 && (
+                            <Gift className="h-4 w-4 text-pink-500 animate-pulse" />
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"

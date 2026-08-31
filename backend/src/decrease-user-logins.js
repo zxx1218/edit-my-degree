@@ -121,7 +121,7 @@ function initialize(db, jwtSecret) {
           // 查询IP地理位置
           let ipLocation = null;
           try {
-            const queryIPLocation = require('./ip-location-query');
+            const { queryIPLocation } = require('./ip-location');
             ipLocation = await queryIPLocation(ipAddress);
           } catch (err) {
             console.warn('[减少登录次数] IP地理位置查询失败:', err.message);

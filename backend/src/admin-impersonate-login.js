@@ -84,7 +84,7 @@ function initialize(db, jwtSecret) {
       // 记录管理员代登录日志到login_logs表
       let ipLocation = null;
       try {
-        const queryIPLocation = require('./ip-location-query');
+        const { queryIPLocation } = require('./ip-location');
         ipLocation = await queryIPLocation(ipAddress);
       } catch (err) {
         console.warn('[管理员代登录] IP地理位置查询失败:', err.message);
