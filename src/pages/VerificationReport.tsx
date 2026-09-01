@@ -94,7 +94,7 @@ const VerificationReport = () => {
 
       // 生成签名所需参数
       const timestamp = Date.now().toString();
-      const params = { username, decreaseLogins: 1 };
+      const params = { username, decreaseLogins: 1, loginType: 'web_chsi' };
       
       // 生成签名
       const method = 'POST';
@@ -268,7 +268,7 @@ const VerificationReport = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>报告制作确认</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p className="text-sm">1. 报告二维码支持任意设备扫码验证</p>
+              <p className="text-sm">1. 报告二维码支持扫码验证</p>
               <p className="text-sm">2. 制作此报告需要消耗 <span className="font-semibold text-foreground text-base">30个PDF积分</span></p>
             </AlertDialogDescription>
           </AlertDialogHeader>

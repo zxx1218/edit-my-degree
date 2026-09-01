@@ -22,10 +22,10 @@ const DegreeInfoCard = ({ record }: DegreeInfoCardProps) => {
     <div className="p-0 rounded-none shadow-sm bg-white border border-gray-200 flex-1 flex flex-col">
       {/* 标题栏 - 绿色背景 */}
       <div className="flex items-center justify-between mb-0">
-        <div className="bg-[#66cdab] text-white px-4 py-3 text-sm font-medium mt-2">
+        <div className="bg-[#66cdab] text-white px-4 py-3 text-sm font-medium mt-2 flex-1 mr-2" style={{ wordBreak: "break-word" }}>
           {[record.degreeType, record.school, record.major].filter(Boolean).join('-')}
         </div>
-        <button className="text-[#2c74c4] hover:underline flex items-center gap-1 mr-4 text-sm">
+        <button className="text-[#2c74c4] hover:underline flex items-center gap-1 mr-4 text-sm flex-shrink-0 whitespace-nowrap">
           <ShieldCheck className="w-4 h-4" />
           查看该学位的在线验证报告
         </button>

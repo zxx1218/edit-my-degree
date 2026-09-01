@@ -189,11 +189,11 @@ const EducationCard = ({ school, major, studyType, degreeLevel, variant, onEdit,
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-xl font-yahei" style={{ fontSize: "20.5px" }}>
+        <h3 className="text-xl font-yahei flex-1 mr-2" style={{ fontSize: "20.5px", wordBreak: "break-word" }}>
           {school}
         </h3>
         {variant !== "exam" && (
-          <div className={`${getBadgeClasses()} px-2 py-0.5 rounded-full text-sm font-normal flex items-center gap-2`}>
+          <div className={`${getBadgeClasses()} px-2 py-0.5 rounded-full text-sm font-normal flex items-center gap-2 flex-shrink-0 whitespace-nowrap`}>
             {/* 如果是自考本科，显示"本科" */}
             {degreeLevel === "自考本科" ? "本科" : degreeLevel}
           </div>
