@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, MessageSquare, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { loginUser, changePassword, getMessages, addMessage, type Message } from "@/lib/api";
+import { loginUser, changePassword, resetPassword, getMessages, addMessage, type Message } from "@/lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -33,7 +33,14 @@ const Login = () => {
     newPassword: "",
     confirmPassword: "",
   });
+  const [resetPasswordData, setResetPasswordData] = useState({
+    username: "",
+    cardId: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   // 充值相关状态
   const [loginRechargeData, setLoginRechargeData] = useState({ username: "", cardId: "" });
@@ -242,6 +249,59 @@ const Login = () => {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (resetPasswordData.newPassword !== resetPasswordData.confirmPassword) {
+      toast.error("两次输入的新密码不一致", { duration: 3000 });
+      return;
+    }
+
+    if (resetPasswordData.newPassword.length < 6) {
+      toast.error("新密码长度至少为6位", { duration: 3000 });
+      return;
+    }
+
+    if (!resetPasswordData.username.trim()) {
+      toast.error("请输入用户名", { duration: 1500 });
+      return;
+    }
+
+    if (!resetPasswordData.cardId.trim()) {
+      toast.error("请输入充值卡密", { duration: 1500 });
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    try {
+      const result = await resetPassword(
+        resetPasswordData.username,
+        resetPasswordData.cardId,
+        resetPasswordData.newPassword,
+        resetPasswordData.confirmPassword
+      );
+
+      if (result.error) {
+        toast.error(result.error, { duration: 3000 });
+      } else if (result.success) {
+        toast.success("密码重置成功，请使用新密码登录", { duration: 3000 });
+        setIsChangePasswordOpen(false);
+        setResetPasswordData({
+          username: "",
+          cardId: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "密码重置失败，请重试";
+      toast.error(errorMessage, { duration: 3000 });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const handleRecharge = async (type: "login" | "pdf") => {
     const data = type === "login" ? loginRechargeData : pdfRechargeData;
 
@@ -422,7 +482,7 @@ const Login = () => {
                   onClick={() => setIsChangePasswordOpen(true)}
                   className="text-xs text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center gap-1 hover:scale-105 transform px-2 py-1 rounded-md hover:bg-blue-50"
                 >
-                  <span>修改密码</span>
+                  <span>忘记/修改密码</span>
                 </button>
               </div>
               <Input
@@ -470,102 +530,214 @@ const Login = () => {
             </div>
           </form>
 
-          {/* 修改密码对话框 */}
+          {/* 忘记/修改密码对话框 */}
           <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
-            <DialogContent>
-              <form onSubmit={handleChangePassword}>
-                <DialogHeader>
-                  <DialogTitle>修改密码</DialogTitle>
-                  <DialogDescription>请输入您的账号信息和新密码</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="change-username">用户名</Label>
-                    <Input
-                      id="change-username"
-                      type="text"
-                      placeholder="请输入用户名"
-                      value={changePasswordData.username}
-                      onChange={(e) =>
-                        setChangePasswordData({
-                          ...changePasswordData,
-                          username: e.target.value,
-                        })
-                      }
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                      }}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="old-password">原密码</Label>
-                    <Input
-                      id="old-password"
-                      type="password"
-                      placeholder="请输入原密码"
-                      value={changePasswordData.oldPassword}
-                      onChange={(e) =>
-                        setChangePasswordData({
-                          ...changePasswordData,
-                          oldPassword: e.target.value,
-                        })
-                      }
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                      }}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">新密码</Label>
-                    <Input
-                      id="new-password"
-                      type="password"
-                      placeholder="请输入新密码（至少 6 位）"
-                      value={changePasswordData.newPassword}
-                      onChange={(e) =>
-                        setChangePasswordData({
-                          ...changePasswordData,
-                          newPassword: e.target.value,
-                        })
-                      }
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                      }}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">确认新密码</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="请再次输入新密码"
-                      value={changePasswordData.confirmPassword}
-                      onChange={(e) =>
-                        setChangePasswordData({
-                          ...changePasswordData,
-                          confirmPassword: e.target.value,
-                        })
-                      }
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
-                      }}
-                      required
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isChangingPassword}>
-                    {isChangingPassword ? "修改中..." : "确认修改"}
-                  </Button>
-                </DialogFooter>
-              </form>
+            <DialogContent className="max-w-md sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>忘记/修改密码</DialogTitle>
+                <DialogDescription>请选择操作类型</DialogDescription>
+              </DialogHeader>
+              <Tabs defaultValue="change" className="w-full mt-4">
+                <TabsList className="grid w-full grid-cols-2 h-12 p-1 bg-muted/50 rounded-lg">
+                  <TabsTrigger 
+                    value="change" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
+                  >
+                    🔑 修改密码
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="reset" 
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 ease-in-out font-medium data-[state=active]:scale-[1.02]"
+                  >
+                    🔄 忘记密码
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* 修改密码选项卡 */}
+                <TabsContent value="change" className="space-y-4 pt-4 animate-fade-in">
+                  <form onSubmit={handleChangePassword}>
+                    <div className="space-y-4 py-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="change-username">用户名</Label>
+                        <Input
+                          id="change-username"
+                          type="text"
+                          placeholder="请输入用户名"
+                          value={changePasswordData.username}
+                          onChange={(e) =>
+                            setChangePasswordData({
+                              ...changePasswordData,
+                              username: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="old-password">原密码</Label>
+                        <Input
+                          id="old-password"
+                          type="password"
+                          placeholder="请输入原密码"
+                          value={changePasswordData.oldPassword}
+                          onChange={(e) =>
+                            setChangePasswordData({
+                              ...changePasswordData,
+                              oldPassword: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-password">新密码</Label>
+                        <Input
+                          id="new-password"
+                          type="password"
+                          placeholder="请输入新密码（至少 6 位）"
+                          value={changePasswordData.newPassword}
+                          onChange={(e) =>
+                            setChangePasswordData({
+                              ...changePasswordData,
+                              newPassword: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password">确认新密码</Label>
+                        <Input
+                          id="confirm-password"
+                          type="password"
+                          placeholder="请再次输入新密码"
+                          value={changePasswordData.confirmPassword}
+                          onChange={(e) =>
+                            setChangePasswordData({
+                              ...changePasswordData,
+                              confirmPassword: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled={isChangingPassword}>
+                        {isChangingPassword ? "修改中..." : "确认修改"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </TabsContent>
+
+                {/* 忘记密码选项卡 */}
+                <TabsContent value="reset" className="space-y-4 pt-4 animate-fade-in">
+                  <form onSubmit={handleResetPassword}>
+                    <div className="space-y-4 py-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-username">用户名</Label>
+                        <Input
+                          id="reset-username"
+                          type="text"
+                          placeholder="请输入您的用户名"
+                          value={resetPasswordData.username}
+                          onChange={(e) =>
+                            setResetPasswordData({
+                              ...resetPasswordData,
+                              username: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-card-id">充值卡密</Label>
+                        <Input
+                          id="reset-card-id"
+                          type="text"
+                          placeholder="请输入您使用过的充值卡密"
+                          value={resetPasswordData.cardId}
+                          onChange={(e) =>
+                            setResetPasswordData({
+                              ...resetPasswordData,
+                              cardId: e.target.value,
+                            })
+                          }
+                          required
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          💡 提示：请输入您账号下使用过的任意充值卡密（登录次数卡或PDF积分卡均可）
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-new-password">新密码</Label>
+                        <Input
+                          id="reset-new-password"
+                          type="password"
+                          placeholder="请输入新密码（至少 6 位）"
+                          value={resetPasswordData.newPassword}
+                          onChange={(e) =>
+                            setResetPasswordData({
+                              ...resetPasswordData,
+                              newPassword: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="reset-confirm-password">确认新密码</Label>
+                        <Input
+                          id="reset-confirm-password"
+                          type="password"
+                          placeholder="请再次输入新密码"
+                          value={resetPasswordData.confirmPassword}
+                          onChange={(e) =>
+                            setResetPasswordData({
+                              ...resetPasswordData,
+                              confirmPassword: e.target.value,
+                            })
+                          }
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            target.value = target.value.replace(/[\u4e00-\u9fa5]/g, '');
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled={isResettingPassword}>
+                        {isResettingPassword ? "重置中..." : "重置密码"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
 

@@ -170,6 +170,28 @@ export const changePassword = async (username: string, oldPassword: string, newP
   return data;
 };
 
+// 忘记密码重置API - 通过用户名和卡密验证重置密码
+export const resetPassword = async (username: string, cardId: string, newPassword: string, confirmPassword: string) => {
+  const options = createSignedRequestOptions('POST', '/api/reset-password', { 
+    username, 
+    cardId, 
+    newPassword, 
+    confirmPassword 
+  });
+  
+  const response = await fetch(`${API_BASE_URL}/reset-password`, {
+    ...options,
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || '密码重置失败');
+  }
+
+  return data;
+};
+
 // 减少 PDF 积分 API
 export const decreasePdfLimit = async (username: string, decreaseAmount: number) => {
   const options = createSignedRequestOptions('POST', '/api/decrease-pdf-limit', { username, decreaseAmount });

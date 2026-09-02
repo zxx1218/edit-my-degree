@@ -42,6 +42,7 @@ const getTodayLoginDetailsModule = require('../get-today-login-details');
 const getProvinceLoginStatsModule = require('../get-province-login-stats');
 const getUserCardHistoryModule = require('../get-user-card-history');
 const adminImpersonateLoginModule = require('../admin-impersonate-login');
+const resetPasswordModule = require('../reset-password');
 
 // 引入IP黑名单管理模块
 const manageIpBlacklistModule = require('../manage-ip-blacklist');
@@ -537,6 +538,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 管理员直接登录用户接口 - 用于管理员免积分登录到用户账号（不消耗登录次数）
   app.post('/api/admin-impersonate-login', generalLimiter, signatureValidationMiddleware, adminImpersonateLoginModule.initialize(db, JWT_SECRET));
+
+  // 忘记密码重置接口 - 用于用户通过卡密验证重置密码（无需原密码）
+  app.post('/api/reset-password', generalLimiter, signatureValidationMiddleware, resetPasswordModule.initialize(db));
 
   // IP黑名单管理接口 - 用于获取、更新和删除IP黑名单记录（管理员）
   app.post('/api/manage-ip-blacklist', generalLimiter, signatureValidationMiddleware, manageIpBlacklistModule.initialize(db, JWT_SECRET));
