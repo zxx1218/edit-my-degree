@@ -1,4 +1,8 @@
 const { logPasswordChange } = require('./operation-logger');
+const { sendSecurityAlert } = require('./email-notifier');
+
+// 简单的内存存储，用于记录失败次数（生产环境建议使用 Redis）
+const failedAttempts = new Map();
 
 /**
  * 忘记密码重置接口 - 通过用户名和卡密验证来重置密码
@@ -19,6 +23,34 @@ function initialize(db) {
         return res.status(400).json({
           success: false,
           error: '请提供所有必填字段'
+        });
+      }
+
+      // 检查失败次数限制
+      const failKey = `${ipAddress}_${username}`;
+      const attempts = failedAttempts.get(failKey) || 0;
+      
+      if (attempts >= 5) {
+        logPasswordChange(null, username, ipAddress, userAgent, 'failed', { 
+          reason: '尝试次数过多，已被临时锁定',
+          operation: 'reset_password'
+        });
+        
+        // 发送告警邮件
+        sendSecurityAlert({
+          subject: '频繁重置密码尝试警告',
+          message: `检测到针对用户 ${username} 的频繁密码重置尝试，可能正在遭受恶意攻击。`,
+          details: {
+            ipAddress,
+            userAgent,
+            attempts,
+            timestamp: new Date().toISOString()
+          }
+        }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+
+        return res.status(429).json({
+          success: false,
+          error: '操作过于频繁，请稍后再试或联系管理员'
         });
       }
 
@@ -51,6 +83,10 @@ function initialize(db) {
           operation: 'reset_password'
         });
         
+        // 即使不存在也增加计数，防止枚举用户名
+        failedAttempts.set(failKey, attempts + 1);
+        setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
+        
         return res.status(404).json({
           success: false,
           error: '用户名不存在'
@@ -77,6 +113,24 @@ function initialize(db) {
           cardId: cardIdTrimmed
         });
         
+        // 增加失败计数
+        failedAttempts.set(failKey, attempts + 1);
+        setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
+
+        // 如果达到阈值，发送告警
+        if (attempts + 1 >= 3) {
+           sendSecurityAlert({
+            subject: '密码重置验证失败次数过多',
+            message: `用户 ${username} 在短时间内多次输入错误的卡密进行密码重置。`,
+            details: {
+              ipAddress,
+              userAgent,
+              attempts: attempts + 1,
+              timestamp: new Date().toISOString()
+            }
+          }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+        }
+        
         return res.status(400).json({
           success: false,
           error: '卡密与用户不对应'
@@ -88,6 +142,9 @@ function initialize(db) {
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newPassword, targetUser.id]
       );
+
+      // 成功后清除失败记录
+      failedAttempts.delete(failKey);
 
       // 记录密码重置成功日志
       logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'success', { 

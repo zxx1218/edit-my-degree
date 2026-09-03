@@ -1,5 +1,9 @@
 const jwt = require('jsonwebtoken');
 const { logPasswordChange } = require('./operation-logger');
+const { sendSecurityAlert } = require('./email-notifier');
+
+// 简单的内存存储，用于记录失败次数（生产环境建议使用 Redis）
+const failedAttempts = new Map();
 
 /**
  * 修改密码接口
@@ -23,6 +27,33 @@ function initialize(db, jwtSecret) {
         });
       }
 
+      // 检查失败次数限制
+      const failKey = `${ipAddress}_${username}`;
+      const attempts = failedAttempts.get(failKey) || 0;
+      
+      if (attempts >= 5) {
+        logPasswordChange(null, username, ipAddress, userAgent, 'failed', { 
+          reason: '尝试次数过多，已被临时锁定'
+        });
+        
+        // 发送告警邮件
+        sendSecurityAlert({
+          subject: '频繁修改密码尝试警告',
+          message: `检测到针对用户 ${username} 的频繁密码修改尝试，可能正在遭受暴力破解。`,
+          details: {
+            ipAddress,
+            userAgent,
+            attempts,
+            timestamp: new Date().toISOString()
+          }
+        }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+
+        return res.status(429).json({
+          success: false,
+          error: '操作过于频繁，请稍后再试或联系管理员'
+        });
+      }
+
       // 查找目标用户
       const [users] = await db.execute(
         'SELECT * FROM users WHERE username = ?',
@@ -35,6 +66,10 @@ function initialize(db, jwtSecret) {
           reason: '用户不存在'
         });
         
+        // 即使不存在也增加计数，防止枚举用户名
+        failedAttempts.set(failKey, attempts + 1);
+        setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
+
         return res.status(404).json({
           success: false,
           error: '用户不存在'
@@ -97,6 +132,24 @@ function initialize(db, jwtSecret) {
             operator: operatorUsername
           });
           
+          // 增加失败计数
+          failedAttempts.set(failKey, attempts + 1);
+          setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
+
+          // 如果达到阈值，发送告警
+          if (attempts + 1 >= 3) {
+             sendSecurityAlert({
+              subject: '密码修改失败次数过多',
+              message: `用户 ${username} 在短时间内多次输入错误原密码。`,
+              details: {
+                ipAddress,
+                userAgent,
+                attempts: attempts + 1,
+                timestamp: new Date().toISOString()
+              }
+            }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+          }
+          
           return res.status(401).json({
             success: false,
             error: '原密码错误'
@@ -117,6 +170,24 @@ function initialize(db, jwtSecret) {
             reason: '原密码错误'
           });
           
+          // 增加失败计数
+          failedAttempts.set(failKey, attempts + 1);
+          setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
+
+           // 如果达到阈值，发送告警
+          if (attempts + 1 >= 3) {
+             sendSecurityAlert({
+              subject: '密码修改失败次数过多',
+              message: `用户 ${username} 在短时间内多次输入错误原密码。`,
+              details: {
+                ipAddress,
+                userAgent,
+                attempts: attempts + 1,
+                timestamp: new Date().toISOString()
+              }
+            }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+          }
+          
           return res.status(401).json({
             success: false,
             error: '原密码错误'
@@ -129,6 +200,9 @@ function initialize(db, jwtSecret) {
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newPassword, targetUser.id]
       );
+
+      // 成功后清除失败记录
+      failedAttempts.delete(failKey);
 
       // 记录密码更改成功日志
       logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'success', { 
