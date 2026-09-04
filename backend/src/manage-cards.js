@@ -139,7 +139,7 @@ const manageCards = (db) => async (req, res) => {
         }
 
         // 更严格的数量限制
-        const MAX_CREATE_COUNT = 50;
+        const MAX_CREATE_COUNT = 200;
         if (count > MAX_CREATE_COUNT) {
           console.warn(`[安全警告] 管理员尝试大批量创建充值卡 - 管理员: ${adminUsername}, 数量: ${count}, IP: ${ipAddress}`);
           return res.status(400).json({
@@ -324,9 +324,9 @@ const manageCards = (db) => async (req, res) => {
         );
 
         if (usersResult.length === 0) {
-          return res.status(404).json({
+          return res.status(400).json({
             success: false,
-            error: '待充值的用户不存在，请检查账号是否已注册！'
+            error: '用户名不存在，请先注册账号后再进行充值'
           });
         }
 

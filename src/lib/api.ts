@@ -24,6 +24,124 @@ export interface UserData {
 
 // 设置API基础URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
+/**
+ * 检查响应是否为黑名单拦截，如果是则显示友好提示
+ */
+function checkBlacklistResponse(response: Response, data: any): boolean {
+  // 检查是否是403状态码且包含黑名单相关错误信息
+  if (response.status === 403 && data.error) {
+    const errorMsg = data.error;
+    
+    // 检测黑名单相关的错误信息
+    if (errorMsg.includes('封禁') || errorMsg.includes('拉黑') || errorMsg.includes('黑名单')) {
+      // 创建或更新全局提示元素
+      showBlacklistAlert(errorMsg);
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * 显示黑名单封禁的全局提示
+ */
+function showBlacklistAlert(errorMessage: string) {
+  // 移除已存在的提示
+  const existingAlert = document.getElementById('blacklist-alert');
+  if (existingAlert) {
+    existingAlert.remove();
+  }
+  
+  // 创建新的提示元素
+  const alertDiv = document.createElement('div');
+  alertDiv.id = 'blacklist-alert';
+  alertDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 2px solid #ef4444;
+    border-radius: 12px;
+    padding: 16px 24px;
+    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    max-width: 90%;
+    width: 500px;
+    animation: slideDown 0.3s ease-out;
+  `;
+  
+  alertDiv.innerHTML = `
+    <div style="display: flex; align-items: start; gap: 12px;">
+      <div style="flex-shrink: 0; width: 24px; height: 24px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div style="flex: 1;">
+        <h3 style="margin: 0 0 8px 0; color: #991b1b; font-size: 16px; font-weight: 600;">⚠️ 访问受限</h3>
+        <p style="margin: 0 0 8px 0; color: #7f1d1d; font-size: 14px; line-height: 1.5;">${errorMessage}</p>
+        <p style="margin: 0; color: #991b1b; font-size: 13px; font-weight: 500;">💡 提示：由于请求过于频繁，您的IP已被临时封禁。请在15分钟后再试。</p>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; cursor: pointer; padding: 4px; color: #991b1b; font-size: 20px; line-height: 1;">×</button>
+    </div>
+  `;
+  
+  // 添加动画样式
+  if (!document.getElementById('blacklist-alert-style')) {
+    const style = document.createElement('style');
+    style.id = 'blacklist-alert-style';
+    style.textContent = `
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(alertDiv);
+  
+  // 10秒后自动移除
+  setTimeout(() => {
+    const alert = document.getElementById('blacklist-alert');
+    if (alert) {
+      alert.style.opacity = '0';
+      alert.style.transition = 'opacity 0.3s ease-out';
+      setTimeout(() => alert.remove(), 300);
+    }
+  }, 10000);
+}
+
+/**
+ * 封装fetch请求，自动处理黑名单响应
+ */
+async function fetchWithBlacklistCheck(url: string, options?: RequestInit): Promise<Response> {
+  const response = await fetch(url, options);
+  
+  // 克隆响应以便可以多次读取
+  const clonedResponse = response.clone();
+  
+  try {
+    const data = await clonedResponse.json();
+    checkBlacklistResponse(response, data);
+  } catch (e) {
+    // 如果不是JSON响应，忽略
+  }
+  
+  return response;
+}
+
 // 生成签名的辅助函数
 export function generateSignature(
   method: string,
@@ -87,7 +205,7 @@ function createSignedRequestOptions(method: string, url: string, body?: any) {
 // 登录API
 export const loginUser = async (username: string, password: string): Promise<LoginResponse> => {
   const options = createSignedRequestOptions('POST', '/api/auth', { username, password });
-  const response = await fetch(`${API_BASE_URL}/auth`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/auth`, options);
 
   const data = await response.json();
   
@@ -97,7 +215,7 @@ export const loginUser = async (username: string, password: string): Promise<Log
 // 注册API
 export const registerUser = async (username: string, password: string): Promise<LoginResponse> => {
   const options = createSignedRequestOptions('POST', '/api/register', { username, password });
-  const response = await fetch(`${API_BASE_URL}/register`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/register`, options);
 
   const data = await response.json();
   
@@ -107,7 +225,7 @@ export const registerUser = async (username: string, password: string): Promise<
 // 获取用户数据API
 export const getUserData = async (userId: string): Promise<UserData> => {
   const options = createSignedRequestOptions('POST', '/api/get-user-data', { userId });
-  const response = await fetch(`${API_BASE_URL}/get-user-data`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-user-data`, options);
 
   const data = await response.json();
   
@@ -132,7 +250,7 @@ export const updateData = async (
   id?: string
 ) => {
   const options = createSignedRequestOptions('POST', '/api/update-data', { table, action, data, id, userId });
-  const response = await fetch(`${API_BASE_URL}/update-data`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/update-data`, options);
 
   const result = await response.json();
   
@@ -156,7 +274,7 @@ export const changePassword = async (username: string, oldPassword: string, newP
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const response = await fetch(`${API_BASE_URL}/change-password`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/change-password`, {
     ...options,
     headers
   });
@@ -179,7 +297,7 @@ export const resetPassword = async (username: string, cardId: string, newPasswor
     confirmPassword 
   });
   
-  const response = await fetch(`${API_BASE_URL}/reset-password`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/reset-password`, {
     ...options,
   });
 
@@ -199,7 +317,7 @@ export const decreasePdfLimit = async (username: string, decreaseAmount: number)
   // 获取JWT token用于认证
   const authToken = localStorage.getItem("authToken");
   
-  const response = await fetch(`${API_BASE_URL}/decrease-pdf-limit`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/decrease-pdf-limit`, {
     ...options,
     headers: {
       ...options.headers,
@@ -230,7 +348,7 @@ export interface QueryUserLoginsPdfResponse {
 
 export const queryUserLoginsPdf = async (username: string, password: string): Promise<QueryUserLoginsPdfResponse> => {
   const options = createSignedRequestOptions('POST', '/api/query-user-logins-pdf', { username, password });
-  const response = await fetch(`${API_BASE_URL}/query-user-logins-pdf`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/query-user-logins-pdf`, options);
 
   const data = await response.json();
   
@@ -260,7 +378,7 @@ export interface GetMessagesResponse {
 
 export const getMessages = async (page: number = 1, pageSize: number = 10): Promise<GetMessagesResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { page, pageSize });
-  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
 
   const data = await response.json();
   
@@ -288,7 +406,7 @@ export interface AddMessageResponse {
 
 export const addMessage = async (content: string, username: string): Promise<AddMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/add-message', { content, username });
-  const response = await fetch(`${API_BASE_URL}/add-message`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/add-message`, options);
 
   const data = await response.json();
   
@@ -304,7 +422,7 @@ export interface ReplyMessageResponse {
 
 export const replyMessage = async (messageId: string, replyContent: string): Promise<ReplyMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'replyMessage', messageId, replyContent });
-  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
 
   const data = await response.json();
   
@@ -320,7 +438,7 @@ export interface DeleteMessageResponse {
 
 export const deleteMessage = async (messageId: string): Promise<DeleteMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'deleteMessage', messageId });
-  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
 
   const data = await response.json();
   
@@ -336,7 +454,7 @@ export interface SetPriorityResponse {
 
 export const setPriority = async (messageId: string, priority: number | null): Promise<SetPriorityResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'setPriority', messageId, priority });
-  const response = await fetch(`${API_BASE_URL}/get-messages`, options);
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
 
   const data = await response.json();
   

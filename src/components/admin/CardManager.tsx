@@ -65,7 +65,7 @@ const CardManager = ({
     const count = parseInt(newCardCount);
     if (!newCardType) return;
     if (isNaN(values) || values <= 0) return;
-    if (isNaN(count) || count <= 0 || count > 100) return;
+    if (isNaN(count) || count <= 0 || count > 200) return;
 
     setIsCreatingCards(true);
     try {
@@ -167,7 +167,7 @@ const CardManager = ({
                 <Ticket className="h-5 w-5 text-teal-600 dark:text-teal-400" />
                 批量创建充值卡
               </h3>
-              <p className="text-sm text-muted-foreground mb-4">批量生成充值卡密（最多100张）</p>
+              <p className="text-sm text-muted-foreground mb-4">批量生成充值卡密（最多200张）</p>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>卡类型</Label>
@@ -224,10 +224,10 @@ const CardManager = ({
                     id="card-count"
                     type="number"
                     min="1"
-                    max="100"
+                    max="200"
                     value={newCardCount}
                     onChange={(e) => setNewCardCount(e.target.value)}
-                    placeholder="请输入要生成的张数（1-100）"
+                    placeholder="请输入要生成的张数（1-200）"
                     className="h-10"
                   />
                 </div>

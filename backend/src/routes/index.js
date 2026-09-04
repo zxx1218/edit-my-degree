@@ -59,67 +59,12 @@ const { queryIPLocation, isChinaIP } = require('../ip-location');
 // 引入邮件通知模块
 const { sendSecurityAlert } = require('../email-notifier');
 
-// 从环境变量读取 IP 黑名单配置
-const IP_BLACKLIST = process.env.IP_BLACKLIST 
-  ? process.env.IP_BLACKLIST.split(',').map(ip => ip.trim()).filter(ip => ip)
-  : [];
-
 // IP封禁中间件 - 这个中间件使用了await方法，会让线程等待结果返回，会造成响应有延迟，后续需要考虑优化
 const ipBlacklistMiddleware = async (req, res, next) => {
   // 获取客户端 IP 地址
   const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
                   (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
                   req.headers['x-real-ip'] || 'unknown';
-  
-  // 检查 IP 是否在黑名单中
-  if (IP_BLACKLIST.includes(clientIp)) {
-    console.warn('被封禁的 IP 地址发来请求', {
-      ip: clientIp,
-      url: req.path,
-      method: req.method,
-      userAgent: req.get('User-Agent')
-    });
-    
-    // 发送安全告警邮件
-    sendSecurityAlert({
-      subject: '手动配置黑名单IP访问被拦截',
-      message: `系统检测到手动配置的黑名单IP ${clientIp} 尝试访问系统，已被拦截。`,
-      details: {
-        ipAddress: clientIp,
-        userAgent: req.get('User-Agent') || 'Unknown',
-        url: req.path,
-        method: req.method,
-        timestamp: new Date().toISOString(),
-        action: 'manual_blacklist_access_blocked'
-      }
-    }).catch(err => {
-      console.error('[路由] 发送手动黑名单IP访问告警邮件失败:', err.message);
-    });
-    
-    return res.status(403).json({
-      success: false,
-      error: '阿里云已将本机机器码拉黑，访问被拒绝！'
-    });
-  }
-  
-  // 检查是否为中国大陆地区 IP（本地测试 IP 除外）
-  // const localTestIPs = ['127.0.0.1', '::1', 'localhost'];
-  // if (!localTestIPs.includes(clientIp)) {
-  //   const isChina = await isChinaIP(clientIp);
-  //   if (!isChina) {
-  //     console.warn('非中国大陆地区 IP 访问被拒绝', {
-  //       ip: clientIp,
-  //       url: req.path,
-  //       method: req.method,
-  //       userAgent: req.get('User-Agent')
-  //     });
-      
-  //     return res.status(403).json({
-  //       success: false,
-  //       error: '傻逼玩意！AI 风控检测到访问异常！机器码已拉黑！'
-  //     });
-  //   }
-  // }
   
   next();
 };

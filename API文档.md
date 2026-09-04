@@ -1718,8 +1718,8 @@ GET /qr/ABC123
 ### 11.4 IP黑名单
 
 #### 工作机制
-1. **配置文件**: 从环境变量 `IP_BLACKLIST` 读取手动配置的黑名单IP
-2. **数据库存储**: `ip_blacklist` 表存储动态管理的黑名单
+1. **数据库存储**: `ip_blacklist` 表存储动态管理的黑名单（通过管理员界面或自动封禁）
+2. **频率限制**: 基于IP的请求频率检测，超过阈值自动封禁15分钟
 3. **中间件检查**: 每个请求首先检查IP是否在黑名单中
 4. **自动告警**: 检测到黑名单IP访问时发送邮件告警
 
@@ -1727,6 +1727,7 @@ GET /qr/ABC123
 - HTTP 403 Forbidden
 - 记录访问日志
 - 发送安全告警邮件
+- 前端显示友好提示："由于请求过于频繁，您的IP已被临时封禁。请在15分钟后再试。"
 
 ---
 
@@ -1934,9 +1935,6 @@ SESSION_DURATION_LEVEL_4=86400000  # 24小时
 # API签名验证
 API_SECRET_KEY=your-api-secret
 VALID_APP_KEYS=key1,key2,key3
-
-# IP黑名单
-IP_BLACKLIST=192.168.1.1,10.0.0.1
 
 # MinIO对象存储
 MINIO_ENDPOINT=cheerot.cn:19000

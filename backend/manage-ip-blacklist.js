@@ -11,7 +11,6 @@
 
 require('dotenv').config({ path: '../.env' }); // 加载项目根目录的.env文件
 const dbManager = require('./src/db-utils');
-const { loadManualBlacklist } = require('./src/ip-blacklist');
 
 // 初始化数据库连接
 async function initialize() {
@@ -108,14 +107,6 @@ async function listBlacklist() {
   }
 }
 
-/**
- * 重新加载手动配置的黑名单
- */
-async function reloadManualBlacklist() {
-  console.log('正在重新加载手动配置的黑名单...');
-  await loadManualBlacklist();
-  console.log('重新加载完成');
-}
 
 /**
  * 显示帮助信息
@@ -136,15 +127,12 @@ IP黑名单管理工具
   
   list                       列出所有活跃的黑名单IP
   
-  reload                     重新加载.env中的手动黑名单配置
-  
   help                       显示此帮助信息
 
 示例:
   node manage-ip-blacklist.js add 192.168.1.100 "暴力破解" 30
   node manage-ip-blacklist.js remove 192.168.1.100
   node manage-ip-blacklist.js list
-  node manage-ip-blacklist.js reload
   `);
 }
 
@@ -181,10 +169,6 @@ async function main() {
       
     case 'list':
       await listBlacklist();
-      break;
-      
-    case 'reload':
-      await reloadManualBlacklist();
       break;
       
     default:
