@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, List, Loader2, Ticket, Copy, Check, Download, ChevronLeft, ChevronRight, Search, Gift } from "lucide-react";
+import { UserPlus, List, Loader2, Ticket, Copy, Check, Download, ChevronLeft, ChevronRight, Search, Gift, MessageSquare } from "lucide-react";
 
 interface CardItem {
   id: string;
@@ -22,7 +22,7 @@ interface CardManagerProps {
   isFetchingCards: boolean;
   onFetchCards: () => void;
   onCreateCards: (type: string, values: number, count: number) => Promise<void>;
-  onCopyToClipboard: (text: string) => void;
+  onCopyToClipboard: (text: string, type?: "card" | "info") => void;
   copiedId: string | null;
 }
 
@@ -43,6 +43,7 @@ const CardManager = ({
   const [newCardCount, setNewCardCount] = useState("");
   const [isCreatingCards, setIsCreatingCards] = useState(false);
   const [exportCardType, setExportCardType] = useState<string>("all");
+  const [copiedInfoId, setCopiedInfoId] = useState<string | null>(null);
 
   const filteredCards = useMemo(() => {
     if (!cardSearchQuery.trim()) return cards;
@@ -123,6 +124,34 @@ const CardManager = ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  };
+
+  const handleCopyCardInfo = (card: CardItem) => {
+    const cardValue = card.id;
+    const isLoginCard = card.type === "login";
+    const actionType = isLoginCard ? "登录次数充值" : "PDF积分充值";
+    
+    // 从环境变量获取模板，如果不存在则使用默认模板
+    const template = import.meta.env.VITE_CARD_MESSAGE_TEMPLATE || 
+      `您好，您的卡密信息如下：
+----
+卡密：
+{cardId}
+----
+卡密使用教程：
+1. 在系统登录页中点击注册账号，注册一个您的个人账号
+2. 在系统登录页中点击“使用卡密”按钮后选择“{actionType}”，随后输入您刚注册好的账号以及上方卡密点击确认即可
+
+注意：
+任意位置均可修改，修改方式是长按，卡片信息也是长按触发更改和创建`;
+
+    let message = template
+      .replace(/{cardId}/g, cardValue)
+      .replace(/{actionType}/g, actionType);
+
+    onCopyToClipboard(message, "info");
+    setCopiedInfoId(card.id);
+    setTimeout(() => setCopiedInfoId(null), 2000);
   };
 
   return (
@@ -360,12 +389,25 @@ const CardManager = ({
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0"
-                            onClick={() => onCopyToClipboard(card.id)}
+                            onClick={() => onCopyToClipboard(card.id, "card")}
                           >
                             {copiedId === card.id ? (
                               <Check className="h-3.5 w-3.5 text-green-500" />
                             ) : (
                               <Copy className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleCopyCardInfo(card)}
+                            title="复制发卡信息"
+                          >
+                            {copiedInfoId === card.id ? (
+                              <Check className="h-3.5 w-3.5 text-green-500" />
+                            ) : (
+                              <MessageSquare className="h-3.5 w-3.5" />
                             )}
                           </Button>
                         </div>

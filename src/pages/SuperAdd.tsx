@@ -419,7 +419,7 @@ const SuperAdd = () => {
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (text: string, type: "card" | "info" = "card") => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
@@ -440,9 +440,14 @@ const SuperAdd = () => {
       }
       setCopiedId(text);
       setTimeout(() => setCopiedId(null), 2000);
-      toast({ title: "已复制", description: "卡密已复制到剪贴板" });
+      
+      if (type === "info") {
+        toast({ title: "已复制", description: "发卡信息已复制到剪贴板" });
+      } else {
+        toast({ title: "已复制", description: "卡密已复制到剪贴板" });
+      }
     } catch (error) {
-      toast({ variant: "destructive", title: "复制失败", description: "请手动复制卡密" });
+      toast({ variant: "destructive", title: "复制失败", description: "请手动复制内容" });
     }
   };
 
