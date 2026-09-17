@@ -208,6 +208,18 @@ async function createTables(db) {
       INDEX idx_short_code (short_code),
       INDEX idx_created_at (created_at)
     )
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS user_blacklist (
+      id VARCHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+      username VARCHAR(255) NOT NULL,
+      reason TEXT NOT NULL,
+      blocked_until TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      created_by VARCHAR(255),
+      INDEX idx_username (username),
+      INDEX idx_blocked_until (blocked_until)
+    )
     `
   ];
 

@@ -595,3 +595,76 @@ export const adminImpersonateLogin = async (token: string, username: string) => 
   
   return await response.json();
 };
+
+// 用户黑名单管理API
+
+// 获取所有未过期的用户黑名单记录
+export const getUserBlacklist = async (token: string) => {
+  const url = '/api/manage-user-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'list' });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 更新用户黑名单记录
+export const updateUserBlacklist = async (token: string, body: any) => {
+  const url = '/api/manage-user-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'update', ...body });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 删除用户黑名单记录
+export const deleteUserBlacklist = async (token: string, id: string) => {
+  const url = '/api/manage-user-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'delete', id });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 新增用户黑名单记录
+export const addUserBlacklist = async (token: string, body: {
+  username: string;
+  reason: string;
+  blockedUntil: string;
+}) => {
+  const url = '/api/manage-user-blacklist';
+  const options = createSignedRequestOptions('POST', url, { 
+    action: 'add', 
+    ...body 
+  });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};

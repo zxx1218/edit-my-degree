@@ -47,6 +47,9 @@ const resetPasswordModule = require('../reset-password');
 // 引入IP黑名单管理模块
 const manageIpBlacklistModule = require('../manage-ip-blacklist');
 
+// 引入用户黑名单管理模块
+const manageUserBlacklistModule = require('../manage-user-blacklist');
+
 // 引入PDF生成管理模块
 const managePdfGenerationModule = require('../manage-pdf-generation');
 
@@ -489,6 +492,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // IP黑名单管理接口 - 用于获取、更新和删除IP黑名单记录（管理员）
   app.post('/api/manage-ip-blacklist', generalLimiter, signatureValidationMiddleware, manageIpBlacklistModule.initialize(db, JWT_SECRET));
+
+  // 用户黑名单管理接口 - 用于获取、添加、更新和删除用户黑名单记录（管理员）
+  app.post('/api/manage-user-blacklist', generalLimiter, signatureValidationMiddleware, manageUserBlacklistModule.initialize(db, JWT_SECRET));
 
   // PDF生成管理接口 - 用于查看和管理PDF生成记录及二维码信息（管理员）
   app.post('/api/manage-pdf-generation', generalLimiter, signatureValidationMiddleware, managePdfGenerationModule.initialize(db, JWT_SECRET));

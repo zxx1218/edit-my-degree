@@ -8,3 +8,4 @@ export { default as ProvinceMap } from './ProvinceMap';
 export { default as StatsDashboard } from './StatsDashboard';
 export { default as IpBlacklistManager } from './IpBlacklistManager';
 export { default as PdfGenerationManager } from './PdfGenerationManager';
+export { default as UserBlacklistManager } from './UserBlacklistManager';

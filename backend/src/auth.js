@@ -4,6 +4,7 @@ const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
 const { sendSecurityAlert } = require('./email-notifier');
+const { isUserBlacklisted } = require('./manage-user-blacklist');
 
 /**
  * 初始化认证模块
@@ -76,6 +77,21 @@ function initialize(pool, jwtSecret) {
       }
       
       const user = rows[0];
+      
+      // 检查用户是否在黑名单中
+      const userBlacklisted = await isUserBlacklisted(username);
+      if (userBlacklisted) {
+        logLogin(user.id, username, ipAddress, userAgent, 'failed', { 
+          reason: '用户在黑名单中',
+          blacklistReason: userBlacklisted.reason,
+          blockedUntil: userBlacklisted.blocked_until
+        });
+        
+        return res.status(403).json({ 
+          error: '您的账号已被封禁',
+          message: `您的账号已被加入黑名单，原因：${userBlacklisted.reason}。封禁至：${new Date(userBlacklisted.blocked_until).toLocaleString('zh-CN')}`
+        });
+      }
       
       // 检查密码
       const isPasswordValid = password === user.password; // 简化处理，实际应该使用 bcrypt
