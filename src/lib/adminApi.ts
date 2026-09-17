@@ -600,10 +600,10 @@ export const adminImpersonateLogin = async (token: string, username: string) => 
 
 // 获取所有未过期的用户黑名单记录
 export const getUserBlacklist = async (token: string) => {
-  const url = '/api/manage-user-blacklist';
-  const options = createSignedRequestOptions('POST', url, { action: 'list' });
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'list', type: 'user' });
   
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-ip-blacklist`, {
     ...options,
     headers: {
       ...options.headers,
@@ -616,10 +616,10 @@ export const getUserBlacklist = async (token: string) => {
 
 // 更新用户黑名单记录
 export const updateUserBlacklist = async (token: string, body: any) => {
-  const url = '/api/manage-user-blacklist';
-  const options = createSignedRequestOptions('POST', url, { action: 'update', ...body });
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'update', type: 'user', ...body });
   
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-ip-blacklist`, {
     ...options,
     headers: {
       ...options.headers,
@@ -632,10 +632,10 @@ export const updateUserBlacklist = async (token: string, body: any) => {
 
 // 删除用户黑名单记录
 export const deleteUserBlacklist = async (token: string, id: string) => {
-  const url = '/api/manage-user-blacklist';
-  const options = createSignedRequestOptions('POST', url, { action: 'delete', id });
+  const url = '/api/manage-ip-blacklist';
+  const options = createSignedRequestOptions('POST', url, { action: 'delete', type: 'user', id });
   
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-ip-blacklist`, {
     ...options,
     headers: {
       ...options.headers,
@@ -652,13 +652,14 @@ export const addUserBlacklist = async (token: string, body: {
   reason: string;
   blockedUntil: string;
 }) => {
-  const url = '/api/manage-user-blacklist';
+  const url = '/api/manage-ip-blacklist';
   const options = createSignedRequestOptions('POST', url, { 
     action: 'add', 
+    type: 'user',
     ...body 
   });
   
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-user-blacklist`, {
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-ip-blacklist`, {
     ...options,
     headers: {
       ...options.headers,

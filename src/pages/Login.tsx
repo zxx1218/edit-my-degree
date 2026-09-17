@@ -175,12 +175,14 @@ const Login = () => {
     try {
       const result = await loginUser(username, password);
 
+      // 检查是否有错误（包括黑名单拦截）
       if (result.error) {
         // 特殊处理登录次数不足的情况
         if (result.error === "登录次数不足") {
           setShowLoginLimitDialog(true);
         } else {
-          toast.error(result.error, { duration: 4000 });
+          // 其他错误（包括黑名单）会通过全局提示显示，这里也显示toast作为补充
+          toast.error(result.error, { duration: 6000 });
         }
         setIsLoading(false);
         return;

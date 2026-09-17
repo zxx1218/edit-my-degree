@@ -3,8 +3,8 @@ const { logLogin, logAdminOperation } = require('./operation-logger');
 const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
+const { isUserBlacklisted } = require('./manage-ip-blacklist');
 const { sendSecurityAlert } = require('./email-notifier');
-const { isUserBlacklisted } = require('./manage-user-blacklist');
 
 /**
  * 初始化认证模块
