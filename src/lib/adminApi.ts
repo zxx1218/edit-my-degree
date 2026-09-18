@@ -1,4 +1,5 @@
 import { generateSignature } from "./api";
+import { toast } from "@/hooks/use-toast";
 
 // 设置API基础URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
@@ -8,12 +9,13 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
  */
 function checkBlacklistResponse(response: Response, data: any): boolean {
   // 检查是否是403状态码且包含黑名单相关错误信息
-  if (response.status === 403 && data.error) {
-    const errorMsg = data.error;
+  if (response.status === 403 && (data.error || data.message)) {
+    // 优先使用message字段（包含完整的reason和封禁时间信息）
+    const errorMsg = data.message || data.error;
     
     // 检测黑名单相关的错误信息
     if (errorMsg.includes('封禁') || errorMsg.includes('拉黑') || errorMsg.includes('黑名单')) {
-      // 创建或更新全局提示元素
+      // 使用toast显示封禁原因
       showBlacklistAlert(errorMsg);
       return true;
     }
@@ -23,82 +25,26 @@ function checkBlacklistResponse(response: Response, data: any): boolean {
 }
 
 /**
- * 显示黑名单封禁的全局提示
+ * 显示黑名单封禁的toast提示
  */
+let lastBlacklistMessage = '';
+let lastBlacklistTime = 0;
+const BLACKLIST_DEBOUNCE_TIME = 3000; // 3秒内不重复显示相同消息
+
 function showBlacklistAlert(errorMessage: string) {
-  // 移除已存在的提示
-  const existingAlert = document.getElementById('blacklist-alert');
-  if (existingAlert) {
-    existingAlert.remove();
+  const now = Date.now();
+  
+  // 如果相同的消息在3秒内已经显示过，则不再显示
+  if (errorMessage === lastBlacklistMessage && (now - lastBlacklistTime) < BLACKLIST_DEBOUNCE_TIME) {
+    return;
   }
   
-  // 创建新的提示元素
-  const alertDiv = document.createElement('div');
-  alertDiv.id = 'blacklist-alert';
-  alertDiv.style.cssText = `
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-    border: 2px solid #ef4444;
-    border-radius: 12px;
-    padding: 16px 24px;
-    box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-    max-width: 90%;
-    width: 500px;
-    animation: slideDown 0.3s ease-out;
-  `;
+  lastBlacklistMessage = errorMessage;
+  lastBlacklistTime = now;
   
-  alertDiv.innerHTML = `
-    <div style="display: flex; align-items: start; gap: 12px;">
-      <div style="flex-shrink: 0; width: 24px; height: 24px; background: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      </div>
-      <div style="flex: 1;">
-        <h3 style="margin: 0 0 8px 0; color: #991b1b; font-size: 16px; font-weight: 600;">⚠️ 访问受限</h3>
-        <p style="margin: 0 0 8px 0; color: #7f1d1d; font-size: 14px; line-height: 1.5;">${errorMessage}</p>
-        <p style="margin: 0; color: #991b1b; font-size: 13px; font-weight: 500;">💡 提示：由于请求过于频繁，您的IP已被临时封禁。请在15分钟后再试。</p>
-      </div>
-      <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; cursor: pointer; padding: 4px; color: #991b1b; font-size: 20px; line-height: 1;">×</button>
-    </div>
-  `;
-  
-  // 添加动画样式
-  if (!document.getElementById('blacklist-alert-style')) {
-    const style = document.createElement('style');
-    style.id = 'blacklist-alert-style';
-    style.textContent = `
-      @keyframes slideDown {
-        from {
-          opacity: 0;
-          transform: translateX(-50%) translateY(-20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(-50%) translateY(0);
-        }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-  
-  document.body.appendChild(alertDiv);
-  
-  // 10秒后自动移除
-  setTimeout(() => {
-    const alert = document.getElementById('blacklist-alert');
-    if (alert) {
-      alert.style.opacity = '0';
-      alert.style.transition = 'opacity 0.3s ease-out';
-      setTimeout(() => alert.remove(), 300);
-    }
-  }, 10000);
+  toast({
+    description: errorMessage,
+  });
 }
 
 /**

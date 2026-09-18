@@ -12,9 +12,8 @@ import {
   MessageList,
   TodayLoginList,
   ProvinceMap,
-  IpBlacklistManager,
+  BlacklistManager,
   PdfGenerationManager,
-  UserBlacklistManager,
 } from "@/components/admin";
 
 interface User {
@@ -606,11 +605,8 @@ const SuperAdd = () => {
         {/* 省份登录分布地图 */}
         <ProvinceMap token={token} />
 
-        {/* IP黑名单管理 */}
-        <IpBlacklistManager token={token} />
-
-        {/* 用户黑名单管理 */}
-        <UserBlacklistManager token={token} />
+        {/* 黑名单管理（IP和用户） */}
+        <BlacklistManager token={token} />
 
         {/* PDF生成管理 */}
         <PdfGenerationManager token={token} />

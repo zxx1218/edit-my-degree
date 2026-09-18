@@ -89,7 +89,9 @@ function initialize(pool, jwtSecret) {
         
         return res.status(403).json({ 
           error: '您的账号已被封禁',
-          message: `您的账号已被加入黑名单，原因：${userBlacklisted.reason}。封禁至：${new Date(userBlacklisted.blocked_until).toLocaleString('zh-CN')}`
+          message: `${userBlacklisted.reason}`,
+          isBlacklisted: true,
+          blockedUntil: userBlacklisted.blocked_until
         });
       }
       
