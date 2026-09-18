@@ -31,17 +31,14 @@ function initialize(pool, jwtSecret) {
       if (blacklisted) {
         logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
         
-        // 发送安全告警邮件
-        sendSecurityAlert({
-          subject: '黑名单IP尝试登录',
-          message: `系统检测到已被封禁的IP地址 ${ipAddress} 尝试登录系统，可能存在安全风险。`,
-          details: {
-            ipAddress: ipAddress,
-            userAgent: userAgent,
-            action: 'login_attempt',
-            timestamp: new Date().toISOString(),
-            reason: '黑名单IP尝试登录'
-          }
+        // 发送黑名单IP登录告警邮件（带IP冷却控制）
+        sendBlacklistUserLoginAlert({
+          ipAddress: ipAddress,
+          username: null,
+          reason: '黑名单IP尝试登录',
+          blockedUntil: null,
+          userAgent: userAgent,
+          blacklistType: 'ip'
         }).catch(err => {
           console.error('[认证] 发送黑名单IP登录告警邮件失败:', err.message);
         });

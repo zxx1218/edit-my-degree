@@ -172,32 +172,52 @@ async function sendIllegalApiCallAlert(requestData) {
  * 发送黑名单用户登录告警（带IP冷却控制）
  * @param {Object} params - 邮件参数
  * @param {string} params.ipAddress - IP地址
- * @param {string} params.username - 用户名
+ * @param {string} params.username - 用户名（可选，IP黑名单时为空）
  * @param {string} params.reason - 封禁原因
- * @param {string} params.blockedUntil - 封禁截止时间
+ * @param {string} params.blockedUntil - 封禁截止时间（可选）
  * @param {string} params.userAgent - User-Agent
+ * @param {string} params.blacklistType - 黑名单类型：'user' | 'ip'
  */
 async function sendBlacklistUserLoginAlert(params) {
-  const { ipAddress, username, reason, blockedUntil, userAgent } = params;
+  const { ipAddress, username, reason, blockedUntil, userAgent, blacklistType = 'user' } = params;
   
   // 检查IP是否在冷却期内
   if (isIpInCooldown(ipAddress)) {
-    console.info(`[邮件通知] IP ${ipAddress} 在冷却期内，跳过发送黑名单用户登录告警`);
+    console.info(`[邮件通知] IP ${ipAddress} 在冷却期内，跳过发送黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警`);
     return false;
   }
   
-  const subject = '黑名单用户尝试登录';
-  const message = `系统检测到已被加入黑名单的用户 "${username}" 从IP地址 ${ipAddress} 尝试登录系统。`;
+  let subject, message, details;
   
-  const details = {
-    username: username,
-    ipAddress: ipAddress,
-    reason: reason,
-    blockedUntil: blockedUntil,
-    userAgent: userAgent,
-    timestamp: new Date().toISOString(),
-    action: 'blacklisted_user_login_attempt'
-  };
+  if (blacklistType === 'user') {
+    // 用户黑名单
+    subject = '黑名单用户尝试登录';
+    message = `系统检测到已被加入黑名单的用户 "${username}" 从IP地址 ${ipAddress} 尝试登录系统。`;
+    
+    details = {
+      username: username,
+      ipAddress: ipAddress,
+      reason: reason,
+      blockedUntil: blockedUntil,
+      userAgent: userAgent,
+      timestamp: new Date().toISOString(),
+      action: 'blacklisted_user_login_attempt',
+      blacklistType: 'user'
+    };
+  } else {
+    // IP黑名单
+    subject = '黑名单IP尝试登录';
+    message = `系统检测到已被封禁的IP地址 ${ipAddress} 尝试登录系统，可能存在安全风险。`;
+    
+    details = {
+      ipAddress: ipAddress,
+      userAgent: userAgent,
+      reason: reason,
+      timestamp: new Date().toISOString(),
+      action: 'blacklisted_ip_login_attempt',
+      blacklistType: 'ip'
+    };
+  }
   
   const result = await sendSecurityAlert({
     subject,
