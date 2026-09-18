@@ -4,7 +4,7 @@ const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
 const { isUserBlacklisted } = require('./manage-ip-blacklist');
-const { sendSecurityAlert } = require('./email-notifier');
+const { sendSecurityAlert, sendBlacklistUserLoginAlert } = require('./email-notifier');
 
 /**
  * 初始化认证模块
@@ -85,6 +85,17 @@ function initialize(pool, jwtSecret) {
           reason: '用户在黑名单中',
           blacklistReason: userBlacklisted.reason,
           blockedUntil: userBlacklisted.blocked_until
+        });
+        
+        // 发送黑名单用户登录告警邮件（带IP冷却控制）
+        sendBlacklistUserLoginAlert({
+          ipAddress: ipAddress,
+          username: username,
+          reason: userBlacklisted.reason,
+          blockedUntil: userBlacklisted.blocked_until,
+          userAgent: userAgent
+        }).catch(err => {
+          console.error('[认证] 发送黑名单用户登录告警邮件失败:', err.message);
         });
         
         return res.status(403).json({ 

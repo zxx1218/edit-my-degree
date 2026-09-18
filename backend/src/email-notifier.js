@@ -9,6 +9,12 @@ require('dotenv').config({ path: '../.env' }); // 加载根目录的.env文件
 // 邮件传输器配置
 let transporter = null;
 
+// IP级别的告警冷却缓存（内存中）
+// 格式: { ip: timestamp }
+const ipAlertCache = new Map();
+// 从环境变量读取冷却时间，默认15分钟（900000毫秒）
+const ALERT_COOLDOWN = parseInt(process.env.BLACKLIST_LOGIN_ALERT_COOLDOWN || '900000', 10);
+
 /**
  * 初始化邮件传输器
  */
@@ -27,6 +33,37 @@ function initTransporter() {
   
   transporter = nodemailer.createTransport(smtpConfig);
   return transporter;
+}
+
+/**
+ * 检查IP是否在冷却期内
+ * @param {string} ipAddress - IP地址
+ * @returns {boolean} 是否在冷却期内
+ */
+function isIpInCooldown(ipAddress) {
+  const lastAlertTime = ipAlertCache.get(ipAddress);
+  if (!lastAlertTime) return false;
+  
+  const now = Date.now();
+  return (now - lastAlertTime) < ALERT_COOLDOWN;
+}
+
+/**
+ * 记录IP告警时间
+ * @param {string} ipAddress - IP地址
+ */
+function recordIpAlert(ipAddress) {
+  ipAlertCache.set(ipAddress, Date.now());
+  
+  // 定期清理过期的缓存项（每小时清理一次）
+  if (ipAlertCache.size > 100) {
+    const now = Date.now();
+    for (const [ip, timestamp] of ipAlertCache.entries()) {
+      if ((now - timestamp) > ALERT_COOLDOWN) {
+        ipAlertCache.delete(ip);
+      }
+    }
+  }
 }
 
 /**
@@ -131,7 +168,53 @@ async function sendIllegalApiCallAlert(requestData) {
   });
 }
 
+/**
+ * 发送黑名单用户登录告警（带IP冷却控制）
+ * @param {Object} params - 邮件参数
+ * @param {string} params.ipAddress - IP地址
+ * @param {string} params.username - 用户名
+ * @param {string} params.reason - 封禁原因
+ * @param {string} params.blockedUntil - 封禁截止时间
+ * @param {string} params.userAgent - User-Agent
+ */
+async function sendBlacklistUserLoginAlert(params) {
+  const { ipAddress, username, reason, blockedUntil, userAgent } = params;
+  
+  // 检查IP是否在冷却期内
+  if (isIpInCooldown(ipAddress)) {
+    console.info(`[邮件通知] IP ${ipAddress} 在冷却期内，跳过发送黑名单用户登录告警`);
+    return false;
+  }
+  
+  const subject = '黑名单用户尝试登录';
+  const message = `系统检测到已被加入黑名单的用户 "${username}" 从IP地址 ${ipAddress} 尝试登录系统。`;
+  
+  const details = {
+    username: username,
+    ipAddress: ipAddress,
+    reason: reason,
+    blockedUntil: blockedUntil,
+    userAgent: userAgent,
+    timestamp: new Date().toISOString(),
+    action: 'blacklisted_user_login_attempt'
+  };
+  
+  const result = await sendSecurityAlert({
+    subject,
+    message,
+    details
+  });
+  
+  // 如果发送成功，记录IP到冷却缓存
+  if (result) {
+    recordIpAlert(ipAddress);
+  }
+  
+  return result;
+}
+
 module.exports = {
   sendSecurityAlert,
-  sendIllegalApiCallAlert
+  sendIllegalApiCallAlert,
+  sendBlacklistUserLoginAlert
 };
