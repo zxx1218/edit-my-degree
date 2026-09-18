@@ -78,18 +78,23 @@ async function sendSecurityAlert(params) {
   
   // 检查是否启用邮件通知
   if (process.env.ENABLE_ERROR_EMAIL_NOTIFICATION !== 'true') {
-    console.log('[邮件通知] 邮件通知已禁用');
+    console.info('[邮件通知] ℹ️ 邮件通知已禁用（ENABLE_ERROR_EMAIL_NOTIFICATION != true）');
     return false;
   }
   
   // 检查SMTP配置
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[邮件通知] SMTP配置不完整，无法发送邮件');
+    console.warn('[邮件通知] ⚠️ SMTP配置不完整，无法发送邮件');
+    console.warn(`[邮件通知] 🔍 当前配置 - SMTP_USER: ${process.env.SMTP_USER ? '已设置' : '未设置'}, SMTP_PASS: ${process.env.SMTP_PASS ? '已设置' : '未设置'}`);
     return false;
   }
   
   try {
     const mailTransporter = initTransporter();
+    
+    console.info(`[邮件通知] 📤 正在连接SMTP服务器: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`);
+    console.info(`[邮件通知] 👤 发件人: ${process.env.EMAIL_FROM || process.env.SMTP_USER}`);
+    console.info(`[邮件通知] 📬 收件人: ${process.env.ERROR_NOTIFICATION_EMAIL}`);
     
     // 构建HTML邮件内容
     const htmlContent = `
@@ -130,12 +135,22 @@ async function sendSecurityAlert(params) {
       html: htmlContent
     };
     
+    console.info(`[邮件通知] 📨 正在发送邮件...`);
     const info = await mailTransporter.sendMail(mailOptions);
-    console.info(`[邮件通知] 安全告警邮件发送成功: ${info.messageId}`);
+    console.info(`[邮件通知] ✅ 安全告警邮件发送成功`);
+    console.info(`[邮件通知] 🆔 Message ID: ${info.messageId}`);
+    console.info(`[邮件通知] 📊 SMTP响应: ${info.response || 'N/A'}`);
     return true;
     
   } catch (error) {
-    console.error('[邮件通知] 邮件发送失败:', error.message);
+    console.error(`[邮件通知] ❌ 邮件发送失败`);
+    console.error(`[邮件通知] 🔴 错误类型: ${error.constructor.name}`);
+    console.error(`[邮件通知] 🔴 错误消息: ${error.message}`);
+    console.error(`[邮件通知] 🔴 错误代码: ${error.code || 'N/A'}`);
+    console.error(`[邮件通知] 🔴 错误命令: ${error.command || 'N/A'}`);
+    if (error.stack) {
+      console.error(`[邮件通知] 📚 堆栈跟踪:\n${error.stack}`);
+    }
     return false;
   }
 }
@@ -183,7 +198,11 @@ async function sendBlacklistUserLoginAlert(params) {
   
   // 检查IP是否在冷却期内
   if (isIpInCooldown(ipAddress)) {
-    console.info(`[邮件通知] IP ${ipAddress} 在冷却期内，跳过发送黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警`);
+    const lastAlertTime = ipAlertCache.get(ipAddress);
+    const remainingSeconds = Math.ceil((ALERT_COOLDOWN - (Date.now() - lastAlertTime)) / 1000);
+    console.info(`[邮件通知] ⏸️ IP ${ipAddress} 在冷却期内，跳过发送黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警`);
+    console.info(`[邮件通知] 📊 冷却剩余时间: ${remainingSeconds}秒 (${Math.floor(remainingSeconds / 60)}分${remainingSeconds % 60}秒)`);
+    console.info(`[邮件通知] 🔍 详细信息 - 用户名: ${username || 'N/A'}, 原因: ${reason}, 黑名单类型: ${blacklistType}`);
     return false;
   }
   
@@ -219,15 +238,25 @@ async function sendBlacklistUserLoginAlert(params) {
     };
   }
   
+  console.info(`[邮件通知] 📧 准备发送黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警邮件`);
+  console.info(`[邮件通知] 📋 收件人: ${process.env.ERROR_NOTIFICATION_EMAIL}`);
+  console.info(`[邮件通知] 📝 主题: ${subject}`);
+  console.info(`[邮件通知] 🔑 IP: ${ipAddress}, 用户名: ${username || 'N/A'}, 原因: ${reason}`);
+  
   const result = await sendSecurityAlert({
     subject,
     message,
     details
   });
   
-  // 如果发送成功，记录IP到冷却缓存
+  // 无论成功还是失败，都记录IP到冷却缓存，防止频繁重试
+  recordIpAlert(ipAddress);
+  
   if (result) {
-    recordIpAlert(ipAddress);
+    console.info(`[邮件通知] ✅ 黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警邮件发送成功`);
+    console.info(`[邮件通知] ⏱️ IP ${ipAddress} 已加入冷却缓存，下次可发送时间: ${new Date(Date.now() + ALERT_COOLDOWN).toLocaleString('zh-CN')}`);
+  } else {
+    console.warn(`[邮件通知] ❌ 黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警邮件发送失败，但IP已加入冷却缓存以避免重复尝试`);
   }
   
   return result;
