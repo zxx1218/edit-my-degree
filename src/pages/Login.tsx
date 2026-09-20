@@ -693,6 +693,17 @@ const Login = () => {
                         <p className="text-xs text-muted-foreground">
                           💡 提示：请输入您账号下使用过的任意充值卡密（登录次数卡或PDF积分卡均可）
                         </p>
+                        <div className="bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 rounded-r-lg p-3 mt-2">
+                          <div className="flex items-start gap-2">
+                            <span className="text-amber-600 dark:text-amber-400 font-bold text-sm">⚠️</span>
+                            <div className="flex-1">
+                              <p className="text-xs text-amber-800 dark:text-amber-200 font-medium">重要提醒</p>
+                              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                                每个账号仅能使用卡密改密<span className="font-bold">一次</span>，请谨慎操作。一旦使用后，将无法再次通过此方式重置密码。
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="reset-new-password">新密码</Label>

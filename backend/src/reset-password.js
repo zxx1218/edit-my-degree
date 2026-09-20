@@ -99,6 +99,26 @@ function initialize(db) {
       // 用户直接输入的是原始卡密ID，直接使用即可
       const cardIdTrimmed = cardId.trim();
 
+      // 检查用户是否已经使用过卡密改密功能
+      const [userDetails] = await db.execute(
+        'SELECT id, has_used_card_reset FROM users WHERE id = ?',
+        [targetUser.id]
+      );
+
+      if (userDetails.length > 0 && userDetails[0].has_used_card_reset === 1) {
+        // 用户已经使用过卡密改密
+        logPasswordChange(targetUser.id, username, ipAddress, userAgent, 'failed', { 
+          reason: '已使用过卡密改密功能',
+          operation: 'reset_password',
+          cardId: cardIdTrimmed
+        });
+        
+        return res.status(400).json({
+          success: false,
+          error: '您的账号已使用过卡密改密功能，无法再次使用'
+        });
+      }
+
       // 查询该用户是否使用过这个卡密
       const [cardRecords] = await db.execute(
         'SELECT id, type, `values` FROM cards WHERE id = ? AND used_by = ? AND used = TRUE',
@@ -137,9 +157,9 @@ function initialize(db) {
         });
       }
 
-      // 更新密码
+      // 更新密码和标记已使用卡密改密
       await db.execute(
-        'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        'UPDATE users SET password = ?, has_used_card_reset = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newPassword, targetUser.id]
       );
 
