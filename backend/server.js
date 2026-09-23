@@ -12,6 +12,10 @@ const { startCleanupTask } = require('./src/ip-blacklist');
 // 引入日志模块
 require('./src/logger');
 
+// 引入并初始化 Bark 通知模块
+const barkNotifier = require('./src/bark-notifier');
+barkNotifier.initialize();
+
 const app = express();
 app.set('trust proxy', 1); // 添加这一行以信任代理
 const PORT = process.env.PORT || 3001;

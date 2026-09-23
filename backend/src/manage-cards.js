@@ -3,12 +3,17 @@ let dbInstance = null;
 // 添加初始化方法
 const initialize = (db) => {
   dbInstance = db;
+  
+  // 初始化 Bark 通知模块
+  const barkNotifier = require('./bark-notifier');
+  barkNotifier.initialize();
 };
 
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const cryptoUtils = require('./crypto-utils');
 const { sendIllegalApiCallAlert } = require('./email-notifier');
+const barkNotifier = require('./bark-notifier');
 
 /**
  * 管理员身份验证中间件
@@ -445,6 +450,27 @@ const manageCards = (db) => async (req, res) => {
             }
           } else if (cardInfo.type === 'pdf') {
             message += `，用户 ${username} 当前PDF积分剩余 ${pdfRemaining} 分`;
+          }
+          
+          // 发送 Bark 通知（异步执行，不阻塞响应）
+          if (barkNotifier.isEnabled()) {
+            setTimeout(() => {
+              barkNotifier.sendRechargeNotification({
+                username,
+                cardType: cardInfo.type,
+                cardValues: cardInfo.values,
+                remainingLogins: loginRemaining,
+                remainingPdfLimit: pdfRemaining
+              }).then(result => {
+                if (result.success) {
+                  console.info(`[Bark通知] 充值通知已发送 - 用户: ${username}, 类型: ${cardInfo.type}`);
+                } else {
+                  console.error(`[Bark通知] 充值通知发送失败 - 用户: ${username}, 错误: ${result.error}`);
+                }
+              }).catch(err => {
+                console.error('[Bark通知] 通知发送异常:', err.message);
+              });
+            }, 0);
           }
           
           return res.json({

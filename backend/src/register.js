@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { logRegister, logOperation } = require('./operation-logger');
 const { sendSecurityAlert } = require('./email-notifier');
+const { isIpBlacklisted } = require('./ip-blacklist');
 
 /**
  * 初始化注册模块
@@ -19,6 +20,18 @@ function initialize(db) {
    const userAgent = req.get('User-Agent') || 'Unknown';
 
    try {
+     // 【新增】检查IP是否在黑名单中
+     const blacklisted = await isIpBlacklisted(ipAddress);
+     if (blacklisted) {
+       console.warn(`[安全防护] 黑名单IP尝试注册 - IP: ${ipAddress}, 用户名: ${req.body?.username || '未知'}`);
+       
+       return res.status(403).json({
+         success: false,
+         error: '您的IP地址已被加入黑名单，暂时无法注册新账号',
+         isBlacklisted: true
+       });
+     }
+     
      const { username, password } = req.body;
 
       if (!username || !password) {

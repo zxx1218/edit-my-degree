@@ -145,6 +145,38 @@ const pdfGenerationLimiter = rateLimit({
   }
 });
 
+// 留言添加操作的严格限流 - 每个IP每分钟最多3次
+const addMessageLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1分钟
+  max: 3, // 每分钟最多3次
+  message: {
+    success: false,
+    error: '留言操作过于频繁（每分钟最多3次），请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // 基于IP进行限流，使用 ipKeyGenerator 正确处理 IPv6 地址
+    return ipKeyGenerator(req);
+  }
+});
+
+// 留言添加的小时限流 - 每个IP每小时最多20次，防止长期持续刷留言
+const addMessageHourlyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1小时
+  max: 20, // 每小时最多20次
+  message: {
+    success: false,
+    error: '今日留言次数已达上限（每小时最多20次），请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    // 基于IP进行限流
+    return ipKeyGenerator(req);
+  }
+});
+
 // JWT认证中间件
 const authenticateJWT = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
@@ -497,8 +529,13 @@ function setupRoutes(app, db, JWT_SECRET) {
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
   app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));
   
-  // 添加留言接口 - 用于用户提交新留言
-  app.post('/api/add-message', generalLimiter, addMessageModule.initialize(db));
+  // 添加留言接口 - 应用双重限流 + 签名验证，防止恶意刷留言
+  app.post('/api/add-message', 
+    addMessageLimiter,              // 第一层：分钟级限流（3次/分钟）
+    addMessageHourlyLimiter,        // 第二层：小时级限流（20次/小时）
+    signatureValidationMiddleware,  // 签名完整性验证
+    addMessageModule.initialize(db)
+  );
 
   // 删除用户接口 - 用于管理员彻底删除用户及其所有相关数据
   app.post('/api/delete-user', generalLimiter, signatureValidationMiddleware, deleteUserModule.initialize(db, JWT_SECRET));

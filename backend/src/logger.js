@@ -58,7 +58,7 @@ const transports = [
   }),
   // info级别及以上的普通日志 - .log 文件（仅记录 info 和 http）
   new DailyRotateFile({
-    filename: path.join(logDir, 'application-%DATE%.log'),
+    filename: path.join(logDir, 'editMyDegree-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
@@ -76,7 +76,7 @@ const transports = [
   }),
   // warn级别的警告日志 - .warn 文件（仅记录 warn）
   new DailyRotateFile({
-    filename: path.join(logDir, 'application-%DATE%.warn'),
+    filename: path.join(logDir, 'editMyDegree-%DATE%.warn'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
@@ -94,7 +94,7 @@ const transports = [
   }),
   // error级别的错误日志 - .error 文件（仅记录 error）
   new DailyRotateFile({
-    filename: path.join(logDir, 'application-%DATE%.error'),
+    filename: path.join(logDir, 'editMyDegree-%DATE%.error'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
@@ -131,7 +131,7 @@ const transports = [
   }),
   // 安全防护相关日志 - .safe 文件（仅接收safe级别）
   new DailyRotateFile({
-    filename: path.join(logDir, 'application-%DATE%.safe'),
+    filename: path.join(logDir, 'editMyDegree-%DATE%.safe'),
     datePattern: 'YYYY-MM-DD',
     maxSize: '10m', // 10MB
     maxFiles: '3d', // 保留3天
@@ -337,7 +337,7 @@ function sendErrorEmail(errorMessage, metadata = {}) {
         level: 'info',
         transports: [
           new winston.transports.File({
-            filename: path.join(logDir, 'application-' + new Date().toISOString().split('T')[0] + '.safe'),
+            filename: path.join(logDir, 'editMyDegree-' + new Date().toISOString().split('T')[0] + '.safe'),
             maxsize: 10485760,
             maxFiles: 3
           })
@@ -357,7 +357,7 @@ function sendErrorEmail(errorMessage, metadata = {}) {
       level: 'info',
       transports: [
         new winston.transports.File({
-          filename: path.join(logDir, 'application-' + new Date().toISOString().split('T')[0] + '.safe'),
+          filename: path.join(logDir, 'editMyDegree-' + new Date().toISOString().split('T')[0] + '.safe'),
           maxsize: 10485760,
           maxFiles: 3
         })
@@ -380,7 +380,7 @@ function sendErrorEmail(errorMessage, metadata = {}) {
       level: 'warn',
       transports: [
         new winston.transports.File({
-          filename: path.join(logDir, 'application-' + new Date().toISOString().split('T')[0] + '.warn'),
+          filename: path.join(logDir, 'editMyDegree-' + new Date().toISOString().split('T')[0] + '.warn'),
           maxsize: 10485760,
           maxFiles: 3
         })
@@ -396,7 +396,7 @@ function sendErrorEmail(errorMessage, metadata = {}) {
       level: 'info',
       transports: [
         new winston.transports.File({
-          filename: path.join(logDir, 'application-' + new Date().toISOString().split('T')[0] + '.safe'),
+          filename: path.join(logDir, 'editMyDegree-' + new Date().toISOString().split('T')[0] + '.safe'),
           maxsize: 10485760,
           maxFiles: 3
         })
@@ -518,7 +518,7 @@ ${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata
         level: 'info',
         transports: [
           new winston.transports.File({
-            filename: path.join(logDir, 'application-' + new Date().toISOString().split('T')[0] + '.safe'),
+            filename: path.join(logDir, 'editMyDegree-' + new Date().toISOString().split('T')[0] + '.safe'),
             maxsize: 10485760,
             maxFiles: 3
           })
@@ -558,8 +558,8 @@ function cleanupOldLogFiles() {
     let deletedCount = 0;
     
     for (const file of files) {
-      // 匹配日志文件名格式: application-YYYY-MM-DD.log/warn/error/safe
-      const match = file.match(/^application-(\d{4}-\d{2}-\d{2})\.(log|warn|error|safe)$/);
+      // 匹配日志文件名格式: editMyDegree-YYYY-MM-DD.log/warn/error/safe
+      const match = file.match(/^editMyDegree-(\d{4}-\d{2}-\d{2})\.(log|warn|error|safe)$/);
       if (!match) continue;
       
       const dateStr = match[1];

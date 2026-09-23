@@ -140,10 +140,16 @@ const Login = () => {
         // 刷新第一页的留言
         await fetchMessages(1);
       } else {
-        toast.error(response.error || "留言失败");
+        // 区分不同类型的错误，提供更明确的提示
+        if (response.error?.includes('过于频繁') || response.error?.includes('重复提交')) {
+          toast.warning(response.error, { duration: 5000 });
+        } else {
+          toast.error(response.error || "留言失败");
+        }
       }
     } catch (error) {
-      toast.error("留言失败，请稍后重试");
+      const errorMessage = error instanceof Error ? error.message : "网络连接失败，请检查网络后重试";
+      toast.error(errorMessage, { duration: 4000 });
     } finally {
       setIsSubmitting(false);
     }

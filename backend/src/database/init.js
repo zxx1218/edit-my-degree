@@ -183,7 +183,11 @@ async function createTables(db) {
       content TEXT NOT NULL COMMENT '留言内容',
       reply_content TEXT COMMENT '管理员回复内容',
       replied_at TIMESTAMP COMMENT '回复时间',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '留言创建时间'
+      priority INT DEFAULT NULL COMMENT '留言优先级：数字越小越靠前，NULL表示无优先级按时间排序',
+      ip_address VARCHAR(45) DEFAULT NULL COMMENT '留言者IP地址，用于安全审计和频率控制',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '留言创建时间',
+      INDEX idx_username_created_at (username, created_at),
+      INDEX idx_ip_created_at (ip_address, created_at)
     )
     `,
     `
