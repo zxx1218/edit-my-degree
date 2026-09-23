@@ -10,14 +10,20 @@
 - [7. 统计分析模块](#7-统计分析模块)
 - [8. 留言管理模块](#8-留言管理模块)
 - [9. 安全管理模块](#9-安全管理模块)
-- [10. 二维码重定向](#10-二维码重定向)
-- [11. 安全机制](#11-安全机制)
+- [10. 留言板管理增强](#10-留言板管理增强)
+- [11. 二维码重定向](#11-二维码重定向)
+- [12. 安全机制](#12-安全机制)
+- [13. 附录](#13-附录)
 
 ---
 
 ## 1. 概述
 
 ### 1.1 系统架构
+
+---
+
+## 2. 认证模块
 本系统是一个基于 Node.js + Express + MySQL 的学位验证管理系统，提供用户注册、登录、学历信息管理、PDF报告生成等功能。
 
 ### 1.2 基础配置
@@ -27,7 +33,7 @@
 - **签名验证**: 大部分接口需要请求签名验证
 
 ### 1.3 通用响应格式
-```json
+``json
 {
   "success": true/false,
   "data": {},
@@ -36,73 +42,44 @@
 }
 ```
 
-### 1.4 数据库表结构概览
-系统包含以下核心数据表：
-- `users` - 用户表
-- `student_status` - 学籍信息表
-- `education` - 学历信息表
-- `degree` - 学位信息表
-- `exam` - 考试信息表
-- `login_logs` - 登录日志表
-- `cards` - 充值卡表
-- `admins` - 管理员表
-- `messages` - 留言表
-- `ip_blacklist` - IP黑名单表
-- `qr_code_urls` - 二维码短码表
+### 1.4 限流规则说明
 
----
+系统采用多层限流策略保护API安全：
 
-## 2. 认证模块
+#### 全局限流
+- **规则**: 每IP每5分钟最多100次请求
+- **适用范围**: 所有API端点（除特殊说明外）
+- **超限响应**: HTTP 429，返回错误提示"请求过多，IP已经封禁！"
 
-### 2.1 用户登录
+#### 注册限流
+- **规则**: 每IP每天最多5次注册
+- **适用范围**: `/api/register`
+- **超限响应**: HTTP 429，返回错误提示"注册次数太多了，稍后再试！"
 
-#### 接口信息
-- **路径**: `POST /api/auth`
-- **认证**: 无需认证
-- **限流**: 每IP每5分钟最多100次请求
+#### PDF生成限流
+- **规则**: 每用户每分钟最多2次PDF生成
+- **适用范围**: `/api/generate-degree-pdf`, `/api/generate-education-pdf`, `/api/generate-student-status-pdf`
+- **限流键**: IP + 用户ID组合
+- **超限响应**: HTTP 429，返回错误提示"PDF生成操作过于频繁（每分钟最多2次），请稍后再试"
 
-#### 功能描述
-验证用户凭据并返回JWT令牌，同时扣除一次登录次数。
+#### 充值卡创建限流
+- **规则**: 每管理员每小时最多3次创建操作
+- **适用范围**: `/api/manage-cards` (action: create)
+- **限流键**: IP + 管理员ID组合
+- **超限响应**: HTTP 429，返回错误提示"充值卡创建操作过于频繁（每小时最多3次），请稍后再试"
 
-#### 业务逻辑
-1. **IP黑名单检查**: 首先检查请求IP是否在黑名单中，若在则直接拒绝
-2. **IP频率限制**: 记录并检查IP请求频率
-3. **用户验证**: 从 `users` 表查询用户名和密码
-4. **登录次数检查**: 验证 `remaining_logins > 0`
-5. **会话时长计算**: 根据剩余登录次数动态设置会话时长
-   - 剩余1次: 3分钟 (180000ms)
-   - 剩余2-5次: 8分钟 (480000ms)
-   - 剩余6-30次: 20分钟 (1200000ms)
-   - 剩余>30次: 24小时 (86400000ms)
-6. **扣减登录次数**: `UPDATE users SET remaining_logins = remaining_logins - 1`
-7. **记录登录日志**: 
-   - 写入 `login_logs` 表（包含IP和地理位置）
-   - 记录操作日志到审计系统
-8. **生成JWT Token**: 有效期24小时
+#### 充值卡使用限流
+- **规则**: 每IP每分钟最多10次使用操作
+- **适用范围**: `/api/manage-cards` (action: use)
+- **超限响应**: HTTP 429，返回错误提示"充值卡使用操作过于频繁（每分钟最多10次），请稍后再试"
 
-#### 数据库表关联
-**读取表**: `users`
-```sql
-SELECT * FROM users WHERE username = ?
--- 字段: id, username, password, remaining_logins, pdf_limit
-```
+#### 留言添加限流（双重限流）
+- **第一层**: 每IP每分钟最多3次
+- **第二层**: 每IP每小时最多20次
+- **适用范围**: `/api/add-message`
+- **超限响应**: HTTP 429，分别返回对应的错误提示
 
-**更新表**: `users`
-```sql
-UPDATE users SET remaining_logins = remaining_logins - 1 WHERE id = ?
-```
-
-**插入表**: `login_logs`
-```sql
-INSERT INTO login_logs (user_id, username, login_ip, ip_location) 
-VALUES (?, ?, ?, ?)
--- 字段: user_id, username, login_time(自动), login_ip, ip_location
-```
-
-#### 请求参数示例
-```json
-{
-  "username": "testuser",
+### 1.5 数据库表结构概览
   "password": "password123"
 }
 ```
@@ -1489,8 +1466,16 @@ WHERE id = ?
 }
 ```
 
-#### 响应示例
+**删除**:
 ```json
+{
+  "action": "delete",
+  "id": "uuid-string"
+}
+```
+
+#### 响应示例
+``json
 {
   "success": true,
   "records": [
@@ -1515,6 +1500,23 @@ WHERE id = ?
     "pageSize": 10,
     "totalPages": 10
   }
+}
+```
+
+**更新成功**:
+```json
+{
+  "success": true,
+  "message": "二维码过期时间已更新",
+  "newExpiresAt": "2024-12-31T23:59:59Z"
+}
+```
+
+**删除成功**:
+```json
+{
+  "success": true,
+  "message": "二维码记录已删除"
 }
 ```
 
@@ -1597,9 +1599,361 @@ UPDATE users SET pdf_limit = 0 WHERE id = ?
 
 ---
 
-## 10. 二维码重定向
+### 9.6 管理员直接登录用户
 
-### 10.1 二维码短码重定向
+#### 接口信息
+- **路径**: `POST /api/admin-impersonate-login`
+- **认证**: 需要签名验证 + JWT管理员权限
+- **限流**: 每IP每5分钟最多100次请求
+
+#### 功能描述
+允许管理员免积分、免次数限制直接登录到指定用户账号（用于技术支持和问题排查）。
+
+#### 业务逻辑
+1. 验证管理员JWT Token
+2. 根据目标用户名查找用户
+3. 生成该用户的JWT Token（不消耗登录次数）
+4. 记录审计日志（包含管理员ID和目标用户ID）
+5. 返回目标用户的Token和用户信息
+
+#### 数据库表关联
+**读取表**: `users`
+```sql
+SELECT id, username, remaining_logins, pdf_limit 
+FROM users WHERE username = ?
+```
+
+**插入表**: `login_logs`（可选，记录管理员代登录行为）
+```sql
+INSERT INTO login_logs (user_id, username, login_ip, ip_location, is_admin_impersonate) 
+VALUES (?, ?, ?, ?, TRUE)
+```
+
+#### 请求参数示例
+```json
+{
+  "targetUsername": "testuser"
+}
+```
+
+#### 响应示例
+**成功**:
+```json
+{
+  "success": true,
+  "user": {
+    "id": "uuid-string",
+    "username": "testuser",
+    "remaining_logins": 10,
+    "pdf_limit": 5
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "message": "管理员已成功登录到用户 testuser 的账号"
+}
+```
+
+**失败 - 用户不存在**:
+```json
+{
+  "success": false,
+  "error": "用户不存在"
+}
+```
+
+---
+
+### 9.7 忘记密码重置
+
+#### 接口信息
+- **路径**: `POST /api/reset-password`
+- **认证**: 需要签名验证
+- **限流**: 每IP每5分钟最多100次请求
+
+#### 功能描述
+用户通过充值卡密验证身份后重置密码（无需提供原密码）。
+
+#### 业务逻辑
+1. 验证卡密有效性（加密的卡ID通过`SBverify`传递）
+2. 解密卡ID并检查是否已使用
+3. 根据用户名查找用户
+4. 更新用户密码
+5. 标记卡密为已使用
+6. 记录操作日志
+
+#### 数据库表关联
+**读取表**: `cards`, `users`
+```sql
+-- 检查卡密
+SELECT id, type, values, used FROM cards WHERE id = ?
+
+-- 查找用户
+SELECT id FROM users WHERE username = ?
+```
+
+**更新表**: `users`, `cards`
+```sql
+-- 更新密码
+UPDATE users SET password = ? WHERE id = ?
+
+-- 标记卡密已使用
+UPDATE cards SET used = TRUE, used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?
+```
+
+#### 请求参数示例
+```json
+{
+  "username": "testuser",
+  "newPassword": "newSecurePass123",
+  "SBverify": "encrypted-card-id-string"
+}
+```
+
+#### 响应示例
+**成功**:
+```json
+{
+  "success": true,
+  "message": "密码重置成功"
+}
+```
+
+**失败 - 卡密无效**:
+```json
+{
+  "success": false,
+  "error": "无效的充值卡或卡密已被使用"
+}
+```
+
+---
+
+### 9.8 异常登录检测
+
+#### 接口信息
+- **路径**: `POST /api/get-anomaly-login-detection`
+- **认证**: 需要签名验证 + JWT管理员权限
+- **限流**: 每IP每5分钟最多100次请求
+
+#### 功能描述
+检测系统中的异常登录行为，包括频繁登录、异常时间段登录等。
+
+#### 业务逻辑
+1. **频繁登录检测**: 1小时内登录超过5次的用户
+2. **异常时间段检测**: 凌晨0-5点的登录记录
+3. **单日登录异常**: 单日登录超过20次的用户
+4. 返回所有检测到的异常数据
+
+#### 数据库表关联
+**读取表**: `login_logs`, `users`
+```sql
+-- 频繁登录检测
+SELECT u.username, DATE(l.login_time) as login_date, 
+       HOUR(l.login_time) as hour, COUNT(*) as login_count
+FROM login_logs l
+JOIN users u ON l.user_id = u.id
+WHERE l.login_time >= ?
+GROUP BY u.id, DATE(l.login_time), HOUR(l.login_time)
+HAVING login_count > 5
+
+-- 异常时间段登录
+SELECT u.username, l.login_time, HOUR(l.login_time) as hour
+FROM login_logs l
+JOIN users u ON l.user_id = u.id
+WHERE l.login_time >= ? AND HOUR(l.login_time) >= 0 AND HOUR(l.login_time) < 5
+
+-- 单日登录异常
+SELECT u.username, DATE(l.login_time) as login_date, COUNT(*) as daily_logins
+FROM login_logs l
+JOIN users u ON l.user_id = u.id
+WHERE l.login_time >= ?
+GROUP BY u.id, DATE(l.login_time)
+HAVING daily_logins > 20
+```
+
+#### 请求参数示例
+```json
+{
+  "days": 7
+}
+```
+
+#### 响应示例
+```json
+{
+  "success": true,
+  "data": {
+    "frequentLogins": [
+      {
+        "username": "testuser",
+        "login_date": "2024-01-15",
+        "hour": 14,
+        "login_count": 8
+      }
+    ],
+    "abnormalTimeLogins": [
+      {
+        "username": "nightowl",
+        "login_time": "2024-01-15T02:30:00Z",
+        "hour": 2
+      }
+    ],
+    "dailyAnomalies": [
+      {
+        "username": "poweruser",
+        "login_date": "2024-01-15",
+        "daily_logins": 25
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 10. 留言板管理增强
+
+### 10.1 留言板管理（完整功能）
+
+#### 接口信息
+- **路径**: `POST /api/message-board`
+- **认证**: 部分操作需要签名验证 + JWT管理员权限
+- **限流**: 见各子操作的限流规则
+
+#### 功能描述
+提供完整的留言板管理功能，包括获取留言、回复留言、设置优先级、删除留言等。
+
+#### 业务逻辑
+
+**获取留言列表 (action: getMessages)**:
+1. 分页查询所有留言
+2. 按优先级排序（有优先级的在前，按priority升序）
+3. 无优先级的按创建时间降序排列
+4. 返回总记录数和分页数据
+
+**回复留言 (action: replyMessage)**:
+1. 验证管理员权限
+2. 更新留言的回复内容和回复时间
+3. 记录操作日志
+
+**设置优先级 (action: setPriority)**:
+1. 验证管理员权限
+2. 设置留言的优先级值（数字越小优先级越高）
+3. 记录操作日志
+
+**删除留言 (action: deleteMessage)**:
+1. 验证管理员权限
+2. 删除指定留言
+3. 记录操作日志
+
+#### 数据库表关联
+
+**读取表**: `messages`
+```sql
+-- 获取留言列表
+SELECT id, username, content, reply_content, replied_at, priority, created_at 
+FROM messages 
+ORDER BY 
+  CASE WHEN priority IS NOT NULL THEN 0 ELSE 1 END,
+  priority ASC,
+  created_at DESC 
+LIMIT ? OFFSET ?
+
+-- 查询总数
+SELECT COUNT(*) as total FROM messages
+```
+
+**更新表**: `messages`
+```sql
+-- 回复留言
+UPDATE messages 
+SET reply_content = ?, replied_at = CURRENT_TIMESTAMP 
+WHERE id = ?
+
+-- 设置优先级
+UPDATE messages SET priority = ? WHERE id = ?
+```
+
+**删除表**: `messages`
+```sql
+DELETE FROM messages WHERE id = ?
+```
+
+#### 请求参数示例
+
+**获取留言**:
+```json
+{
+  "action": "getMessages",
+  "page": 1,
+  "pageSize": 10
+}
+```
+
+**回复留言**:
+```json
+{
+  "action": "replyMessage",
+  "id": "uuid-string",
+  "replyContent": "这是管理员的回复内容"
+}
+```
+
+**设置优先级**:
+```json
+{
+  "action": "setPriority",
+  "id": "uuid-string",
+  "priority": 1
+}
+```
+
+**删除留言**:
+```json
+{
+  "action": "deleteMessage",
+  "id": "uuid-string"
+}
+```
+
+#### 响应示例
+
+**获取留言成功**:
+```json
+{
+  "success": true,
+  "messages": [
+    {
+      "id": "uuid",
+      "username": "testuser",
+      "content": "这是一条留言",
+      "reply_content": "管理员回复",
+      "replied_at": "2024-01-15T10:00:00Z",
+      "priority": 1,
+      "created_at": "2024-01-14T08:00:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 50,
+    "page": 1,
+    "pageSize": 10,
+    "totalPages": 5
+  }
+}
+```
+
+**操作成功**:
+```json
+{
+  "success": true,
+  "message": "操作成功"
+}
+```
+
+---
+
+## 11. 二维码重定向
+
+### 11.1 二维码短码重定向
 
 #### 接口信息
 - **路径**: `GET /qr/:shortCode`
@@ -1645,9 +1999,9 @@ GET /qr/ABC123
 
 ---
 
-## 11. 安全机制
+## 12. 安全机制
 
-### 11.1 JWT身份认证
+### 12.1 JWT身份认证
 
 #### 工作原理
 1. 用户/管理员登录后获得JWT Token
@@ -1884,36 +2238,37 @@ GET /qr/ABC123
 | id | VARCHAR(36) | UUID主键 |
 | username | VARCHAR(255) | 用户名 |
 | content | TEXT | 留言内容 |
-| reply_content | TEXT | 回复内容 |
+| reply_content | TEXT | 回复内容（管理员回复） |
 | replied_at | TIMESTAMP | 回复时间 |
+| priority | INT | 优先级（数字越小优先级越高，NULL表示无优先级） |
 | created_at | TIMESTAMP | 创建时间 |
 
 #### ip_blacklist - IP黑名单表
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | VARCHAR(36) | UUID主键 |
-| ip_address | VARCHAR(45) | IP地址 |
+| ip_address | VARCHAR(45) | IP地址（支持IPv4和IPv6） |
 | reason | TEXT | 封禁原因 |
-| blocked_until | TIMESTAMP | 封禁截止时间 |
+| blocked_until | TIMESTAMP | 封禁截止时间（NULL表示永久封禁） |
 | created_at | TIMESTAMP | 创建时间 |
 
 #### qr_code_urls - 二维码短码表
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | VARCHAR(36) | UUID主键 |
-| short_code | VARCHAR(20) | 短码（唯一） |
-| full_url | TEXT | 完整URL |
-| pdf_type | ENUM | PDF类型（degree/education/student_status） |
+| short_code | VARCHAR(20) | 短码（唯一，用于生成短URL） |
+| full_url | TEXT | 完整URL（包含所有查询参数，如username、name等） |
+| pdf_type | ENUM | PDF类型：'degree'（学位验证）、'education'（学历验证）、'student_status'（学籍验证） |
 | created_at | TIMESTAMP | 创建时间 |
-| expires_at | TIMESTAMP | 过期时间 |
-| scan_count | INT | 扫描次数 |
+| expires_at | TIMESTAMP | 过期时间（超过此时间的二维码将失效） |
+| scan_count | INT | 扫描次数（每次扫码后自动+1） |
 | last_scanned_at | TIMESTAMP | 最后扫描时间 |
 
 ---
 
 ### B. 环境变量配置
 
-```env
+``env
 # 数据库配置
 DB_HOST=localhost
 DB_USER=root
@@ -1998,11 +2353,102 @@ QR_CODE_EXPIRES_IN_DAYS=1
 
 ---
 
+### E. API端点总览
+
+#### 认证模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/auth` | ❌ | ❌ | 100次/5分钟 | 用户登录 |
+| POST | `/api/admin-auth` | ❌ | ❌ | 100次/5分钟 | 管理员登录 |
+| POST | `/api/register` | ❌ | ✅ | 5次/天 | 用户注册 |
+
+#### 数据管理模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/get-user-data` | ❌ | ✅ | 100次/5分钟 | 获取用户数据 |
+| POST | `/api/update-data` | ❌ | ✅ | 100次/5分钟 | 增删改数据 |
+
+#### 用户管理模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/query-user` | ❌ | ✅ | 100次/5分钟 | 查询用户 |
+| POST | `/api/get-all-users` | JWT(Admin) | ✅ | 100次/5分钟 | 获取所有用户 |
+| POST | `/api/delete-user` | JWT(Admin) | ✅ | 100次/5分钟 | 删除用户 |
+| POST | `/api/change-password` | JWT | ✅ | 100次/5分钟 | 修改密码 |
+| POST | `/api/update-user-logins` | JWT(Admin) | ✅ | 100次/5分钟 | 更新登录次数 |
+| POST | `/api/reset-user-logins` | JWT(Admin) | ✅ | 100次/5分钟 | 重置登录次数 |
+| POST | `/api/decrease-user-logins` | JWT(Admin) | ✅ | 100次/5分钟 | 减少登录次数 |
+| POST | `/api/admin-impersonate-login` | JWT(Admin) | ✅ | 100次/5分钟 | 管理员代登录 |
+| POST | `/api/reset-password` | ❌ | ✅ | 100次/5分钟 | 忘记密码重置 |
+
+#### 充值卡管理模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/manage-cards` | JWT(Admin) | ✅ | 3次/小时(create)<br>10次/分钟(use) | 充值卡管理 |
+
+#### PDF生成模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/generate-degree-pdf` | JWT | ✅ | 2次/分钟 | 生成学位PDF |
+| POST | `/api/generate-education-pdf` | JWT | ✅ | 2次/分钟 | 生成学历PDF |
+| POST | `/api/generate-student-status-pdf` | JWT | ✅ | 2次/分钟 | 生成学籍PDF |
+
+#### 统计分析模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/get-today-login-count` | JWT(Admin) | ✅ | 100次/5分钟 | 今日登录统计 |
+| POST | `/api/get-hourly-login-stats` | JWT(Admin) | ✅ | 100次/5分钟 | 每小时统计 |
+| POST | `/api/get-login-stats-range` | JWT(Admin) | ✅ | 100次/5分钟 | 范围统计 |
+| POST | `/api/get-user-activity-heatmap` | JWT(Admin) | ✅ | 100次/5分钟 | 活跃度热力图 |
+| POST | `/api/get-top-active-users` | JWT(Admin) | ✅ | 100次/5分钟 | Top活跃用户 |
+| POST | `/api/get-province-login-stats` | JWT(Admin) | ✅ | 100次/5分钟 | 省份统计 |
+| POST | `/api/get-today-login-details` | JWT(Admin) | ✅ | 100次/5分钟 | 今日登录详情 |
+| POST | `/api/query-user-logins-pdf` | ❌ | ❌ | 100次/5分钟 | 查询用户资源 |
+| POST | `/api/get-user-card-history` | JWT(Admin) | ✅ | 100次/5分钟 | 卡密使用记录 |
+| POST | `/api/get-anomaly-login-detection` | JWT(Admin) | ✅ | 100次/5分钟 | 异常登录检测 |
+
+#### 留言管理模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/get-messages` | ❌ | ❌ | 100次/5分钟 | 获取留言列表 |
+| POST | `/api/add-message` | ❌ | ✅ | 3次/分钟<br>20次/小时 | 添加留言 |
+| POST | `/api/message-board` | JWT(Admin) | ✅ | 100次/5分钟 | 留言板管理 |
+
+#### 安全管理模块
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| POST | `/api/manage-ip-blacklist` | JWT(Admin) | ✅ | 100次/5分钟 | IP黑名单管理 |
+| POST | `/api/manage-pdf-generation` | JWT(Admin) | ✅ | 100次/5分钟 | PDF生成管理（查询/更新/删除） |
+| POST | `/api/decrease-pdf-limit` | JWT(Admin) | ✅ | 100次/5分钟 | 减少PDF积分 |
+| POST | `/api/increase-pdf-limit` | JWT(Admin) | ✅ | 100次/5分钟 | 增加PDF积分 |
+| POST | `/api/reset-pdf-limit` | JWT(Admin) | ✅ | 100次/5分钟 | 重置PDF积分 |
+
+#### 二维码重定向
+| 方法 | 路径 | 认证 | 签名 | 限流 | 说明 |
+|------|------|------|------|------|------|
+| GET | `/qr/:shortCode` | ❌ | ❌ | 无 | 二维码短码重定向 |
+
+**图例说明**:
+- ✅ = 需要 / ❌ = 不需要
+- JWT(Admin) = 需要JWT且必须是管理员
+- 限流规则中的"次/时间单位"表示该IP或用户在指定时间窗口内最多可请求的次数
+
+---
+
 ## 文档版本
 
-- **版本**: 1.0.0
-- **更新日期**: 2024-01-15
+- **版本**: 2.0.0
+- **更新日期**: 2026-09-23
 - **维护者**: 系统开发团队
+- **更新内容**: 
+  - 新增管理员直接登录用户API（admin-impersonate-login）
+  - 新增忘记密码重置API（reset-password）
+  - 新增异常登录检测API（get-anomaly-login-detection）
+  - 新增留言板完整管理功能API（message-board）
+  - PDF生成管理新增删除记录功能
+  - 完善数据库表字段注释（添加priority、full_url等字段说明）
+  - 补充所有限流规则的详细说明
+  - 添加API端点总览表
 
 ---
 
