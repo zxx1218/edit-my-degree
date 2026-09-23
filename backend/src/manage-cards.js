@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const cryptoUtils = require('./crypto-utils');
 const { sendIllegalApiCallAlert } = require('./email-notifier');
-const barkNotifier = require('./bark-notifier');
+const { getRechargeNotification } = require('./notifications/templates');
 
 /**
  * 管理员身份验证中间件
@@ -453,15 +453,20 @@ const manageCards = (db) => async (req, res) => {
           }
           
           // 发送 Bark 通知（异步执行，不阻塞响应）
-          if (barkNotifier.isEnabled()) {
-            setTimeout(() => {
-              barkNotifier.sendRechargeNotification({
+          setTimeout(() => {
+            const barkNotifier = require('./bark-notifier');
+            if (barkNotifier.isEnabled()) {
+              // 使用通知模板生成通知内容
+              const notification = getRechargeNotification({
                 username,
                 cardType: cardInfo.type,
                 cardValues: cardInfo.values,
                 remainingLogins: loginRemaining,
-                remainingPdfLimit: pdfRemaining
-              }).then(result => {
+                remainingPdfLimit: pdfRemaining,
+                timestamp: new Date().toLocaleString('zh-CN')
+              });
+
+              barkNotifier.sendNotification(notification).then(result => {
                 if (result.success) {
                   console.info(`[Bark通知] 充值通知已发送 - 用户: ${username}, 类型: ${cardInfo.type}`);
                 } else {
@@ -470,8 +475,8 @@ const manageCards = (db) => async (req, res) => {
               }).catch(err => {
                 console.error('[Bark通知] 通知发送异常:', err.message);
               });
-            }, 0);
-          }
+            }
+          }, 0);
           
           return res.json({
             success: true,

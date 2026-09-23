@@ -16,6 +16,9 @@ require('./src/logger');
 const barkNotifier = require('./src/bark-notifier');
 barkNotifier.initialize();
 
+// 引入通知模板
+const { getStartupNotification } = require('./src/notifications/templates');
+
 const app = express();
 app.set('trust proxy', 1); // 添加这一行以信任代理
 const PORT = process.env.PORT || 3001;
@@ -135,6 +138,9 @@ initializeApp().then((success) => {
           }
         }, statusReportInterval);
       }
+
+      // 发送 Bark 启动通知
+      sendStartupNotification();
     });
 
     // 处理未捕获的异常
@@ -155,3 +161,41 @@ initializeApp().then((success) => {
     process.exit(1);
   }
 });
+
+/**
+ * 发送服务启动通知
+ */
+async function sendStartupNotification() {
+  try {
+    if (!barkNotifier.isEnabled()) {
+      console.info('[Bark通知] Bark通知未启用，跳过发送启动通知');
+      return;
+    }
+
+    const hostname = require('os').hostname();
+    const notification = getStartupNotification({
+      hostname,
+      port: PORT,
+      env: process.env.NODE_ENV || 'development',
+      startTime: new Date().toLocaleString('zh-CN')
+    });
+
+    // 异步发送通知，不阻塞主流程
+    setTimeout(async () => {
+      try {
+        const result = await barkNotifier.sendNotification(notification);
+
+        if (result.success) {
+          console.info('[Bark通知] ✅ 启动通知发送成功');
+        } else {
+          console.warn('[Bark通知] ⚠️ 启动通知发送失败:', result.error);
+        }
+      } catch (error) {
+        console.error('[Bark通知] ❌ 启动通知发送异常:', error.message);
+      }
+    }, 1000); // 延迟1秒发送，确保服务完全启动
+
+  } catch (error) {
+    console.error('[Bark通知] 准备启动通知时出错:', error.message);
+  }
+}

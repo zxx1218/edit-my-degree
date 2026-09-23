@@ -4,6 +4,7 @@
  */
 
 const barkNotifier = require('../src/bark-notifier');
+const { getRechargeNotification } = require('../src/notifications/templates');
 
 // 初始化 Bark 模块
 barkNotifier.initialize();
@@ -24,13 +25,16 @@ console.log('');
 
 // 测试1: 发送登录次数充值通知
 console.log('\n📤 测试1: 发送登录次数充值通知...');
-barkNotifier.sendRechargeNotification({
+const loginNotification = getRechargeNotification({
   username: 'test_user',
   cardType: 'login',
   cardValues: 5,
   remainingLogins: 10,
-  remainingPdfLimit: 30
-})
+  remainingPdfLimit: 30,
+  timestamp: new Date().toLocaleString('zh-CN')
+});
+
+barkNotifier.sendNotification(loginNotification)
 .then(result => {
   if (result.success) {
     console.log('✅ 登录次数充值通知发送成功');
@@ -41,13 +45,16 @@ barkNotifier.sendRechargeNotification({
   
   // 测试2: 发送PDF积分充值通知
   console.log('\n📤 测试2: 发送PDF积分充值通知...');
-  return barkNotifier.sendRechargeNotification({
+  const pdfNotification = getRechargeNotification({
     username: 'test_user',
     cardType: 'pdf',
     cardValues: 30,
     remainingLogins: 10,
-    remainingPdfLimit: 60
+    remainingPdfLimit: 60,
+    timestamp: new Date().toLocaleString('zh-CN')
   });
+  
+  return barkNotifier.sendNotification(pdfNotification);
 })
 .then(result => {
   if (result.success) {
