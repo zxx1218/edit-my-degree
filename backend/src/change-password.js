@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { logPasswordChange } = require('./operation-logger');
-const { sendSecurityAlert } = require('./email-notifier');
+const barkNotifier = require('./bark-notifier');
+const { getFrequentPasswordChangeNotification } = require('./notifications/templates');
 
 // 简单的内存存储，用于记录失败次数（生产环境建议使用 Redis）
 const failedAttempts = new Map();
@@ -36,17 +37,18 @@ function initialize(db, jwtSecret) {
           reason: '尝试次数过多，已被临时锁定'
         });
         
-        // 发送告警邮件
-        sendSecurityAlert({
-          subject: '频繁修改密码尝试警告',
-          message: `检测到针对用户 ${username} 的频繁密码修改尝试，可能正在遭受暴力破解。`,
-          details: {
-            ipAddress,
-            userAgent,
-            attempts,
-            timestamp: new Date().toISOString()
-          }
-        }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+        // 发送频繁密码修改尝试Bark通知
+        const timestamp = new Date().toLocaleString('zh-CN');
+        const notification = getFrequentPasswordChangeNotification({
+          username,
+          ip: ipAddress,
+          attempts,
+          timestamp
+        });
+        
+        barkNotifier.sendNotification(notification).catch(err => 
+          console.error('[安全] 发送频繁密码修改Bark通知失败:', err.message)
+        );
 
         return res.status(429).json({
           success: false,
@@ -136,18 +138,19 @@ function initialize(db, jwtSecret) {
           failedAttempts.set(failKey, attempts + 1);
           setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
 
-          // 如果达到阈值，发送告警
+          // 如果达到阈值，发送Bark通知
           if (attempts + 1 >= 3) {
-             sendSecurityAlert({
-              subject: '密码修改失败次数过多',
-              message: `用户 ${username} 在短时间内多次输入错误原密码。`,
-              details: {
-                ipAddress,
-                userAgent,
-                attempts: attempts + 1,
-                timestamp: new Date().toISOString()
-              }
-            }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+            const timestamp = new Date().toLocaleString('zh-CN');
+            const notification = getFrequentPasswordChangeNotification({
+              username,
+              ip: ipAddress,
+              attempts: attempts + 1,
+              timestamp
+            });
+            
+            barkNotifier.sendNotification(notification).catch(err => 
+              console.error('[安全] 发送密码修改失败Bark通知失败:', err.message)
+            );
           }
           
           return res.status(401).json({
@@ -174,18 +177,19 @@ function initialize(db, jwtSecret) {
           failedAttempts.set(failKey, attempts + 1);
           setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
 
-           // 如果达到阈值，发送告警
+           // 如果达到阈值，发送Bark通知
           if (attempts + 1 >= 3) {
-             sendSecurityAlert({
-              subject: '密码修改失败次数过多',
-              message: `用户 ${username} 在短时间内多次输入错误原密码。`,
-              details: {
-                ipAddress,
-                userAgent,
-                attempts: attempts + 1,
-                timestamp: new Date().toISOString()
-              }
-            }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+            const timestamp = new Date().toLocaleString('zh-CN');
+            const notification = getFrequentPasswordChangeNotification({
+              username,
+              ip: ipAddress,
+              attempts: attempts + 1,
+              timestamp
+            });
+            
+            barkNotifier.sendNotification(notification).catch(err => 
+              console.error('[安全] 发送密码修改失败Bark通知失败:', err.message)
+            );
           }
           
           return res.status(401).json({

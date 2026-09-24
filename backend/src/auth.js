@@ -4,7 +4,11 @@ const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
 const { isUserBlacklisted } = require('./manage-ip-blacklist');
-const { sendSecurityAlert, sendBlacklistUserLoginAlert } = require('./email-notifier');
+const barkNotifier = require('./bark-notifier');
+const { 
+  getIpBlacklistBlockNotification, 
+  getUserBlacklistBlockNotification 
+} = require('./notifications/templates');
 
 /**
  * 初始化认证模块
@@ -31,16 +35,17 @@ function initialize(pool, jwtSecret) {
       if (blacklisted) {
         logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
         
-        // 发送黑名单IP登录告警邮件（带IP冷却控制）
-        sendBlacklistUserLoginAlert({
-          ipAddress: ipAddress,
+        // 发送黑名单IP登录告警Bark通知
+        const timestamp = new Date().toLocaleString('zh-CN');
+        const notification = getIpBlacklistBlockNotification({
+          ip: ipAddress,
           username: null,
-          reason: '黑名单IP尝试登录',
-          blockedUntil: null,
-          userAgent: userAgent,
-          blacklistType: 'ip'
-        }).catch(err => {
-          console.error('[认证] 发送黑名单IP登录告警邮件失败:', err.message);
+          action: '登录',
+          timestamp
+        });
+        
+        barkNotifier.sendNotification(notification).catch(err => {
+          console.error('[认证] 发送黑名单IP登录告警Bark通知失败:', err.message);
         });
         
         return res.status(403).json({ 
@@ -84,15 +89,17 @@ function initialize(pool, jwtSecret) {
           blockedUntil: userBlacklisted.blocked_until
         });
         
-        // 发送黑名单用户登录告警邮件（带IP冷却控制）
-        sendBlacklistUserLoginAlert({
-          ipAddress: ipAddress,
+        // 发送黑名单用户登录告警Bark通知
+        const timestamp = new Date().toLocaleString('zh-CN');
+        const notification = getUserBlacklistBlockNotification({
           username: username,
           reason: userBlacklisted.reason,
-          blockedUntil: userBlacklisted.blocked_until,
-          userAgent: userAgent
-        }).catch(err => {
-          console.error('[认证] 发送黑名单用户登录告警邮件失败:', err.message);
+          blockedUntil: userBlacklisted.blocked_until ? new Date(userBlacklisted.blocked_until).toLocaleString('zh-CN') : '未知',
+          timestamp
+        });
+        
+        barkNotifier.sendNotification(notification).catch(err => {
+          console.error('[认证] 发送黑名单用户登录告警Bark通知失败:', err.message);
         });
         
         return res.status(403).json({ 

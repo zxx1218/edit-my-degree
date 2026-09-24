@@ -1,6 +1,6 @@
 /**
  * 邮件通知模块
- * 用于发送安全告警邮件
+ * 仅用于充值接口的恶意调用告警（高优先级安全事件）
  */
 
 const nodemailer = require('nodemailer');
@@ -8,12 +8,6 @@ require('dotenv').config({ path: '../.env' }); // 加载根目录的.env文件
 
 // 邮件传输器配置
 let transporter = null;
-
-// IP级别的告警冷却缓存（内存中）
-// 格式: { ip: timestamp }
-const ipAlertCache = new Map();
-// 从环境变量读取冷却时间，默认15分钟（900000毫秒）
-const ALERT_COOLDOWN = parseInt(process.env.BLACKLIST_LOGIN_ALERT_COOLDOWN || '900000', 10);
 
 /**
  * 初始化邮件传输器
@@ -33,37 +27,6 @@ function initTransporter() {
   
   transporter = nodemailer.createTransport(smtpConfig);
   return transporter;
-}
-
-/**
- * 检查IP是否在冷却期内
- * @param {string} ipAddress - IP地址
- * @returns {boolean} 是否在冷却期内
- */
-function isIpInCooldown(ipAddress) {
-  const lastAlertTime = ipAlertCache.get(ipAddress);
-  if (!lastAlertTime) return false;
-  
-  const now = Date.now();
-  return (now - lastAlertTime) < ALERT_COOLDOWN;
-}
-
-/**
- * 记录IP告警时间
- * @param {string} ipAddress - IP地址
- */
-function recordIpAlert(ipAddress) {
-  ipAlertCache.set(ipAddress, Date.now());
-  
-  // 定期清理过期的缓存项（每小时清理一次）
-  if (ipAlertCache.size > 100) {
-    const now = Date.now();
-    for (const [ip, timestamp] of ipAlertCache.entries()) {
-      if ((now - timestamp) > ALERT_COOLDOWN) {
-        ipAlertCache.delete(ip);
-      }
-    }
-  }
 }
 
 /**
@@ -156,13 +119,16 @@ async function sendSecurityAlert(params) {
 }
 
 /**
- * 发送非法API调用告警
+ * 发送非法API调用告警（充值接口恶意调用）
  * @param {Object} requestData - 请求数据
+ * @param {Object} requestData.req - 请求对象
+ * @param {string} requestData.reason - 告警原因
+ * @param {Object} requestData.details - 详细信息
  */
 async function sendIllegalApiCallAlert(requestData) {
   const { req, reason, details } = requestData;
   
-  const subject = '检测到非法API调用';
+  const subject = '检测到充值接口非法调用';
   const message = `系统检测到对充值卡管理接口的非法调用，可能存在安全风险。`;
   
   const alertDetails = {
@@ -183,87 +149,8 @@ async function sendIllegalApiCallAlert(requestData) {
   });
 }
 
-/**
- * 发送黑名单用户登录告警（带IP冷却控制）
- * @param {Object} params - 邮件参数
- * @param {string} params.ipAddress - IP地址
- * @param {string} params.username - 用户名（可选，IP黑名单时为空）
- * @param {string} params.reason - 封禁原因
- * @param {string} params.blockedUntil - 封禁截止时间（可选）
- * @param {string} params.userAgent - User-Agent
- * @param {string} params.blacklistType - 黑名单类型：'user' | 'ip'
- */
-async function sendBlacklistUserLoginAlert(params) {
-  const { ipAddress, username, reason, blockedUntil, userAgent, blacklistType = 'user' } = params;
-  
-  // 检查IP是否在冷却期内
-  if (isIpInCooldown(ipAddress)) {
-    const lastAlertTime = ipAlertCache.get(ipAddress);
-    const remainingSeconds = Math.ceil((ALERT_COOLDOWN - (Date.now() - lastAlertTime)) / 1000);
-    console.info(`[邮件通知] ⏸️ IP ${ipAddress} 在冷却期内，跳过发送黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警`);
-    console.info(`[邮件通知] 📊 冷却剩余时间: ${remainingSeconds}秒 (${Math.floor(remainingSeconds / 60)}分${remainingSeconds % 60}秒)`);
-    console.info(`[邮件通知] 🔍 详细信息 - 用户名: ${username || 'N/A'}, 原因: ${reason}, 黑名单类型: ${blacklistType}`);
-    return false;
-  }
-  
-  let subject, message, details;
-  
-  if (blacklistType === 'user') {
-    // 用户黑名单
-    subject = '黑名单用户尝试登录';
-    message = `系统检测到已被加入黑名单的用户 "${username}" 从IP地址 ${ipAddress} 尝试登录系统。`;
-    
-    details = {
-      username: username,
-      ipAddress: ipAddress,
-      reason: reason,
-      blockedUntil: blockedUntil,
-      userAgent: userAgent,
-      timestamp: new Date().toISOString(),
-      action: 'blacklisted_user_login_attempt',
-      blacklistType: 'user'
-    };
-  } else {
-    // IP黑名单
-    subject = '黑名单IP尝试登录';
-    message = `系统检测到已被封禁的IP地址 ${ipAddress} 尝试登录系统，可能存在安全风险。`;
-    
-    details = {
-      ipAddress: ipAddress,
-      userAgent: userAgent,
-      reason: reason,
-      timestamp: new Date().toISOString(),
-      action: 'blacklisted_ip_login_attempt',
-      blacklistType: 'ip'
-    };
-  }
-  
-  console.info(`[邮件通知] 📧 准备发送黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警邮件`);
-  console.info(`[邮件通知] 📋 收件人: ${process.env.ERROR_NOTIFICATION_EMAIL}`);
-  console.info(`[邮件通知] 📝 主题: ${subject}`);
-  console.info(`[邮件通知] 🔑 IP: ${ipAddress}, 用户名: ${username || 'N/A'}, 原因: ${reason}`);
-  
-  const result = await sendSecurityAlert({
-    subject,
-    message,
-    details
-  });
-  
-  // 无论成功还是失败，都记录IP到冷却缓存，防止频繁重试
-  recordIpAlert(ipAddress);
-  
-  if (result) {
-    console.info(`[邮件通知] ✅ 黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警邮件发送成功`);
-    console.info(`[邮件通知] ⏱️ IP ${ipAddress} 已加入冷却缓存，下次可发送时间: ${new Date(Date.now() + ALERT_COOLDOWN).toLocaleString('zh-CN')}`);
-  } else {
-    console.warn(`[邮件通知] ❌ 黑名单${blacklistType === 'user' ? '用户' : 'IP'}登录告警邮件发送失败，但IP已加入冷却缓存以避免重复尝试`);
-  }
-  
-  return result;
-}
 
 module.exports = {
   sendSecurityAlert,
-  sendIllegalApiCallAlert,
-  sendBlacklistUserLoginAlert
+  sendIllegalApiCallAlert
 };

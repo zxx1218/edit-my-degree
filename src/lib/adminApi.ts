@@ -615,3 +615,38 @@ export const addUserBlacklist = async (token: string, body: {
   
   return await response.json();
 };
+
+// 获取特别关注用户列表（有标签的用户）
+export const getSpecialUsers = async (token: string) => {
+  const url = '/api/get-special-users';
+  const options = createSignedRequestOptions('POST', url, {});
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-special-users`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 更新用户标签
+export const updateUserTags = async (token: string, body: {
+  username: string;
+  tags: string[];
+}) => {
+  const url = '/api/update-user-tags';
+  const options = createSignedRequestOptions('POST', url, body);
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/update-user-tags`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};

@@ -1,6 +1,7 @@
 const dbManager = require('./db-utils');
 const { logIpBlacklist } = require('./operation-logger');
-const { sendSecurityAlert } = require('./email-notifier');
+const barkNotifier = require('./bark-notifier');
+const { getIpRateLimitBlockNotification } = require('./notifications/templates');
 
 // IP请求记录缓存（内存中）
 // 格式: Map<ip, [timestamp1, timestamp2, ...]>
@@ -70,24 +71,19 @@ async function addToBlacklist(ipAddress, reason) {
       blockDurationMinutes: CONFIG.BLOCK_DURATION / 1000 / 60
     });
     
-    // 发送安全告警邮件
-    sendSecurityAlert({
-      subject: 'IP因频繁请求被自动封禁',
-      message: `系统检测到IP地址 ${ipAddress} 在短时间内发起大量请求，已触发频率限制机制并自动加入黑名单。`,
-      details: {
-        ipAddress: ipAddress,
-        reason: reason,
-        blockedUntil: blockedUntil.toISOString(),
-        blockDurationMinutes: Math.floor(CONFIG.BLOCK_DURATION / 1000 / 60),
-        timestamp: new Date().toISOString(),
-        config: {
-          timeWindowSeconds: CONFIG.TIME_WINDOW / 1000,
-          maxRequests: CONFIG.MAX_REQUESTS,
-          blockDurationMinutes: CONFIG.BLOCK_DURATION / 1000 / 60
-        }
-      }
-    }).catch(err => {
-      console.error('[安全防护] 发送IP封禁告警邮件失败:', err.message);
+    // 发送IP频率限制封禁Bark通知
+    const timestamp = new Date().toLocaleString('zh-CN');
+    const notification = getIpRateLimitBlockNotification({
+      ip: ipAddress,
+      requestCount: CONFIG.MAX_REQUESTS,
+      timeWindow: Math.floor(CONFIG.TIME_WINDOW / 1000),
+      maxRequests: CONFIG.MAX_REQUESTS,
+      blockDuration: Math.floor(CONFIG.BLOCK_DURATION / 1000 / 60),
+      timestamp
+    });
+    
+    barkNotifier.sendNotification(notification).catch(err => {
+      console.error('[安全防护] 发送IP封禁告警Bark通知失败:', err.message);
     });
   } catch (err) {
     console.safe('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });

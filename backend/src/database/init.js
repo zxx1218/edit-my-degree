@@ -31,6 +31,7 @@ async function createTables(db) {
       registration_ip VARCHAR(45) COMMENT '注册时的IP地址',
       is_trial_user TINYINT(1) DEFAULT NULL COMMENT '是否为体验版用户: NULL-未设置, 1-是, 0-否',
       has_used_card_reset TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否已使用卡密改密: 0-未使用, 1-已使用（一次性限制）',
+      tags TEXT DEFAULT NULL COMMENT '用户标签（JSON数组格式），用于标记特别关注的用户',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '账号创建时间',
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间',
       CONSTRAINT chk_pdf_limit CHECK (pdf_limit <= 90)

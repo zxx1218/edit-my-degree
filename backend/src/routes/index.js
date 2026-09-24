@@ -43,6 +43,8 @@ const getProvinceLoginStatsModule = require('../get-province-login-stats');
 const getUserCardHistoryModule = require('../get-user-card-history');
 const adminImpersonateLoginModule = require('../admin-impersonate-login');
 const resetPasswordModule = require('../reset-password');
+const getSpecialUsersModule = require('../get-special-users');
+const updateUserTagsModule = require('../update-user-tags');
 
 // 引入IP黑名单管理模块（已合并用户黑名单功能）
 const manageIpBlacklistModule = require('../manage-ip-blacklist');
@@ -518,6 +520,12 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 忘记密码重置接口 - 用于用户通过卡密验证重置密码（无需原密码）
   app.post('/api/reset-password', generalLimiter, signatureValidationMiddleware, resetPasswordModule.initialize(db));
+
+  // 获取特别关注用户列表接口 - 用于获取有标签的用户列表（管理员）
+  app.post('/api/get-special-users', generalLimiter, signatureValidationMiddleware, getSpecialUsersModule.initialize(db, JWT_SECRET));
+
+  // 更新用户标签接口 - 用于为用户添加或修改标签（管理员）
+  app.post('/api/update-user-tags', generalLimiter, signatureValidationMiddleware, updateUserTagsModule.initialize(db, JWT_SECRET));
 
   // IP黑名单管理接口 - 用于获取、更新和删除IP黑名单记录（管理员）
   app.post('/api/manage-ip-blacklist', generalLimiter, signatureValidationMiddleware, manageIpBlacklistModule.initialize(db, JWT_SECRET));

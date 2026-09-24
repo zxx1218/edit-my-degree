@@ -85,9 +85,60 @@ function getFailedLoginNotification({ ip, username, failedAttempts, timestamp })
   };
 }
 
+/**
+ * 获取IP频率限制封禁通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.ip - IP地址
+ * @param {number} options.requestCount - 请求次数
+ * @param {number} options.timeWindow - 时间窗口（秒）
+ * @param {number} options.maxRequests - 最大允许请求数
+ * @param {string} options.blockDuration - 封禁时长（分钟）
+ * @param {string} options.timestamp - 发生时间
+ * @returns {Object} 通知对象
+ */
+function getIpRateLimitBlockNotification({ 
+  ip, 
+  requestCount, 
+  timeWindow, 
+  maxRequests, 
+  blockDuration,
+  timestamp 
+}) {
+  return {
+    title: '🚫 IP频率限制封禁',
+    body: `IP: ${ip}\n请求次数: ${requestCount}/${maxRequests}\n时间窗口: ${timeWindow}秒\n封禁时长: ${blockDuration}分钟\n时间: ${timestamp}`,
+    subtitle: '安全告警',
+    group: '安全告警',
+    level: 'critical',
+    sound: 'alarm'
+  };
+}
+
+/**
+ * 获取频繁密码修改尝试通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.username - 用户名
+ * @param {string} options.ip - IP地址
+ * @param {number} options.attempts - 尝试次数
+ * @param {string} options.timestamp - 发生时间
+ * @returns {Object} 通知对象
+ */
+function getFrequentPasswordChangeNotification({ username, ip, attempts, timestamp }) {
+  return {
+    title: '⚠️ 频繁密码修改尝试',
+    body: `用户: ${username}\nIP: ${ip}\n尝试次数: ${attempts}\n时间: ${timestamp}`,
+    subtitle: '安全告警',
+    group: '安全告警',
+    level: 'critical',
+    sound: 'alarm'
+  };
+}
+
 module.exports = {
   getIpBlacklistBlockNotification,
   getUserBlacklistBlockNotification,
   getSuspiciousLoginNotification,
-  getFailedLoginNotification
+  getFailedLoginNotification,
+  getIpRateLimitBlockNotification,
+  getFrequentPasswordChangeNotification
 };

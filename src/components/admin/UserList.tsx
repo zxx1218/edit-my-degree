@@ -1,9 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles, Tag, Star } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ interface User {
   remaining_logins: number;
   pdf_limit: number;
   created_at?: string;
+  tags?: string[];
 }
 
 interface CardHistoryItem {
@@ -53,6 +54,8 @@ interface UserListProps {
   token?: string | null;
   // 直接登录回调
   onImpersonateLogin?: (username: string) => Promise<void>;
+  // 标签管理回调
+  onUpdateTags?: (username: string, tags: string[]) => Promise<void>;
 }
 
 const USERS_PER_PAGE = 10;
@@ -73,8 +76,12 @@ const UserList = ({
   onResetPdf,
   token,
   onImpersonateLogin,
+  onUpdateTags,
 }: UserListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [userViewMode, setUserViewMode] = useState<"all" | "special">("all");
+  const [specialUsers, setSpecialUsers] = useState<User[]>([]);
+  const [isLoadingSpecial, setIsLoadingSpecial] = useState(false);
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -95,6 +102,12 @@ const UserList = ({
 
   // 复制状态
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // 标签编辑对话框状态
+  const [tagDialogOpen, setTagDialogOpen] = useState(false);
+  const [currentTags, setCurrentTags] = useState<string[]>([]);
+  const [newTagInput, setNewTagInput] = useState("");
+  const [isProcessingTags, setIsProcessingTags] = useState(false);
 
   const { toast } = useToast();
 
@@ -186,22 +199,72 @@ const UserList = ({
     }
   };
 
+  // 获取特别关注用户列表
+  const fetchSpecialUsers = async () => {
+    if (!token) return;
+    
+    setIsLoadingSpecial(true);
+    try {
+      const data = await adminApi.getSpecialUsers(token);
+      if (data.success) {
+        setSpecialUsers(data.users || []);
+      } else {
+        throw new Error(data.error || "获取特别关注用户失败");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "获取失败",
+        description: error.message || "请重试",
+      });
+    } finally {
+      setIsLoadingSpecial(false);
+    }
+  };
+
+  // 当token变化或视图模式切换时获取特别关注用户
+  useEffect(() => {
+    if (token && userViewMode === "special") {
+      fetchSpecialUsers();
+    }
+  }, [token, userViewMode]);
+
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users;
     return users.filter((user) => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [users, searchQuery]);
 
+  // 特别关注用户的过滤
+  const filteredSpecialUsers = useMemo(() => {
+    if (!searchQuery.trim()) return specialUsers;
+    return specialUsers.filter((user) => 
+      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.tags && user.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
+    );
+  }, [specialUsers, searchQuery]);
+
   const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+  const totalSpecialPages = Math.ceil(filteredSpecialUsers.length / USERS_PER_PAGE);
 
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
   }, [filteredUsers, currentPage]);
 
+  const paginatedSpecialUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    return filteredSpecialUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
+  }, [filteredSpecialUsers, currentPage]);
+
   // 当搜索条件变化时,重置到第一页
   useMemo(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  // 当视图模式变化时,重置到第一页
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [userViewMode]);
 
   const handleOpenChangePassword = (user: User) => {
     setSelectedUser(user);
@@ -330,6 +393,62 @@ const UserList = ({
     }
   };
 
+  // 打开标签编辑对话框
+  const handleOpenTagDialog = (user: User) => {
+    setSelectedUser(user);
+    setCurrentTags(user.tags || []);
+    setNewTagInput("");
+    setTagDialogOpen(true);
+  };
+
+  // 添加标签
+  const handleAddTag = () => {
+    const trimmedTag = newTagInput.trim();
+    if (trimmedTag && !currentTags.includes(trimmedTag)) {
+      setCurrentTags([...currentTags, trimmedTag]);
+      setNewTagInput("");
+    }
+  };
+
+  // 删除标签
+  const handleRemoveTag = (tagToRemove: string) => {
+    setCurrentTags(currentTags.filter(tag => tag !== tagToRemove));
+  };
+
+  // 保存标签
+  const handleSaveTags = async () => {
+    if (!selectedUser || !onUpdateTags) return;
+
+    setIsProcessingTags(true);
+    try {
+      await onUpdateTags(selectedUser.username, currentTags);
+      toast({
+        title: "标签更新成功",
+        description: `已为用户 ${selectedUser.username} 更新标签`,
+      });
+      setTagDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "更新失败",
+        description: error.message || "请重试",
+      });
+    } finally {
+      setIsProcessingTags(false);
+    }
+  };
+
+  // 获取标签颜色
+  const getTagColor = (tag: string) => {
+    const colorMap: Record<string, string> = {
+      'VIP': 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white',
+      '问题用户': 'bg-red-500 text-white',
+      '测试账号': 'bg-gray-500 text-white',
+      '特别关注': 'bg-purple-500 text-white',
+    };
+    return colorMap[tag] || 'bg-blue-500 text-white';
+  };
+
   const handleConfirmDelete = async () => {
     if (!selectedUser) return;
 
@@ -348,7 +467,7 @@ const UserList = ({
   return (
     <Card className="shadow-lg border-2">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
               <List className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -356,7 +475,11 @@ const UserList = ({
             <div>
               <CardTitle className="text-xl">用户列表</CardTitle>
               <CardDescription>
-                共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}
+                {userViewMode === "all" ? (
+                  <>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</>
+                ) : (
+                  <>特别关注 {specialUsers.length} 个用户 {searchQuery && `· 搜索结果 ${filteredSpecialUsers.length} 个`}</>
+                )}
               </CardDescription>
             </div>
           </div>
@@ -369,6 +492,20 @@ const UserList = ({
             刷新列表
           </Button>
         </div>
+
+        {/* Tab导航 - 全部用户 / 特别关注 */}
+        <Tabs value={userViewMode} onValueChange={(value) => setUserViewMode(value as "all" | "special")} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 h-12">
+            <TabsTrigger value="all" className="text-base">
+              <List className="mr-2 h-4 w-4" />
+              全部用户
+            </TabsTrigger>
+            <TabsTrigger value="special" className="text-base">
+              <Star className="mr-2 h-4 w-4" />
+              特别关注
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative">
@@ -376,183 +513,411 @@ const UserList = ({
           <Input
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="搜索用户名..."
+            placeholder={userViewMode === "all" ? "搜索用户名..." : "搜索用户名或标签..."}
             className="pl-10 h-10"
           />
         </div>
 
-        {isFetchingUsers ? (
-          <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
-            <div className="flex flex-col items-center justify-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
-            </div>
-          </div>
-        ) : paginatedUsers.length > 0 ? (
+        {/* 全部用户视图 */}
+        {userViewMode === "all" && (
           <>
-            <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
-              <div className="space-y-2">
-                {paginatedUsers.map((user, index) => {
-                  const isTodayRegistered = user.created_at && new Date(user.created_at).toDateString() === new Date().toDateString();
-                  return (
-                  <div
-                    key={user.id}
-                    className={`flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3 ${isTodayRegistered ? 'ring-2 ring-green-500/50 ring-offset-2' : ''}`}
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    {/* 用户基本信息 */}
-                    <div className="w-full">
-                      <div className="flex items-center gap-2 mb-1.5 group">
-                        <span className="font-bold text-base sm:text-lg truncate cursor-pointer hover:text-primary transition-colors" onClick={() => copyToClipboard(user.username, `username-${user.id}`)} title="点击复制用户名">
-                          {user.username}
-                        </span>
-                        {isTodayRegistered && (
-                          <Badge className="bg-green-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
-                            <Sparkles className="h-3 w-3" />
-                            今日新注册
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => copyToClipboard(user.username, `username-${user.id}`)}
-                          title="复制用户名"
-                        >
-                          {copiedField === `username-${user.id}` ? (
-                            <Check className="h-3.5 w-3.5 text-green-500" />
-                          ) : (
-                            <Copy className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                        <span className="text-muted-foreground font-mono flex items-center gap-1.5 group/password cursor-pointer hover:text-foreground transition-colors" onClick={() => copyToClipboard(user.password, `password-${user.id}`)} title="点击复制密码">
-                          <span className="font-medium">密码:</span> 
-                          <span>{user.password}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 w-5 p-0 opacity-0 group-hover/password:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              copyToClipboard(user.password, `password-${user.id}`);
-                            }}
-                            title="复制密码"
-                          >
-                            {copiedField === `password-${user.id}` ? (
-                              <Check className="h-3 w-3 text-green-500" />
-                            ) : (
-                              <Copy className="h-3 w-3" />
+            {isFetchingUsers ? (
+              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
+                </div>
+              </div>
+            ) : paginatedUsers.length > 0 ? (
+              <>
+                <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+                  <div className="space-y-2">
+                    {paginatedUsers.map((user, index) => {
+                      const isTodayRegistered = user.created_at && new Date(user.created_at).toDateString() === new Date().toDateString();
+                      return (
+                      <div
+                        key={user.id}
+                        className={`flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3 ${isTodayRegistered ? 'ring-2 ring-green-500/50 ring-offset-2' : ''}`}
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        {/* 用户基本信息 */}
+                        <div className="w-full">
+                          <div className="flex items-center gap-2 mb-1.5 group">
+                            <span className="font-bold text-base sm:text-lg truncate cursor-pointer hover:text-primary transition-colors" onClick={() => copyToClipboard(user.username, `username-${user.id}`)} title="点击复制用户名">
+                              {user.username}
+                            </span>
+                            {isTodayRegistered && (
+                              <Badge className="bg-green-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
+                                <Sparkles className="h-3 w-3" />
+                                今日新注册
+                              </Badge>
                             )}
+                            {/* 显示用户标签 */}
+                            {user.tags && user.tags.length > 0 && (
+                              <div className="flex gap-1 flex-wrap">
+                                {user.tags.map((tag, idx) => (
+                                  <Badge key={idx} className={`${getTagColor(tag)} border-0 px-1.5 py-0 h-5 text-[10px]`}>
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => copyToClipboard(user.username, `username-${user.id}`)}
+                              title="复制用户名"
+                            >
+                              {copiedField === `username-${user.id}` ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                            <span className="text-muted-foreground font-mono flex items-center gap-1.5 group/password cursor-pointer hover:text-foreground transition-colors" onClick={() => copyToClipboard(user.password, `password-${user.id}`)} title="点击复制密码">
+                              <span className="font-medium">密码:</span> 
+                              <span>{user.password}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 opacity-0 group-hover/password:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(user.password, `password-${user.id}`);
+                                }}
+                                title="复制密码"
+                              >
+                                {copiedField === `password-${user.id}` ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </span>
+                            {user.created_at && (
+                              <span className="text-muted-foreground">
+                                <span className="font-medium">注册时间:</span> {format(new Date(user.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 统计信息徽章 - 移动端横向排列 */}
+                        <div className="flex gap-2 w-full">
+                          <Badge variant="default" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                            <LogIn className="h-3 w-3" />
+                            <span className="font-medium">登录: {user.remaining_logins}</span>
+                          </Badge>
+                          <Badge variant="secondary" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                            <CreditCard className="h-3 w-3" />
+                            <span className="font-medium">PDF: {user.pdf_limit}</span>
+                          </Badge>
+                        </div>
+
+                        {/* 操作按钮 - 移动端两个一行排列，桌面端横向排列 */}
+                        <div className="grid grid-cols-2 sm:flex sm:gap-2 w-full gap-2">
+                          {onImpersonateLogin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImpersonateLogin(user)}
+                              className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                              title="直接登录（不消耗积分）"
+                            >
+                              <LogOut className="h-4 w-4 mr-1.5 shrink-0" />
+                              <span className="truncate">登录</span>
+                            </Button>
+                          )}
+                          {onUpdateTags && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenTagDialog(user)}
+                              className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                              title="管理标签"
+                            >
+                              <Tag className="h-4 w-4 mr-1.5 shrink-0" />
+                              <span className="truncate">标签</span>
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPointsDialog(user)}
+                            className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="管理积分"
+                          >
+                            <Coins className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">积分</span>
                           </Button>
-                        </span>
-                        {user.created_at && (
-                          <span className="text-muted-foreground">
-                            <span className="font-medium">注册时间:</span> {format(new Date(user.created_at), 'yyyy-MM-dd HH:mm:ss')}
-                          </span>
-                        )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenChangePassword(user)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="修改密码"
+                          >
+                            <KeyRound className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">改密</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDeleteDialog(user)}
+                            className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="删除用户"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">删除</span>
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    );
+                    })}
+                  </div>
+                </div>
 
-                    {/* 统计信息徽章 - 移动端横向排列 */}
-                    <div className="flex gap-2 w-full">
-                      <Badge variant="default" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
-                        <LogIn className="h-3 w-3" />
-                        <span className="font-medium">登录: {user.remaining_logins}</span>
-                      </Badge>
-                      <Badge variant="secondary" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
-                        <CreditCard className="h-3 w-3" />
-                        <span className="font-medium">PDF: {user.pdf_limit}</span>
-                      </Badge>
-                    </div>
-
-                    {/* 操作按钮 - 移动端两个一行排列，桌面端横向排列 */}
-                    <div className="grid grid-cols-2 sm:flex sm:gap-2 w-full gap-2">
-                      {onImpersonateLogin && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleImpersonateLogin(user)}
-                          className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 h-9 px-2 text-xs justify-center sm:flex-1"
-                          title="直接登录（不消耗积分）"
-                        >
-                          <LogOut className="h-4 w-4 mr-1.5 shrink-0" />
-                          <span className="truncate">登录</span>
-                        </Button>
-                      )}
+                {/* 分页控件 */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t flex-wrap gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      第 {currentPage} / {totalPages} 页
+                    </p>
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleOpenPointsDialog(user)}
-                        className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 h-9 px-2 text-xs justify-center sm:flex-1"
-                        title="管理积分"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="text-xs sm:text-sm h-9"
                       >
-                        <Coins className="h-4 w-4 mr-1.5 shrink-0" />
-                        <span className="truncate">积分</span>
+                        <ChevronLeft className="h-4 w-4" />
+                        上一页
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleOpenChangePassword(user)}
-                        className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 h-9 px-2 text-xs justify-center sm:flex-1"
-                        title="修改密码"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="text-xs sm:text-sm h-9"
                       >
-                        <KeyRound className="h-4 w-4 mr-1.5 shrink-0" />
-                        <span className="truncate">改密</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenDeleteDialog(user)}
-                        className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-9 px-2 text-xs justify-center sm:flex-1"
-                        title="删除用户"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1.5 shrink-0" />
-                        <span className="truncate">删除</span>
+                        下一页
+                        <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                );
-                })}
-              </div>
-            </div>
-
-            {/* 分页控件 */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t flex-wrap gap-3">
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  第 {currentPage} / {totalPages} 页
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="text-xs sm:text-sm h-9"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    上一页
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="text-xs sm:text-sm h-9"
-                  >
-                    下一页
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
               </div>
             )}
           </>
-        ) : (
-          <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
-            {searchQuery ? "未找到匹配的用户" : "暂无用户数据"}
-          </div>
+        )}
+
+        {/* 特别关注用户视图 */}
+        {userViewMode === "special" && (
+          <>
+            {isLoadingSpecial ? (
+              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载特别关注用户...</p>
+                </div>
+              </div>
+            ) : paginatedSpecialUsers.length > 0 ? (
+              <>
+                <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-muted/30 to-muted/50">
+                  <div className="space-y-2">
+                    {paginatedSpecialUsers.map((user, index) => {
+                      const isTodayRegistered = user.created_at && new Date(user.created_at).toDateString() === new Date().toDateString();
+                      return (
+                      <div
+                        key={user.id}
+                        className={`flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-muted/20 rounded-lg hover:shadow-lg transition-all border-2 border-border/50 hover:border-primary/30 animate-scale-in gap-3 ${isTodayRegistered ? 'ring-2 ring-green-500/50 ring-offset-2' : ''}`}
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        {/* 用户基本信息 */}
+                        <div className="w-full">
+                          <div className="flex items-center gap-2 mb-1.5 group">
+                            <span className="font-bold text-base sm:text-lg truncate cursor-pointer hover:text-primary transition-colors" onClick={() => copyToClipboard(user.username, `username-${user.id}`)} title="点击复制用户名">
+                              {user.username}
+                            </span>
+                            {isTodayRegistered && (
+                              <Badge className="bg-green-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
+                                <Sparkles className="h-3 w-3" />
+                                今日新注册
+                              </Badge>
+                            )}
+                            {/* 显示用户标签 */}
+                            {user.tags && user.tags.length > 0 && (
+                              <div className="flex gap-1 flex-wrap">
+                                {user.tags.map((tag, idx) => (
+                                  <Badge key={idx} className={`${getTagColor(tag)} border-0 px-1.5 py-0 h-5 text-[10px]`}>
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => copyToClipboard(user.username, `username-${user.id}`)}
+                              title="复制用户名"
+                            >
+                              {copiedField === `username-${user.id}` ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                            <span className="text-muted-foreground font-mono flex items-center gap-1.5 group/password cursor-pointer hover:text-foreground transition-colors" onClick={() => copyToClipboard(user.password, `password-${user.id}`)} title="点击复制密码">
+                              <span className="font-medium">密码:</span> 
+                              <span>{user.password}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 opacity-0 group-hover/password:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(user.password, `password-${user.id}`);
+                                }}
+                                title="复制密码"
+                              >
+                                {copiedField === `password-${user.id}` ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </span>
+                            {user.created_at && (
+                              <span className="text-muted-foreground">
+                                <span className="font-medium">注册时间:</span> {format(new Date(user.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 统计信息徽章 - 移动端横向排列 */}
+                        <div className="flex gap-2 w-full">
+                          <Badge variant="default" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                            <LogIn className="h-3 w-3" />
+                            <span className="font-medium">登录: {user.remaining_logins}</span>
+                          </Badge>
+                          <Badge variant="secondary" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                            <CreditCard className="h-3 w-3" />
+                            <span className="font-medium">PDF: {user.pdf_limit}</span>
+                          </Badge>
+                        </div>
+
+                        {/* 操作按钮 - 移动端两个一行排列，桌面端横向排列 */}
+                        <div className="grid grid-cols-2 sm:flex sm:gap-2 w-full gap-2">
+                          {onImpersonateLogin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImpersonateLogin(user)}
+                              className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                              title="直接登录（不消耗积分）"
+                            >
+                              <LogOut className="h-4 w-4 mr-1.5 shrink-0" />
+                              <span className="truncate">登录</span>
+                            </Button>
+                          )}
+                          {onUpdateTags && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenTagDialog(user)}
+                              className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                              title="管理标签"
+                            >
+                              <Tag className="h-4 w-4 mr-1.5 shrink-0" />
+                              <span className="truncate">标签</span>
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPointsDialog(user)}
+                            className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="管理积分"
+                          >
+                            <Coins className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">积分</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenChangePassword(user)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="修改密码"
+                          >
+                            <KeyRound className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">改密</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDeleteDialog(user)}
+                            className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="删除用户"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">删除</span>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                    })}
+                  </div>
+                </div>
+
+                {/* 分页控件 */}
+                {totalSpecialPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t flex-wrap gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      第 {currentPage} / {totalSpecialPages} 页
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="text-xs sm:text-sm h-9"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        上一页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalSpecialPages, p + 1))}
+                        disabled={currentPage === totalSpecialPages}
+                        className="text-xs sm:text-sm h-9"
+                      >
+                        下一页
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                {searchQuery ? "未找到匹配的用户" : "暂无特别关注用户"}
+              </div>
+            )}
+          </>
         )}
       </CardContent>
 
@@ -655,6 +1020,129 @@ const UserList = ({
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   确认删除
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 标签编辑对话框 */}
+      <Dialog open={tagDialogOpen} onOpenChange={setTagDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-orange-600" />
+              管理用户标签
+            </DialogTitle>
+            <DialogDescription>
+              为用户 <span className="font-semibold text-primary">{selectedUser?.username}</span> 添加或删除标签
+              <br />
+              <span className="text-xs text-muted-foreground">特别关注的用户将显示在"特别关注"Tab页中</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* 当前标签列表 */}
+            <div>
+              <Label className="mb-2 block">当前标签</Label>
+              {currentTags.length > 0 ? (
+                <div className="flex flex-wrap gap-2 min-h-[40px] p-3 bg-muted/30 rounded-lg border">
+                  {currentTags.map((tag, idx) => (
+                    <Badge
+                      key={idx}
+                      className={`${getTagColor(tag)} cursor-pointer hover:opacity-80 transition-opacity px-3 py-1`}
+                      onClick={() => handleRemoveTag(tag)}
+                      title="点击删除此标签"
+                    >
+                      {tag} ✕
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-3 bg-muted/30 rounded-lg border text-sm text-muted-foreground text-center">
+                  暂无标签，请添加新标签
+                </div>
+              )}
+            </div>
+
+            {/* 添加新标签 */}
+            <div className="space-y-2">
+              <Label htmlFor="new-tag">添加新标签</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="new-tag"
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  placeholder="输入标签名称（如：VIP、问题用户）"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddTag}
+                  disabled={!newTagInput.trim()}
+                  variant="outline"
+                  size="sm"
+                >
+                  添加
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                提示：按回车键可快速添加标签
+              </p>
+            </div>
+
+            {/* 常用标签建议 */}
+            <div>
+              <Label className="mb-2 block">常用标签建议</Label>
+              <div className="flex flex-wrap gap-2">
+                {['VIP', '问题用户', '测试账号', '特别关注'].map((suggestion) => (
+                  <Badge
+                    key={suggestion}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() => {
+                      if (!currentTags.includes(suggestion)) {
+                        setCurrentTags([...currentTags, suggestion]);
+                      }
+                    }}
+                  >
+                    + {suggestion}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setTagDialogOpen(false)}
+              disabled={isProcessingTags}
+              className="flex-1 sm:flex-none"
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleSaveTags}
+              disabled={isProcessingTags}
+              className="flex-1 sm:flex-none"
+            >
+              {isProcessingTags ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  保存中...
+                </>
+              ) : (
+                <>
+                  <Tag className="h-4 w-4 mr-2" />
+                  保存标签
                 </>
               )}
             </Button>

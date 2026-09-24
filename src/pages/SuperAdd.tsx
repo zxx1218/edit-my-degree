@@ -22,6 +22,8 @@ interface User {
   password: string;
   remaining_logins: number;
   pdf_limit: number;
+  created_at?: string;
+  tags?: string[];
 }
 
 interface CardItem {
@@ -208,6 +210,23 @@ const SuperAdd = () => {
       });
     } finally {
       setIsFetchingUsers(false);
+    }
+  };
+
+  // 处理更新用户标签
+  const handleUpdateTags = async (username: string, tags: string[]) => {
+    if (!token) return;
+    
+    try {
+      const data = await adminApi.updateUserTags(token, { username, tags });
+      if (data.success) {
+        // 刷新用户列表
+        await fetchUsers();
+      } else {
+        throw new Error(data.error || "更新标签失败");
+      }
+    } catch (error: any) {
+      throw error;
     }
   };
 
@@ -569,7 +588,9 @@ const SuperAdd = () => {
           onResetPdf={handleResetPdf}
           token={token}
           onImpersonateLogin={handleImpersonateLogin}
+          onUpdateTags={handleUpdateTags}
         />
+
 
         {/* 留言管理 */}
         <MessageList token={token} />

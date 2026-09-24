@@ -33,6 +33,8 @@ templates/
 - `getUserBlacklistBlockNotification()` - 用户黑名单拦截
 - `getSuspiciousLoginNotification()` - 异常登录行为
 - `getFailedLoginNotification()` - 多次登录失败
+- `getIpRateLimitBlockNotification()` - IP频率限制封禁
+- `getFrequentPasswordChangeNotification()` - 频繁密码修改尝试
 
 ### 4. user-notifications.js
 用户行为相关的通知：
@@ -212,7 +214,22 @@ const notification = getStartupNotification({
 await barkNotifier.sendNotification(notification);
 ```
 
+## 📧 邮件通知使用范围
+
+**重要说明**：邮件通知仅用于充值接口的恶意调用告警（高优先级安全事件），其余所有通知均使用Bark推送。
+
+### 邮件通知场景
+- ✅ 充值接口非法调用（未授权访问、权限不足等）
+
+### Bark通知场景
+- ✅ IP/用户黑名单拦截
+- ✅ IP频率限制封禁
+- ✅ 频繁密码修改尝试
+- ✅ 服务启停/异常
+- ✅ 充值成功
+- ✅ 用户注册/留言
+
 ---
 
-**最后更新**: 2026-09-23  
+**最后更新**: 2026-09-24  
 **维护者**: 开发团队
