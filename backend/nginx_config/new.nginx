@@ -5,6 +5,12 @@ server {
     # 隐藏 Nginx 版本号
     server_tokens off;
 
+    # ========== IP 黑名单检查（使用 geo 模块） ==========
+    # 如果 IP 在黑名单中，直接返回 403 Forbidden
+    if ($blacklist_ip) {
+        return 403;
+    }
+
     # 开启 Gzip 压缩
     gzip on;
     gzip_vary on;
