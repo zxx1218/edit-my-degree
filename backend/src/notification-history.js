@@ -35,28 +35,24 @@ async function recordNotificationHistory(params) {
       return;
     }
     
-    const db = await dbManager.getConnection();
-    
-    const query = `
-      INSERT INTO notification_history 
+    // 使用execute而不是getConnection，确保连接自动释放
+    await dbManager.execute(
+      `INSERT INTO notification_history 
       (channel, title, body, recipient, \`group\`, level, sound, status, error_message, metadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-    
-    const values = [
-      channel,
-      title,
-      body,
-      recipient || null,
-      group || null,
-      level || null,
-      sound || null,
-      status,
-      errorMessage || null,
-      metadata ? JSON.stringify(metadata) : null
-    ];
-    
-    await db.execute(query, values);
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        channel,
+        title,
+        body,
+        recipient || null,
+        group || null,
+        level || null,
+        sound || null,
+        status,
+        errorMessage || null,
+        metadata ? JSON.stringify(metadata) : null
+      ]
+    );
     
     console.info(`[通知历史] ✅ 已记录${channel === 'bark' ? 'Bark' : '邮件'}通知: ${title}`);
     

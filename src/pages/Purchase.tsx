@@ -98,9 +98,9 @@ const Purchase = () => {
     },
     {
       name: "进阶版",
-      logins: "可登录30次",
+      logins: "可登录50次",
       price: "¥29",
-      description: "获取一张30次登录次数充值卡密",
+      description: "获取一张50次登录次数充值卡密",
       popular: true,
       features: ["数据永久存储", "支持信息任意修改", "购买人数最多", "支持多人多设备同时登录"],
       icon: Crown,

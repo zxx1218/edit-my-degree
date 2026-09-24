@@ -35,7 +35,7 @@ function initialize(pool, jwtSecret) {
       if (blacklisted) {
         logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
         
-        // 发送黑名单IP登录告警Bark通知
+        // 发送黑名单IP登录告警Bark通知（不等待完成，避免阻塞响应）
         const timestamp = new Date().toLocaleString('zh-CN');
         const notification = getIpBlacklistBlockNotification({
           ip: ipAddress,
@@ -44,8 +44,15 @@ function initialize(pool, jwtSecret) {
           timestamp
         });
         
-        barkNotifier.sendNotification(notification).catch(err => {
-          console.error('[认证] 发送黑名单IP登录告警Bark通知失败:', err.message);
+        // 使用setImmediate确保通知发送不会阻塞主响应
+        setImmediate(() => {
+          barkNotifier.sendNotification(notification)
+            .then(() => {
+              console.safe('[认证] 黑名单IP登录告警通知发送成功');
+            })
+            .catch(err => {
+              console.error('[认证] 发送黑名单IP登录告警Bark通知失败:', err.message);
+            });
         });
         
         return res.status(403).json({ 
@@ -89,7 +96,7 @@ function initialize(pool, jwtSecret) {
           blockedUntil: userBlacklisted.blocked_until
         });
         
-        // 发送黑名单用户登录告警Bark通知
+        // 发送黑名单用户登录告警Bark通知（不等待完成，避免阻塞响应）
         const timestamp = new Date().toLocaleString('zh-CN');
         const notification = getUserBlacklistBlockNotification({
           username: username,
@@ -98,8 +105,15 @@ function initialize(pool, jwtSecret) {
           timestamp
         });
         
-        barkNotifier.sendNotification(notification).catch(err => {
-          console.error('[认证] 发送黑名单用户登录告警Bark通知失败:', err.message);
+        // 使用setImmediate确保通知发送不会阻塞主响应
+        setImmediate(() => {
+          barkNotifier.sendNotification(notification)
+            .then(() => {
+              console.safe('[认证] 黑名单用户登录告警通知发送成功');
+            })
+            .catch(err => {
+              console.error('[认证] 发送黑名单用户登录告警Bark通知失败:', err.message);
+            });
         });
         
         return res.status(403).json({ 
@@ -148,11 +162,11 @@ function initialize(pool, jwtSecret) {
       } else if (remainingLoginsBefore <= 5) {
         // 当前剩余登录次数大于1但小于等于5时，会话时长8分钟
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_2 || '480000', 10);
-      } else if (remainingLoginsBefore <= 30) {
-        // 当前剩余登录次数大于5但小于等于30时，会话时长20分钟
+      } else if (remainingLoginsBefore <= 50) {
+        // 当前剩余登录次数大于5但小于等于50时，会话时长20分钟
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_3 || '1200000', 10);
       } else {
-        // 当前剩余登录次数大于30时，会话时长24小时
+        // 当前剩余登录次数大于50时，会话时长24小时
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_4 || '86400000', 10);
       }
       

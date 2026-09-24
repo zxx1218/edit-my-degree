@@ -71,7 +71,7 @@ async function addToBlacklist(ipAddress, reason) {
       blockDurationMinutes: CONFIG.BLOCK_DURATION / 1000 / 60
     });
     
-    // 发送IP频率限制封禁Bark通知
+    // 发送IP频率限制封禁Bark通知（不等待完成，避免阻塞）
     const timestamp = new Date().toLocaleString('zh-CN');
     const notification = getIpRateLimitBlockNotification({
       ip: ipAddress,
@@ -82,8 +82,15 @@ async function addToBlacklist(ipAddress, reason) {
       timestamp
     });
     
-    barkNotifier.sendNotification(notification).catch(err => {
-      console.error('[安全防护] 发送IP封禁告警Bark通知失败:', err.message);
+    // 使用setImmediate确保通知发送不会阻塞主流程
+    setImmediate(() => {
+      barkNotifier.sendNotification(notification)
+        .then(() => {
+          console.safe('[安全防护] IP封禁告警通知发送成功');
+        })
+        .catch(err => {
+          console.error('[安全防护] 发送IP封禁告警Bark通知失败:', err.message);
+        });
     });
   } catch (err) {
     console.safe('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });
