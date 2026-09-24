@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { recordNotificationHistory } = require('./notification-history');
 
 /**
  * Bark 通知推送模块
@@ -152,6 +153,19 @@ async function sendNotification(options) {
     
     console.info('[Bark通知] 通知发送成功:', response.data);
     
+    // 记录通知历史
+    await recordNotificationHistory({
+      channel: 'bark',
+      title,
+      body,
+      recipient: barkConfig.deviceKeys.join(', '),
+      group,
+      level,
+      sound,
+      status: 'success',
+      metadata: { subtitle, icon, url }
+    });
+    
     return {
       success: true,
       data: response.data
@@ -164,6 +178,27 @@ async function sendNotification(options) {
       console.error('[Bark通知] 响应状态:', error.response.status);
       console.error('[Bark通知] 响应数据:', error.response.data);
     }
+    
+    // 记录失败的通知历史
+    const {
+      title,
+      body,
+      level = barkConfig.level,
+      sound = barkConfig.sound,
+      group = barkConfig.group
+    } = options;
+    
+    await recordNotificationHistory({
+      channel: 'bark',
+      title: title || '未知通知',
+      body: body || '',
+      recipient: barkConfig.deviceKeys.join(', '),
+      group,
+      level,
+      sound,
+      status: 'failed',
+      errorMessage: error.message
+    });
     
     return {
       success: false,

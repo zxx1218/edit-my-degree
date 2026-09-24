@@ -14,6 +14,7 @@ import {
   ProvinceMap,
   BlacklistManager,
   PdfGenerationManager,
+  NotificationHistoryManager,
 } from "@/components/admin";
 
 interface User {
@@ -631,6 +632,9 @@ const SuperAdd = () => {
 
         {/* PDF生成管理 */}
         <PdfGenerationManager token={token} />
+
+        {/* 通知历史管理 */}
+        <NotificationHistoryManager token={token} />
 
         {/* 今日登录用户列表 */}
         <TodayLoginList

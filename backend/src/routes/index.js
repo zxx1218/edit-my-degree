@@ -61,6 +61,11 @@ const { queryIPLocation, isChinaIP } = require('../ip-location');
 // 引入邮件通知模块
 const { sendSecurityAlert } = require('../email-notifier');
 
+// 引入通知历史管理模块
+const getNotificationHistoryModule = require('../get-notification-history');
+const deleteNotificationHistoryModule = require('../delete-notification-history');
+const clearNotificationHistoryModule = require('../clear-notification-history');
+
 // IP封禁中间件 - 这个中间件使用了await方法，会让线程等待结果返回，会造成响应有延迟，后续需要考虑优化
 const ipBlacklistMiddleware = async (req, res, next) => {
   // 获取客户端 IP 地址
@@ -529,6 +534,11 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // IP黑名单管理接口 - 用于获取、更新和删除IP黑名单记录（管理员）
   app.post('/api/manage-ip-blacklist', generalLimiter, signatureValidationMiddleware, manageIpBlacklistModule.initialize(db, JWT_SECRET));
+
+  // 通知历史管理接口 - 用于查看和管理通知发送历史（管理员）
+  app.post('/api/get-notification-history', generalLimiter, signatureValidationMiddleware, getNotificationHistoryModule(db, JWT_SECRET));
+  app.post('/api/delete-notification-history', generalLimiter, signatureValidationMiddleware, deleteNotificationHistoryModule(db, JWT_SECRET));
+  app.post('/api/clear-notification-history', generalLimiter, signatureValidationMiddleware, clearNotificationHistoryModule(db, JWT_SECRET));
 
 
   // PDF生成管理接口 - 用于查看和管理PDF生成记录及二维码信息（管理员）

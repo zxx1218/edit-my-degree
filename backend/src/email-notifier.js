@@ -4,6 +4,7 @@
  */
 
 const nodemailer = require('nodemailer');
+const { recordNotificationHistory } = require('./notification-history');
 require('dotenv').config({ path: '../.env' }); // 加载根目录的.env文件
 
 // 邮件传输器配置
@@ -103,6 +104,19 @@ async function sendSecurityAlert(params) {
     console.info(`[邮件通知] ✅ 安全告警邮件发送成功`);
     console.info(`[邮件通知] 🆔 Message ID: ${info.messageId}`);
     console.info(`[邮件通知] 📊 SMTP响应: ${info.response || 'N/A'}`);
+    
+    // 记录通知历史
+    await recordNotificationHistory({
+      channel: 'email',
+      title: subject,
+      body: message,
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL,
+      group: '安全告警',
+      level: 'critical',
+      status: 'success',
+      metadata: { messageId: info.messageId }
+    });
+    
     return true;
     
   } catch (error) {
@@ -114,6 +128,19 @@ async function sendSecurityAlert(params) {
     if (error.stack) {
       console.error(`[邮件通知] 📚 堆栈跟踪:\n${error.stack}`);
     }
+    
+    // 记录失败的通知历史
+    await recordNotificationHistory({
+      channel: 'email',
+      title: params.subject,
+      body: params.message,
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL,
+      group: '安全告警',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: error.message
+    });
+    
     return false;
   }
 }

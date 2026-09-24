@@ -650,3 +650,60 @@ export const updateUserTags = async (token: string, body: {
   
   return await response.json();
 };
+
+// 获取通知历史记录
+export const getNotificationHistory = async (token: string, params: {
+  page?: number;
+  pageSize?: number;
+  channel?: 'all' | 'bark' | 'email';
+  status?: 'all' | 'success' | 'failed';
+  searchQuery?: string;
+}) => {
+  const url = '/api/get-notification-history';
+  const options = createSignedRequestOptions('POST', url, { 
+    action: 'list',
+    ...params 
+  });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-notification-history`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 删除单条通知历史
+export const deleteNotificationHistory = async (token: string, id: string) => {
+  const url = '/api/delete-notification-history';
+  const options = createSignedRequestOptions('POST', url, { id });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/delete-notification-history`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 清空所有通知历史
+export const clearNotificationHistory = async (token: string) => {
+  const url = '/api/clear-notification-history';
+  const options = createSignedRequestOptions('POST', url, {});
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/clear-notification-history`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
