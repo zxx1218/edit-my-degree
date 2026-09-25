@@ -31,7 +31,8 @@ async function recordNotificationHistory(params) {
     
     // 验证必要参数
     if (!channel || !title || !body || !status) {
-      console.warn('[通知历史] 缺少必要参数，跳过记录');
+      console.warn('[通知历史] ⚠️ 缺少必要参数，跳过记录');
+      console.warn(`[通知历史] 🔍 参数详情 - channel: ${channel}, title: ${title ? '已提供' : '缺失'}, body: ${body ? '已提供' : '缺失'}, status: ${status}`);
       return;
     }
     
@@ -57,7 +58,14 @@ async function recordNotificationHistory(params) {
     console.info(`[通知历史] ✅ 已记录${channel === 'bark' ? 'Bark' : '邮件'}通知: ${title}`);
     
   } catch (error) {
-    console.error('[通知历史] ❌ 记录失败:', error.message);
+    console.error('[通知历史] ❌ 记录失败');
+    console.error(`[通知历史] 🔴 错误类型: ${error.constructor.name}`);
+    console.error(`[通知历史] 🔴 错误消息: ${error.message}`);
+    console.error(`[通知历史] 🔴 错误代码: ${error.code || 'N/A'}`);
+    if (error.stack) {
+      console.error(`[通知历史] 📚 堆栈跟踪:\n${error.stack}`);
+    }
+    console.error(`[通知历史] 🔍 失败的参数 - channel: ${params?.channel}, title: ${params?.title?.substring(0, 30)}, status: ${params?.status}`);
     // 不抛出错误，避免影响主流程
   }
 }

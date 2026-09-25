@@ -1,5 +1,15 @@
 const mysql = require('mysql2/promise');
 
+// 确保console.safe被定义（用于PM2集群环境的安全日志输出）
+if (!console.safe) {
+  try {
+    require('./logger');
+  } catch (err) {
+    // 如果logger模块加载失败，提供一个简单的fallback
+    console.safe = console.log;
+  }
+}
+
 class DatabaseManager {
   constructor() {
     this.pool = null;

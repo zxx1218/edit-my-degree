@@ -91,20 +91,32 @@ function initialize(db, jwtSecret) {
       const [rows] = await db.execute(dataQuery, queryParams);
       
       // 格式化数据
-      const notifications = rows.map(row => ({
-        id: row.id,
-        channel: row.channel,
-        title: row.title,
-        body: row.body,
-        recipient: row.recipient,
-        group: row.group,
-        level: row.level,
-        sound: row.sound,
-        status: row.status,
-        errorMessage: row.error_message,
-        metadata: row.metadata || null,
-        createdAt: row.created_at
-      }));
+      const notifications = rows.map(row => {
+        let metadata = null;
+        if (row.metadata) {
+          try {
+            metadata = typeof row.metadata === 'string' ? JSON.parse(row.metadata) : row.metadata;
+          } catch (e) {
+            console.warn('[通知历史] 解析metadata失败:', e.message);
+            metadata = row.metadata;
+          }
+        }
+        
+        return {
+          id: row.id,
+          channel: row.channel,
+          title: row.title,
+          body: row.body,
+          recipient: row.recipient,
+          group: row.group,
+          level: row.level,
+          sound: row.sound,
+          status: row.status,
+          errorMessage: row.error_message,
+          metadata: metadata,
+          createdAt: row.created_at
+        };
+      });
       
       res.json({
         success: true,
