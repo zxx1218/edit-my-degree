@@ -47,6 +47,18 @@ const Index = () => {
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<any[]>([]);
 
+  // 转换数据格式的辅助函数
+  const convertToEducationRecord = (item: any, type: string): EducationRecord => ({
+    id: item.id,
+    school: item.school,
+    major: type === "exam" ? item.year : item.major,
+    studyType: item.study_type || "",
+    degreeLevel: item.degree_level || "",
+    degreeType: item.degree_type || "",
+    type: type as any,
+    created_at: item.created_at,
+  });
+
   // 初始化banner图片
   useEffect(() => {
     const totalImages = getTotalBannerImages();
@@ -69,18 +81,6 @@ const Index = () => {
 
         const data = await getUserData(user.id);
         
-        // 转换数据格式以匹配前端接口
-        const convertToEducationRecord = (item: any, type: string): EducationRecord => ({
-          id: item.id,
-          school: item.school,
-          major: type === "exam" ? item.year : item.major,
-          studyType: item.study_type || "",
-          degreeLevel: item.degree_level || "",
-          degreeType: item.degree_type || "",
-          type: type as any,
-          created_at: item.created_at,
-        });
-
         // 检查学籍信息是否为空，如果为空则创建默认记录
         if (data.studentStatus.length === 0) {
           try {
@@ -131,13 +131,13 @@ const Index = () => {
     
     // 考研信息不需要选择学历层次
     if (selectedRecord.type === "exam") {
-      handleAddWithLevel("本科"); // 考研默认使用本科
+      handleAddWithLevel({ level: "本科", school: "", major: "", studyType: "" }); // 考研默认使用本科
     } else {
       setIsAddDialogOpen(true);
     }
   };
 
-  const handleAddWithLevel = async (level: DegreeLevel | DegreeType) => {
+  const handleAddWithLevel = async (data: { level: DegreeLevel | DegreeType; school: string; major: string; studyType?: string }) => {
     if (!selectedRecord) return;
 
     try {
@@ -156,17 +156,17 @@ const Index = () => {
       if (selectedRecord.type === "degree") {
         newData = {
           name: "浆果儿",
-          school: "新学校",
-          degree_type: level, // 学位使用 degree_type
+          school: data.school,
+          degree_type: data.level, // 学位使用 degree_type
           degree_level: "", // 学位的 degree_level 可以为空
-          major: "新专业",
+          major: data.major,
         };
       } else if (selectedRecord.type === "exam") {
         // 考研信息不需要 degree_level 字段，使用当前年份作为默认值
         const currentYear = new Date().getFullYear();
         newData = {
           name: "浆果儿",
-          school: "新学校",
+          school: data.school,
           year: currentYear.toString(),
           note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
         };
@@ -174,44 +174,65 @@ const Index = () => {
         // 学历/学籍使用 degree_level
         newData = {
           name: "浆果儿",
-          school: "新学校",
-          major: "新专业",
-          study_type: "全日制",
-          degree_level: level,
+          school: data.school,
+          major: data.major,
+          study_type: data.studyType || "全日制",
+          degree_level: data.level,
         };
       }
 
       const result = await updateData(table, "insert", currentUserId, newData);
       
       if (result.success && result.data) {
-        const newRecord: EducationRecord = {
-          id: result.data[0].id,
-          school: result.data[0].school,
-          major: selectedRecord.type === "exam" ? "" : (result.data[0].major || ""),
-          studyType: result.data[0].study_type || "",
-          degreeLevel: result.data[0].degree_level || "",
-          degreeType: result.data[0].degree_type || "",
-          type: selectedRecord.type,
-          created_at: result.data[0].created_at,
-        };
+        // 如果是添加研究生学籍（硕士或博士），需要重新加载完整数据
+        // 因为后端可能会自动创建学历、学位和考研信息
+        const isGraduateStudent = data.level === '硕士研究生' || data.level === '博士研究生';
+        
+        if (isGraduateStudent && selectedRecord.type === "student-status") {
+          // 等待1.5秒，给后端足够时间完成衍生数据创建
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // 重新加载完整的用户数据
+          const userData = await getUserData(currentUserId);
+          
+          // 转换并排序数据
+          setStudentStatus(sortByDegreeLevel(userData.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
+          setEducationRecords(sortByDegreeLevel(userData.education.map((item: any) => convertToEducationRecord(item, "education"))));
+          setDegreeRecords(sortByDegreeType(userData.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
+          setExamRecords(userData.exam.map((item: any) => ({ ...item, type: "exam" })));
+          
+          toast.success("已添加新记录，并自动生成了相关学历、学位和考研信息", { duration: 2000 });
+        } else {
+          // 非研究生学籍，使用原有的局部更新逻辑
+          const newRecord: EducationRecord = {
+            id: result.data[0].id,
+            school: result.data[0].school,
+            major: selectedRecord.type === "exam" ? "" : (result.data[0].major || ""),
+            studyType: result.data[0].study_type || "",
+            degreeLevel: result.data[0].degree_level || "",
+            degreeType: result.data[0].degree_type || "",
+            type: selectedRecord.type,
+            created_at: result.data[0].created_at,
+          };
 
-        // 使用排序函数重新排序列表
-        switch (selectedRecord.type) {
-          case "student-status":
-            setStudentStatus(sortByDegreeLevel([...studentStatus, newRecord]));
-            break;
-          case "education":
-            setEducationRecords(sortByDegreeLevel([...educationRecords, newRecord]));
-            break;
-          case "degree":
-            setDegreeRecords(sortByDegreeType([...degreeRecords, newRecord]));
-            break;
-          case "exam":
-            setExamRecords([...examRecords, { ...result.data[0], type: "exam" }]);
-            break;
+          // 使用排序函数重新排序列表
+          switch (selectedRecord.type) {
+            case "student-status":
+              setStudentStatus(sortByDegreeLevel([...studentStatus, newRecord]));
+              break;
+            case "education":
+              setEducationRecords(sortByDegreeLevel([...educationRecords, newRecord]));
+              break;
+            case "degree":
+              setDegreeRecords(sortByDegreeType([...degreeRecords, newRecord]));
+              break;
+            case "exam":
+              setExamRecords([...examRecords, { ...result.data[0], type: "exam" }]);
+              break;
+          }
+
+          toast.success("已添加新记录", { duration: 1500 });
         }
-
-        toast.success("已添加新记录", { duration: 1500 });
       }
     } catch (error) {
       toast.error("添加记录失败", { duration: 1500 });
