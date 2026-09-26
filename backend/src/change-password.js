@@ -2,9 +2,36 @@ const jwt = require('jsonwebtoken');
 const { logPasswordChange } = require('./operation-logger');
 const barkNotifier = require('./bark-notifier');
 const { getFrequentPasswordChangeNotification } = require('./notifications/templates');
+const dbManager = require('./db-utils');
 
 // 简单的内存存储，用于记录失败次数（生产环境建议使用 Redis）
 const failedAttempts = new Map();
+
+/**
+ * 记录密码修改历史到数据库
+ * @param {Object} db - 数据库连接
+ * @param {string|null} userId - 用户ID
+ * @param {string} username - 用户名
+ * @param {string} ipAddress - IP地址
+ * @param {string} userAgent - User-Agent
+ * @param {string} result - 结果：success或failed
+ * @param {boolean} isAdmin - 是否为管理员操作
+ * @param {string} operatorUsername - 操作者用户名
+ * @param {string} reason - 失败原因
+ */
+async function recordPasswordChangeHistory(db, userId, username, ipAddress, userAgent, result, isAdmin, operatorUsername, reason = null) {
+  try {
+    await db.execute(
+      `INSERT INTO password_change_history 
+       (user_id, username, ip_address, user_agent, result, is_admin_operation, operator_username, reason) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId || 'unknown', username, ipAddress, userAgent, result, isAdmin ? 1 : 0, operatorUsername, reason]
+    );
+  } catch (err) {
+    console.error('[密码修改] 记录历史失败:', err.message);
+    // 不抛出错误，避免影响主流程
+  }
+}
 
 /**
  * 修改密码接口
@@ -36,6 +63,9 @@ function initialize(db, jwtSecret) {
         logPasswordChange(null, username, ipAddress, userAgent, 'failed', { 
           reason: '尝试次数过多，已被临时锁定'
         });
+        
+        // 记录到数据库
+        await recordPasswordChangeHistory(db, null, username, ipAddress, userAgent, 'failed', false, username, '尝试次数过多，已被临时锁定');
         
         // 发送频繁密码修改尝试Bark通知（不等待完成，避免阻塞响应）
         const timestamp = new Date().toLocaleString('zh-CN');
@@ -74,6 +104,9 @@ function initialize(db, jwtSecret) {
         logPasswordChange(null, username, ipAddress, userAgent, 'failed', { 
           reason: '用户不存在'
         });
+        
+        // 记录到数据库
+        await recordPasswordChangeHistory(db, null, username, ipAddress, userAgent, 'failed', false, username, '用户不存在');
         
         // 即使不存在也增加计数，防止枚举用户名
         failedAttempts.set(failKey, attempts + 1);
@@ -120,6 +153,9 @@ function initialize(db, jwtSecret) {
             operator: operatorUsername
           });
           
+          // 记录到数据库
+          await recordPasswordChangeHistory(db, targetUser.id, username, ipAddress, userAgent, 'failed', false, operatorUsername, '权限不足：普通用户只能修改自己的密码');
+          
           return res.status(403).json({
             success: false,
             error: '您只能修改自己的密码'
@@ -140,6 +176,9 @@ function initialize(db, jwtSecret) {
             reason: '原密码错误',
             operator: operatorUsername
           });
+          
+          // 记录到数据库
+          await recordPasswordChangeHistory(db, targetUser.id, username, ipAddress, userAgent, 'failed', false, operatorUsername, '原密码错误');
           
           // 增加失败计数
           failedAttempts.set(failKey, attempts + 1);
@@ -187,6 +226,9 @@ function initialize(db, jwtSecret) {
             reason: '原密码错误'
           });
           
+          // 记录到数据库
+          await recordPasswordChangeHistory(db, targetUser.id, username, ipAddress, userAgent, 'failed', false, username, '原密码错误');
+          
           // 增加失败计数
           failedAttempts.set(failKey, attempts + 1);
           setTimeout(() => failedAttempts.delete(failKey), 15 * 60 * 1000); // 15分钟后重置
@@ -225,6 +267,9 @@ function initialize(db, jwtSecret) {
         'UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [newPassword, targetUser.id]
       );
+
+      // 记录密码修改历史到数据库
+      await recordPasswordChangeHistory(db, targetUser.id, username, ipAddress, userAgent, 'success', isAdmin, operatorUsername);
 
       // 成功后清除失败记录
       failedAttempts.delete(failKey);

@@ -707,3 +707,23 @@ export const clearNotificationHistory = async (token: string) => {
   
   return await response.json();
 };
+
+// 获取密码修改统计
+export const getPasswordChangeStats = async (token: string, params: {
+  page?: number;
+  pageSize?: number;
+}) => {
+  const url = '/api/get-password-change-stats';
+  const options = createSignedRequestOptions('POST', url, params);
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-password-change-stats`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+

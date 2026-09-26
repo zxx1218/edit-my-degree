@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles, Tag, Star } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles, Tag, Star, Shield } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as adminApi from "@/lib/adminApi";
 import { format } from "date-fns";
+import PasswordChangeStats from "./PasswordChangeStats";
 
 interface User {
   id: string;
@@ -79,7 +80,7 @@ const UserList = ({
   onUpdateTags,
 }: UserListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [userViewMode, setUserViewMode] = useState<"all" | "special">("all");
+  const [userViewMode, setUserViewMode] = useState<"all" | "special" | "password-stats">("all");
   const [specialUsers, setSpecialUsers] = useState<User[]>([]);
   const [isLoadingSpecial, setIsLoadingSpecial] = useState(false);
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
@@ -493,9 +494,9 @@ const UserList = ({
           </Button>
         </div>
 
-        {/* Tab导航 - 全部用户 / 特别关注 */}
-        <Tabs value={userViewMode} onValueChange={(value) => setUserViewMode(value as "all" | "special")} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 h-12">
+        {/* Tab导航 - 全部用户 / 特别关注 / 密码统计 */}
+        <Tabs value={userViewMode} onValueChange={(value) => setUserViewMode(value as "all" | "special" | "password-stats")} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 h-12">
             <TabsTrigger value="all" className="text-base">
               <List className="mr-2 h-4 w-4" />
               全部用户
@@ -503,6 +504,10 @@ const UserList = ({
             <TabsTrigger value="special" className="text-base">
               <Star className="mr-2 h-4 w-4" />
               特别关注
+            </TabsTrigger>
+            <TabsTrigger value="password-stats" className="text-base">
+              <Shield className="mr-2 h-4 w-4" />
+              密码统计
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -918,6 +923,13 @@ const UserList = ({
               </div>
             )}
           </>
+        )}
+
+        {/* 密码修改统计视图 */}
+        {userViewMode === "password-stats" && (
+          <div className="border-2 rounded-lg p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+            <PasswordChangeStats token={token} />
+          </div>
         )}
       </CardContent>
 

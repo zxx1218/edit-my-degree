@@ -12,3 +12,5 @@ export { default as UserBlacklistManager } from './UserBlacklistManager';
 export { default as BlacklistManager } from './BlacklistManager';
 export { default as SpecialUsersManager } from './SpecialUsersManager';
 export { default as NotificationHistoryManager } from './NotificationHistoryManager';
+export { PasswordChangeStats } from './PasswordChangeStats';
+

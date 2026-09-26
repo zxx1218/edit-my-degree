@@ -15,6 +15,7 @@ import {
   BlacklistManager,
   PdfGenerationManager,
   NotificationHistoryManager,
+  PasswordChangeStats,
 } from "@/components/admin";
 
 interface User {
