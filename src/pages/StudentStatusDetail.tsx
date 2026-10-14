@@ -299,14 +299,20 @@ const StudentStatusDetail = () => {
     }
 
     try {
-      // Get current user info
-      const currentUser = localStorage.getItem("currentUser");
-      
       // Compress image if needed
       const compressedPhotoData = await compressImage(file);
       setData({ ...data, [type]: compressedPhotoData });
 
-      const userId = JSON.parse(currentUser!).id;
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        toast({
+          title: "上传失败",
+          description: "用户信息已过期，请重新登录",
+          variant: "destructive",
+        });
+        return;
+      }
+      const userId = JSON.parse(currentUser).id;
 
       try {
         const dbField = type

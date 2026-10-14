@@ -252,7 +252,16 @@ const EducationDetail = () => {
       const compressedPhotoData = await compressImage(file);
       setData({ ...data, photo: compressedPhotoData });
 
-      const userId = JSON.parse(currentUser!).id;
+      const currentUser = localStorage.getItem("currentUser");
+      if (!currentUser) {
+        toast({
+          title: "上传失败",
+          description: "用户信息已过期，请重新登录",
+          variant: "destructive",
+        });
+        return;
+      }
+      const userId = JSON.parse(currentUser).id;
 
       try {
         await updateData("education", "update", userId, { photo: compressedPhotoData }, id);

@@ -93,17 +93,6 @@ export const compressImage = (file: File, maxFileSize: number = 2 * 1024 * 1024,
   });
 };
 
-import { getUserData, updateData } from "@/lib/api";
-import { 
-  sortByDegreeLevel, 
-  sortByDegreeType, 
-  insertRecordAtCorrectPosition, 
-  insertDegreeRecordAtCorrectPosition,
-  extractDegreeType,
-  DegreeLevel,
-  DegreeType 
-} from "@/lib/educationSort";
-
 /**
  * 根据当前日期获取应该显示的banner图片路径
  * @param totalImages banner图片总数
