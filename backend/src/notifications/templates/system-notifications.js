@@ -63,8 +63,35 @@ function getDatabaseErrorNotification({ hostname, error, timestamp }) {
   };
 }
 
+/**
+ * 获取每日收入日报通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.date - 统计日期
+ * @param {number} options.totalCards - 总卡密数
+ * @param {number} options.totalIncome - 总收入（元）
+ * @param {Array} options.breakdown - 分类明细
+ * @returns {Object} 通知对象
+ */
+function getDailyIncomeReport({ date, totalCards, totalIncome, breakdown }) {
+  let body = '';
+  breakdown.forEach(b => {
+    body += `${b.label}: ${b.count}张 = ¥${b.subtotal}\n`;
+  });
+  body += `\n总计: ${totalCards}张卡密, 收入 ¥${totalIncome}`;
+
+  return {
+    title: `📊 每日收入日报 (${date})`,
+    body,
+    subtitle: `今日总收入: ¥${totalIncome}`,
+    group: '系统消息',
+    level: 'active',
+    sound: 'minuet'
+  };
+}
+
 module.exports = {
   getStartupNotification,
   getShutdownNotification,
-  getDatabaseErrorNotification
+  getDatabaseErrorNotification,
+  getDailyIncomeReport
 };

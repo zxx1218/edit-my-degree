@@ -5,7 +5,6 @@
 
 const nodemailer = require('nodemailer');
 const { recordNotificationHistory } = require('./notification-history');
-require('dotenv').config({ path: '../.env' }); // 加载根目录的.env文件
 
 // 邮件传输器配置
 let transporter = null;

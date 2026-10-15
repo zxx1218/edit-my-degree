@@ -208,58 +208,6 @@ async function sendNotification(options) {
 }
 
 /**
- * 发送充值成功通知
- * @param {Object} userData - 用户数据
- * @param {string} userData.username - 用户名
- * @param {string} userData.cardType - 卡密类型 (login/pdf)
- * @param {number} userData.cardValues - 充值数量
- * @param {number} userData.remainingLogins - 剩余登录次数
- * @param {number} userData.remainingPdfLimit - 剩余PDF积分
- * @returns {Promise<Object>} 推送结果
- */
-async function sendRechargeNotification(userData) {
-  if (!barkConfig.enabled) {
-    return { success: false, error: 'Bark通知功能未启用' };
-  }
-  
-  try {
-    const { username, cardType, cardValues, remainingLogins, remainingPdfLimit } = userData;
-    
-    // 根据充值类型构建不同的通知内容
-    let title, body;
-    
-    if (cardType === 'login') {
-      title = '💳 登录次数充值成功';
-      body = `用户 ${username} 成功充值 ${cardValues} 次登录次数\n当前剩余: ${remainingLogins} 次`;
-    } else if (cardType === 'pdf') {
-      title = '📑 PDF积分充值成功';
-      body = `用户 ${username} 成功充值 ${cardValues} PDF积分\n当前剩余: ${remainingPdfLimit} 分`;
-    } else {
-      title = '💰 充值成功';
-      body = `用户 ${username} 成功充值 ${cardValues} ${cardType}`;
-    }
-    
-    // 发送通知
-    const result = await sendNotification({
-      title,
-      body,
-      subtitle: `充值时间: ${new Date().toLocaleString('zh-CN')}`,
-      level: 'active',
-      sound: 'minuet'
-    });
-    
-    return result;
-    
-  } catch (error) {
-    console.error('[Bark通知] 充值通知发送失败:', error.message);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-}
-
-/**
  * 检查 Bark 通知是否启用
  * @returns {boolean}
  */
@@ -271,6 +219,5 @@ function isEnabled() {
 module.exports = {
   initialize,
   sendNotification,
-  sendRechargeNotification,
   isEnabled
 };

@@ -18,6 +18,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const dbManager = require('../src/db-utils');
 const barkNotifier = require('../src/bark-notifier');
+const { getDailyIncomeReport } = require('../src/notifications/templates');
 
 const PRICE_MAP = {
   'login_5': parseFloat(process.env.PRICE_LOGIN_5) || 9,
@@ -98,19 +99,14 @@ async function main() {
     });
 
     if (totalCards > 0) {
-      let body = '';
-      breakdown.forEach(b => {
-        body += `${b.label}: ${b.count}张 = ¥${b.subtotal}\n`;
+      const notification = getDailyIncomeReport({
+        date: todayStr,
+        totalCards,
+        totalIncome,
+        breakdown,
       });
-      body += `\n总计: ${totalCards}张卡密, 收入 ¥${totalIncome}`;
 
-      const result = await barkNotifier.sendNotification({
-        title: `📊 每日收入日报 (${todayStr})`,
-        body,
-        subtitle: `今日总收入: ¥${totalIncome}`,
-        level: 'active',
-        sound: 'minuet',
-      });
+      const result = await barkNotifier.sendNotification(notification);
 
       console.log(`   Bark推送结果: ${result.success ? '✅ 成功' : '❌ 失败'}`);
     } else {

@@ -288,19 +288,6 @@ const manageCards = (db) => async (req, res) => {
         if (cardExistsResult.length === 0) {
           console.warn(`[安全警告] 使用不存在的充值卡 - 卡ID: ${decryptedCardId}, 用户: ${username}, IP: ${ipAddress}`);
           
-          // 发送非法调用告警邮件
-          // sendIllegalApiCallAlert({
-          //   req,
-          //   reason: '使用不存在的充值卡',
-          //   details: {
-          //     action: 'use',
-          //     cardId: decryptedCardId,
-          //     username: username
-          //   }
-          // }).catch(err => {
-          //   console.error('[邮件通知] 发送告警失败:', err.message);
-          // });
-          
           return res.status(400).json({
             success: false,
             error: '充值卡不存在或已失效'
@@ -312,9 +299,6 @@ const manageCards = (db) => async (req, res) => {
         // 检查充值卡是否已被使用
         if (cardInfo.used === 1) {
           console.warn(`[安全警告] 尝试使用已使用的充值卡 - 卡ID: ${decryptedCardId}, 用户: ${username}, IP: ${ipAddress}`);
-          
-          // 发送非法调用告警邮件（可选，因为可能是用户误操作）
-          // sendIllegalApiCallAlert({...});
           
           return res.status(400).json({
             success: false,

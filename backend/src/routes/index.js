@@ -58,9 +58,6 @@ const qrRedirectModule = require('../qr-redirect');
 // 引入 IP归属地查询工具
 const { queryIPLocation, isChinaIP } = require('../ip-location');
 
-// 引入邮件通知模块
-const { sendSecurityAlert } = require('../email-notifier');
-
 // 引入通知历史管理模块
 const getNotificationHistoryModule = require('../get-notification-history');
 const deleteNotificationHistoryModule = require('../delete-notification-history');

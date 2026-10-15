@@ -37,14 +37,6 @@ function checkAndAlert(ipAddress, username) {
   // 达到阈值时告警
   if (count === ALERT_THRESHOLD) {
     console.error(`🚨 [安全告警] 检测到异常留言行为 - IP: ${ipAddress}, 用户: ${username}, 1小时内尝试${count}次`);
-    
-    // 可选：未来可集成邮件告警系统
-    // sendSecurityAlert({
-    //   type: 'spam_message',
-    //   ip: ipAddress,
-    //   username: username,
-    //   count: count
-    // });
   }
 }
 

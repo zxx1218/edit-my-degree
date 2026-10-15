@@ -4,7 +4,6 @@
  * @param {string} jwtSecret - JWT密钥
  */
 const cryptoUtils = require('./crypto-utils');
-const { sendIllegalApiCallAlert } = require('./email-notifier');
 const jwt = require('jsonwebtoken');
 
 /**
