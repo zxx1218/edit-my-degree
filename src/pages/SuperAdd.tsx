@@ -540,8 +540,8 @@ const SuperAdd = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 md:p-6">
-      <div className="container max-w-6xl mx-auto py-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 px-3 py-4 md:px-6">
+      <div className="mx-auto py-4" style={{ width: '96%', maxWidth: '1800px' }}>
         {/* 页面标题 */}
         <div className="mb-6 text-center space-y-2">
           <div className="flex items-center justify-center gap-3 mb-2">

@@ -28,10 +28,12 @@ const path = require('path');
 
 // 导入任务模块
 const updateIPLocationTask = require('./updateIPLocation');
+const dailyIncomeReportTask = require('./dailyIncomeReport');
 
 // 任务运行状态跟踪（防止并发执行）
 const taskRunningStatus = {
-  updateIPLocation: false
+  updateIPLocation: false,
+  dailyIncomeReport: false
 };
 
 // 时区配置
@@ -165,6 +167,44 @@ function registerUpdateIPLocationTask() {
 }
 
 /**
+ * 注册每日收入统计推送任务
+ */
+function registerDailyIncomeReportTask() {
+  console.log('📅 注册 每日收入统计推送任务...');
+  
+  const cronExp = process.env.DAILY_INCOME_CRON || '0 0 * * *';
+  
+  try {
+    const job = cron.schedule(cronExp, () => {
+      printSeparator('每日收入统计推送任务');
+      safeExecuteTask('dailyIncomeReport', dailyIncomeReportTask.main);
+    }, {
+      scheduled: true,
+      timezone: TIMEZONE
+    });
+    
+    console.log(`   ✅ 定时任务已注册: 每天 ${cronExp}`);
+    
+    try {
+      if (typeof job.nextRun === 'function') {
+        const nextRun = job.nextRun();
+        if (nextRun) {
+          console.log(`      下次执行时间: ${nextRun.toLocaleString('zh-CN', { timeZone: TIMEZONE })}`);
+        }
+      } else if (job.nextDates) {
+        console.log(`      下次执行时间: ${job.nextDates(1).toString()}`);
+      }
+    } catch (e) {
+      // 忽略获取下次执行时间的错误
+    }
+    console.log('');
+    
+  } catch (error) {
+    console.error(`   ❌ 注册定时任务失败:`, error.message);
+  }
+}
+
+/**
  * 显示调度器信息
  */
 function displaySchedulerInfo() {
@@ -180,6 +220,11 @@ function displaySchedulerInfo() {
   console.log('     - 执行时间: 每天 0:30, 12:30, 17:30');
   console.log('     - 功能: 批量更新login_logs表中的IP地理位置信息');
   console.log('     - 配置来源: backend/batch_task/.env\n');
+  
+  console.log('  2. 每日收入统计推送任务 (dailyIncomeReport)');
+  console.log('     - 执行时间: 每天 0:00');
+  console.log('     - 功能: 统计当日卡密使用情况并推送收入日报');
+  console.log('     - 配置来源: 项目根目录 .env\n');
   
   console.log('💡 提示:');
   console.log('  - 使用 Ctrl+C 停止调度器');
@@ -226,6 +271,7 @@ async function main() {
   try {
     // 注册所有定时任务
     registerUpdateIPLocationTask();
+    registerDailyIncomeReportTask();
     
     // 显示调度器信息
     displaySchedulerInfo();
