@@ -14,6 +14,7 @@ import {
   BlacklistManager,
   PdfGenerationManager,
   NotificationHistoryManager,
+  BarkManager,
   PasswordChangeStats,
 } from "@/components/admin";
 
@@ -25,6 +26,7 @@ interface User {
   pdf_limit: number;
   created_at?: string;
   tags?: string[];
+  gender?: string | null;
 }
 
 interface CardItem {
@@ -669,6 +671,9 @@ const SuperAdd = () => {
 
         {/* 通知历史管理 */}
         <NotificationHistoryManager token={token} />
+
+        {/* Bark推送管理 */}
+        <BarkManager token={token} />
       </div>
     </div>
   );

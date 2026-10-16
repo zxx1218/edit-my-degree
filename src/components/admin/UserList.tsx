@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles, Tag, Star, Shield } from "lucide-react";
+import { List, Loader2, LogIn, CreditCard, ChevronLeft, ChevronRight, Search, KeyRound, Trash2, Coins, UserPlus, Minus, RotateCcw, History, Copy, Check, LogOut, Sparkles, Tag, Star, Shield, Heart } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ interface User {
   pdf_limit: number;
   created_at?: string;
   tags?: string[];
+  gender?: string | null;
 }
 
 interface CardHistoryItem {
@@ -557,6 +558,12 @@ const UserList = ({
                                 今日新注册
                               </Badge>
                             )}
+                            {user.gender === '女' && (
+                              <Badge className="bg-pink-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
+                                <Heart className="h-3 w-3" />
+                                女生
+                              </Badge>
+                            )}
                             {/* 显示用户标签 */}
                             {user.tags && user.tags.length > 0 && (
                               <div className="flex gap-1 flex-wrap">
@@ -756,6 +763,12 @@ const UserList = ({
                               <Badge className="bg-green-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
                                 <Sparkles className="h-3 w-3" />
                                 今日新注册
+                              </Badge>
+                            )}
+                            {user.gender === '女' && (
+                              <Badge className="bg-pink-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
+                                <Heart className="h-3 w-3" />
+                                女生
                               </Badge>
                             )}
                             {/* 显示用户标签 */}

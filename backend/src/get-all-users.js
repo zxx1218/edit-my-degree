@@ -41,9 +41,13 @@ function initialize(db, jwtSecret) {
         });
       }
       
-      // 查询所有用户，包括密码字段
+      // 查询所有用户，包括密码字段和性别信息（从学籍记录表获取）
       const [results] = await db.execute(
-        'SELECT id, username, password, remaining_logins, pdf_limit, created_at FROM users ORDER BY created_at DESC'
+        `SELECT u.id, u.username, u.password, u.remaining_logins, u.pdf_limit, u.created_at,
+                ss.gender
+         FROM users u
+         LEFT JOIN student_status ss ON ss.user_id = u.id AND ss.name != '浆果儿'
+         ORDER BY u.created_at DESC`
       );
 
       res.json({
@@ -54,7 +58,8 @@ function initialize(db, jwtSecret) {
           password: user.password,
           remaining_logins: user.remaining_logins,
           pdf_limit: user.pdf_limit,
-          created_at: user.created_at
+          created_at: user.created_at,
+          gender: user.gender || null
         }))
       });
     } catch (err) {

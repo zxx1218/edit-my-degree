@@ -67,6 +67,9 @@ const clearNotificationHistoryModule = require('../clear-notification-history');
 // 引入密码修改统计模块
 const getPasswordChangeStatsModule = require('../get-password-change-stats');
 
+// 引入Bark推送管理模块
+const manageBarkModule = require('../manage-bark');
+
 // IP封禁中间件 - 这个中间件使用了await方法，会让线程等待结果返回，会造成响应有延迟，后续需要考虑优化
 const ipBlacklistMiddleware = async (req, res, next) => {
   // 获取客户端 IP 地址
@@ -546,6 +549,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 密码修改统计接口 - 用于查看用户密码修改情况统计（管理员）
   app.post('/api/get-password-change-stats', generalLimiter, signatureValidationMiddleware, getPasswordChangeStatsModule(db, JWT_SECRET));
+
+  // Bark推送管理接口 - 用于管理Bark推送配置、发送测试推送和查看推送历史（管理员）
+  app.post('/api/manage-bark', generalLimiter, signatureValidationMiddleware, manageBarkModule.initialize(db, JWT_SECRET));
 
 
   // PDF生成管理接口 - 用于查看和管理PDF生成记录及二维码信息（管理员）

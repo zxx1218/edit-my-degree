@@ -657,3 +657,89 @@ export const getPasswordChangeStats = async (token: string, params: {
   return await response.json();
 };
 
+// Bark推送管理API
+
+// 获取Bark配置
+export const getBarkConfig = async (token: string) => {
+  const url = '/api/manage-bark';
+  const options = createSignedRequestOptions('POST', url, { action: 'getConfig' });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-bark`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 发送Bark测试推送
+export const sendBarkTest = async (token: string, body: {
+  title: string;
+  body: string;
+  targetDeviceKey?: string;
+  level?: string;
+  sound?: string;
+  group?: string;
+}) => {
+  const url = '/api/manage-bark';
+  const options = createSignedRequestOptions('POST', url, { action: 'sendTest', ...body });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-bark`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 发送自定义Bark推送
+export const sendBarkCustom = async (token: string, body: {
+  title: string;
+  body: string;
+  level?: string;
+  sound?: string;
+  group?: string;
+  icon?: string;
+  url?: string;
+}) => {
+  const url = '/api/manage-bark';
+  const options = createSignedRequestOptions('POST', url, { action: 'sendCustom', ...body });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-bark`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 获取Bark推送历史
+export const getBarkHistory = async (token: string, params: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  keyword?: string;
+}) => {
+  const url = '/api/manage-bark';
+  const options = createSignedRequestOptions('POST', url, { action: 'getBarkHistory', ...params });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-bark`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+

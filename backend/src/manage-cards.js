@@ -378,13 +378,21 @@ const manageCards = (db) => async (req, res) => {
               [cardInfo.values, user.id]
             );
 
-            // 【特殊逻辑】如果充值的是 9999999 次登录卡密，自动赠送 30 PDF 积分
+            // 【特殊逻辑】根据充值卡面值赠送PDF积分
             if (cardInfo.values === 9999999) {
+              // 永久卡赠送60 PDF积分
+              await connection.execute(
+                'UPDATE users SET pdf_limit = pdf_limit + 60 WHERE id = ?',
+                [user.id]
+              );
+              console.info(`[充值管理] 触发永久卡赠送逻辑 - 用户 ${username} 自动获得 60 PDF 积分`);
+            } else if (cardInfo.values === 50) {
+              // 50次登录卡赠送30 PDF积分
               await connection.execute(
                 'UPDATE users SET pdf_limit = pdf_limit + 30 WHERE id = ?',
                 [user.id]
               );
-              console.info(`[充值管理] 触发永久卡赠送逻辑 - 用户 ${username} 自动获得 30 PDF 积分`);
+              console.info(`[充值管理] 触发50次卡赠送逻辑 - 用户 ${username} 自动获得 30 PDF 积分`);
             }
             
             // 根据充值规则更新is_trial_user字段
@@ -459,6 +467,9 @@ const manageCards = (db) => async (req, res) => {
             // 判断是否为永久卡（充值次数大于1000）
             if (cardInfo.values > 1000) {
               isPermanentCard = true;
+              message += '，额外赠送60个PDF积分';
+            } else if (cardInfo.values === 50) {
+              message += '，额外赠送30个PDF积分';
             }
           } else if (cardInfo.type === 'pdf') {
             message += `，用户 ${username} 当前PDF积分剩余 ${pdfRemaining} 分`;

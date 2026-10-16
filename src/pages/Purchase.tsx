@@ -14,7 +14,7 @@ const faqItems = [
   },
   {
     question: "不同套餐的登录次数有什么区别？",
-    answer: "除永久卡密额外赠送 30 个PDF积分外，不同套餐区别仅登录次数不同。"
+    answer: "进阶版(50次)额外赠送30个PDF积分，永久版额外赠送60个PDF积分，其他套餐无额外赠送。"
   },
   {
     question: "如何下载APP？",
@@ -77,7 +77,7 @@ const Purchase = () => {
 
   const plans = [
     {
-      name: "体验版",
+      name: "尝鲜版",
       logins: "可登录1次",
       price: "¥3",
       description: "获取一张1次登录次数充值卡密",
@@ -87,7 +87,7 @@ const Purchase = () => {
       gradient: "from-sky-500 to-blue-500",
     },
     {
-      name: "标准版",
+      name: "体验版",
       logins: "可登录5次",
       price: "¥9",
       description: "获取一张5次登录次数充值卡密",
@@ -97,12 +97,12 @@ const Purchase = () => {
       gradient: "from-blue-500 to-cyan-500",
     },
     {
-      name: "进阶版",
+      name: "标准版",
       logins: "可登录50次",
       price: "¥29",
-      description: "获取一张50次登录次数充值卡密",
+      description: "获取一张50次登录次数充值卡密，额外赠送30个PDF下载积分",
       popular: true,
-      features: ["数据永久存储", "支持信息任意修改", "购买人数最多", "支持多人多设备同时登录"],
+      features: ["数据永久存储", "支持信息任意修改", "购买人数最多", "额外赠送30个PDF下载积分", "支持多人多设备同时登录"],
       icon: Crown,
       gradient: "from-purple-500 to-pink-500",
     },
@@ -110,9 +110,9 @@ const Purchase = () => {
       name: "永久版",
       logins: "不限制登录次数",
       price: "¥99",
-      description: "获取一张不限制登录次数的充值卡密，额外赠送30个PDF下载积分",
+      description: "获取一张不限制登录次数的充值卡密，额外赠送60个PDF下载积分",
       popular: false,
-      features: ["数据永久存储", "支持信息任意修改", "不限制登录次数","额外赠送30个PDF下载积分", "支持多人多设备同时登录"],
+      features: ["数据永久存储", "支持信息任意修改", "不限制登录次数","额外赠送60个PDF下载积分", "支持多人多设备同时登录"],
       icon: Crown,
       gradient: "from-amber-500 to-orange-500",
     },

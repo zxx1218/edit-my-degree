@@ -138,7 +138,7 @@ async function sendNotification(options) {
       body: body,
       level: level,
       sound: sound,
-      device_keys: barkConfig.deviceKeys,  // 使用数组
+      device_keys: barkConfig.deviceKeys,
       group: group
     };
     
