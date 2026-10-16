@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
 import { compressImage } from "@/lib/utils"; // Import compressImage utility
+import { useLongPress, LongPressField } from "@/hooks/useLongPress";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ExamData {
   name: string;
@@ -34,81 +36,12 @@ interface ExamData {
   note: string;
 }
 
-// Long press hook
-const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress();
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: clear,
-    onMouseLeave: clear,
-    onTouchStart: start,
-    onTouchEnd: clear,
-    onTouchMove: clear,
-  };
-};
-
-// Long press field component for detail list items
-interface LongPressFieldProps {
-  field: keyof ExamData;
-  label: string;
-  value: string;
-  onLongPress: (field: keyof ExamData, label: string) => void;
-}
-
-const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress(field, label);
-    }, 500);
-  }, [field, label, onLongPress]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return (
-    <div className="flex items-center gap-4 py-0.5 text-base">
-      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-      <span
-        className="flex-1 cursor-pointer hover:text-primary select-none"
-        style={{ color: 'rgb(52, 51, 51)' }}
-        onMouseDown={start}
-        onMouseUp={clear}
-        onMouseLeave={clear}
-        onTouchStart={start}
-        onTouchEnd={clear}
-        onTouchMove={clear}
-      >
-        {value}
-      </span>
-    </div>
-  );
-};
-
 const ExamDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 默认值
@@ -144,9 +77,8 @@ const ExamDetail = () => {
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
-      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser || !id) return;
-      const userId = JSON.parse(currentUser).id;
+      const userId = currentUser.id;
 
       // 优先使用从 Index 页面传递的 detailRecord
       const detailRecord = location.state?.detailRecord;
@@ -226,7 +158,7 @@ const ExamDetail = () => {
   }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof ExamData; label: string } | null>(null);
 
-  const handleFieldClick = useCallback((field: keyof ExamData, label: string) => {
+  const handleFieldClick = useCallback((field: string, label: string) => {
     setEditingField({ field, label });
   }, []);
 
@@ -239,9 +171,8 @@ const ExamDetail = () => {
   const handleFieldSave = async (field: keyof ExamData, newValue: string) => {
     setData({ ...data, [field]: newValue });
 
-    const currentUser = localStorage.getItem("currentUser");
     if (!currentUser || !id) return;
-    const userId = JSON.parse(currentUser).id;
+    const userId = currentUser.id;
 
     try {
       const dbField = field
@@ -282,7 +213,6 @@ const ExamDetail = () => {
       const compressedPhotoData = await compressImage(file);
       setData({ ...data, photo: compressedPhotoData });
 
-      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast({
           title: "上传失败",
@@ -291,7 +221,7 @@ const ExamDetail = () => {
         });
         return;
       }
-      const userId = JSON.parse(currentUser).id;
+      const userId = currentUser.id;
 
       try {
         await updateData("exam", "update", userId, { photo: compressedPhotoData }, id);
@@ -382,18 +312,18 @@ const ExamDetail = () => {
         {/* Detail Info */}
         <div className="space-y-3">
           {[
-            { field: "examLocation" as keyof ExamData, label: "报考点", value: data.examLocation },
-            { field: "registrationNumber" as keyof ExamData, label: "报名号", value: data.registrationNumber },
-            { field: "examUnit" as keyof ExamData, label: "报考单位", value: data.examUnit },
-            { field: "department" as keyof ExamData, label: "报考院系所", value: data.department },
-            { field: "major" as keyof ExamData, label: "报考专业", value: data.major },
-            { field: "researchDirection" as keyof ExamData, label: "研究方向", value: data.researchDirection },
-            { field: "examType" as keyof ExamData, label: "考试方式", value: data.examType },
-            { field: "specialProgram" as keyof ExamData, label: "专项计划", value: data.specialProgram },
-            { field: "politicsName" as keyof ExamData, label: "政治理论名称", value: data.politicsName },
-            { field: "foreignLanguageName" as keyof ExamData, label: "外国语名称", value: data.foreignLanguageName },
-            { field: "businessCourse1Name" as keyof ExamData, label: "业务课一名称", value: data.businessCourse1Name },
-            { field: "businessCourse2Name" as keyof ExamData, label: "业务课二名称", value: data.businessCourse2Name },
+            { field: "examLocation", label: "报考点", value: data.examLocation },
+            { field: "registrationNumber", label: "报名号", value: data.registrationNumber },
+            { field: "examUnit", label: "报考单位", value: data.examUnit },
+            { field: "department", label: "报考院系所", value: data.department },
+            { field: "major", label: "报考专业", value: data.major },
+            { field: "researchDirection", label: "研究方向", value: data.researchDirection },
+            { field: "examType", label: "考试方式", value: data.examType },
+            { field: "specialProgram", label: "专项计划", value: data.specialProgram },
+            { field: "politicsName", label: "政治理论名称", value: data.politicsName },
+            { field: "foreignLanguageName", label: "外国语名称", value: data.foreignLanguageName },
+            { field: "businessCourse1Name", label: "业务课一名称", value: data.businessCourse1Name },
+            { field: "businessCourse2Name", label: "业务课二名称", value: data.businessCourse2Name },
           ].map(({ field, label, value }) => (
             <LongPressField
               key={field}
@@ -410,11 +340,11 @@ const ExamDetail = () => {
           <h2 className="text-lg font-semibold mb-4">成绩信息</h2>
           <div className="space-y-3">
             {[
-              { field: "politicsScore" as keyof ExamData, label: "政治理论", value: data.politicsScore },
-              { field: "foreignLanguageScore" as keyof ExamData, label: "外国语", value: data.foreignLanguageScore },
-              { field: "businessCourse1Score" as keyof ExamData, label: "业务课一", value: data.businessCourse1Score },
-              { field: "businessCourse2Score" as keyof ExamData, label: "业务课二", value: data.businessCourse2Score },
-              { field: "totalScore" as keyof ExamData, label: "总分", value: data.totalScore },
+              { field: "politicsScore", label: "政治理论", value: data.politicsScore },
+              { field: "foreignLanguageScore", label: "外国语", value: data.foreignLanguageScore },
+              { field: "businessCourse1Score", label: "业务课一", value: data.businessCourse1Score },
+              { field: "businessCourse2Score", label: "业务课二", value: data.businessCourse2Score },
+              { field: "totalScore", label: "总分", value: data.totalScore },
             ].map(({ field, label, value }) => (
               <LongPressField
                 key={field}
@@ -432,8 +362,8 @@ const ExamDetail = () => {
           <h2 className="text-lg font-semibold mb-4">录取信息</h2>
           <div className="space-y-3">
             {[
-              { field: "admissionUnit" as keyof ExamData, label: "录取单位", value: data.admissionUnit },
-              { field: "admissionMajor" as keyof ExamData, label: "录取专业", value: data.admissionMajor },
+              { field: "admissionUnit", label: "录取单位", value: data.admissionUnit },
+              { field: "admissionMajor", label: "录取专业", value: data.admissionMajor },
             ].map(({ field, label, value }) => (
               <LongPressField
                 key={field}

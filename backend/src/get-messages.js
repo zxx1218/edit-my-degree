@@ -1,14 +1,28 @@
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+const { getClientIp } = require('./get-client-ip');
 
-function initialize(db) {
+function initialize(db, JWT_SECRET) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
-    
+    const ipAddress = getClientIp(req);
+
+    const verifyAdmin = () => {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+      try {
+        const decoded = jwt.verify(authHeader.substring(7), JWT_SECRET || process.env.JWT_SECRET);
+        return decoded.isAdmin || decoded.is_admin;
+      } catch { return false; }
+    };
+
     try {
       const { action, page = 1, pageSize = 10, messageId, replyContent, content, username, priority } = req.body;
       
       // 回复留言
       if (action === 'replyMessage') {
+        if (!verifyAdmin()) {
+          return res.status(403).json({ success: false, error: '需要管理员权限' });
+        }
         // 验证参数
         if (!messageId || !replyContent) {
           return res.status(400).json({
@@ -54,6 +68,9 @@ function initialize(db) {
 
       // 删除留言
       if (action === 'deleteMessage') {
+        if (!verifyAdmin()) {
+          return res.status(403).json({ success: false, error: '需要管理员权限' });
+        }
         // 验证参数
         if (!messageId) {
           return res.status(400).json({
@@ -85,6 +102,9 @@ function initialize(db) {
 
       // 设置留言优先级
       if (action === 'setPriority') {
+        if (!verifyAdmin()) {
+          return res.status(403).json({ success: false, error: '需要管理员权限' });
+        }
         // 验证参数
         if (!messageId) {
           return res.status(400).json({

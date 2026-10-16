@@ -41,11 +41,11 @@ function initialize(db, jwtSecret) {
         });
       }
       
-      // 查询所有用户，包括密码字段和注册时间
+      // 查询所有用户，包括密码字段
       const [results] = await db.execute(
         'SELECT id, username, password, remaining_logins, pdf_limit, created_at FROM users ORDER BY created_at DESC'
       );
-      
+
       res.json({
         success: true,
         users: results.map(user => ({

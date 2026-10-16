@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 增加用户PDF积分接口（支持管理员和普通用户）
@@ -7,7 +8,7 @@ const jwt = require('jsonwebtoken');
  */
 function initialize(db, jwtSecret) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const ipAddress = getClientIp(req);
     const userAgent = req.headers['user-agent'] || '未知设备';
     
     try {

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { logOperation } = require('./operation-logger');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 管理员直接登录用户接口（不消耗积分）
@@ -8,9 +9,7 @@ const { logOperation } = require('./operation-logger');
  */
 function initialize(db, jwtSecret) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {

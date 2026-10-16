@@ -41,11 +41,11 @@ function initialize(db, jwtSecret) {
         });
       }
       
-      // 查询所有有标签的用户（tags字段不为NULL且非空数组）
+      // 查询所有有标签的用户（tags字段不为NULL且非空数组），包括密码字段
       const [results] = await db.execute(
         'SELECT id, username, password, remaining_logins, pdf_limit, tags, created_at FROM users WHERE tags IS NOT NULL AND tags != "[]" ORDER BY created_at DESC'
       );
-      
+
       // 解析tags字段
       const users = results.map(user => ({
         id: user.id.toString(),

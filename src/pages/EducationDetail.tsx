@@ -6,6 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import FieldEditDialog from "@/components/FieldEditDialog";
 import { updateData, getUserData } from "@/lib/api";
 import { compressImage } from "@/lib/utils"; // Import compressImage utility
+import { useLongPress, LongPressField } from "@/hooks/useLongPress";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EducationData {
   name: string;
@@ -26,81 +28,12 @@ interface EducationData {
   idNumber?: string;
 }
 
-// Long press hook
-const useLongPress = (onLongPress: () => void, delay = 500) => {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress();
-    }, delay);
-  }, [onLongPress, delay]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return {
-    onMouseDown: start,
-    onMouseUp: clear,
-    onMouseLeave: clear,
-    onTouchStart: start,
-    onTouchEnd: clear,
-    onTouchMove: clear,
-  };
-};
-
-// Long press field component for detail list items
-interface LongPressFieldProps {
-  field: keyof EducationData;
-  label: string;
-  value: string;
-  onLongPress: (field: keyof EducationData, label: string) => void;
-}
-
-const LongPressField = ({ field, label, value, onLongPress }: LongPressFieldProps) => {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const start = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      onLongPress(field, label);
-    }, 500);
-  }, [field, label, onLongPress]);
-
-  const clear = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  return (
-    <div className="text-base flex items-center gap-4 py-0.5">
-      <span className="text-right w-32 flex-shrink-0" style={{ color: 'rgb(153, 152, 153)' }}>{label}</span>
-      <span
-        className="flex-1 cursor-pointer hover:text-primary select-none"
-        style={{ color: 'rgb(52, 51, 51)' }}
-        onMouseDown={start}
-        onMouseUp={clear}
-        onMouseLeave={clear}
-        onTouchStart={start}
-        onTouchEnd={clear}
-        onTouchMove={clear}
-      >
-        {value}
-      </span>
-    </div>
-  );
-};
-
 const EducationDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const photoRef = useRef<HTMLInputElement>(null);
 
   // 默认值
@@ -128,9 +61,8 @@ const EducationDetail = () => {
   // 从数据库加载数据
   useEffect(() => {
     const loadData = async () => {
-      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser || !id) return;
-      const userId = JSON.parse(currentUser).id;
+      const userId = currentUser.id;
 
       // 优先使用从 Index 页面传递的 detailRecord
       const detailRecord = location.state?.detailRecord;
@@ -194,7 +126,7 @@ const EducationDetail = () => {
   }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof EducationData; label: string } | null>(null);
 
-  const handleFieldClick = useCallback((field: keyof EducationData, label: string) => {
+  const handleFieldClick = useCallback((field: string, label: string) => {
     setEditingField({ field, label });
   }, []);
 
@@ -209,9 +141,8 @@ const EducationDetail = () => {
   const handleFieldSave = async (field: keyof EducationData, newValue: string) => {
     setData({ ...data, [field]: newValue });
 
-    const currentUser = localStorage.getItem("currentUser");
     if (!currentUser || !id) return;
-    const userId = JSON.parse(currentUser).id;
+    const userId = currentUser.id;
 
     try {
       const dbField = field
@@ -252,7 +183,6 @@ const EducationDetail = () => {
       const compressedPhotoData = await compressImage(file);
       setData({ ...data, photo: compressedPhotoData });
 
-      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast({
           title: "上传失败",
@@ -261,7 +191,7 @@ const EducationDetail = () => {
         });
         return;
       }
-      const userId = JSON.parse(currentUser).id;
+      const userId = currentUser.id;
 
       try {
         await updateData("education", "update", userId, { photo: compressedPhotoData }, id);
@@ -390,7 +320,7 @@ const EducationDetail = () => {
             ].map(({ field, label, value }) => (
               <LongPressField
                 key={field}
-                field={field as keyof EducationData}
+                field={field}
                 label={label}
                 value={value || "-"}
                 onLongPress={handleFieldClick}
@@ -409,7 +339,7 @@ const EducationDetail = () => {
             ].map(({ field, label, value }) => (
               <LongPressField
                 key={field}
-                field={field as keyof EducationData}
+                field={field}
                 label={label}
                 value={value || "-"}
                 onLongPress={handleFieldClick}

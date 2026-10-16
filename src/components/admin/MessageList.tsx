@@ -243,6 +243,7 @@ const MessageList = ({ token }: MessageListProps) => {
                           )}
                           <span className="text-xs text-muted-foreground ml-2">
                             {new Date(message.created_at).toLocaleString('zh-CN', {
+                              year: 'numeric',
                               month: '2-digit',
                               day: '2-digit',
                               hour: '2-digit',
@@ -296,6 +297,7 @@ const MessageList = ({ token }: MessageListProps) => {
                             {message.replied_at && (
                               <span className="text-xs text-muted-foreground">
                                 {new Date(message.replied_at).toLocaleString('zh-CN', {
+                                  year: 'numeric',
                                   month: '2-digit',
                                   day: '2-digit',
                                   hour: '2-digit',

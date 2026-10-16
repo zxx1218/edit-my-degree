@@ -39,6 +39,7 @@ const getMessagesModule = require('../get-messages');
 const addMessageModule = require('../add-message');
 const deleteUserModule = require('../delete-user');
 const getTodayLoginDetailsModule = require('../get-today-login-details');
+const getTodayIncomeModule = require('../get-today-income');
 const getProvinceLoginStatsModule = require('../get-province-login-stats');
 const getUserCardHistoryModule = require('../get-user-card-history');
 const adminImpersonateLoginModule = require('../admin-impersonate-login');
@@ -475,7 +476,7 @@ function setupRoutes(app, db, JWT_SECRET) {
   
   // 初始化各接口模块
   // 获取用户数据接口 - 用于获取指定用户的所有相关数据
-  app.post('/api/get-user-data', generalLimiter, signatureValidationMiddleware, getUserDataModule.initialize(db));
+  app.post('/api/get-user-data', generalLimiter, signatureValidationMiddleware, getUserDataModule.initialize(db, JWT_SECRET));
   // 更新数据接口 - 用于对指定表执行插入、更新或删除操作
   app.post('/api/update-data', generalLimiter, signatureValidationMiddleware, updateDataModule.initialize(db));
   // 更新用户登录次数接口 - 用于增加或减少用户剩余登录次数（管理员）
@@ -489,7 +490,7 @@ function setupRoutes(app, db, JWT_SECRET) {
   // 获取所有用户接口 - 用于管理员获取系统中的所有用户信息
   app.post('/api/get-all-users', generalLimiter, signatureValidationMiddleware, getAllUsersModule.initialize(db, JWT_SECRET));
   // 查询用户接口 - 用于根据条件查询特定用户信息
-  app.post('/api/query-user', generalLimiter, signatureValidationMiddleware, queryUserModule.initialize(db));
+  app.post('/api/query-user', generalLimiter, signatureValidationMiddleware, queryUserModule.initialize(db, JWT_SECRET));
   // 减少PDF限制接口 - 用于减少用户PDF下载积分（管理员）
   app.post('/api/decrease-pdf-limit', generalLimiter, signatureValidationMiddleware, decreasePdfLimitModule.initialize(db, JWT_SECRET));
   // 获取今日登录统计接口 - 用于获取当天系统的登录统计数据（管理员）
@@ -513,6 +514,9 @@ function setupRoutes(app, db, JWT_SECRET) {
 
   // 获取今日登录详情接口 - 用于获取今天所有用户的登录记录（管理员）
   app.post('/api/get-today-login-details', generalLimiter, signatureValidationMiddleware, getTodayLoginDetailsModule.initialize(db, JWT_SECRET));
+
+  // 获取今日收入统计接口 - 用于获取今天卡密使用情况及收入金额（管理员）
+  app.post('/api/get-today-income', generalLimiter, signatureValidationMiddleware, getTodayIncomeModule.initialize(db, JWT_SECRET));
 
   // 获取省份登录统计接口 - 用于展示各省份用户登录次数分布（管理员）
   app.post('/api/get-province-login-stats', generalLimiter, signatureValidationMiddleware, getProvinceLoginStatsModule.initialize(db, JWT_SECRET));
@@ -548,7 +552,7 @@ function setupRoutes(app, db, JWT_SECRET) {
   app.post('/api/manage-pdf-generation', generalLimiter, signatureValidationMiddleware, managePdfGenerationModule.initialize(db, JWT_SECRET));
 
   // 获取留言列表接口 - 用于获取所有用户的留言（分页）
-  app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db));
+  app.post('/api/get-messages', generalLimiter, getMessagesModule.initialize(db, JWT_SECRET));
   
   // 添加留言接口 - 应用双重限流 + 签名验证，防止恶意刷留言
   app.post('/api/add-message', 

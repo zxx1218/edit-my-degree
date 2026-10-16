@@ -1,93 +1,7 @@
-import { generateSignature } from "./api";
-import { toast } from "@/hooks/use-toast";
+import { generateSignature, createSignedRequestOptions, fetchWithBlacklistCheck } from "./api";
 
 // 设置API基础URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
-
-/**
- * 检查响应是否为黑名单拦截，如果是则显示友好提示
- */
-function checkBlacklistResponse(response: Response, data: any): boolean {
-  // 检查是否是403状态码且包含黑名单相关错误信息
-  if (response.status === 403 && (data.error || data.message)) {
-    // 优先使用message字段（包含完整的reason和封禁时间信息）
-    const errorMsg = data.message || data.error;
-    
-    // 检测黑名单相关的错误信息
-    if (errorMsg.includes('封禁') || errorMsg.includes('拉黑') || errorMsg.includes('黑名单')) {
-      // 使用toast显示封禁原因
-      showBlacklistAlert(errorMsg);
-      return true;
-    }
-  }
-  
-  return false;
-}
-
-/**
- * 显示黑名单封禁的toast提示
- */
-let lastBlacklistMessage = '';
-let lastBlacklistTime = 0;
-const BLACKLIST_DEBOUNCE_TIME = 3000; // 3秒内不重复显示相同消息
-
-function showBlacklistAlert(errorMessage: string) {
-  const now = Date.now();
-  
-  // 如果相同的消息在3秒内已经显示过，则不再显示
-  if (errorMessage === lastBlacklistMessage && (now - lastBlacklistTime) < BLACKLIST_DEBOUNCE_TIME) {
-    return;
-  }
-  
-  lastBlacklistMessage = errorMessage;
-  lastBlacklistTime = now;
-  
-  toast({
-    description: errorMessage,
-  });
-}
-
-/**
- * 封装fetch请求，自动处理黑名单响应
- */
-async function fetchWithBlacklistCheck(url: string, options?: RequestInit): Promise<Response> {
-  const response = await fetch(url, options);
-  
-  // 克隆响应以便可以多次读取
-  const clonedResponse = response.clone();
-  
-  try {
-    const data = await clonedResponse.json();
-    checkBlacklistResponse(response, data);
-  } catch (e) {
-    // 如果不是JSON响应，忽略
-  }
-  
-  return response;
-}
-
-// 创建带签名的请求选项
-function createSignedRequestOptions(method: string, url: string, body?: any) {
-  const timestamp = Date.now();
-  
-  const signature = generateSignature(
-    method,
-    url,
-    body || {},
-    timestamp
-  );
-  
-  return {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Timestamp': timestamp.toString(),
-      'X-Signature': signature,
-      'X-App-Key': import.meta.env.VITE_APP_KEY || 'default_app_key'
-    },
-    body: body ? JSON.stringify(body) : undefined
-  };
-}
 
 // 管理员登录API
 export const adminLogin = async (username: string, password: string) => {
@@ -321,6 +235,22 @@ export const getTodayLoginDetails = async (token: string) => {
   const options = createSignedRequestOptions('POST', url, {});
   
   const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-today-login-details`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 获取今日收入统计
+export const getTodayIncome = async (token: string) => {
+  const url = '/api/get-today-income';
+  const options = createSignedRequestOptions('POST', url, {});
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-today-income`, {
     ...options,
     headers: {
       ...options.headers,

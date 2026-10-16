@@ -1,7 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const { logRegister, logOperation } = require('./operation-logger');
 const { sendSecurityAlert } = require('./email-notifier');
-const { isIpBlacklisted } = require('./ip-blacklist');
+const { isIpBlacklisted, autoBlockIp } = require('./ip-blacklist');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 初始化注册模块
@@ -14,9 +15,7 @@ function initialize(db) {
    * @param {Object} res - 响应对象
    */
   async function register(req, res) {
-   const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+   const ipAddress = getClientIp(req);
    const userAgent = req.get('User-Agent') || 'Unknown';
 
    try {
@@ -81,7 +80,7 @@ function initialize(db) {
         // 发送安全告警邮件
         sendSecurityAlert({
           subject: 'IP注册频率超限被拦截',
-          message: `系统检测到IP地址 ${ipAddress} 在24小时内尝试注册多个账户（已注册${recentRegistrations.length}个），触发安全防护机制并被拦截。`,
+          message: `系统检测到IP地址 ${ipAddress} 在24小时内尝试注册多个账户（已注册${recentRegistrations.length}个），触发安全防护机制并被拦截。该IP已被自动封禁1小时。`,
           details: {
             ipAddress: ipAddress,
             userAgent: userAgent,
@@ -92,10 +91,16 @@ function initialize(db) {
             })),
             registrationCount: recentRegistrations.length,
             timestamp: new Date().toISOString(),
-            action: 'registration_blocked'
+            action: 'registration_blocked',
+            autoBlocked: true
           }
         }).catch(err => {
           console.error('[注册] 发送IP注册频率超限告警邮件失败:', err.message);
+        });
+
+        // 自动将该IP加入黑名单（封禁1小时）
+        autoBlockIp(ipAddress, `24小时内注册${recentRegistrations.length}个账户，超过限制`, '注册模块').catch(err => {
+          console.error('[注册] 自动封禁IP失败:', err.message);
         });
 
         return res.status(403).json({

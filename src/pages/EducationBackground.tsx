@@ -5,6 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import { getUserData } from "@/lib/api";
 import { toast } from "sonner";
 import { sortByDegreeLevel, sortByDegreeType } from "@/lib/educationSort";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   StudentStatusCard, 
   EducationInfoCard, 
@@ -58,6 +59,7 @@ interface EducationRecord {
 
 const EducationBackground = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [studentStatusRecords, setStudentStatusRecords] = useState<any[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
@@ -68,10 +70,8 @@ const EducationBackground = () => {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const userStr = localStorage.getItem("currentUser");
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          const data = await getUserData(user.id);
+        if (currentUser) {
+          const data = await getUserData(currentUser.id);
           
           // 按学历层次排序学籍信息
           const sortedStudentStatus = sortByDegreeLevel(
@@ -117,7 +117,7 @@ const EducationBackground = () => {
       }
     };
     loadUserData();
-  }, []);
+  }, [currentUser]);
 
   const allRecords = activeTab === "education" ? educationRecords : activeTab === "degree" ? degreeRecords : activeTab === "exam" ? examRecords : [];
   const showStudentStatus = activeTab === "info";

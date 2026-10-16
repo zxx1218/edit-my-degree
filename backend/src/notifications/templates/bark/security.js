@@ -134,11 +134,34 @@ function getFrequentPasswordChangeNotification({ username, ip, attempts, timesta
   };
 }
 
+/**
+ * 获取IP自动封禁通知模板（因触发错误/警告而自动加入黑名单）
+ * @param {Object} options - 配置选项
+ * @param {string} options.ip - IP地址
+ * @param {string} options.reason - 触发原因（错误/警告描述）
+ * @param {string} options.source - 触发来源模块
+ * @param {number} options.blockDuration - 封禁时长（分钟）
+ * @param {string} options.blockedUntil - 封禁截止时间
+ * @param {string} options.timestamp - 发生时间
+ * @returns {Object} 通知对象
+ */
+function getIpAutoBlockNotification({ ip, reason, source, blockDuration, blockedUntil, timestamp }) {
+  return {
+    title: '🚨 IP自动封禁',
+    body: `IP: ${ip}\n原因: ${reason}\n来源: ${source}\n封禁时长: ${blockDuration}分钟\n封禁至: ${blockedUntil}\n时间: ${timestamp}`,
+    subtitle: '安全告警',
+    group: '安全告警',
+    level: 'critical',
+    sound: 'alarm'
+  };
+}
+
 module.exports = {
   getIpBlacklistBlockNotification,
   getUserBlacklistBlockNotification,
   getSuspiciousLoginNotification,
   getFailedLoginNotification,
   getIpRateLimitBlockNotification,
-  getFrequentPasswordChangeNotification
+  getFrequentPasswordChangeNotification,
+  getIpAutoBlockNotification
 };

@@ -6,6 +6,7 @@ import * as adminApi from "@/lib/adminApi";
 import {
   AdminLogin,
   LoginStatsCard,
+  TodayIncomeCard,
   CardManager,
   UserList,
   StatsDashboard,
@@ -76,6 +77,12 @@ const SuperAdd = () => {
   // 今日登录详情
   const [todayLoginDetails, setTodayLoginDetails] = useState<any[]>([]);
   const [isLoadingTodayLoginDetails, setIsLoadingTodayLoginDetails] = useState(false);
+
+  // 今日收入
+  const [todayIncome, setTodayIncome] = useState<number | null>(null);
+  const [todayTotalCards, setTodayTotalCards] = useState<number | null>(null);
+  const [incomeBreakdown, setIncomeBreakdown] = useState<any[]>([]);
+  const [isLoadingIncome, setIsLoadingIncome] = useState(false);
 
   const { toast } = useToast();
 
@@ -190,6 +197,25 @@ const SuperAdd = () => {
       // 忽略获取今日详情的错误
     } finally {
       setIsLoadingTodayLoginDetails(false);
+    }
+  };
+
+  // 获取今日收入统计
+  const fetchTodayIncome = async () => {
+    if (!token) return;
+    
+    setIsLoadingIncome(true);
+    try {
+      const data = await adminApi.getTodayIncome(token);
+      if (data.success) {
+        setTodayIncome(data.totalIncome);
+        setTodayTotalCards(data.totalCards);
+        setIncomeBreakdown(data.breakdown || []);
+      }
+    } catch (error) {
+      // 忽略获取收入统计的错误
+    } finally {
+      setIsLoadingIncome(false);
     }
   };
 
@@ -532,6 +558,7 @@ const SuperAdd = () => {
       fetchHeatmapData();
       fetchTopActiveUsers();
       fetchTodayLoginDetails();
+      fetchTodayIncome();
     }
   }, [isVerified]);
 
@@ -561,6 +588,15 @@ const SuperAdd = () => {
           distinctUsers={distinctUsers}
           isLoading={isLoadingLoginCount}
           onRefresh={fetchTodayLoginCount}
+        />
+
+        {/* 今日已赚 */}
+        <TodayIncomeCard
+          totalCards={todayTotalCards}
+          totalIncome={todayIncome}
+          breakdown={incomeBreakdown}
+          isLoading={isLoadingIncome}
+          onRefresh={fetchTodayIncome}
         />
 
         {/* 充值卡管理 */}

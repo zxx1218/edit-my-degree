@@ -14,6 +14,8 @@ const jwt = require('jsonwebtoken');
 const cryptoUtils = require('./crypto-utils');
 const { sendIllegalApiCallAlert } = require('./email-notifier');
 const { getRechargeNotification } = require('./notifications/templates');
+const { autoBlockIp } = require('./ip-blacklist');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 管理员身份验证中间件
@@ -24,7 +26,8 @@ const adminAuthMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.warn(`[安全防护] 充值卡管理接口缺少认证Token - IP: ${req.ip}`);
+      const ipAddress = getClientIp(req);
+      console.warn(`[安全防护] 充值卡管理接口缺少认证Token - IP: ${ipAddress}`);
       
       // 发送非法调用告警邮件
       sendIllegalApiCallAlert({
@@ -36,6 +39,11 @@ const adminAuthMiddleware = (req, res, next) => {
         }
       }).catch(err => {
         console.error('[邮件通知] 发送告警失败:', err.message);
+      });
+      
+      // 自动将该IP加入黑名单（封禁1小时）
+      autoBlockIp(ipAddress, '充值卡管理接口缺少认证Token', '充值卡管理模块').catch(err => {
+        console.error('[充值卡管理] 自动封禁IP失败:', err.message);
       });
       
       return res.status(401).json({
@@ -50,7 +58,8 @@ const adminAuthMiddleware = (req, res, next) => {
     
     // 兼容 isAdmin 和 is_admin 两种命名
     if (!decoded.isAdmin && !decoded.is_admin) {
-      console.warn(`[安全防护] 非管理员尝试访问充值卡管理接口 - 用户: ${decoded.username}, IP: ${req.ip}`);
+      const ipAddress = getClientIp(req);
+      console.warn(`[安全防护] 非管理员尝试访问充值卡管理接口 - 用户: ${decoded.username}, IP: ${ipAddress}`);
       
       // 发送非法调用告警邮件
       sendIllegalApiCallAlert({
@@ -63,6 +72,11 @@ const adminAuthMiddleware = (req, res, next) => {
         }
       }).catch(err => {
         console.error('[邮件通知] 发送告警失败:', err.message);
+      });
+      
+      // 自动将该IP加入黑名单（封禁1小时）
+      autoBlockIp(ipAddress, `非管理员${decoded.username}尝试访问充值卡管理接口`, '充值卡管理模块').catch(err => {
+        console.error('[充值卡管理] 自动封禁IP失败:', err.message);
       });
       
       return res.status(403).json({
@@ -107,7 +121,7 @@ const manageCards = (db) => async (req, res) => {
 
   try {
     const { action, type, values, count, cardId, username, SBverify } = req.body;
-    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
     
     // 获取管理员信息（如果已通过中间件验证）
@@ -225,6 +239,11 @@ const manageCards = (db) => async (req, res) => {
             console.error('[邮件通知] 发送告警失败:', err.message);
           });
           
+          // 自动将该IP加入黑名单（封禁1小时）
+          autoBlockIp(ipAddress, '充值卡使用缺少SBverify参数', '充值卡管理模块').catch(err => {
+            console.error('[充值卡管理] 自动封禁IP失败:', err.message);
+          });
+          
           return res.status(400).json({
             success: false,
             error: '缺少必要的验证参数：SBverify'
@@ -245,6 +264,11 @@ const manageCards = (db) => async (req, res) => {
             }
           }).catch(err => {
             console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
+          // 自动将该IP加入黑名单（封禁1小时）
+          autoBlockIp(ipAddress, '充值卡使用缺少username参数', '充值卡管理模块').catch(err => {
+            console.error('[充值卡管理] 自动封禁IP失败:', err.message);
           });
           
           return res.status(400).json({
@@ -271,6 +295,11 @@ const manageCards = (db) => async (req, res) => {
             }
           }).catch(err => {
             console.error('[邮件通知] 发送告警失败:', err.message);
+          });
+          
+          // 自动将该IP加入黑名单（封禁1小时）
+          autoBlockIp(ipAddress, '充值卡SBverify解密失败', '充值卡管理模块').catch(err => {
+            console.error('[充值卡管理] 自动封禁IP失败:', err.message);
           });
           
           return res.status(400).json({
@@ -325,8 +354,7 @@ const manageCards = (db) => async (req, res) => {
         const connection = await database.getConnection();
         
         try {
-          // 开始事务处理 - 使用数据库管理器的executeNonQuery方法
-          await database.executeNonQuery('START TRANSACTION');
+          await connection.query('START TRANSACTION');
           
           // 记录充值前的状态
           const beforeState = {
@@ -386,7 +414,7 @@ const manageCards = (db) => async (req, res) => {
             );
           }
 
-          await database.executeNonQuery('COMMIT');
+          await connection.query('COMMIT');
 
           // 获取更新后的用户信息用于消息提示
           const updatedUserResult = await connection.execute(
@@ -474,7 +502,7 @@ const manageCards = (db) => async (req, res) => {
             isPermanentCard: isPermanentCard
           });
         } catch (error) {
-          await database.executeNonQuery('ROLLBACK');
+          await connection.query('ROLLBACK');
           connection.release();
           throw error;
         }

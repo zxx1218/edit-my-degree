@@ -298,6 +298,10 @@ async function createTables(db) {
   await createIndexIfExists('idx_login_logs_login_time', 'login_logs', 'login_time');
   await createIndexIfExists('idx_login_logs_user_id', 'login_logs', 'user_id');
   await createIndexIfExists('idx_users_registration_ip', 'users', 'registration_ip');
+  await createIndexIfExists('idx_cards_used_type', 'cards', '`used`, `type`, `values`');
+  await createIndexIfExists('idx_cards_used_at', 'cards', '`used_at`');
+  await createIndexIfExists('idx_notification_history_created', 'notification_history', '`created_at`');
+  await createIndexIfExists('idx_password_change_user', 'password_change_history', '`user_id`, `changed_at`');
   
   if (isLogProcess) {
     console.safe('Database tables initialized');

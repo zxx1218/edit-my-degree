@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 重置用户PDF积分接口
@@ -7,7 +8,7 @@ const jwt = require('jsonwebtoken');
  */
 function initialize(db, jwtSecret) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const ipAddress = getClientIp(req);
     
     try {
       // 从请求头获取token

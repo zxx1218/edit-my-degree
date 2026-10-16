@@ -26,6 +26,7 @@ import { CalendarIcon, ExternalLink, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getUserData } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import LoadingDialog from "./LoadingDialog";
 
 interface DegreeVerificationDialogProps {
@@ -41,6 +42,7 @@ const DegreeVerificationDialog = ({
 }: DegreeVerificationDialogProps) => {
   // 从环境变量读取PDF积分购买链接
   const cardPdfUrl = import.meta.env.VITE_CARD_PDF_URL || "http://4ox.cn/sdms3r";
+  const { currentUser } = useAuth();
   
   const [degreeRecords, setDegreeRecords] = useState<any[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string>("");
@@ -76,12 +78,10 @@ const DegreeVerificationDialog = ({
         setIsLoading(true);
         onLoadingChange?.(true);
         try {
-          const currentUser = localStorage.getItem("currentUser");
           if (currentUser) {
-            const user = JSON.parse(currentUser);
             // 添加最小延迟确保加载动画可见
             const [userData] = await Promise.all([
-              getUserData(user.id),
+              getUserData(currentUser.id),
               new Promise(resolve => setTimeout(resolve, 500))
             ]);
             if (userData.degree && userData.degree.length > 0) {
@@ -198,11 +198,7 @@ const DegreeVerificationDialog = ({
     }
 
     // Get current PDF limit before showing confirmation dialog
-    const currentUserStr = localStorage.getItem("currentUser");
-    if (currentUserStr) {
-      const currentUser = JSON.parse(currentUserStr);
-      setCurrentPdfLimit(currentUser.pdf_limit || 0);
-    }
+    setCurrentPdfLimit(currentUser?.pdf_limit || 0);
 
     // Show confirmation dialog
     setShowConfirmDialog(true);
@@ -212,29 +208,22 @@ const DegreeVerificationDialog = ({
     setShowConfirmDialog(false);
     
     try {
-      const currentUser = localStorage.getItem("currentUser");
       if (!currentUser) {
         toast.error("用户信息获取失败");
         return;
       }
-      
-      const user = JSON.parse(currentUser);
 
       // 导入API函数
       const { decreasePdfLimit } = await import('@/lib/api');
 
       // 调用后端API扣除PDF积分
-      const pdfLimitData = await decreasePdfLimit(user.username, 30);
+      const pdfLimitData = await decreasePdfLimit(currentUser.username, 30);
 
       if (!pdfLimitData?.success) {
         const errorMsg = pdfLimitData?.message || pdfLimitData?.error || "扣除PDF下载积分失败";
         toast.error(errorMsg);
         return;
       }
-
-      // Update localStorage with new pdf_limit
-      const updatedUser = { ...user, pdf_limit: pdfLimitData.newPdfLimit };
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
 
       // Close the current dialog and show loading dialog
       onOpenChange(false);

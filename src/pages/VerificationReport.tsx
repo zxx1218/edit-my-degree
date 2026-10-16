@@ -18,9 +18,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { createSignedRequestOptions, fetchWithBlacklistCheck } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const VerificationReport = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [degreeDialogOpen, setDegreeDialogOpen] = useState(false);
   const [educationDialogOpen, setEducationDialogOpen] = useState(false);
   const [studentStatusDialogOpen, setStudentStatusDialogOpen] = useState(false);
@@ -35,9 +38,7 @@ const VerificationReport = () => {
 
   const handleReportClick = (type: 'studentStatus' | 'degree' | 'education') => {
     // Get current PDF limit before showing confirmation dialog
-    const currentUserStr = localStorage.getItem("currentUser");
-    if (currentUserStr) {
-      const currentUser = JSON.parse(currentUserStr);
+    if (currentUser) {
       setCurrentPdfLimit(currentUser.pdf_limit || 0);
     }
     
@@ -74,15 +75,13 @@ const VerificationReport = () => {
     setIsLoadingData(true);
 
     try {
-      const currentUserStr = localStorage.getItem("currentUser");
-      if (!currentUserStr) {
+      if (!currentUser) {
         toast.error("未找到用户信息，请重新登录");
         setIsLoadingData(false);
         navigate("/login");
         return;
       }
 
-      const currentUser = JSON.parse(currentUserStr);
       const username = currentUser.username;
 
       if (!username) {
@@ -92,51 +91,18 @@ const VerificationReport = () => {
         return;
       }
 
-      // 生成签名所需参数
-      const timestamp = Date.now().toString();
       const params = { username, decreaseLogins: 1, loginType: 'web_chsi' };
-      
-      // 生成签名
-      const method = 'POST';
-      const url = '/api/decrease-user-logins';
-      const sortedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
-      const signString = `${method.toUpperCase()}${url}${sortedParams}${timestamp}`;
-      
-      let hash = 0;
-      for (let i = 0; i < signString.length; i++) {
-        const char = signString.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      
-      const secretKey = import.meta.env.VITE_API_SECRET_KEY || 'default_secret_key';
-      for (let i = 0; i < secretKey.length; i++) {
-        const char = secretKey.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      
-      const signature = Math.abs(hash).toString(16);
-      const appKey = import.meta.env.VITE_APP_KEY || 'default_app_key';
 
-      // 获取JWT token用于认证
       const authToken = localStorage.getItem("authToken");
-
-      // 调用本地 API 扣除登录次数（传递loginType参数标记为网页版学信网登录）
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api"}/decrease-user-logins`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Timestamp": timestamp,
-            "X-Signature": signature,
-            "X-App-Key": appKey,
-            ...(authToken && { "Authorization": `Bearer ${authToken}` }),
-          },
-          body: JSON.stringify({ username, decreaseLogins: 1, loginType: 'web_chsi' }),
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
+      const options = createSignedRequestOptions("POST", "/api/decrease-user-logins", params);
+      const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/decrease-user-logins`, {
+        ...options,
+        headers: {
+          ...options.headers,
+          ...(authToken && { "Authorization": `Bearer ${authToken}` }),
         },
-      );
+      });
 
       const result = await response.json();
 

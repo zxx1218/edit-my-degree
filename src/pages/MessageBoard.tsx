@@ -16,9 +16,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MessageBoard = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -68,21 +70,13 @@ const MessageBoard = () => {
     }
 
     // 获取当前用户名
-    const currentUserStr = localStorage.getItem("currentUser");
-    if (!currentUserStr) {
+    if (!currentUser) {
       toast.error("请先登录");
       navigate("/login");
       return;
     }
 
-    let username = "";
-    try {
-      const currentUser = JSON.parse(currentUserStr);
-      username = currentUser.username || currentUser.name || "匿名用户";
-    } catch (error) {
-      toast.error("获取用户信息失败");
-      return;
-    }
+    const username = currentUser.username || currentUser.name || "匿名用户";
 
     setIsSubmitting(true);
     try {

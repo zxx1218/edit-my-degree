@@ -205,7 +205,7 @@ async function main() {
     
     if (stats.total === 0) {
       console.log('ℹ️  没有需要更新的记录，任务结束。');
-      await dbManager.shutdown();
+      await dbManager.close();
       return { success: true, message: '没有需要更新的记录', stats };
     }
     

@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, MessageSquare, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { loginUser, changePassword, resetPassword, getMessages, addMessage, type Message } from "@/lib/api";
+import { loginUser, changePassword, resetPassword, getMessages, addMessage, createSignedRequestOptions, fetchWithBlacklistCheck, type Message } from "@/lib/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -329,54 +329,19 @@ const Login = () => {
     setIsRecharging(true);
 
     try {
-      // 生成签名所需参数
-      const timestamp = Date.now().toString();
-      
       // 对充值卡ID进行Base64编码（生成SBverify）
       const cardId = data.cardId.trim();
       const SBverify = btoa(unescape(encodeURIComponent(cardId)));
-      
+
       const params = {
         action: "use",
         username: data.username.trim(),
-        SBverify: SBverify,  // 使用加密后的卡ID
+        SBverify: SBverify,
       };
-      
-      // 生成签名
-      const method = "POST";
-      const url = "/api/manage-cards";
-      const sortedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
-      const signString = `${method.toUpperCase()}${url}${sortedParams}${timestamp}`;
-      
-      let hash = 0;
-      for (let i = 0; i < signString.length; i++) {
-        const char = signString.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      
-      // 从环境变量获取密钥，如果没有则使用默认值
-      const secretKey = import.meta.env.VITE_API_SECRET_KEY || "default_secret_key";
-      for (let i = 0; i < secretKey.length; i++) {
-        const char = secretKey.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      
-      const signature = Math.abs(hash).toString(16);
 
-      // 使用本地后端API替代Supabase函数调用
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001/api";
-      const response = await fetch(`${API_BASE_URL}/manage-cards`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Timestamp": timestamp,
-          "X-Signature": signature,
-          "X-App-Key": import.meta.env.VITE_APP_KEY || "default_app_key"
-        },
-        body: JSON.stringify(params),
-      });
+      const options = createSignedRequestOptions("POST", "/api/manage-cards", params);
+      const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-cards`, options);
 
       const result = await response.json();
 
@@ -1051,6 +1016,7 @@ const Login = () => {
                                     </div>
                                     <span className="text-xs text-muted-foreground whitespace-nowrap">
                                       {new Date(message.created_at).toLocaleString('zh-CN', {
+                                        year: 'numeric',
                                         month: '2-digit',
                                         day: '2-digit',
                                         hour: '2-digit',
@@ -1095,6 +1061,7 @@ const Login = () => {
                                       {message.replied_at && (
                                         <span className="text-xs text-muted-foreground">
                                           {new Date(message.replied_at).toLocaleString('zh-CN', {
+                                            year: 'numeric',
                                             month: '2-digit',
                                             day: '2-digit',
                                             hour: '2-digit',

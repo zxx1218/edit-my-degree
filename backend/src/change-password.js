@@ -2,7 +2,9 @@ const jwt = require('jsonwebtoken');
 const { logPasswordChange } = require('./operation-logger');
 const barkNotifier = require('./bark-notifier');
 const { getFrequentPasswordChangeNotification } = require('./notifications/templates');
+const { autoBlockIp } = require('./ip-blacklist');
 const dbManager = require('./db-utils');
+const { getClientIp } = require('./get-client-ip');
 
 // 简单的内存存储，用于记录失败次数（生产环境建议使用 Redis）
 const failedAttempts = new Map();
@@ -40,9 +42,7 @@ async function recordPasswordChangeHistory(db, userId, username, ipAddress, user
  */
 function initialize(db, jwtSecret) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {
@@ -85,6 +85,11 @@ function initialize(db, jwtSecret) {
             .catch(err => {
               console.error('[安全] 发送频繁密码修改Bark通知失败:', err.message);
             });
+        });
+
+        // 自动将该IP加入黑名单（封禁1小时）
+        autoBlockIp(ipAddress, `频繁密码修改尝试${attempts}次，针对用户${username}`, '密码修改模块').catch(err => {
+          console.error('[密码修改] 自动封禁IP失败:', err.message);
         });
 
         return res.status(429).json({
@@ -204,6 +209,11 @@ function initialize(db, jwtSecret) {
                   console.error('[安全] 发送密码修改失败Bark通知失败:', err.message);
                 });
             });
+
+            // 自动将该IP加入黑名单（封禁1小时）
+            autoBlockIp(ipAddress, `密码修改失败${attempts + 1}次，针对用户${username}`, '密码修改模块').catch(err => {
+              console.error('[密码修改] 自动封禁IP失败:', err.message);
+            });
           }
           
           return res.status(401).json({
@@ -252,6 +262,11 @@ function initialize(db, jwtSecret) {
                 .catch(err => {
                   console.error('[安全] 发送密码修改失败Bark通知失败:', err.message);
                 });
+            });
+
+            // 自动将该IP加入黑名单（封禁1小时）
+            autoBlockIp(ipAddress, `密码修改失败${attempts + 1}次，针对用户${username}`, '密码修改模块').catch(err => {
+              console.error('[密码修改] 自动封禁IP失败:', err.message);
             });
           }
           

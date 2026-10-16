@@ -62,7 +62,7 @@ async function main() {
 
     const todayStr = today.toISOString().slice(0, 10);
 
-    const [rows] = await dbManager.query(
+    const [rows] = await dbManager.execute(
       `SELECT type, \`values\`, COUNT(*) AS count
        FROM cards
        WHERE used = TRUE AND used_at >= ? AND used_at < ?
@@ -114,7 +114,7 @@ async function main() {
     }
 
     const duration = Date.now() - startTime;
-    await dbManager.closePool();
+    await dbManager.close();
 
     return {
       success: true,
@@ -124,7 +124,7 @@ async function main() {
 
   } catch (error) {
     console.error('❌ 每日收入统计失败:', error.message);
-    try { await dbManager.closePool(); } catch (_) {}
+    try { await dbManager.close(); } catch (_) {}
     return {
       success: false,
       message: error.message,

@@ -1,11 +1,16 @@
 const dbManager = require('./db-utils');
 const { logIpBlacklist } = require('./operation-logger');
 const barkNotifier = require('./bark-notifier');
-const { getIpRateLimitBlockNotification } = require('./notifications/templates');
+const { getIpRateLimitBlockNotification, getIpAutoBlockNotification } = require('./notifications/templates');
 
 // IP请求记录缓存（内存中）
 // 格式: Map<ip, [timestamp1, timestamp2, ...]>
 const ipRequestCache = new Map();
+
+// 自动封禁配置
+const AUTO_BLOCK_CONFIG = {
+  DURATION: parseInt(process.env.IP_AUTO_BLOCK_DURATION) || 60 * 60 * 1000 // 默认1小时（毫秒）
+};
 
 // 从环境变量读取配置参数，提供默认值
 const CONFIG = {
@@ -94,6 +99,72 @@ async function addToBlacklist(ipAddress, reason) {
     });
   } catch (err) {
     console.safe('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });
+  }
+}
+
+/**
+ * 因触发错误/警告而自动将IP加入黑名单（封禁1小时）
+ * @param {string} ipAddress - IP地址
+ * @param {string} reason - 触发原因（错误/警告描述）
+ * @param {string} source - 触发来源模块
+ */
+async function autoBlockIp(ipAddress, reason, source = '未知模块') {
+  if (!ipAddress || ipAddress === 'unknown') {
+    return;
+  }
+  
+  try {
+    // 检查是否已在黑名单中
+    const alreadyBlocked = await isIpBlacklisted(ipAddress);
+    if (alreadyBlocked) {
+      return;
+    }
+    
+    const blockedUntil = new Date(Date.now() + AUTO_BLOCK_CONFIG.DURATION);
+    const blockDurationMinutes = AUTO_BLOCK_CONFIG.DURATION / 1000 / 60;
+    
+    // 删除旧记录
+    await dbManager.execute(
+      'DELETE FROM ip_blacklist WHERE ip_address = ?',
+      [ipAddress]
+    );
+    
+    // 插入新记录
+    await dbManager.execute(
+      'INSERT INTO ip_blacklist (id, ip_address, reason, blocked_until) VALUES (UUID(), ?, ?, ?)',
+      [ipAddress, `触发${source}模块的错误/警告: ${reason}`, blockedUntil]
+    );
+    
+    logIpBlacklist(ipAddress, 'auto-blocked', reason, {
+      source,
+      blockedUntil: blockedUntil.toISOString(),
+      blockDurationMinutes
+    });
+    
+    console.safe(`[安全防护] IP自动封禁: ${ipAddress}, 原因: ${reason}, 来源: ${source}, 封禁${blockDurationMinutes}分钟`);
+    
+    // 发送Bark通知
+    const timestamp = new Date().toLocaleString('zh-CN');
+    const notification = getIpAutoBlockNotification({
+      ip: ipAddress,
+      reason,
+      source,
+      blockDuration: blockDurationMinutes,
+      blockedUntil: blockedUntil.toISOString(),
+      timestamp
+    });
+    
+    setImmediate(() => {
+      barkNotifier.sendNotification(notification)
+        .then(() => {
+          console.safe('[安全防护] IP自动封禁通知发送成功');
+        })
+        .catch(err => {
+          console.error('[安全防护] 发送IP自动封禁Bark通知失败:', err.message);
+        });
+    });
+  } catch (err) {
+    console.safe('[安全防护] IP自动封禁失败:', err.message, { ipAddress, reason, source });
   }
 }
 
@@ -196,8 +267,9 @@ function getIpStats(ipAddress) {
 module.exports = {
   isIpBlacklisted,
   addToBlacklist,
+  autoBlockIp,
   recordAndCheckIp,
   startCleanupTask,
   getIpStats,
-  logIpBlacklist // 导出IP黑名单日志记录函数，供外部使用
+  logIpBlacklist
 };

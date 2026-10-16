@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import EducationHeader from "@/components/EducationHeader";
 import SectionHeader from "@/components/SectionHeader";
 import EducationCard from "@/components/EducationCard";
@@ -19,6 +20,7 @@ import {
   DegreeType 
 } from "@/lib/educationSort";
 import { getDailyBanner, getTotalBannerImages } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EducationRecord {
   id: string;
@@ -33,22 +35,21 @@ interface EducationRecord {
 
 const Index = () => {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [selectedRecord, setSelectedRecord] = useState<EducationRecord | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [bannerImage, setBannerImage] = useState<string>("/certification-banner.png");
-  
+
   const [studentStatus, setStudentStatus] = useState<EducationRecord[]>([]);
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<any[]>([]);
 
-  // 转换数据格式的辅助函数
-  const convertToEducationRecord = (item: any, type: string): EducationRecord => ({
+  const convertToEducationRecord = useCallback((item: any, type: string): EducationRecord => ({
     id: item.id,
     school: item.school,
     major: type === "exam" ? item.year : item.major,
@@ -57,7 +58,7 @@ const Index = () => {
     degreeType: item.degree_type || "",
     type: type as any,
     created_at: item.created_at,
-  });
+  }), []);
 
   // 初始化banner图片
   useEffect(() => {
@@ -66,56 +67,48 @@ const Index = () => {
     setBannerImage(dailyBanner);
   }, []);
 
-  // 从数据库加载用户数据
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const userStr = localStorage.getItem("currentUser");
-        if (!userStr) {
-          navigate("/login");
-          return;
-        }
-
-        const user = JSON.parse(userStr);
-        setCurrentUserId(user.id);
-
-        const data = await getUserData(user.id);
-        
-        // 检查学籍信息是否为空，如果为空则创建默认记录
-        if (data.studentStatus.length === 0) {
-          try {
-            const defaultData = {
-              name: "浆果儿",
-              school: "清华大学",
-              major: "经济与金融",
-              study_type: "全日制",
-              degree_level: "本科",
-            };
-            
-            const result = await updateData("student_status", "insert", user.id, defaultData);
-            
-            if (result.success && result.data) {
-              data.studentStatus = result.data;
-            }
-          } catch (error) {
-            // 忽略创建默认学籍的错误
-          }
-        }
-
-        // 排序后设置数据
-        setStudentStatus(sortByDegreeLevel(data.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
-        setEducationRecords(sortByDegreeLevel(data.education.map((item: any) => convertToEducationRecord(item, "education"))));
-        setDegreeRecords(sortByDegreeType(data.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
-        setExamRecords(data.exam.map((item: any) => ({ ...item, type: "exam" })));
-      } catch (error) {
-        toast.error("加载数据失败", { duration: 1500 });
-      } finally {
-        setLoading(false);
+  const { data: userData, isLoading: loading } = useQuery({
+    queryKey: ["userData", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) {
+        navigate("/login");
+        return null;
       }
-    };
 
-    loadUserData();
-  }, [navigate]);
+      setCurrentUserId(currentUser.id);
+      const data = await getUserData(currentUser.id);
+
+      if (data.studentStatus.length === 0) {
+        try {
+          const defaultData = {
+            name: "浆果儿",
+            school: "清华大学",
+            major: "经济与金融",
+            study_type: "全日制",
+            degree_level: "本科",
+          };
+          const result = await updateData("student_status", "insert", currentUser.id, defaultData);
+          if (result.success && result.data) {
+            data.studentStatus = result.data;
+          }
+        } catch {
+          // 忽略创建默认学籍的错误
+        }
+      }
+
+      return data;
+    },
+    enabled: !!currentUser,
+    staleTime: 30000,
+  });
+
+  useEffect(() => {
+    if (!userData) return;
+    setStudentStatus(sortByDegreeLevel(userData.studentStatus.map((item: any) => convertToEducationRecord(item, "student-status"))));
+    setEducationRecords(sortByDegreeLevel(userData.education.map((item: any) => convertToEducationRecord(item, "education"))));
+    setDegreeRecords(sortByDegreeType(userData.degree.map((item: any) => convertToEducationRecord(item, "degree"))));
+    setExamRecords(userData.exam.map((item: any) => ({ ...item, type: "exam" })));
+  }, [userData, convertToEducationRecord]);
 
   const handleLongPress = (record: EducationRecord) => {
     setSelectedRecord(record);

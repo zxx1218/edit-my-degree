@@ -2,9 +2,18 @@ import { createContext, useContext, useState, useEffect, useRef, ReactNode } fro
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+interface CurrentUser {
+  id: string;
+  username: string;
+  remaining_logins: number;
+  pdf_limit?: number;
+  is_trial_user?: boolean | null;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   isCheckingAuth: boolean;
+  currentUser: CurrentUser | null;
   login: (sessionDuration?: number) => void;
   logout: () => void;
 }
@@ -21,6 +30,7 @@ const DEFAULT_SESSION_DURATION = import.meta.env.VITE_SESSION_DURATION
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [showTrialDialog, setShowTrialDialog] = useState(false);
   const timerRef = useRef<number | null>(null);
 
@@ -128,7 +138,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loginTimestamp = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
     const sessionDurationStr = localStorage.getItem(SESSION_DURATION_KEY);
-    
+
+    // 加载 currentUser
+    try {
+      const userStr = localStorage.getItem("currentUser");
+      if (userStr) {
+        setCurrentUser(JSON.parse(userStr));
+      }
+    } catch {
+      // 忽略解析错误
+    }
+
     if (loginTimestamp && sessionDurationStr) {
       const loginTime = parseInt(loginTimestamp, 10);
       const sessionDuration = parseInt(sessionDurationStr, 10);
@@ -177,7 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isCheckingAuth, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isCheckingAuth, currentUser, login, logout }}>
       {children}
       
       {/* 体验用户会话过期提示弹窗 */}

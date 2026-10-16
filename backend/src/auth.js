@@ -9,6 +9,7 @@ const {
   getIpBlacklistBlockNotification, 
   getUserBlacklistBlockNotification 
 } = require('./notifications/templates');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 初始化认证模块
@@ -24,9 +25,7 @@ function initialize(pool, jwtSecret) {
    * @param {Object} res - 响应对象
    */
   async function login(req, res) {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {
@@ -140,42 +139,36 @@ function initialize(pool, jwtSecret) {
         });
       }
       
-      // 检查登录次数
-      if (user.remaining_logins <= 0) {
-        // 记录登录失败日志
+      // 原子扣减登录次数（防止并发竞态）
+      const [updateResult] = await dbManager.execute(
+        'UPDATE users SET remaining_logins = remaining_logins - 1 WHERE id = ? AND remaining_logins > 0',
+        [user.id]
+      );
+
+      if (updateResult.affectedRows === 0) {
         logLogin(user.id, username, ipAddress, userAgent, 'failed', { reason: '登录次数不足', remaining_logins: 0 });
-        
-        return res.status(403).json({ 
+
+        return res.status(403).json({
           error: '您的剩余登录次数为0，请购买或续费后再登录！',
           message: '您的账号剩余可登录次数为 0 ，请购买或续费套餐后再登录！'
         });
       }
-      
+
       // 获取用户当前剩余登录次数（扣除本次登录前）
       const remainingLoginsBefore = user.remaining_logins;
-      
+
       // 根据当前剩余登录次数确定会话时长（单位：毫秒）
       let sessionDuration;
       if (remainingLoginsBefore == 1) {
-        // 当前剩余登录次数为1时，会话时长3分钟
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_1 || '180000', 10);
       } else if (remainingLoginsBefore <= 5) {
-        // 当前剩余登录次数大于1但小于等于5时，会话时长8分钟
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_2 || '480000', 10);
       } else if (remainingLoginsBefore <= 50) {
-        // 当前剩余登录次数大于5但小于等于50时，会话时长20分钟
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_3 || '1200000', 10);
       } else {
-        // 当前剩余登录次数大于50时，会话时长24小时
         sessionDuration = parseInt(process.env.SESSION_DURATION_LEVEL_4 || '86400000', 10);
       }
-      
-      // 减少登录次数
-      await dbManager.execute(
-        'UPDATE users SET remaining_logins = remaining_logins - 1 WHERE id = ?',
-        [user.id]
-      );
-      
+
       // 获取扣除本次登录后的剩余登录次数
       const remainingLoginsAfter = remainingLoginsBefore - 1;
       
@@ -257,9 +250,7 @@ function initialize(pool, jwtSecret) {
    * @param {Object} res - 响应对象
    */
   async function adminLogin(req, res) {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {

@@ -1,5 +1,7 @@
 const { logPasswordChange } = require('./operation-logger');
 const { sendSecurityAlert } = require('./email-notifier');
+const { autoBlockIp } = require('./ip-blacklist');
+const { getClientIp } = require('./get-client-ip');
 
 // 简单的内存存储，用于记录失败次数（生产环境建议使用 Redis）
 const failedAttempts = new Map();
@@ -10,9 +12,7 @@ const failedAttempts = new Map();
  */
 function initialize(db) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {
@@ -39,14 +39,20 @@ function initialize(db) {
         // 发送告警邮件
         sendSecurityAlert({
           subject: '频繁重置密码尝试警告',
-          message: `检测到针对用户 ${username} 的频繁密码重置尝试，可能正在遭受恶意攻击。`,
+          message: `检测到针对用户 ${username} 的频繁密码重置尝试，可能正在遭受恶意攻击。该IP已被自动封禁1小时。`,
           details: {
             ipAddress,
             userAgent,
             attempts,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            autoBlocked: true
           }
         }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+
+        // 自动将该IP加入黑名单（封禁1小时）
+        autoBlockIp(ipAddress, `频繁重置密码尝试${attempts}次，针对用户${username}`, '密码重置模块').catch(err => {
+          console.error('[密码重置] 自动封禁IP失败:', err.message);
+        });
 
         return res.status(429).json({
           success: false,
@@ -141,14 +147,20 @@ function initialize(db) {
         if (attempts + 1 >= 3) {
            sendSecurityAlert({
             subject: '密码重置验证失败次数过多',
-            message: `用户 ${username} 在短时间内多次输入错误的卡密进行密码重置。`,
+            message: `用户 ${username} 在短时间内多次输入错误的卡密进行密码重置。该IP已被自动封禁1小时。`,
             details: {
               ipAddress,
               userAgent,
               attempts: attempts + 1,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              autoBlocked: true
             }
           }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+
+          // 自动将该IP加入黑名单（封禁1小时）
+          autoBlockIp(ipAddress, `密码重置验证失败${attempts + 1}次，针对用户${username}`, '密码重置模块').catch(err => {
+            console.error('[密码重置] 自动封禁IP失败:', err.message);
+          });
         }
         
         return res.status(400).json({

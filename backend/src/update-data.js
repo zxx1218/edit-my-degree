@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { logOperation } = require('./operation-logger');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 获取表的字段列表（带缓存）
@@ -486,9 +487,7 @@ async function handleGraduateStudentInsert(db, userId, insertedData) {
  */
 function initialize(db) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 
-                      (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null) || 
-                      req.headers['x-real-ip'] || 'unknown';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
 
     try {

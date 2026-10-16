@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { isIpBlacklisted } = require('./ip-blacklist');
+const { isIpBlacklisted, autoBlockIp } = require('./ip-blacklist');
+const { getClientIp } = require('./get-client-ip');
 
 // 内存缓存：记录最近5分钟内每个IP+用户的留言内容哈希（防止完全相同的重复提交）
 const recentMessagesCache = new Map();
@@ -37,12 +38,17 @@ function checkAndAlert(ipAddress, username) {
   // 达到阈值时告警
   if (count === ALERT_THRESHOLD) {
     console.error(`🚨 [安全告警] 检测到异常留言行为 - IP: ${ipAddress}, 用户: ${username}, 1小时内尝试${count}次`);
+    
+    // 自动将该IP加入黑名单（封禁1小时）
+    autoBlockIp(ipAddress, `异常留言行为，1小时内尝试${count}次`, '留言板模块').catch(err => {
+      console.error('[留言板] 自动封禁IP失败:', err.message);
+    });
   }
 }
 
 function initialize(db) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const ipAddress = getClientIp(req);
     
     try {
       // 【新增】检查IP是否在黑名单中

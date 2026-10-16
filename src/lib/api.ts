@@ -86,7 +86,7 @@ function showBlacklistAlert(errorMessage: string) {
 /**
  * 封装fetch请求，自动处理黑名单响应
  */
-async function fetchWithBlacklistCheck(url: string, options?: RequestInit): Promise<Response> {
+export async function fetchWithBlacklistCheck(url: string, options?: RequestInit): Promise<Response> {
   const response = await fetch(url, options);
   
   // 克隆响应以便可以多次读取
@@ -149,7 +149,7 @@ export function generateSignature(
   return Math.abs(hash).toString(16);
 }
 // 创建带签名的请求选项
-function createSignedRequestOptions(method: string, url: string, body?: any) {
+export function createSignedRequestOptions(method: string, url: string, body?: any) {
   const timestamp = Date.now();
   
   const signature = generateSignature(
@@ -391,10 +391,14 @@ export interface ReplyMessageResponse {
 
 export const replyMessage = async (messageId: string, replyContent: string): Promise<ReplyMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'replyMessage', messageId, replyContent });
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
+  const adminToken = localStorage.getItem("adminToken");
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: { ...options.headers, ...(adminToken && { 'Authorization': `Bearer ${adminToken}` }) }
+  });
 
   const data = await response.json();
-  
+
   return data;
 };
 
@@ -407,10 +411,14 @@ export interface DeleteMessageResponse {
 
 export const deleteMessage = async (messageId: string): Promise<DeleteMessageResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'deleteMessage', messageId });
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
+  const adminToken = localStorage.getItem("adminToken");
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: { ...options.headers, ...(adminToken && { 'Authorization': `Bearer ${adminToken}` }) }
+  });
 
   const data = await response.json();
-  
+
   return data;
 };
 
@@ -423,9 +431,13 @@ export interface SetPriorityResponse {
 
 export const setPriority = async (messageId: string, priority: number | null): Promise<SetPriorityResponse> => {
   const options = createSignedRequestOptions('POST', '/api/get-messages', { action: 'setPriority', messageId, priority });
-  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, options);
+  const adminToken = localStorage.getItem("adminToken");
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: { ...options.headers, ...(adminToken && { 'Authorization': `Bearer ${adminToken}` }) }
+  });
 
   const data = await response.json();
-  
+
   return data;
 };

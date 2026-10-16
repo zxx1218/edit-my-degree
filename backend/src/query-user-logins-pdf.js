@@ -1,3 +1,5 @@
+const { getClientIp } = require('./get-client-ip');
+
 /**
  * 查询用户登录次数和 PDF 积分接口
  * @param {Object} db - 数据库连接实例
@@ -10,7 +12,7 @@ function initialize(db) {
       const { username, password } = req.body;
       
       // 获取客户端信息
-      const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+      const ipAddress = getClientIp(req);
       const userAgent = req.headers['user-agent'] || '未知设备';
       
       if (!username || !password) {

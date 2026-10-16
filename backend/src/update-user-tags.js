@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { logOperation } = require('./operation-logger');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 更新用户标签接口
@@ -76,7 +77,7 @@ function initialize(db, jwtSecret) {
       }
       
       // 记录操作日志
-      const ipAddress = req.ip || req.connection.remoteAddress;
+      const ipAddress = getClientIp(req);
       const userAgent = req.headers['user-agent'] || '';
       logOperation(decoded.id, admins[0].username, 'update_tags', 'users', 
         { username, oldTags: null, newTags: tags }, ipAddress, userAgent, 'success');

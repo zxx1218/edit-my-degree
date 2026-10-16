@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { getClientIp } = require('./get-client-ip');
 
 /**
  * 更新用户登录次数接口（管理员操作）
@@ -7,7 +8,7 @@ const jwt = require('jsonwebtoken');
  */
 function initialize(db, jwtSecret) {
   return async (req, res) => {
-    const ipAddress = req.ip || req.connection.remoteAddress || '未知 IP';
+    const ipAddress = getClientIp(req);
     const userAgent = req.get('User-Agent') || 'Unknown';
     
     try {

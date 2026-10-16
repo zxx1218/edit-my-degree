@@ -5,6 +5,7 @@
 
 const nodemailer = require('nodemailer');
 const { recordNotificationHistory } = require('./notification-history');
+const { getSecurityAlertHtml, getIllegalApiCallAlertData } = require('./notifications/templates/email/security');
 
 // 邮件传输器配置
 let transporter = null;
@@ -59,37 +60,12 @@ async function sendSecurityAlert(params) {
     console.info(`[邮件通知] 👤 发件人: ${process.env.EMAIL_FROM || process.env.SMTP_USER}`);
     console.info(`[邮件通知] 📬 收件人: ${process.env.ERROR_NOTIFICATION_EMAIL}`);
     
-    // 构建HTML邮件内容
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ 安全告警</h1>
-        </div>
-        
-        <div style="padding: 20px; background: #f9f9f9;">
-          <div style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-            <h2 style="color: #333; margin-top: 0; font-size: 18px;">${subject}</h2>
-            <p style="color: #666; line-height: 1.6;">${message}</p>
-          </div>
-          
-          ${details ? `
-          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px;">
-            <h3 style="color: #856404; margin-top: 0; font-size: 16px;">📋 详细信息</h3>
-            <pre style="background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; font-size: 12px; color: #333;">${JSON.stringify(details, null, 2)}</pre>
-          </div>
-          ` : ''}
-          
-          <div style="margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 5px; font-size: 12px; color: #6c757d;">
-            <p style="margin: 0;">🕐 时间: ${new Date().toLocaleString('zh-CN')}</p>
-            <p style="margin: 5px 0 0 0;">🖥️ 服务器: ${process.env.APP_NAME || '学位管理系统'}</p>
-          </div>
-        </div>
-        
-        <div style="background: #343a40; color: white; padding: 15px; border-radius: 0 0 10px 10px; text-align: center; font-size: 12px;">
-          <p style="margin: 0;">此邮件由系统自动发送，请勿回复</p>
-        </div>
-      </div>
-    `;
+    const htmlContent = getSecurityAlertHtml({
+      subject,
+      message,
+      details,
+      appName: process.env.APP_NAME
+    });
     
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.SMTP_USER,
@@ -154,25 +130,20 @@ async function sendSecurityAlert(params) {
 async function sendIllegalApiCallAlert(requestData) {
   const { req, reason, details } = requestData;
   
-  const subject = '检测到充值接口非法调用';
-  const message = `系统检测到对充值卡管理接口的非法调用，可能存在安全风险。`;
+  const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress
+    || (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null)
+    || req.headers['x-real-ip'] || '未知IP';
   
-  const alertDetails = {
-    reason: reason,
-    ip: req.ip || req.connection.remoteAddress || '未知IP',
+  const alertData = getIllegalApiCallAlertData({
+    ip,
     userAgent: req.get('User-Agent') || 'Unknown',
     path: req.path,
     method: req.method,
-    timestamp: new Date().toISOString(),
-    requestBody: req.body,
-    ...details
-  };
-  
-  return await sendSecurityAlert({
-    subject,
-    message,
-    details: alertDetails
+    reason,
+    details
   });
+  
+  return await sendSecurityAlert(alertData);
 }
 
 

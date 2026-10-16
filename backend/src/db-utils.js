@@ -72,8 +72,6 @@ class DatabaseManager {
     
     try {
       const connection = await this.pool.getConnection();
-      // 设置时区
-      await connection.execute(`SET time_zone = '${process.env.DB_TIMEZONE || '+08:00'}'`);
       return connection;
     } catch (err) {
       console.error('获取数据库连接失败:', err);

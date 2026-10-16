@@ -1,5 +1,6 @@
 export { default as AdminLogin } from './AdminLogin';
 export { default as LoginStatsCard } from './LoginStatsCard';
+export { default as TodayIncomeCard } from './TodayIncomeCard';
 export { default as CardManager } from './CardManager';
 export { default as UserList } from './UserList';
 export { default as MessageList } from './MessageList';
