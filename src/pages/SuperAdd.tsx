@@ -5,13 +5,11 @@ import { Users } from "lucide-react";
 import * as adminApi from "@/lib/adminApi";
 import {
   AdminLogin,
-  LoginStatsCard,
-  TodayIncomeCard,
+  TodayOverview,
   CardManager,
   UserList,
   StatsDashboard,
   MessageList,
-  TodayLoginList,
   ProvinceMap,
   BlacklistManager,
   PdfGenerationManager,
@@ -582,21 +580,20 @@ const SuperAdd = () => {
           <p className="text-muted-foreground">云南商务职业学院 - 工程学院毕业设计</p>
         </div>
 
-        {/* 今日登录统计卡片 */}
-        <LoginStatsCard
+        {/* 今日概览（登录统计 + 收入 + 登录详情） */}
+        <TodayOverview
           todayLoginCount={todayLoginCount}
           distinctUsers={distinctUsers}
-          isLoading={isLoadingLoginCount}
-          onRefresh={fetchTodayLoginCount}
-        />
-
-        {/* 今日已赚 */}
-        <TodayIncomeCard
+          isLoadingLogin={isLoadingLoginCount}
+          onRefreshLogin={fetchTodayLoginCount}
           totalCards={todayTotalCards}
           totalIncome={todayIncome}
           breakdown={incomeBreakdown}
-          isLoading={isLoadingIncome}
-          onRefresh={fetchTodayIncome}
+          isLoadingIncome={isLoadingIncome}
+          onRefreshIncome={fetchTodayIncome}
+          loginDetails={todayLoginDetails}
+          isLoadingDetails={isLoadingTodayLoginDetails}
+          onRefreshDetails={fetchTodayLoginDetails}
         />
 
         {/* 充值卡管理 */}
@@ -672,13 +669,6 @@ const SuperAdd = () => {
 
         {/* 通知历史管理 */}
         <NotificationHistoryManager token={token} />
-
-        {/* 今日登录用户列表 */}
-        <TodayLoginList
-          loginDetails={todayLoginDetails}
-          isLoading={isLoadingTodayLoginDetails}
-          onRefresh={fetchTodayLoginDetails}
-        />
       </div>
     </div>
   );
