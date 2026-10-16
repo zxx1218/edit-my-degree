@@ -304,6 +304,13 @@ function getEmailTransporter() {
  * @param {string} errorMessage - 错误消息内容
  * @param {object} metadata - 额外的元数据
  */
+function safeRecordNotification(params) {
+  try {
+    const { recordNotificationHistory } = require('./notification-history');
+    recordNotificationHistory(params);
+  } catch (_) {}
+}
+
 function sendErrorEmail(errorMessage, metadata = {}) {
   // 防止递归调用：如果正在发送邮件，直接返回
   if (isSendingErrorEmail) {
@@ -324,6 +331,16 @@ function sendErrorEmail(errorMessage, metadata = {}) {
 
   const transporter = getEmailTransporter();
   if (!transporter) {
+    safeRecordNotification({
+      channel: 'email',
+      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      body: errorMessage.substring(0, 500),
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
+      group: '系统错误',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: 'SMTP传输器未初始化'
+    });
     return;
   }
 
@@ -346,6 +363,16 @@ function sendErrorEmail(errorMessage, metadata = {}) {
       bypassLogger.info(`[邮件通知] 熔断器已激活，暂停邮件发送直到 ${new Date(emailRateLimit.circuitBreakerUntil).toLocaleTimeString('zh-CN')}`);
       emailRateLimit.circuitBreakerLogged = true;
     }
+    safeRecordNotification({
+      channel: 'email',
+      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      body: errorMessage.substring(0, 500),
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
+      group: '系统错误',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: '熔断器已激活，邮件发送暂停'
+    });
     return;
   } else if (emailRateLimit.circuitBreakerActive && now >= emailRateLimit.circuitBreakerUntil) {
     // 熔断器解除
@@ -387,6 +414,16 @@ function sendErrorEmail(errorMessage, metadata = {}) {
       ]
     });
     bypassLogger.warn('[邮件通知] 已达到每小时最大邮件数限制，跳过发送');
+    safeRecordNotification({
+      channel: 'email',
+      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      body: errorMessage.substring(0, 500),
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
+      group: '系统错误',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: '已达到每小时最大邮件数限制'
+    });
     return;
   }
   
@@ -403,6 +440,16 @@ function sendErrorEmail(errorMessage, metadata = {}) {
       ]
     });
     bypassLogger.info('[邮件通知] 距离上次发送邮件时间过短，跳过发送');
+    safeRecordNotification({
+      channel: 'email',
+      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      body: errorMessage.substring(0, 500),
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
+      group: '系统错误',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: '发送间隔过短，已跳过'
+    });
     return;
   }
 
@@ -507,6 +554,17 @@ ${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata
         });
         warnLogger.warn(`[邮件通知] 发送失败 (${emailRateLimit.consecutiveFailures}/5): ${error.message}`);
       }
+      
+      safeRecordNotification({
+        channel: 'email',
+        title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+        body: errorMessage.substring(0, 500),
+        recipient: toEmail,
+        group: '系统错误',
+        level: 'critical',
+        status: 'failed',
+        errorMessage: error.message
+      });
     } else {
       // 发送成功，重置失败计数
       emailRateLimit.consecutiveFailures = 0;
@@ -525,6 +583,17 @@ ${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata
         ]
       });
       successLogger.info(`[邮件通知] 已发送错误告警邮件至 ${toEmail}, MessageID: ${info.messageId}, 本小时已发送: ${emailRateLimit.sentCount}/${emailRateLimit.maxEmailsPerHour}`);
+      
+      safeRecordNotification({
+        channel: 'email',
+        title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+        body: errorMessage.substring(0, 500),
+        recipient: toEmail,
+        group: '系统错误',
+        level: 'critical',
+        status: 'success',
+        metadata: { messageId: info.messageId }
+      });
     }
   });
 }

@@ -105,6 +105,18 @@ function initialize() {
  */
 async function sendNotification(options) {
   if (!barkConfig.enabled) {
+    const { title, body, group, level, sound } = options;
+    await recordNotificationHistory({
+      channel: 'bark',
+      title: title || '未知通知',
+      body: body || '',
+      recipient: '未启用',
+      group: group || null,
+      level: level || null,
+      sound: sound || null,
+      status: 'failed',
+      errorMessage: 'Bark通知功能未启用'
+    });
     return { success: false, error: 'Bark通知功能未启用' };
   }
   

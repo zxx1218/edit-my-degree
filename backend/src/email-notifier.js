@@ -43,6 +43,16 @@ async function sendSecurityAlert(params) {
   // 检查是否启用邮件通知
   if (process.env.ENABLE_ERROR_EMAIL_NOTIFICATION !== 'true') {
     console.info('[邮件通知] ℹ️ 邮件通知已禁用（ENABLE_ERROR_EMAIL_NOTIFICATION != true）');
+    await recordNotificationHistory({
+      channel: 'email',
+      title: subject,
+      body: message,
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
+      group: '安全告警',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: '邮件通知功能已禁用（ENABLE_ERROR_EMAIL_NOTIFICATION != true）'
+    });
     return false;
   }
   
@@ -50,6 +60,16 @@ async function sendSecurityAlert(params) {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.warn('[邮件通知] ⚠️ SMTP配置不完整，无法发送邮件');
     console.warn(`[邮件通知] 🔍 当前配置 - SMTP_USER: ${process.env.SMTP_USER ? '已设置' : '未设置'}, SMTP_PASS: ${process.env.SMTP_PASS ? '已设置' : '未设置'}`);
+    await recordNotificationHistory({
+      channel: 'email',
+      title: subject,
+      body: message,
+      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
+      group: '安全告警',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: 'SMTP配置不完整（缺少SMTP_USER或SMTP_PASS）'
+    });
     return false;
   }
   
