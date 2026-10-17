@@ -19,7 +19,7 @@ function getLoginRechargeNotification({ username, cardValues, remainingLogins, t
     subtitle: `充值时间: ${timestamp}`,
     group: '学位管理系统充值通知',
     level: 'active',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 
@@ -39,7 +39,7 @@ function getPdfRechargeNotification({ username, cardValues, remainingPdfLimit, t
     subtitle: `充值时间: ${timestamp}`,
     group: '学位管理系统充值通知',
     level: 'active',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 
@@ -84,7 +84,7 @@ function getRechargeNotification({
       subtitle: `充值时间: ${timestamp}`,
       group: '学位管理系统充值通知',
       level: 'active',
-      sound: 'minuet'
+      sound: 'paymentsuccess'
     };
   }
 }

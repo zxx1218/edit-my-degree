@@ -21,7 +21,7 @@ function getIpBlacklistBlockNotification({ ip, username, action, timestamp }) {
     subtitle: '安全告警',
     group: '安全告警',
     level: 'critical',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -41,7 +41,7 @@ function getUserBlacklistBlockNotification({ username, reason, blockedUntil, tim
     subtitle: '安全告警',
     group: '安全告警',
     level: 'critical',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -61,7 +61,7 @@ function getSuspiciousLoginNotification({ ip, username, attempts, timestamp }) {
     subtitle: '安全告警',
     group: '安全告警',
     level: 'active',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -81,7 +81,7 @@ function getFailedLoginNotification({ ip, username, failedAttempts, timestamp })
     subtitle: '安全告警',
     group: '安全告警',
     level: 'active',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -110,7 +110,7 @@ function getIpRateLimitBlockNotification({
     subtitle: '安全告警',
     group: '安全告警',
     level: 'critical',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -130,7 +130,7 @@ function getFrequentPasswordChangeNotification({ username, ip, attempts, timesta
     subtitle: '安全告警',
     group: '安全告警',
     level: 'critical',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -152,7 +152,7 @@ function getIpAutoBlockNotification({ ip, reason, source, blockDuration, blocked
     subtitle: '安全告警',
     group: '安全告警',
     level: 'critical',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 

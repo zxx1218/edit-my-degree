@@ -55,19 +55,21 @@ async function main() {
     await dbManager.initializePool();
     barkNotifier.initialize();
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // 查询前一天的数据（任务在 0 点运行，统计的是昨天的收入）
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+    const today = new Date(yesterday);
+    today.setDate(today.getDate() + 1);
 
-    const todayStr = today.toISOString().slice(0, 10);
+    const todayStr = yesterday.toISOString().slice(0, 10);
 
     const [rows] = await dbManager.execute(
       `SELECT type, \`values\`, COUNT(*) AS count
        FROM cards
        WHERE used = TRUE AND used_at >= ? AND used_at < ?
        GROUP BY type, \`values\``,
-      [today, tomorrow]
+      [yesterday, today]
     );
 
     let totalIncome = 0;

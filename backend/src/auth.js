@@ -199,9 +199,26 @@ function initialize(pool, jwtSecret) {
         [user.id, username, ipAddress, ipLocation, 'normal']
       );
       
+      // 检查用户是否也是管理员
+      let isAdmin = false;
+      try {
+        const [adminRows] = await dbManager.execute(
+          'SELECT id FROM admins WHERE username = ?',
+          [username]
+        );
+        isAdmin = adminRows.length > 0;
+      } catch (err) {
+        console.warn('[认证] 检查管理员身份失败:', err.message);
+      }
+      
       // 生成 JWT token
+      const tokenPayload = { id: user.id, username: user.username };
+      if (isAdmin) {
+        tokenPayload.isAdmin = true;
+      }
+      
       const token = jwt.sign(
-        { id: user.id, username: user.username },
+        tokenPayload,
         JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
       );

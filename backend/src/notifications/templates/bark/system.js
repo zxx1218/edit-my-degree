@@ -19,7 +19,7 @@ function getStartupNotification({ hostname, port, env, startTime }) {
     subtitle: '系统消息',
     group: '系统消息',
     level: 'active',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 
@@ -40,7 +40,7 @@ function getShutdownNotification({ hostname, shutdownTime, reason }) {
     subtitle: '系统消息',
     group: '系统消息',
     level: 'passive',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 
@@ -59,7 +59,7 @@ function getDatabaseErrorNotification({ hostname, error, timestamp }) {
     subtitle: '系统告警',
     group: '系统消息',
     level: 'critical',
-    sound: 'alarm'
+    sound: 'bell'
   };
 }
 
@@ -85,7 +85,7 @@ function getDailyIncomeReport({ date, totalCards, totalIncome, breakdown }) {
     subtitle: `今日总收入: ¥${totalIncome}`,
     group: '系统消息',
     level: 'active',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 

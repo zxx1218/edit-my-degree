@@ -78,28 +78,10 @@ const Index = () => {
       setCurrentUserId(currentUser.id);
       const data = await getUserData(currentUser.id);
 
-      if (data.studentStatus.length === 0) {
-        try {
-          const defaultData = {
-            name: "浆果儿",
-            school: "清华大学",
-            major: "经济与金融",
-            study_type: "全日制",
-            degree_level: "本科",
-          };
-          const result = await updateData("student_status", "insert", currentUser.id, defaultData);
-          if (result.success && result.data) {
-            data.studentStatus = result.data;
-          }
-        } catch {
-          // 忽略创建默认学籍的错误
-        }
-      }
-
       return data;
     },
     enabled: !!currentUser,
-    staleTime: 30000,
+    staleTime: 5000,
   });
 
   useEffect(() => {
@@ -420,18 +402,32 @@ const Index = () => {
             }}
           />
           <div className="px-4 space-y-3">
-            {studentStatus.map((record) => (
-              <EducationCard
-                key={record.id}
-                school={record.school}
-                major={record.major}
-                studyType={record.studyType}
-                degreeLevel={record.degreeLevel}
-                variant="student-status"
-                onEdit={() => handleLongPress(record)}
-                onClick={() => handleCardClick(record)}
+            {studentStatus.length > 0 ? (
+              studentStatus.map((record) => (
+                <EducationCard
+                  key={record.id}
+                  school={record.school}
+                  major={record.major}
+                  studyType={record.studyType}
+                  degreeLevel={record.degreeLevel}
+                  variant="student-status"
+                  onEdit={() => handleLongPress(record)}
+                  onClick={() => handleCardClick(record)}
+                />
+              ))
+            ) : (
+              <EmptyStateCard 
+                variant="student-status" 
+                onEdit={() => handleLongPress({ 
+                  id: 'temp', 
+                  school: '', 
+                  major: '', 
+                  studyType: '', 
+                  degreeLevel: '', 
+                  type: 'student-status' 
+                })}
               />
-            ))}
+            )}
           </div>
         </section>
 
@@ -574,10 +570,7 @@ const Index = () => {
             onDelete={handleDelete}
             recordType={selectedRecord.type}
             showEdit={selectedRecord.id !== 'temp'}
-            showDelete={
-              selectedRecord.id !== 'temp' && 
-              !(selectedRecord.type === 'student-status' && studentStatus.length === 1)
-            }
+            showDelete={selectedRecord.id !== 'temp'}
           />
           <EditEducationDialog
             key={selectedRecord.id}

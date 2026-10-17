@@ -18,7 +18,7 @@ function getNewUserRegistrationNotification({ username, ip, timestamp }) {
     subtitle: '用户通知',
     group: '用户通知',
     level: 'passive',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 
@@ -40,7 +40,7 @@ function getNewMessageNotification({ username, content, ip, timestamp }) {
     subtitle: '用户通知',
     group: '用户通知',
     level: 'passive',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 
@@ -59,7 +59,7 @@ function getPasswordChangeNotification({ username, ip, timestamp }) {
     subtitle: '用户通知',
     group: '用户通知',
     level: 'active',
-    sound: 'minuet'
+    sound: 'paymentsuccess'
   };
 }
 

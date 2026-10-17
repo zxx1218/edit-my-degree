@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Users, MessageSquare, Reply, Trash2, ChevronLeft, ChevronRight, Loader2, Send, Pin } from "lucide-react";
 import { toast } from "sonner";
 import * as adminApi from "@/lib/adminApi";
-import { getMessages, replyMessage, deleteMessage, setPriority, type Message } from "@/lib/api";
+import { type Message } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -51,7 +51,7 @@ const MessageList = ({ token }: MessageListProps) => {
     
     setIsLoading(true);
     try {
-      const response = await getMessages(page, MESSAGES_PER_PAGE);
+      const response = await adminApi.adminGetMessages(token, page, MESSAGES_PER_PAGE);
       if (response.success) {
         setMessages(response.messages);
         setCurrentPage(response.page);
@@ -88,7 +88,7 @@ const MessageList = ({ token }: MessageListProps) => {
 
     setIsReplying(true);
     try {
-      const response = await replyMessage(selectedMessage.id, replyContent);
+      const response = await adminApi.adminReplyMessage(token!, selectedMessage.id, replyContent);
       if (response.success) {
         toast.success("回复成功");
         setReplyDialogOpen(false);
@@ -113,7 +113,7 @@ const MessageList = ({ token }: MessageListProps) => {
     }
 
     try {
-      const response = await deleteMessage(messageId);
+      const response = await adminApi.adminDeleteMessage(token!, messageId);
       if (response.success) {
         toast.success("删除成功");
         // 刷新当前页的留言
@@ -147,7 +147,7 @@ const MessageList = ({ token }: MessageListProps) => {
 
     setIsSettingPriority(true);
     try {
-      const response = await setPriority(priorityMessage.id, priority);
+      const response = await adminApi.adminSetPriority(token!, priorityMessage.id, priority);
       if (response.success) {
         toast.success(priority === null ? "已清除优先级" : `优先级设置为 ${priority}`);
         setPriorityDialogOpen(false);

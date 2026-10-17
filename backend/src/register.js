@@ -133,11 +133,11 @@ function initialize(db) {
         [userId, username, password, 0, ipAddress]
       );
 
-      // 为新用户创建默认的学籍记录
+      // 为新用户创建默认的学籍记录（性别默认为男）
      const studentStatusId = uuidv4();
       await db.execute(
-        `INSERT INTO student_status (id, user_id, name, school, major, study_type, degree_level) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [studentStatusId, userId, '浆果儿', '清华大学', '汉语言文学', '普通全日制', '本科']
+        `INSERT INTO student_status (id, user_id, name, gender, school, major, study_type, degree_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [studentStatusId, userId, '浆果儿', '男', '清华大学', '汉语言文学', '普通全日制', '本科']
       );
 
       // 记录用户注册日志

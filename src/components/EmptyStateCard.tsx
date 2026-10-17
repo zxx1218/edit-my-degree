@@ -1,8 +1,8 @@
-import { HelpCircle, Edit2 } from "lucide-react";
+import { HelpCircle, Edit2, ChevronDown } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface EmptyStateCardProps {
-  variant: "education" | "degree" | "exam";
+  variant: "student-status" | "education" | "degree" | "exam";
   onEdit?: () => void;
   onClick?: () => void;
 }
@@ -29,14 +29,11 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // Cancel long press if user is scrolling
     if (touchStartPos.current && longPressTimer.current) {
       const touchX = e.touches[0].clientX;
       const touchY = e.touches[0].clientY;
       const deltaX = Math.abs(touchX - touchStartPos.current.x);
       const deltaY = Math.abs(touchY - touchStartPos.current.y);
-      
-      // If moved more than 10px, cancel long press
       if (deltaX > 10 || deltaY > 10) {
         clearTimeout(longPressTimer.current);
         longPressTimer.current = null;
@@ -48,22 +45,17 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
-    
-    // Check if this was a swipe/scroll gesture
     if (touchStartPos.current) {
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
       const deltaX = Math.abs(touchEndX - touchStartPos.current.x);
       const deltaY = Math.abs(touchEndY - touchStartPos.current.y);
-      
-      // If moved more than 10px, consider it a swipe/scroll
       if (deltaX > 10 || deltaY > 10) {
         touchStartPos.current = null;
         setTimeout(() => setShowEditIcon(false), 100);
         return;
       }
     }
-    
     if (!isLongPress.current && onClick) {
       onClick();
     }
@@ -90,22 +82,17 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
     }
-    
-    // Check if this was a drag gesture
     if (touchStartPos.current) {
       const mouseEndX = e.clientX;
       const mouseEndY = e.clientY;
       const deltaX = Math.abs(mouseEndX - touchStartPos.current.x);
       const deltaY = Math.abs(mouseEndY - touchStartPos.current.y);
-      
-      // If moved more than 10px, consider it a drag
       if (deltaX > 10 || deltaY > 10) {
         touchStartPos.current = null;
         setTimeout(() => setShowEditIcon(false), 100);
         return;
       }
     }
-    
     if (!isLongPress.current && onClick) {
       onClick();
     }
@@ -119,21 +106,13 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
     }
   };
 
-  const getVariantClasses = () => {
-    switch (variant) {
-      case "education":
-        return "bg-white border border-gray-200";
-      case "degree":
-        return "bg-white border border-gray-200";
-      case "exam":
-        return "bg-white border border-gray-200";
-      default:
-        return "bg-white border border-gray-200";
-    }
-  };
-
   const getContent = () => {
     switch (variant) {
+      case "student-status":
+        return {
+          title: "没有找到您的学籍信息",
+          action: "查看解决办法",
+        };
       case "education":
         return {
           title: "没有找到您的学历信息",
@@ -141,8 +120,8 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
         };
       case "degree":
         return {
-          title: "您还未绑定学位信息，可以使用\"尝试绑定学位\"功能绑定您的学位",
-          action: "查看解决办法",
+          title: `您还未绑定学位信息，可以使用"尝试绑定学位"功能绑定您的学位`,
+          action: "提示信息",
         };
       case "exam":
         return {
@@ -160,8 +139,8 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
   const content = getContent();
 
   return (
-    <div 
-      className={`${getVariantClasses()} rounded-sm p-6 shadow-sm cursor-pointer relative group`}
+    <div
+      className="bg-white rounded border border-gray-200 shadow-sm cursor-pointer relative group overflow-hidden"
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -175,25 +154,35 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
         setShowEditIcon(false);
       }}
     >
-      <div className="flex flex-col items-center justify-center text-center space-y-4">
-        <HelpCircle className="w-6 h-6 text-gray-400" />
-        <p className="text-base text-gray-700 leading-relaxed">
+      {/* 文字区域 */}
+      <div className="px-6 py-5 flex flex-col items-center justify-center text-center">
+        <p className="text-base text-gray-800 leading-relaxed flex items-center gap-1.5">
           {content.title}
+          <HelpCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
         </p>
         {content.subtitle && (
-          <p className="text-sm text-gray-500 leading-relaxed">
+          <p className="text-sm text-gray-400 leading-relaxed mt-2 px-4">
             {content.subtitle}
           </p>
         )}
-        {content.action && (
-          <button className="text-sm text-[#48C9B0] flex items-center gap-1 border-none outline-none">
-            {content.action} <span className="text-lg">▾</span>
-          </button>
-        )}
       </div>
+
+      {/* 分割线 + 操作链接 */}
+      {content.action && (
+        <>
+          <div className="border-t border-gray-200" />
+          <div className="py-3 flex items-center justify-center">
+            <button className="text-[#48C9B0] text-sm flex items-center gap-1 border-none outline-none bg-transparent">
+              {content.action}
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </>
+      )}
+
       {showEditIcon && (
-        <div className="absolute top-6 right-6 transition-opacity">
-          <Edit2 className="w-4 h-4 text-gray-400" />
+        <div className="absolute top-3 right-3 transition-opacity">
+          <Edit2 className="w-3.5 h-3.5 text-gray-400" />
         </div>
       )}
     </div>

@@ -81,7 +81,7 @@ const UserList = ({
   onUpdateTags,
 }: UserListProps) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [userViewMode, setUserViewMode] = useState<"all" | "special" | "password-stats">("all");
+  const [userViewMode, setUserViewMode] = useState<"all" | "special" | "female" | "password-stats">("all");
   const [specialUsers, setSpecialUsers] = useState<User[]>([]);
   const [isLoadingSpecial, setIsLoadingSpecial] = useState(false);
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
@@ -245,8 +245,19 @@ const UserList = ({
     );
   }, [specialUsers, searchQuery]);
 
+  // 女性用户过滤
+  const femaleUsers = useMemo(() => {
+    return users.filter((user) => user.gender === '女');
+  }, [users]);
+
+  const filteredFemaleUsers = useMemo(() => {
+    if (!searchQuery.trim()) return femaleUsers;
+    return femaleUsers.filter((user) => user.username.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [femaleUsers, searchQuery]);
+
   const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
   const totalSpecialPages = Math.ceil(filteredSpecialUsers.length / USERS_PER_PAGE);
+  const totalFemalePages = Math.ceil(filteredFemaleUsers.length / USERS_PER_PAGE);
 
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
@@ -257,6 +268,11 @@ const UserList = ({
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     return filteredSpecialUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
   }, [filteredSpecialUsers, currentPage]);
+
+  const paginatedFemaleUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    return filteredFemaleUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
+  }, [filteredFemaleUsers, currentPage]);
 
   // 当搜索条件变化时,重置到第一页
   useMemo(() => {
@@ -479,9 +495,11 @@ const UserList = ({
               <CardDescription>
                 {userViewMode === "all" ? (
                   <>共 {users.length} 个用户 {searchQuery && `· 搜索结果 ${filteredUsers.length} 个`}</>
-                ) : (
+                ) : userViewMode === "special" ? (
                   <>特别关注 {specialUsers.length} 个用户 {searchQuery && `· 搜索结果 ${filteredSpecialUsers.length} 个`}</>
-                )}
+                ) : userViewMode === "female" ? (
+                  <>女性用户 {femaleUsers.length} 个 {searchQuery && `· 搜索结果 ${filteredFemaleUsers.length} 个`}</>
+                ) : null}
               </CardDescription>
             </div>
           </div>
@@ -495,9 +513,9 @@ const UserList = ({
           </Button>
         </div>
 
-        {/* Tab导航 - 全部用户 / 特别关注 / 密码统计 */}
-        <Tabs value={userViewMode} onValueChange={(value) => setUserViewMode(value as "all" | "special" | "password-stats")} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-12">
+        {/* Tab导航 - 全部用户 / 特别关注 / 女性用户 / 密码统计 */}
+        <Tabs value={userViewMode} onValueChange={(value) => setUserViewMode(value as "all" | "special" | "female" | "password-stats")} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 h-12">
             <TabsTrigger value="all" className="text-base">
               <List className="mr-2 h-4 w-4" />
               全部用户
@@ -505,6 +523,10 @@ const UserList = ({
             <TabsTrigger value="special" className="text-base">
               <Star className="mr-2 h-4 w-4" />
               特别关注
+            </TabsTrigger>
+            <TabsTrigger value="female" className="text-base">
+              <Heart className="mr-2 h-4 w-4" />
+              女性用户
             </TabsTrigger>
             <TabsTrigger value="password-stats" className="text-base">
               <Shield className="mr-2 h-4 w-4" />
@@ -933,6 +955,201 @@ const UserList = ({
             ) : (
               <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
                 {searchQuery ? "未找到匹配的用户" : "暂无特别关注用户"}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 女性用户视图 */}
+        {userViewMode === "female" && (
+          <>
+            {isFetchingUsers ? (
+              <div className="border-2 rounded-lg p-8 bg-muted/50 animate-pulse">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">正在加载用户列表...</p>
+                </div>
+              </div>
+            ) : paginatedFemaleUsers.length > 0 ? (
+              <>
+                <div className="border-2 rounded-lg p-3 max-h-80 overflow-auto bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/20 dark:to-rose-950/20">
+                  <div className="space-y-2">
+                    {paginatedFemaleUsers.map((user, index) => (
+                      <div
+                        key={user.id}
+                        className="flex flex-col p-3 sm:p-4 bg-gradient-to-r from-background to-pink-50/50 dark:to-pink-950/10 rounded-lg hover:shadow-lg transition-all border-2 border-pink-200/50 dark:border-pink-800/50 hover:border-pink-400/50 animate-scale-in gap-3"
+                        style={{ animationDelay: `${index * 30}ms` }}
+                      >
+                        {/* 用户基本信息 */}
+                        <div className="w-full">
+                          <div className="flex items-center gap-2 mb-1.5 group">
+                            <span className="font-bold text-base sm:text-lg truncate cursor-pointer hover:text-primary transition-colors" onClick={() => copyToClipboard(user.username, `username-${user.id}`)} title="点击复制用户名">
+                              {user.username}
+                            </span>
+                            <Badge className="bg-pink-500 text-white border-0 flex items-center gap-1 px-1.5 py-0 h-5 text-[10px]">
+                              <Heart className="h-3 w-3" />
+                              女生
+                            </Badge>
+                            {user.tags && user.tags.length > 0 && (
+                              <div className="flex gap-1 flex-wrap">
+                                {user.tags.map((tag, idx) => (
+                                  <Badge key={idx} className={`${getTagColor(tag)} border-0 px-1.5 py-0 h-5 text-[10px]`}>
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => copyToClipboard(user.username, `username-${user.id}`)}
+                              title="复制用户名"
+                            >
+                              {copiedField === `username-${user.id}` ? (
+                                <Check className="h-3.5 w-3.5 text-green-500" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                            <span className="text-muted-foreground font-mono flex items-center gap-1.5 group/password cursor-pointer hover:text-foreground transition-colors" onClick={() => copyToClipboard(user.password, `password-${user.id}`)} title="点击复制密码">
+                              <span className="font-medium">密码:</span> 
+                              <span>{user.password}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 opacity-0 group-hover/password:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(user.password, `password-${user.id}`);
+                                }}
+                                title="复制密码"
+                              >
+                                {copiedField === `password-${user.id}` ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </span>
+                            {user.created_at && (
+                              <span className="text-muted-foreground">
+                                <span className="font-medium">注册时间:</span> {format(new Date(user.created_at), 'yyyy-MM-dd HH:mm:ss')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 统计信息徽章 */}
+                        <div className="flex gap-2 w-full">
+                          <Badge variant="default" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                            <LogIn className="h-3 w-3" />
+                            <span className="font-medium">登录: {user.remaining_logins}</span>
+                          </Badge>
+                          <Badge variant="secondary" className="flex items-center gap-1.5 px-2.5 py-1 text-xs">
+                            <CreditCard className="h-3 w-3" />
+                            <span className="font-medium">PDF: {user.pdf_limit}</span>
+                          </Badge>
+                        </div>
+
+                        {/* 操作按钮 */}
+                        <div className="grid grid-cols-2 sm:flex sm:gap-2 w-full gap-2">
+                          {onImpersonateLogin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImpersonateLogin(user)}
+                              className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                              title="直接登录（不消耗积分）"
+                            >
+                              <LogOut className="h-4 w-4 mr-1.5 shrink-0" />
+                              <span className="truncate">登录</span>
+                            </Button>
+                          )}
+                          {onUpdateTags && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenTagDialog(user)}
+                              className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                              title="管理标签"
+                            >
+                              <Tag className="h-4 w-4 mr-1.5 shrink-0" />
+                              <span className="truncate">标签</span>
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPointsDialog(user)}
+                            className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="管理积分"
+                          >
+                            <Coins className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">积分</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenChangePassword(user)}
+                            className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="修改密码"
+                          >
+                            <KeyRound className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">改密</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDeleteDialog(user)}
+                            className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-9 px-2 text-xs justify-center sm:flex-1"
+                            title="删除用户"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1.5 shrink-0" />
+                            <span className="truncate">删除</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 分页控件 */}
+                {totalFemalePages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t flex-wrap gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      第 {currentPage} / {totalFemalePages} 页
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="text-xs sm:text-sm h-9"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        上一页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalFemalePages, p + 1))}
+                        disabled={currentPage === totalFemalePages}
+                        className="text-xs sm:text-sm h-9"
+                      >
+                        下一页
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground border-2 rounded-lg">
+                {searchQuery ? "未找到匹配的女性用户" : "暂无女性用户"}
               </div>
             )}
           </>

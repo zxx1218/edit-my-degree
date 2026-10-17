@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, HelpCircle } from "lucide-react";
 
 interface StudentStatusRecord {
   id: string;
@@ -61,7 +61,7 @@ const StudentStatusCard = ({ record }: StudentStatusCardProps) => {
             <p className="text-center text-xs text-gray-600">录取照片</p>
           </div>
           <div>
-            <div className="w-full aspect-[3/4] bg-gray-50 border border-gray-200 flex items-center justify-center mb-2 overflow-hidden">
+            <div className="w-full aspect-[3/4] bg-gray-50 border border-gray-200 flex items-center justify-center mb-2 overflow-hidden relative">
               {record.degree_photo ? (
                 <img 
                   src={record.degree_photo} 
@@ -69,8 +69,15 @@ const StudentStatusCard = ({ record }: StudentStatusCardProps) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-gray-400 text-xs">照片</span>
+                <img 
+                  src="/default-avatar.jpeg" 
+                  alt="默认学历照片" 
+                  className="w-full h-full object-cover"
+                />
               )}
+              <div className="absolute top-1 right-1">
+                <HelpCircle className="w-4 h-4 text-red-500" />
+              </div>
             </div>
             <p className="text-center text-xs text-gray-600">学历照片</p>
           </div>

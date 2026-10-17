@@ -743,3 +743,67 @@ export const getBarkHistory = async (token: string, params: {
   return await response.json();
 };
 
+
+// 管理员获取留言列表
+export const adminGetMessages = async (token: string, page: number = 1, pageSize: number = 10) => {
+  const url = '/api/get-messages';
+  const options = createSignedRequestOptions('POST', url, { page, pageSize });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 管理员回复留言
+export const adminReplyMessage = async (token: string, messageId: string, replyContent: string) => {
+  const url = '/api/get-messages';
+  const options = createSignedRequestOptions('POST', url, { action: 'replyMessage', messageId, replyContent });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 管理员删除留言
+export const adminDeleteMessage = async (token: string, messageId: string) => {
+  const url = '/api/get-messages';
+  const options = createSignedRequestOptions('POST', url, { action: 'deleteMessage', messageId });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
+// 管理员设置留言优先级
+export const adminSetPriority = async (token: string, messageId: string, priority: number | null) => {
+  const url = '/api/get-messages';
+  const options = createSignedRequestOptions('POST', url, { action: 'setPriority', messageId, priority });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/get-messages`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
