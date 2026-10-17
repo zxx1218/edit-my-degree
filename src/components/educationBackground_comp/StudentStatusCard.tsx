@@ -69,11 +69,7 @@ const StudentStatusCard = ({ record }: StudentStatusCardProps) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <img 
-                  src="/default-avatar.jpeg" 
-                  alt="默认学历照片" 
-                  className="w-full h-full object-cover"
-                />
+                <span className="text-gray-400 text-xs">照片</span>
               )}
               <div className="absolute top-1 right-1">
                 <HelpCircle className="w-4 h-4 text-red-500" />
