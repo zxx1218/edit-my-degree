@@ -140,7 +140,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
 
   return (
     <div
-      className="bg-white rounded border border-gray-200 shadow-sm cursor-pointer relative group overflow-hidden"
+      className="bg-background rounded border border-gray-200 shadow-md cursor-pointer relative group overflow-hidden"
       onClick={handleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -155,7 +155,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
       }}
     >
       {/* 文字区域 */}
-      <div className="px-6 py-5 flex flex-col items-center justify-center text-center">
+      <div className={`px-6 flex flex-col items-center justify-center text-center ${variant === "exam" ? "py-4" : "py-5"}`}>
         <p className="text-xl text-gray-800 leading-relaxed flex items-center gap-1.5">
           {content.title}
           {variant !== "exam" && <HelpCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />}
@@ -172,7 +172,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
         <>
           <div className="border-t border-gray-200" />
           <div className="py-3 flex items-center justify-center">
-            <button className="text-[#22b885] text-sl flex items-center gap-1 border-none outline-none bg-transparent">
+            <button className="text-[#31b385] text-sl flex items-center gap-1 border-none outline-none bg-transparent">
               {content.action}
               <ChevronDown className="w-3.5 h-3.5" />
             </button>

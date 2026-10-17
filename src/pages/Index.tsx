@@ -8,6 +8,7 @@ import EmptyStateCard from "@/components/EmptyStateCard";
 import EditEducationDialog from "@/components/EditEducationDialog";
 import ActionMenuDialog from "@/components/ActionMenuDialog";
 import AddRecordDialog from "@/components/AddRecordDialog";
+import AddExamDialog from "@/components/AddExamDialog";
 import { toast } from "sonner";
 import { getUserData, updateData } from "@/lib/api";
 import { 
@@ -40,6 +41,7 @@ const Index = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isExamAddDialogOpen, setIsExamAddDialogOpen] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [bannerImage, setBannerImage] = useState<string>("/certification-banner.png");
@@ -95,6 +97,24 @@ const Index = () => {
   const handleLongPress = (record: EducationRecord) => {
     setSelectedRecord(record);
     setIsActionMenuOpen(true);
+  };
+
+  const handleEmptyCardLongPress = (type: "student-status" | "education" | "degree" | "exam") => {
+    const tempRecord: EducationRecord = {
+      id: 'temp',
+      school: '',
+      major: '',
+      studyType: '',
+      degreeLevel: '',
+      type: type
+    };
+    setSelectedRecord(tempRecord);
+    
+    if (type === "exam") {
+      setIsExamAddDialogOpen(true);
+    } else {
+      setIsAddDialogOpen(true);
+    }
   };
 
   const handleEdit = () => {
@@ -349,6 +369,26 @@ const Index = () => {
     }
   };
 
+  const handleAddExam = async (data: { school: string; year: string }) => {
+    try {
+      const newData = {
+        name: "浆果儿",
+        school: data.school,
+        year: data.year,
+        note: "系统提供2006年以来入学的硕士研究生报名和成绩数据。",
+      };
+
+      const result = await updateData("exam", "insert", currentUserId, newData);
+      
+      if (result.success && result.data) {
+        setExamRecords(prev => [...prev, { ...result.data, type: "exam" }]);
+        toast.success("考研信息已添加", { duration: 1500 });
+      }
+    } catch (error) {
+      toast.error("添加失败", { duration: 1500 });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -418,14 +458,7 @@ const Index = () => {
             ) : (
               <EmptyStateCard 
                 variant="student-status" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'student-status' 
-                })}
+                onEdit={() => handleEmptyCardLongPress("student-status")}
               />
             )}
           </div>
@@ -466,14 +499,7 @@ const Index = () => {
             ) : (
               <EmptyStateCard 
                 variant="education" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'education' 
-                })}
+                onEdit={() => handleEmptyCardLongPress("education")}
               />
             )}
           </div>
@@ -514,14 +540,7 @@ const Index = () => {
             ) : (
               <EmptyStateCard 
                 variant="degree" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'degree' 
-                })}
+                onEdit={() => handleEmptyCardLongPress("degree")}
               />
             )}
           </div>
@@ -546,14 +565,7 @@ const Index = () => {
             ) : (
               <EmptyStateCard 
                 variant="exam" 
-                onEdit={() => handleLongPress({ 
-                  id: 'temp', 
-                  school: '', 
-                  major: '', 
-                  studyType: '', 
-                  degreeLevel: '', 
-                  type: 'exam' 
-                })}
+                onEdit={() => handleEmptyCardLongPress("exam")}
               />
             )}
           </div>
@@ -587,6 +599,11 @@ const Index = () => {
               recordType={selectedRecord.type as "student-status" | "education" | "degree"}
             />
           )}
+          <AddExamDialog
+            open={isExamAddDialogOpen}
+            onOpenChange={setIsExamAddDialogOpen}
+            onConfirm={handleAddExam}
+          />
         </>
       )}
     </div>
