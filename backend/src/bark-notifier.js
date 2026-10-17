@@ -61,7 +61,7 @@ function initialize() {
     barkConfig.deviceKeys = parseDeviceKeys(deviceKeyConfig);
     
     barkConfig.level = process.env.BARK_LEVEL || 'active';
-    barkConfig.sound = process.env.BARK_SOUND || 'minuet';
+    barkConfig.sound = process.env.BARK_SOUND || 'paymentsuccess';
     barkConfig.group = process.env.BARK_GROUP || '学位管理系统充值通知';
     barkConfig.icon = process.env.BARK_ICON || '';
     barkConfig.url = process.env.BARK_URL || '';
