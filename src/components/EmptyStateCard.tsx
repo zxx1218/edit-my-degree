@@ -156,12 +156,12 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
     >
       {/* 文字区域 */}
       <div className="px-6 py-5 flex flex-col items-center justify-center text-center">
-        <p className="text-base text-gray-800 leading-relaxed flex items-center gap-1.5">
+        <p className="text-xl text-gray-800 leading-relaxed flex items-center gap-1.5">
           {content.title}
-          <HelpCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          {variant !== "exam" && <HelpCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />}
         </p>
         {content.subtitle && (
-          <p className="text-sm text-gray-400 leading-relaxed mt-2 px-4">
+          <p className="text-sl text-gray-400 leading-relaxed mt-2 px-4">
             {content.subtitle}
           </p>
         )}
@@ -172,7 +172,7 @@ const EmptyStateCard = ({ variant, onEdit, onClick }: EmptyStateCardProps) => {
         <>
           <div className="border-t border-gray-200" />
           <div className="py-3 flex items-center justify-center">
-            <button className="text-[#48C9B0] text-sm flex items-center gap-1 border-none outline-none bg-transparent">
+            <button className="text-[#22b885] text-sl flex items-center gap-1 border-none outline-none bg-transparent">
               {content.action}
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
