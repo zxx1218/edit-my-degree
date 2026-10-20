@@ -67,13 +67,13 @@ function isGraduateStudent(degreeLevel) {
 }
 
 /**
- * 检查用户是否存在考研信息
+ * 检查用户是否存在指定学校的考研信息
  */
-async function checkExamRecord(db, userId) {
+async function checkExamRecord(db, userId, schoolName) {
   try {
     const [records] = await db.execute(
-      'SELECT id FROM exam WHERE user_id = ? LIMIT 1',
-      [userId]
+      'SELECT id FROM exam WHERE user_id = ? AND school = ? LIMIT 1',
+      [userId, schoolName]
     );
     return records.length > 0 ? records[0] : null;
   } catch (err) {
@@ -263,6 +263,98 @@ async function checkDegreeRecord(db, userId, school, major, degreeType) {
 }
 
 /**
+ * 根据专业名称和学位层次生成学位名称
+ */
+function getDegreeNameByMajor(major, degreeType) {
+  if (!major) {
+    return '请长按卡片编辑学位名称';
+  }
+
+  const majorLower = major.toLowerCase();
+  
+  // 工学类
+  const engineeringMajors = ['计算机', '软件', '机械', '电子', '通信', '土木', '建筑', '电气', '自动化', '材料', '化工', '环境', '生物工程'];
+  if (engineeringMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '工学硕士学位' : degreeType === '博士' ? '工学博士学位' : '工学学士学位';
+  }
+  
+  // 理学类
+  const scienceMajors = ['数学', '物理', '化学', '生物', '统计', '天文', '地理', '大气', '海洋'];
+  if (scienceMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '理学硕士学位' : degreeType === '博士' ? '理学博士学位' : '理学学士学位';
+  }
+  
+  // 管理学类
+  const managementMajors = ['工商管理', '管理', '会计', '财务', '市场营销', '人力资源', '物流', '电子商务', '旅游管理', '行政管理'];
+  if (managementMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '管理学硕士学位' : degreeType === '博士' ? '管理学博士学位' : '管理学学士学位';
+  }
+  
+  // 经济学类
+  const economicsMajors = ['经济', '金融', '贸易', '财政', '税收', '保险', '投资'];
+  if (economicsMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '经济学硕士学位' : degreeType === '博士' ? '经济学博士学位' : '经济学学士学位';
+  }
+  
+  // 文学类
+  const literatureMajors = ['中文', '汉语', '英语', '日语', '俄语', '德语', '法语', '外语', '新闻', '传播', '广告'];
+  if (literatureMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '文学硕士学位' : degreeType === '博士' ? '文学博士学位' : '文学学士学位';
+  }
+  
+  // 法学类
+  const lawMajors = ['法学', '法律', '政治', '社会学', '民族', '公安'];
+  if (lawMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '法学硕士学位' : degreeType === '博士' ? '法学博士学位' : '法学学士学位';
+  }
+  
+  // 教育学类
+  const educationMajors = ['教育', '心理', '学前', '小学', '特殊教育'];
+  if (educationMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '教育学硕士学位' : degreeType === '博士' ? '教育学博士学位' : '教育学学士学位';
+  }
+  
+  // 医学类
+  const medicalMajors = ['医学', '临床', '口腔', '中医', '药学', '护理', '公共卫生', '预防医学'];
+  if (medicalMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '医学硕士学位' : degreeType === '博士' ? '医学博士学位' : '医学学士学位';
+  }
+  
+  // 农学类
+  const agricultureMajors = ['农学', '农业', '园艺', '植物', '动物', '畜牧', '兽医', '林学'];
+  if (agricultureMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '农学硕士学位' : degreeType === '博士' ? '农学博士学位' : '农学学士学位';
+  }
+  
+  // 历史学类
+  const historyMajors = ['历史', '考古', '文物', '博物馆'];
+  if (historyMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '历史学硕士学位' : degreeType === '博士' ? '历史学博士学位' : '历史学学士学位';
+  }
+  
+  // 哲学类
+  const philosophyMajors = ['哲学', '逻辑', '伦理', '美学'];
+  if (philosophyMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '哲学硕士学位' : degreeType === '博士' ? '哲学博士学位' : '哲学学士学位';
+  }
+  
+  // 艺术学类
+  const artMajors = ['艺术', '美术', '设计', '音乐', '舞蹈', '戏剧', '电影', '动画'];
+  if (artMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '艺术学硕士学位' : degreeType === '博士' ? '艺术学博士学位' : '艺术学学士学位';
+  }
+  
+  // 军事学类
+  const militaryMajors = ['军事', '国防', '指挥'];
+  if (militaryMajors.some(m => majorLower.includes(m))) {
+    return degreeType === '硕士' ? '军事学硕士学位' : degreeType === '博士' ? '军事学博士学位' : '军事学学士学位';
+  }
+  
+  // 如果无法匹配，返回默认提示
+  return '请长按卡片编辑学位名称';
+}
+
+/**
  * 创建学位信息
  */
 async function createDegreeRecord(db, userId, statusData, degreeLevel) {
@@ -277,6 +369,9 @@ async function createDegreeRecord(db, userId, statusData, degreeLevel) {
       degreeType = '博士';
     }
 
+    // 根据专业名称生成学位名称
+    const degreeName = getDegreeNameByMajor(statusData.major, degreeType);
+
     const insertData = {
       id: degreeId,
       user_id: userId,
@@ -284,7 +379,7 @@ async function createDegreeRecord(db, userId, statusData, degreeLevel) {
       gender: statusData.gender || '',
       birth_date: statusData.birth_date || '',
       school: statusData.school || '',
-      major: statusData.major || '',
+      major: degreeName,
       degree_type: degreeType,
       degree_level: degreeLevel,
       degree_date: statusData.graduation_date || '',
@@ -301,7 +396,7 @@ async function createDegreeRecord(db, userId, statusData, degreeLevel) {
       values
     );
 
-    console.log(`[数据操作] 已创建${degreeLevel}学位信息，ID: ${degreeId}`);
+    console.log(`[数据操作] 已创建${degreeLevel}学位信息，ID: ${degreeId}，学位名称: ${degreeName}`);
     return degreeId;
   } catch (err) {
     console.error(`[数据操作] 创建${degreeLevel}学位失败:`, err.message);
@@ -323,18 +418,18 @@ async function handleGraduateStudentInsert(db, userId, insertedData) {
 
     console.log(`[数据操作] 检测到研究生学籍添加（${degreeLevel}），开始执行被动触发逻辑...`);
 
-    // 1. 检查是否存在考研信息，如果没有则创建
-    const examRecord = await checkExamRecord(db, userId);
-    if (!examRecord) {
-      console.log('[数据操作] 未找到考研信息，开始创建...');
-      await createExamRecord(db, userId, insertedData.school);
-    } else {
-      console.log('[数据操作] 已存在考研信息，跳过创建');
-    }
-
-    // 2. 根据研究生类型处理对应的本科学籍或本科+硕士学籍
+    // 根据研究生类型处理
     if (degreeLevel === '硕士研究生') {
-      // 硕士研究生：检查并处理本科学籍
+      // 硕士研究生：检查并创建考研信息，处理本科学籍
+      const examRecord = await checkExamRecord(db, userId, insertedData.school);
+      if (!examRecord) {
+        console.log('[数据操作] 未找到考研信息，开始创建...');
+        await createExamRecord(db, userId, insertedData.school);
+      } else {
+        console.log('[数据操作] 已存在考研信息，跳过创建');
+      }
+
+      // 检查并处理本科学籍
       const undergraduateStatuses = await checkStatusByLevel(db, userId, '本科');
       
       if (undergraduateStatuses.length === 0) {
@@ -365,11 +460,12 @@ async function handleGraduateStudentInsert(db, userId, insertedData) {
         }
 
         // 检查是否存在本科学位信息
+        const undergraduateDegreeName = getDegreeNameByMajor(undergradStatus.major, '学士');
         const undergraduateDegree = await checkDegreeRecord(
           db,
           userId,
           undergradStatus.school,
-          undergradStatus.major,
+          undergraduateDegreeName,
           '学士'
         );
 
@@ -381,53 +477,8 @@ async function handleGraduateStudentInsert(db, userId, insertedData) {
         }
       }
     } else if (degreeLevel === '博士研究生') {
-      // 博士研究生：检查并处理本科和硕士学籍
-      const undergraduateStatuses = await checkStatusByLevel(db, userId, '本科');
+      // 博士研究生：只处理硕士学籍（不创建考研信息，不处理本科学籍）
       const masterStatuses = await checkStatusByLevel(db, userId, '硕士研究生');
-
-      // 处理本科学籍
-      if (undergraduateStatuses.length > 0) {
-        console.log(`[数据操作] 找到 ${undergraduateStatuses.length} 条本科学籍，开始处理...`);
-
-        for (const undergradStatus of undergraduateStatuses) {
-          // 更新本科学籍状态为"不在籍（毕业）"
-          await updateStatusToGraduated(db, userId, undergradStatus.id);
-
-          // 检查是否存在本科学历信息
-          const undergraduateEducation = await checkEducationRecord(
-            db, 
-            userId, 
-            undergradStatus.school, 
-            undergradStatus.major,
-            '本科'
-          );
-
-          if (!undergraduateEducation) {
-            console.log('[数据操作] 未找到本科学历信息，开始创建...');
-            await createEducationRecord(db, userId, undergradStatus, '本科');
-          } else {
-            console.log('[数据操作] 已存在本科学历信息，跳过创建');
-          }
-
-          // 检查是否存在本科学位信息
-          const undergraduateDegree = await checkDegreeRecord(
-            db,
-            userId,
-            undergradStatus.school,
-            undergradStatus.major,
-            '学士'
-          );
-
-          if (!undergraduateDegree) {
-            console.log('[数据操作] 未找到本科学位信息，开始创建...');
-            await createDegreeRecord(db, userId, undergradStatus, '本科');
-          } else {
-            console.log('[数据操作] 已存在本科学位信息，跳过创建');
-          }
-        }
-      } else {
-        console.log('[数据操作] 未找到本科学籍');
-      }
 
       // 处理硕士学籍
       if (masterStatuses.length > 0) {
@@ -454,11 +505,12 @@ async function handleGraduateStudentInsert(db, userId, insertedData) {
           }
 
           // 检查是否存在硕士学位信息
+          const masterDegreeName = getDegreeNameByMajor(masterStatus.major, '硕士');
           const masterDegree = await checkDegreeRecord(
             db,
             userId,
             masterStatus.school,
-            masterStatus.major,
+            masterDegreeName,
             '硕士'
           );
 
@@ -470,7 +522,7 @@ async function handleGraduateStudentInsert(db, userId, insertedData) {
           }
         }
       } else {
-        console.log('[数据操作] 未找到硕士学籍');
+        console.log('[数据操作] 未找到硕士学籍，跳过后续操作');
       }
     }
 

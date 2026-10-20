@@ -87,7 +87,8 @@ const AddRecordDialog = ({
       return;
     }
     if (!major.trim()) {
-      toast.error("请填写专业");
+      const majorLabel = recordType === "degree" ? "获取学位名" : "专业";
+      toast.error(`请填写${majorLabel}`);
       return;
     }
     if (!isDegree && !studyType.trim()) {
@@ -151,14 +152,16 @@ const AddRecordDialog = ({
             />
           </div>
 
-          {/* 专业 */}
+          {/* 专业/获取学位名 */}
           <div className="space-y-2">
-            <Label htmlFor="major">专业 <span className="text-destructive">*</span></Label>
+            <Label htmlFor="major">
+              {recordType === "degree" ? "获取学位名" : "专业"} <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="major"
               value={major}
               onChange={(e) => setMajor(e.target.value)}
-              placeholder="请输入专业名称"
+              placeholder={recordType === "degree" ? "请输入获取学位名称" : "请输入专业名称"}
             />
           </div>
 

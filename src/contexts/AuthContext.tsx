@@ -184,6 +184,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(SESSION_DURATION_KEY, duration.toString());
     setIsAuthenticated(true);
     
+    // 从 localStorage 加载 currentUser（登录时已保存）
+    try {
+      const userStr = localStorage.getItem("currentUser");
+      if (userStr) {
+        setCurrentUser(JSON.parse(userStr));
+      }
+    } catch {
+      // 忽略解析错误
+    }
+    
     // 设置会话过期定时器
     setupSessionTimer(loginTime, duration);
   };

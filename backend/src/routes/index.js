@@ -371,7 +371,12 @@ const signatureValidationMiddleware = async (req, res, next) => {
   // 获取请求体参数
   let params = {};
   if (req.body && typeof req.body === 'object') {
-    params = { ...req.body };
+    // 过滤掉 undefined 值，与前端签名生成逻辑保持一致
+    for (const key in req.body) {
+      if (req.body.hasOwnProperty(key) && req.body[key] !== undefined) {
+        params[key] = req.body[key];
+      }
+    }
   }
   
   // 获取密钥（在实际应用中应从安全的地方获取）

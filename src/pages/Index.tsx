@@ -124,9 +124,9 @@ const Index = () => {
   const handleAdd = () => {
     if (!selectedRecord) return;
     
-    // 考研信息不需要选择学历层次
+    // 考研信息不需要选择学历层次，直接打开添加弹窗
     if (selectedRecord.type === "exam") {
-      handleAddWithLevel({ level: "本科", school: "", major: "", studyType: "" }); // 考研默认使用本科
+      setIsExamAddDialogOpen(true);
     } else {
       setIsAddDialogOpen(true);
     }
@@ -381,7 +381,7 @@ const Index = () => {
       const result = await updateData("exam", "insert", currentUserId, newData);
       
       if (result.success && result.data) {
-        setExamRecords(prev => [...prev, { ...result.data, type: "exam" }]);
+        setExamRecords(prev => [...prev, { ...result.data[0], type: "exam" }]);
         toast.success("考研信息已添加", { duration: 1500 });
       }
     } catch (error) {
