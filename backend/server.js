@@ -8,6 +8,7 @@ const { initializeDatabaseConnection, createTables } = require('./src/database/i
 const { setupRoutes } = require('./src/routes');
 const dbManager = require('./src/db-utils');
 const { startCleanupTask } = require('./src/ip-blacklist');
+const notificationCooldown = require('./src/notification-cooldown');
 
 // 引入日志模块
 require('./src/logger');
@@ -78,6 +79,11 @@ async function initializeApp() {
     console.safe('[系统] 正在启动IP黑名单缓存清理任务...');
     startCleanupTask();
     console.safe('[系统] ✅ IP黑名单缓存清理任务已启动');
+    
+    // 启动通知冷却清理任务
+    console.safe('[系统] 正在启动通知冷却清理任务...');
+    notificationCooldown.startCleanupTask();
+    console.safe('[系统] ✅ 通知冷却清理任务已启动');
     
     // 设置路由
     console.safe('[系统] 正在配置路由...');

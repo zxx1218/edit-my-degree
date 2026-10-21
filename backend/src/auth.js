@@ -5,6 +5,7 @@ const dbManager = require('./db-utils');
 const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
 const { isUserBlacklisted } = require('./manage-ip-blacklist');
 const barkNotifier = require('./bark-notifier');
+const notificationCooldown = require('./notification-cooldown');
 const { 
   getIpBlacklistBlockNotification, 
   getUserBlacklistBlockNotification 
@@ -34,7 +35,7 @@ function initialize(pool, jwtSecret) {
       if (blacklisted) {
         logIpBlacklist(ipAddress, 'checked', '黑名单IP尝试登录', { userAgent });
         
-        // 发送黑名单IP登录告警Bark通知（不等待完成，避免阻塞响应）
+        // 使用通知冷却机制发送黑名单IP登录告警Bark通知
         const timestamp = new Date().toLocaleString('zh-CN');
         const notification = getIpBlacklistBlockNotification({
           ip: ipAddress,
@@ -43,15 +44,19 @@ function initialize(pool, jwtSecret) {
           timestamp
         });
         
-        // 使用setImmediate确保通知发送不会阻塞主响应
-        setImmediate(() => {
-          barkNotifier.sendNotification(notification)
-            .then(() => {
-              console.safe('[认证] 黑名单IP登录告警通知发送成功');
-            })
-            .catch(err => {
-              console.error('[认证] 发送黑名单IP登录告警Bark通知失败:', err.message);
-            });
+        setImmediate(async () => {
+          const result = await notificationCooldown.sendWithCooldown({
+            type: 'ip_blacklist_login',
+            identifier: ipAddress,
+            sendFn: (n) => barkNotifier.sendNotification(n),
+            notification,
+          });
+          
+          if (result.sent) {
+            console.safe('[认证] 黑名单IP登录告警通知发送成功');
+          } else if (result.reason === 'cooldown') {
+            console.safe(`[认证] 黑名单IP登录告警通知跳过（冷却中）: ${ipAddress}`);
+          }
         });
         
         return res.status(403).json({ 
@@ -95,7 +100,7 @@ function initialize(pool, jwtSecret) {
           blockedUntil: userBlacklisted.blocked_until
         });
         
-        // 发送黑名单用户登录告警Bark通知（不等待完成，避免阻塞响应）
+        // 使用通知冷却机制发送黑名单用户登录告警Bark通知
         const timestamp = new Date().toLocaleString('zh-CN');
         const notification = getUserBlacklistBlockNotification({
           username: username,
@@ -104,15 +109,19 @@ function initialize(pool, jwtSecret) {
           timestamp
         });
         
-        // 使用setImmediate确保通知发送不会阻塞主响应
-        setImmediate(() => {
-          barkNotifier.sendNotification(notification)
-            .then(() => {
-              console.safe('[认证] 黑名单用户登录告警通知发送成功');
-            })
-            .catch(err => {
-              console.error('[认证] 发送黑名单用户登录告警Bark通知失败:', err.message);
-            });
+        setImmediate(async () => {
+          const result = await notificationCooldown.sendWithCooldown({
+            type: 'user_blacklist_login',
+            identifier: username,
+            sendFn: (n) => barkNotifier.sendNotification(n),
+            notification,
+          });
+          
+          if (result.sent) {
+            console.safe('[认证] 黑名单用户登录告警通知发送成功');
+          } else if (result.reason === 'cooldown') {
+            console.safe(`[认证] 黑名单用户登录告警通知跳过（冷却中）: ${username}`);
+          }
         });
         
         return res.status(403).json({ 

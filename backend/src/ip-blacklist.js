@@ -1,6 +1,7 @@
 const dbManager = require('./db-utils');
 const { logIpBlacklist } = require('./operation-logger');
 const barkNotifier = require('./bark-notifier');
+const notificationCooldown = require('./notification-cooldown');
 const { getIpRateLimitBlockNotification, getIpAutoBlockNotification } = require('./notifications/templates');
 
 // IP请求记录缓存（内存中）
@@ -76,7 +77,7 @@ async function addToBlacklist(ipAddress, reason) {
       blockDurationMinutes: CONFIG.BLOCK_DURATION / 1000 / 60
     });
     
-    // 发送IP频率限制封禁Bark通知（不等待完成，避免阻塞）
+    // 使用通知冷却机制发送IP频率限制封禁Bark通知
     const timestamp = new Date().toLocaleString('zh-CN');
     const notification = getIpRateLimitBlockNotification({
       ip: ipAddress,
@@ -87,15 +88,19 @@ async function addToBlacklist(ipAddress, reason) {
       timestamp
     });
     
-    // 使用setImmediate确保通知发送不会阻塞主流程
-    setImmediate(() => {
-      barkNotifier.sendNotification(notification)
-        .then(() => {
-          console.safe('[安全防护] IP封禁告警通知发送成功');
-        })
-        .catch(err => {
-          console.error('[安全防护] 发送IP封禁告警Bark通知失败:', err.message);
-        });
+    setImmediate(async () => {
+      const result = await notificationCooldown.sendWithCooldown({
+        type: 'ip_rate_limit_block',
+        identifier: ipAddress,
+        sendFn: (n) => barkNotifier.sendNotification(n),
+        notification,
+      });
+      
+      if (result.sent) {
+        console.safe('[安全防护] IP封禁告警通知发送成功');
+      } else if (result.reason === 'cooldown') {
+        console.safe(`[安全防护] IP封禁告警通知跳过（冷却中）: ${ipAddress}`);
+      }
     });
   } catch (err) {
     console.safe('[安全防护] 添加IP到黑名单失败:', err.message, { ipAddress, reason });
@@ -143,7 +148,7 @@ async function autoBlockIp(ipAddress, reason, source = '未知模块') {
     
     console.safe(`[安全防护] IP自动封禁: ${ipAddress}, 原因: ${reason}, 来源: ${source}, 封禁${blockDurationMinutes}分钟`);
     
-    // 发送Bark通知
+    // 使用通知冷却机制发送Bark通知
     const timestamp = new Date().toLocaleString('zh-CN');
     const notification = getIpAutoBlockNotification({
       ip: ipAddress,
@@ -154,14 +159,19 @@ async function autoBlockIp(ipAddress, reason, source = '未知模块') {
       timestamp
     });
     
-    setImmediate(() => {
-      barkNotifier.sendNotification(notification)
-        .then(() => {
-          console.safe('[安全防护] IP自动封禁通知发送成功');
-        })
-        .catch(err => {
-          console.error('[安全防护] 发送IP自动封禁Bark通知失败:', err.message);
-        });
+    setImmediate(async () => {
+      const result = await notificationCooldown.sendWithCooldown({
+        type: 'ip_auto_block',
+        identifier: ipAddress,
+        sendFn: (n) => barkNotifier.sendNotification(n),
+        notification,
+      });
+      
+      if (result.sent) {
+        console.safe('[安全防护] IP自动封禁通知发送成功');
+      } else if (result.reason === 'cooldown') {
+        console.safe(`[安全防护] IP自动封禁通知跳过（冷却中）: ${ipAddress}`);
+      }
     });
   } catch (err) {
     console.safe('[安全防护] IP自动封禁失败:', err.message, { ipAddress, reason, source });

@@ -18,6 +18,52 @@ let barkConfig = {
   url: ''
 };
 
+// 数据库引用
+let db = null;
+
+/**
+ * 设置数据库连接（用于读取动态配置）
+ * @param {Object} dbConnection - 数据库连接或连接池
+ */
+function setDatabase(dbConnection) {
+  db = dbConnection;
+}
+
+/**
+ * 从数据库读取动态配置
+ * @returns {Object} 动态配置对象
+ */
+async function getDynamicConfig() {
+  if (!db) {
+    return {};
+  }
+
+  try {
+    const [rows] = await db.execute(
+      'SELECT config_key, config_value FROM system_config WHERE config_key IN (?, ?, ?)',
+      ['bark_enabled', 'bark_sound', 'bark_daily_report_enabled']
+    );
+
+    const config = {};
+    for (const row of rows) {
+      config[row.config_key] = row.config_value;
+    }
+    return config;
+  } catch (error) {
+    console.error('[Bark通知] 读取动态配置失败:', error.message);
+    return {};
+  }
+}
+
+/**
+ * 获取每日报告开关状态
+ * @returns {Promise<boolean>}
+ */
+async function isDailyReportEnabled() {
+  const config = await getDynamicConfig();
+  return config.bark_daily_report_enabled !== 'false';
+}
+
 /**
  * 解析设备密钥配置
  * 支持单个密钥或多个密钥（逗号分隔）
@@ -39,32 +85,44 @@ function parseDeviceKeys(configValue) {
 
 /**
  * 初始化 Bark 配置
- * 从环境变量加载配置
+ * 从环境变量和数据库加载配置
  */
-function initialize() {
+async function initialize() {
   try {
-    // 检查是否启用
-    const enabled = process.env.ENABLE_BARK_NOTIFICATION;
-    barkConfig.enabled = enabled === 'true';
+    // 从环境变量加载基础配置
+    barkConfig.pushUrl = process.env.BARK_PUSH_URL || 'https://api.day.app/push';
+    
+    // 解析设备密钥（支持单个或多个，逗号分隔）
+    const deviceKeyConfig = process.env.BARK_DEVICE_KEYS || process.env.BARK_DEVICE_KEY || '';
+    barkConfig.deviceKeys = parseDeviceKeys(deviceKeyConfig);
+    
+    barkConfig.level = process.env.BARK_LEVEL || 'active';
+    barkConfig.group = process.env.BARK_GROUP || '学位管理系统充值通知';
+    barkConfig.icon = process.env.BARK_ICON || '';
+    barkConfig.url = process.env.BARK_URL || '';
+    
+    // 从数据库读取动态配置（开关和铃声）
+    const dynamicConfig = await getDynamicConfig();
+    
+    // 动态开关优先于环境变量
+    if (dynamicConfig.bark_enabled !== undefined) {
+      barkConfig.enabled = dynamicConfig.bark_enabled === 'true';
+    } else {
+      // 回退到环境变量
+      barkConfig.enabled = process.env.ENABLE_BARK_NOTIFICATION === 'true';
+    }
+    
+    // 动态铃声优先于环境变量
+    if (dynamicConfig.bark_sound) {
+      barkConfig.sound = dynamicConfig.bark_sound;
+    } else {
+      barkConfig.sound = process.env.BARK_SOUND || 'paymentsuccess';
+    }
     
     if (!barkConfig.enabled) {
       console.info('[Bark通知] Bark通知功能已禁用');
       return;
     }
-    
-    // 加载配置
-    barkConfig.pushUrl = process.env.BARK_PUSH_URL || 'https://api.day.app/push';
-    
-    // 解析设备密钥（支持单个或多个，逗号分隔）
-    // 优先读取 BARK_DEVICE_KEYS（复数形式），兼容旧的 BARK_DEVICE_KEY
-    const deviceKeyConfig = process.env.BARK_DEVICE_KEYS || process.env.BARK_DEVICE_KEY || '';
-    barkConfig.deviceKeys = parseDeviceKeys(deviceKeyConfig);
-    
-    barkConfig.level = process.env.BARK_LEVEL || 'active';
-    barkConfig.sound = process.env.BARK_SOUND || 'paymentsuccess';
-    barkConfig.group = process.env.BARK_GROUP || '学位管理系统充值通知';
-    barkConfig.icon = process.env.BARK_ICON || '';
-    barkConfig.url = process.env.BARK_URL || '';
     
     // 验证必要配置
     if (barkConfig.deviceKeys.length === 0) {
@@ -227,9 +285,29 @@ function isEnabled() {
   return barkConfig.enabled;
 }
 
+/**
+ * 获取当前配置（供管理接口使用）
+ * @returns {Object} 当前配置
+ */
+function getConfig() {
+  return { ...barkConfig };
+}
+
+/**
+ * 刷新配置（从数据库重新读取）
+ */
+async function refreshConfig() {
+  await initialize();
+}
+
 // 导出模块
 module.exports = {
   initialize,
   sendNotification,
-  isEnabled
+  isEnabled,
+  setDatabase,
+  getDynamicConfig,
+  isDailyReportEnabled,
+  getConfig,
+  refreshConfig
 };

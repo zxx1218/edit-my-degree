@@ -1,8 +1,12 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { recordNotificationHistory } = require('./notification-history');
+const barkNotifier = require('./bark-notifier');
 
 function initialize(db, jwtSecret) {
+  // 设置数据库连接供 barkNotifier 使用
+  barkNotifier.setDatabase(db);
+  
   return async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
@@ -28,13 +32,15 @@ function initialize(db, jwtSecret) {
       const { action } = req.body;
 
       if (action === 'getConfig') {
-        return handleGetConfig(req, res);
+        return await handleGetConfig(db, req, res);
       } else if (action === 'sendTest') {
         return await handleSendTest(db, req, res);
       } else if (action === 'sendCustom') {
         return await handleSendCustom(db, req, res);
       } else if (action === 'getBarkHistory') {
         return await handleGetBarkHistory(db, req, res);
+      } else if (action === 'updateConfig') {
+        return await handleUpdateConfig(db, req, res);
       } else {
         return res.status(400).json({ success: false, error: '无效的操作类型' });
       }
@@ -46,8 +52,21 @@ function initialize(db, jwtSecret) {
   };
 }
 
-function handleGetConfig(req, res) {
-  const enabled = process.env.ENABLE_BARK_NOTIFICATION === 'true';
+async function handleGetConfig(db, req, res) {
+  // 从数据库读取动态配置
+  const dynamicConfig = await barkNotifier.getDynamicConfig();
+  
+  // 动态配置优先，回退到环境变量
+  const enabled = dynamicConfig.bark_enabled !== undefined 
+    ? dynamicConfig.bark_enabled === 'true'
+    : process.env.ENABLE_BARK_NOTIFICATION === 'true';
+  
+  const sound = dynamicConfig.bark_sound || process.env.BARK_SOUND || 'paymentsuccess';
+  
+  const dailyReportEnabled = dynamicConfig.bark_daily_report_enabled !== undefined
+    ? dynamicConfig.bark_daily_report_enabled === 'true'
+    : true;
+  
   const pushUrl = process.env.BARK_PUSH_URL || 'https://api.day.app/push';
   const deviceKeysRaw = process.env.BARK_DEVICE_KEYS || process.env.BARK_DEVICE_KEY || '';
   const deviceKeys = deviceKeysRaw.split(',').map(k => k.trim()).filter(k => k.length > 0);
@@ -64,10 +83,11 @@ function handleGetConfig(req, res) {
       deviceKeys: maskedKeys,
       deviceKeysCount: deviceKeys.length,
       level: process.env.BARK_LEVEL || 'active',
-      sound: process.env.BARK_SOUND || 'paymentsuccess',
+      sound,
       group: process.env.BARK_GROUP || '学位管理系统充值通知',
       icon: process.env.BARK_ICON || '',
       url: process.env.BARK_URL || '',
+      dailyReportEnabled,
     }
   });
 }
@@ -235,6 +255,51 @@ async function handleGetBarkHistory(db, req, res) {
     pageSize: safePageSize,
     totalPages: Math.ceil(total / safePageSize),
   });
+}
+
+async function handleUpdateConfig(db, req, res) {
+  const { barkEnabled, barkSound, dailyReportEnabled } = req.body;
+  
+  const updates = [];
+  const params = [];
+  
+  if (barkEnabled !== undefined) {
+    updates.push(['bark_enabled', barkEnabled ? 'true' : 'false', 'Bark推送功能开关']);
+  }
+  
+  if (barkSound !== undefined && barkSound.trim()) {
+    updates.push(['bark_sound', barkSound.trim(), 'Bark推送铃声']);
+  }
+  
+  if (dailyReportEnabled !== undefined) {
+    updates.push(['bark_daily_report_enabled', dailyReportEnabled ? 'true' : 'false', '每日收入统计定时推送开关']);
+  }
+  
+  if (updates.length === 0) {
+    return res.status(400).json({ success: false, error: '没有提供需要更新的配置' });
+  }
+  
+  try {
+    for (const [key, value, desc] of updates) {
+      await db.execute(
+        `INSERT INTO system_config (config_key, config_value, description) 
+         VALUES (?, ?, ?) 
+         ON DUPLICATE KEY UPDATE config_value = VALUES(config_value)`,
+        [key, value, desc]
+      );
+    }
+    
+    // 刷新 barkNotifier 的配置
+    await barkNotifier.refreshConfig();
+    
+    res.json({ 
+      success: true, 
+      message: '配置更新成功' 
+    });
+  } catch (error) {
+    console.error('[Bark管理] 更新配置失败:', error.message);
+    res.status(500).json({ success: false, error: '更新配置失败: ' + error.message });
+  }
 }
 
 module.exports = { initialize };

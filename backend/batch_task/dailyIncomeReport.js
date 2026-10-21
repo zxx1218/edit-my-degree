@@ -53,7 +53,20 @@ async function main() {
 
   try {
     await dbManager.initializePool();
-    barkNotifier.initialize();
+    barkNotifier.setDatabase(dbManager);
+    await barkNotifier.initialize();
+
+    // 检查每日报告开关
+    const isDailyReportEnabled = await barkNotifier.isDailyReportEnabled();
+    if (!isDailyReportEnabled) {
+      console.log('📊 每日收入统计推送已关闭，跳过执行');
+      await dbManager.close();
+      return {
+        success: true,
+        message: '每日收入统计推送已关闭',
+        skipped: true,
+      };
+    }
 
     // 查询前一天的数据（任务在 0 点运行，统计的是昨天的收入）
     const yesterday = new Date();

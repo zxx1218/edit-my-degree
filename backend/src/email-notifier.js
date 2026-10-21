@@ -5,6 +5,7 @@
 
 const nodemailer = require('nodemailer');
 const { recordNotificationHistory } = require('./notification-history');
+const notificationCooldown = require('./notification-cooldown');
 const { getSecurityAlertHtml, getIllegalApiCallAlertData } = require('./notifications/templates/email/security');
 
 // 邮件传输器配置
@@ -31,7 +32,7 @@ function initTransporter() {
 }
 
 /**
- * 发送安全告警邮件
+ * 发送安全告警邮件（带冷却机制）
  * @param {Object} params - 邮件参数
  * @param {string} params.subject - 邮件主题
  * @param {string} params.message - 邮件内容
@@ -39,6 +40,18 @@ function initTransporter() {
  */
 async function sendSecurityAlert(params) {
   const { subject, message, details } = params;
+  
+  // 生成通知标识符（用于冷却）
+  const identifier = `${subject}:${details?.ip || 'unknown'}`;
+  
+  // 检查是否在冷却期内
+  const { shouldSend, remainingSeconds } = notificationCooldown.shouldSend('email_security_alert', identifier);
+  
+  if (!shouldSend) {
+    const minutes = Math.ceil(remainingSeconds / 60);
+    console.info(`[邮件通知] ⏳ 跳过发送（冷却中，剩余 ${minutes} 分钟）: ${subject}`);
+    return false;
+  }
   
   // 检查是否启用邮件通知
   if (process.env.ENABLE_ERROR_EMAIL_NOTIFICATION !== 'true') {
@@ -99,6 +112,9 @@ async function sendSecurityAlert(params) {
     console.info(`[邮件通知] ✅ 安全告警邮件发送成功`);
     console.info(`[邮件通知] 🆔 Message ID: ${info.messageId}`);
     console.info(`[邮件通知] 📊 SMTP响应: ${info.response || 'N/A'}`);
+    
+    // 记录已发送，启动冷却
+    notificationCooldown.recordSent('email_security_alert', identifier);
     
     // 记录通知历史
     await recordNotificationHistory({

@@ -743,6 +743,26 @@ export const getBarkHistory = async (token: string, params: {
   return await response.json();
 };
 
+// 更新Bark配置
+export const updateBarkConfig = async (token: string, config: {
+  barkEnabled?: boolean;
+  barkSound?: string;
+  dailyReportEnabled?: boolean;
+}) => {
+  const url = '/api/manage-bark';
+  const options = createSignedRequestOptions('POST', url, { action: 'updateConfig', ...config });
+  
+  const response = await fetchWithBlacklistCheck(`${API_BASE_URL}/manage-bark`, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  return await response.json();
+};
+
 
 // 管理员获取留言列表
 export const adminGetMessages = async (token: string, page: number = 1, pageSize: number = 10) => {
