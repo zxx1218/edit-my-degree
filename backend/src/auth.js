@@ -70,10 +70,34 @@ function initialize(pool, jwtSecret) {
       
       const { username, password } = req.body;
       
+      // 验证必要参数
+      if (!username || typeof username !== 'string' || username.trim() === '') {
+        logLogin(null, username || '(empty)', ipAddress, userAgent, 'failed', { 
+          reason: '用户名为空或无效',
+          requestBody: req.body
+        });
+        
+        return res.status(400).json({ 
+          error: '用户名不能为空',
+          message: '请输入有效的用户名' 
+        });
+      }
+      
+      if (!password || typeof password !== 'string') {
+        logLogin(null, username, ipAddress, userAgent, 'failed', { 
+          reason: '密码为空或无效'
+        });
+        
+        return res.status(400).json({ 
+          error: '密码不能为空',
+          message: '请输入密码' 
+        });
+      }
+      
       // 使用连接池执行查询
       const [rows] = await dbManager.execute(
         'SELECT * FROM users WHERE username = ?',
-        [username]
+        [username.trim()]
       );
       
       if (rows.length === 0) {

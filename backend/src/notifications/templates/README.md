@@ -38,9 +38,7 @@ templates/
 
 ### 4. user-notifications.js
 用户行为相关的通知：
-- `getNewUserRegistrationNotification()` - 新用户注册
 - `getNewMessageNotification()` - 新留言
-- `getPasswordChangeNotification()` - 密码修改
 
 ## 💡 使用示例
 
@@ -122,12 +120,12 @@ await barkNotifier.sendNotification(notification);
 - **系统消息**: `'系统消息'` - 服务启停、系统异常
 - **学位管理系统充值通知**: `'学位管理系统充值通知'` - 各类充值
 - **安全告警**: `'安全告警'` - 黑名单拦截、异常行为
-- **用户通知**: `'用户通知'` - 注册、留言等用户行为
+- **用户通知**: `'用户通知'` - 留言等用户行为
 
 ### 5. 推送级别
 - `critical` - 紧急告警（数据库异常、安全威胁）
 - `active` - 重要通知（充值成功、异常登录）
-- `passive` - 普通通知（新用户注册、新留言）
+- `passive` - 普通通知（新留言）
 - `timeSensitive` - 时效性通知
 
 ## ✨ 优势
@@ -227,7 +225,7 @@ await barkNotifier.sendNotification(notification);
 - ✅ 频繁密码修改尝试
 - ✅ 服务启停/异常
 - ✅ 充值成功
-- ✅ 用户注册/留言
+- ✅ 用户留言
 
 ---
 

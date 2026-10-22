@@ -53,7 +53,7 @@ const StudentStatusDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    gender: "",
+    gender: "男",
     birthDate: undefined as Date | undefined,
     nationality: "",
     school: "",
@@ -122,7 +122,7 @@ const StudentStatusDialog = ({
     setSelectedRecordId("");
     setFormData({
       name: "",
-      gender: "",
+      gender: "男",
       birthDate: undefined,
       nationality: "",
       school: "",

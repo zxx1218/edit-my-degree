@@ -13,12 +13,10 @@
  * @returns {Object} 通知对象
  */
 function getIpBlacklistBlockNotification({ ip, username, action, timestamp }) {
-  const user = username ? `, 用户: ${username}` : '';
-  
+  const user = username ? `用户: ${username}` : '未登录';
   return {
     title: '🛡️ IP黑名单拦截',
-    body: `IP: ${ip}${user}\n操作: ${action}\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    body: `IP: ${ip} | ${user}\n操作: ${action} | 时间: ${timestamp}`,
     group: '安全告警',
     level: 'critical',
     sound: 'bell'
@@ -37,8 +35,7 @@ function getIpBlacklistBlockNotification({ ip, username, action, timestamp }) {
 function getUserBlacklistBlockNotification({ username, reason, blockedUntil, timestamp }) {
   return {
     title: '🚫 用户黑名单拦截',
-    body: `用户: ${username}\n原因: ${reason}\n封禁至: ${blockedUntil}\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    body: `用户: ${username} | 原因: ${reason}\n封禁至: ${blockedUntil} | 时间: ${timestamp}`,
     group: '安全告警',
     level: 'critical',
     sound: 'bell'
@@ -56,9 +53,8 @@ function getUserBlacklistBlockNotification({ username, reason, blockedUntil, tim
  */
 function getSuspiciousLoginNotification({ ip, username, attempts, timestamp }) {
   return {
-    title: '⚠️ 异常登录行为检测',
-    body: `IP: ${ip}\n用户: ${username}\n尝试次数: ${attempts}\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    title: '⚠️ 异常登录行为',
+    body: `用户: ${username} | IP: ${ip}\n尝试次数: ${attempts}次 | 时间: ${timestamp}`,
     group: '安全告警',
     level: 'active',
     sound: 'bell'
@@ -77,8 +73,7 @@ function getSuspiciousLoginNotification({ ip, username, attempts, timestamp }) {
 function getFailedLoginNotification({ ip, username, failedAttempts, timestamp }) {
   return {
     title: '🔐 多次登录失败',
-    body: `IP: ${ip}\n用户: ${username}\n失败次数: ${failedAttempts}\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    body: `用户: ${username} | IP: ${ip}\n失败次数: ${failedAttempts}次 | 时间: ${timestamp}`,
     group: '安全告警',
     level: 'active',
     sound: 'bell'
@@ -106,8 +101,7 @@ function getIpRateLimitBlockNotification({
 }) {
   return {
     title: '🚫 IP频率限制封禁',
-    body: `IP: ${ip}\n请求次数: ${requestCount}/${maxRequests}\n时间窗口: ${timeWindow}秒\n封禁时长: ${blockDuration}分钟\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    body: `IP: ${ip} | 请求: ${requestCount}/${maxRequests}\n窗口: ${timeWindow}秒 | 封禁: ${blockDuration}分钟 | 时间: ${timestamp}`,
     group: '安全告警',
     level: 'critical',
     sound: 'bell'
@@ -126,8 +120,7 @@ function getIpRateLimitBlockNotification({
 function getFrequentPasswordChangeNotification({ username, ip, attempts, timestamp }) {
   return {
     title: '⚠️ 频繁密码修改尝试',
-    body: `用户: ${username}\nIP: ${ip}\n尝试次数: ${attempts}\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    body: `用户: ${username} | IP: ${ip}\n尝试次数: ${attempts}次 | 时间: ${timestamp}`,
     group: '安全告警',
     level: 'critical',
     sound: 'bell'
@@ -148,8 +141,7 @@ function getFrequentPasswordChangeNotification({ username, ip, attempts, timesta
 function getIpAutoBlockNotification({ ip, reason, source, blockDuration, blockedUntil, timestamp }) {
   return {
     title: '🚨 IP自动封禁',
-    body: `IP: ${ip}\n原因: ${reason}\n来源: ${source}\n封禁时长: ${blockDuration}分钟\n封禁至: ${blockedUntil}\n时间: ${timestamp}`,
-    subtitle: '安全告警',
+    body: `IP: ${ip} | 来源: ${source}\n原因: ${reason}\n封禁: ${blockDuration}分钟 | 至: ${blockedUntil}`,
     group: '安全告警',
     level: 'critical',
     sound: 'bell'

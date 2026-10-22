@@ -48,7 +48,7 @@ const ExamDetail = () => {
   const defaultData: ExamData = {
     name: "浆果儿",
     school: "清华大学",
-    year: "2025年",
+    year: "2026年",
     photo: "",
     examLocation: "1101",
     registrationNumber: "110148372",

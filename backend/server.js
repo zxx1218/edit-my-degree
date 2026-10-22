@@ -63,34 +63,62 @@ app.use((err, req, res, next) => {
 
 async function initializeApp() {
   try {
-    console.safe('[系统] 开始初始化应用...');
+    // 获取集群信息
+    const clusterMode = process.env.NODE_APP_INSTANCE !== undefined;
+    const instanceId = process.env.NODE_APP_INSTANCE || '0';
     
-    // 初始化数据库连接池
-    console.safe('[系统] 正在初始化数据库连接池...');
-    const pool = await initializeDatabaseConnection();
-    console.safe('[系统] ✅ 数据库连接池初始化成功');
+    if (isLogProcess) {
+      console.safe('[系统] 开始初始化应用...');
+      if (clusterMode) {
+        console.safe(`[系统] 运行模式: PM2集群 (当前节点: worker-${instanceId})`);
+      } else {
+        console.safe('[系统] 运行模式: 单进程');
+      }
+    }
     
-    // 创建表（如果不存在）
-    console.safe('[系统] 正在检查并创建数据表...');
-    await createTables(pool);
-    console.safe('[系统] ✅ 数据表检查/创建完成');
+    // 数据库初始化和表创建只在主进程执行
+    if (isLogProcess) {
+      // 初始化数据库连接池（包含数据库存在性检查）
+      console.safe('[系统] 正在初始化数据库连接池...');
+      const pool = await initializeDatabaseConnection();
+      console.safe('[系统] ✅ 数据库连接池初始化成功');
+      
+      // 创建表（如果不存在）
+      console.safe('[系统] 正在检查并创建数据表...');
+      await createTables(pool);
+      console.safe('[系统] ✅ 数据表检查/创建完成');
+      
+      // 启动IP黑名单缓存清理任务
+      console.safe('[系统] 正在启动IP黑名单缓存清理任务...');
+      startCleanupTask();
+      console.safe('[系统] ✅ IP黑名单缓存清理任务已启动');
+      
+      // 启动通知冷却清理任务
+      console.safe('[系统] 正在启动通知冷却清理任务...');
+      notificationCooldown.startCleanupTask();
+      console.safe('[系统] ✅ 通知冷却清理任务已启动');
+    } else {
+      // 非主进程：等待主进程完成数据库初始化后，再初始化自己的连接池
+      if (clusterMode) {
+        console.safe(`[系统] Worker-${instanceId} 等待主进程完成数据库初始化...`);
+        // 等待一段时间让主进程完成数据库创建
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+      
+      // 初始化自己的连接池（数据库应该已经存在）
+      const pool = await initializeDatabaseConnection();
+      console.safe(`[系统] Worker-${instanceId} 数据库连接池初始化成功`);
+    }
     
-    // 启动IP黑名单缓存清理任务
-    console.safe('[系统] 正在启动IP黑名单缓存清理任务...');
-    startCleanupTask();
-    console.safe('[系统] ✅ IP黑名单缓存清理任务已启动');
-    
-    // 启动通知冷却清理任务
-    console.safe('[系统] 正在启动通知冷却清理任务...');
-    notificationCooldown.startCleanupTask();
-    console.safe('[系统] ✅ 通知冷却清理任务已启动');
-    
-    // 设置路由
-    console.safe('[系统] 正在配置路由...');
+    // 设置路由（所有进程都需要）
+    if (isLogProcess) {
+      console.safe('[系统] 正在配置路由...');
+    }
     setupRoutes(app, dbManager, JWT_SECRET);
-    console.safe('[系统] ✅ 路由配置完成');
-    
-    console.safe('[系统] ✅ 应用初始化完成');
+    if (isLogProcess) {
+      console.safe('[系统] ✅ 路由配置完成');
+      console.safe('[系统] ✅ 应用初始化完成');
+    }
     return true;
   } catch (err) {
     console.error('[系统] ❌ 应用初始化失败:', err.message, { stack: err.stack });
@@ -119,12 +147,20 @@ process.on('SIGINT', async () => {
 initializeApp().then((success) => {
   if (success) {
     const server = app.listen(PORT, () => {
-      // 只在日志进程中打印启动信息
+      // 只在日志进程中打印启动信息和发送通知
       if (isLogProcess) {
+        // 获取集群信息
+        const clusterMode = process.env.NODE_APP_INSTANCE !== undefined;
+        const instances = clusterMode ? (process.env.pm_instances || '1') : '1';
+        
         console.safe(`\n========================================`);
         console.safe(`🚀 服务器启动成功`);
         console.safe(`📍 端口: ${PORT}`);
         console.safe(`🔧 环境: ${process.env.NODE_ENV}`);
+        console.safe(`🏗️  模式: ${clusterMode ? 'PM2集群' : '单进程'}`);
+        if (clusterMode) {
+          console.safe(`📊 节点数: ${instances}`);
+        }
         console.safe(`⏰ 启动时间: ${new Date().toLocaleString('zh-CN')}`);
         console.safe(`========================================\n`);
       
@@ -143,10 +179,10 @@ initializeApp().then((success) => {
             console.safe('=========================================\n');
           }
         }, statusReportInterval);
+        
+        // 发送 Bark 启动通知（只在主进程发送一次）
+        sendStartupNotification(clusterMode, instances);
       }
-
-      // 发送 Bark 启动通知
-      sendStartupNotification();
     });
 
     // 处理未捕获的异常
@@ -170,8 +206,10 @@ initializeApp().then((success) => {
 
 /**
  * 发送服务启动通知
+ * @param {boolean} clusterMode - 是否为集群模式
+ * @param {string} instances - 集群节点数量
  */
-async function sendStartupNotification() {
+async function sendStartupNotification(clusterMode, instances) {
   try {
     if (!barkNotifier.isEnabled()) {
       console.info('[Bark通知] Bark通知未启用，跳过发送启动通知');
@@ -183,7 +221,9 @@ async function sendStartupNotification() {
       hostname,
       port: PORT,
       env: process.env.NODE_ENV || 'development',
-      startTime: new Date().toLocaleString('zh-CN')
+      startTime: new Date().toLocaleString('zh-CN'),
+      clusterMode,
+      instances
     });
 
     // 异步发送通知，不阻塞主流程

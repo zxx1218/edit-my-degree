@@ -108,8 +108,20 @@ server {
         error_log off;
     }
 
-    # ========== 安全：禁止访问隐藏文件 ==========
-    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md) {
+    # ========== 安全：禁止访问隐藏文件和敏感后缀 ==========
+    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md|\.DS_Store) {
+        return 404;
+    }
+
+    # 禁止访问常见的开发和备份文件
+    location ~ \.(json|yml|yaml|conf|ini|log|sh|sql|bak|zip|tar\.gz|rar|7z)$ {
+        deny all;
+        return 404;
+    }
+
+    # 禁止访问 Docker 和 IDE 配置文件
+    location ~ /(Dockerfile|docker-compose|ecosystem\.config|pm2\.json|web\.config|nginx\.conf) {
+        deny all;
         return 404;
     }
 

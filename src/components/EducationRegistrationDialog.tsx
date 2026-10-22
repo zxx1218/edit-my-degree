@@ -52,7 +52,7 @@ const EducationRegistrationDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    gender: "",
+    gender: "男",
     birthDate: undefined as Date | undefined,
     enrollmentDate: undefined as Date | undefined,
     graduationDate: undefined as Date | undefined,
@@ -155,7 +155,7 @@ const EducationRegistrationDialog = ({
     setSelectedRecordId("manual");
     setFormData({
       name: "",
-      gender: "",
+      gender: "男",
       birthDate: undefined,
       enrollmentDate: undefined,
       graduationDate: undefined,

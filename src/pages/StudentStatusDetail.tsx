@@ -70,7 +70,7 @@ const StudentStatusDetail = () => {
   // 默认值
   const defaultData: StudentData = {
     name: "浆果儿",
-    gender: "女",
+    gender: "男",
     birthDate: "2002年12月17日",
     school: "清华大学",
     major: "经济与金融",

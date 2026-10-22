@@ -10,13 +10,15 @@
  * @param {number} options.port - 端口号
  * @param {string} options.env - 运行环境
  * @param {string} options.startTime - 启动时间
+ * @param {boolean} options.clusterMode - 是否为集群模式
+ * @param {string} options.instances - 集群节点数量
  * @returns {Object} 通知对象
  */
-function getStartupNotification({ hostname, port, env, startTime }) {
+function getStartupNotification({ hostname, port, env, startTime, clusterMode, instances }) {
+  const mode = clusterMode ? `PM2集群(${instances}节点)` : '单进程';
   return {
-    title: '🚀 后端服务启动成功',
-    body: `主机: ${hostname}\n端口: ${port}\n环境: ${env}\n启动时间: ${startTime}`,
-    subtitle: '系统消息',
+    title: clusterMode ? `🚀 集群启动 (${instances}节点)` : '🚀 后端服务启动成功',
+    body: `主机: ${hostname}:${port} | 环境: ${env} | 模式: ${mode}\n启动时间: ${startTime}`,
     group: '系统消息',
     level: 'active',
     sound: 'paymentsuccess'
@@ -32,12 +34,10 @@ function getStartupNotification({ hostname, port, env, startTime }) {
  * @returns {Object} 通知对象
  */
 function getShutdownNotification({ hostname, shutdownTime, reason }) {
-  const body = `主机: ${hostname}\n关闭时间: ${shutdownTime}${reason ? `\n原因: ${reason}` : ''}`;
-  
+  const body = reason ? `主机: ${hostname}\n原因: ${reason} | 时间: ${shutdownTime}` : `主机: ${hostname}\n时间: ${shutdownTime}`;
   return {
     title: '⛔ 后端服务已关闭',
     body,
-    subtitle: '系统消息',
     group: '系统消息',
     level: 'passive',
     sound: 'paymentsuccess'
@@ -55,8 +55,7 @@ function getShutdownNotification({ hostname, shutdownTime, reason }) {
 function getDatabaseErrorNotification({ hostname, error, timestamp }) {
   return {
     title: '❌ 数据库连接异常',
-    body: `主机: ${hostname}\n时间: ${timestamp}\n错误: ${error}`,
-    subtitle: '系统告警',
+    body: `主机: ${hostname}\n错误: ${error}\n时间: ${timestamp}`,
     group: '系统消息',
     level: 'critical',
     sound: 'bell'
@@ -73,16 +72,10 @@ function getDatabaseErrorNotification({ hostname, error, timestamp }) {
  * @returns {Object} 通知对象
  */
 function getDailyIncomeReport({ date, totalCards, totalIncome, breakdown }) {
-  let body = '';
-  breakdown.forEach(b => {
-    body += `${b.label}: ${b.count}张 = ¥${b.subtotal}\n`;
-  });
-  body += `\n总计: ${totalCards}张卡密, 收入 ¥${totalIncome}`;
-
+  const details = breakdown.map(b => `${b.label}:${b.count}张/¥${b.subtotal}`).join(' | ');
   return {
-    title: `📊 每日收入日报 (${date})`,
-    body,
-    subtitle: `今日总收入: ¥${totalIncome}`,
+    title: `📊 收入日报 ${date}`,
+    body: `${details}\n总计: ${totalCards}张 ¥${totalIncome}`,
     group: '系统消息',
     level: 'active',
     sound: 'paymentsuccess'

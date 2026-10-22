@@ -1,8 +1,164 @@
 const mysql = require('mysql2/promise');
+const readline = require('readline');
 const dbManager = require('../db-utils');
+
+// 判断是否为日志进程（只在进程 0 中询问用户）
+const isLogProcess = process.env.NODE_APP_INSTANCE === '0' || !process.env.NODE_APP_INSTANCE;
+
+/**
+ * 检查数据库是否存在，如果不存在则询问用户是否创建
+ */
+async function ensureDatabaseExists() {
+  const dbName = process.env.DB_NAME || 'degree_management';
+  const dbHost = process.env.DB_HOST || 'localhost';
+  const dbUser = process.env.DB_USER || 'root';
+  const dbPassword = process.env.DB_PASSWORD || '';
+  const dbPort = parseInt(process.env.DB_PORT || '3306');
+
+  // 先连接 MySQL（不指定数据库）
+  let connection;
+  try {
+    connection = await mysql.createConnection({
+      host: dbHost,
+      port: dbPort,
+      user: dbUser,
+      password: dbPassword,
+      multipleStatements: true
+    });
+  } catch (err) {
+    console.error(`[数据库] 无法连接到 MySQL 服务器 (${dbHost}:${dbPort}): ${err.message}`);
+    throw err;
+  }
+
+  try {
+    // 检查数据库是否存在
+    const [rows] = await connection.execute(
+      'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?',
+      [dbName]
+    );
+
+    if (rows.length > 0) {
+      // 数据库已存在，直接返回
+      await connection.end();
+      return;
+    }
+
+    // 数据库不存在
+    console.warn(`\n[数据库] ⚠️  数据库 "${dbName}" 不存在！`);
+    console.warn(`[数据库] 即将创建数据库: ${dbName}`);
+    console.warn(`[数据库] MySQL 服务器: ${dbHost}:${dbPort}\n`);
+
+    // 在集群模式下，只有进程 0 可以询问用户
+    if (!isLogProcess) {
+      // 非日志进程等待一段时间让进程 0 完成创建
+      console.safe('[数据库] 等待主进程创建数据库...');
+      await waitForDatabase(dbName, connection);
+      await connection.end();
+      return;
+    }
+
+    // 检查是否设置了自动创建环境变量
+    const autoCreate = process.env.AUTO_CREATE_DB === 'true' || process.env.AUTO_CREATE_DB === '1';
+    
+    let confirmed = autoCreate;
+    
+    if (!autoCreate) {
+      // 日志进程询问用户确认
+      confirmed = await askUserConfirmation(
+        '是否确认创建数据库？(输入 yes 确认): '
+      );
+    } else {
+      console.safe('[数据库] ✅ 检测到 AUTO_CREATE_DB 环境变量，自动创建数据库');
+    }
+
+    if (confirmed) {
+      console.safe(`[数据库] 正在创建数据库: ${dbName} ...`);
+      await connection.execute(`CREATE DATABASE \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+      console.safe(`[数据库] ✅ 数据库 "${dbName}" 创建成功`);
+    } else {
+      await connection.end();
+      console.error('[数据库] ❌ 用户取消创建数据库，应用退出');
+      process.exit(1);
+    }
+  } catch (err) {
+    await connection.end();
+    throw err;
+  }
+
+  await connection.end();
+}
+
+/**
+ * 等待数据库创建完成（用于集群模式下的非主进程）
+ */
+async function waitForDatabase(dbName, connection, maxWaitMs = 30000) {
+  const startTime = Date.now();
+  const checkInterval = 1000; // 每秒检查一次
+
+  while (Date.now() - startTime < maxWaitMs) {
+    try {
+      const [rows] = await connection.execute(
+        'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?',
+        [dbName]
+      );
+      if (rows.length > 0) {
+        console.safe(`[数据库] ✅ 数据库 "${dbName}" 已就绪`);
+        return;
+      }
+    } catch (err) {
+      // 忽略错误，继续等待
+    }
+    await new Promise(resolve => setTimeout(resolve, checkInterval));
+  }
+
+  throw new Error(`等待数据库 "${dbName}" 创建超时（${maxWaitMs / 1000}秒）`);
+}
+
+/**
+ * 在终端询问用户确认
+ */
+function askUserConfirmation(question) {
+  return new Promise((resolve) => {
+    // 检查 stdin 是否可用（PM2 集群模式下可能不可用）
+    if (!process.stdin.isTTY) {
+      console.error('[数据库] ❌ 当前环境不支持交互式输入');
+      console.error('[数据库] 💡 如需自动创建数据库，请设置环境变量: AUTO_CREATE_DB=true');
+      console.error('[数据库] 💡 或手动创建数据库后重新启动应用');
+      resolve(false);
+      return;
+    }
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    let answered = false;
+
+    rl.question(question, (answer) => {
+      if (answered) return;
+      answered = true;
+      rl.close();
+      resolve(answer.trim().toLowerCase() === 'yes');
+    });
+
+    // 超时处理（30秒）
+    setTimeout(() => {
+      if (answered) return;
+      answered = true;
+      rl.close();
+      console.error('[数据库] ❌ 等待用户输入超时（30秒），应用退出');
+      console.error('[数据库] 💡 如需自动创建数据库，请设置环境变量: AUTO_CREATE_DB=true');
+      process.exit(1);
+    }, 30000);
+  });
+}
 
 async function initializeDatabaseConnection() {
   try {
+    // 先确保数据库存在
+    await ensureDatabaseExists();
+
     // 使用连接池管理器
     const pool = await dbManager.initializePool();
     // 只在日志进程中打印初始化日志
@@ -264,6 +420,15 @@ async function createTables(db) {
       INDEX idx_changed_at (changed_at),
       INDEX idx_result (result)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='密码修改历史记录表'
+    `,
+    `
+    CREATE TABLE IF NOT EXISTS system_config (
+      config_key VARCHAR(100) NOT NULL PRIMARY KEY COMMENT '配置键',
+      config_value TEXT NOT NULL COMMENT '配置值',
+      description VARCHAR(255) COMMENT '配置描述',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+      INDEX idx_updated_at (updated_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统动态配置表'
     `
   ];
 
@@ -305,6 +470,19 @@ async function createTables(db) {
   
   if (isLogProcess) {
     console.safe('Database tables initialized');
+  }
+  
+  // 插入系统配置默认值（如果不存在）
+  const defaultConfigs = [
+    ['bark_enabled', 'true', 'Bark推送功能开关'],
+    ['bark_sound', 'paymentsuccess', 'Bark推送铃声'],
+    ['bark_daily_report_enabled', 'true', '每日收入统计定时推送开关'],
+  ];
+  for (const [key, value, desc] of defaultConfigs) {
+    await db.execute(
+      `INSERT IGNORE INTO system_config (config_key, config_value, description) VALUES (?, ?, ?)`,
+      [key, value, desc]
+    );
   }
   
   // 插入初始管理员账户（如果不存在）

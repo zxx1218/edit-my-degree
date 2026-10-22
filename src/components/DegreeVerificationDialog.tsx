@@ -50,7 +50,7 @@ const DegreeVerificationDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    gender: "",
+    gender: "男",
     birthDate: undefined as Date | undefined,
     degreeDate: undefined as Date | undefined,
     university: "",
@@ -147,7 +147,7 @@ const DegreeVerificationDialog = ({
     setSelectedRecordId("");
     setFormData({
       name: "",
-      gender: "",
+      gender: "男",
       birthDate: undefined,
       degreeDate: undefined,
       university: "",
@@ -356,7 +356,7 @@ const DegreeVerificationDialog = ({
       // Reset form
       setFormData({
         name: "",
-        gender: "",
+        gender: "男",
         birthDate: undefined,
         degreeDate: undefined,
         university: "",

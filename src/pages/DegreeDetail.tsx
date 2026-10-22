@@ -34,12 +34,12 @@ const DegreeDetail = () => {
   // 默认值
   const defaultData: DegreeData = {
     name: "浆果儿",
-    gender: "女",
-    birthDate: "2002年12月17日",
+    gender: "男",
+    birthDate: "2004年12月17日",
     school: "清华大学",
     degreeType: "经济学学士学位",
     degreeLevel: "学士",
-    degreeDate: "2025年06月30日",
+    degreeDate: "2028年06月30日",
     major: "经济与金融",
     certificateNumber: "1000256789012345678",
     photo: "",

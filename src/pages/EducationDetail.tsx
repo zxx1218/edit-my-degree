@@ -39,14 +39,14 @@ const EducationDetail = () => {
   // 默认值
   const defaultData: EducationData = {
     name: "浆果儿",
-    gender: "女",
-    birthDate: "2002年12月17日",
+    gender: "男",
+    birthDate: "2004年12月17日",
     school: "清华大学",
-    major: "经济与金融",
+    major: "汉语言文学",
     studyType: "普通全日制",
     degreeLevel: "本科",
-    enrollmentDate: "2021年09月01日",
-    graduationDate: "2025年06月30日",
+    enrollmentDate: "2024年09月01日",
+    graduationDate: "2028年06月30日",
     educationType: "普通高等教育",
     duration: "4 年",
     graduationStatus: "毕业",
@@ -153,7 +153,7 @@ const EducationDetail = () => {
 
       toast({
         title: "修改成功",
-        description: "信息已更新并同步到数据库",
+        description: "信息已更新并同步",
       });
     } catch (error) {
       toast({

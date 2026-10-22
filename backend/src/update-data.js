@@ -212,7 +212,7 @@ async function createEducationRecord(db, userId, statusData, degreeLevel) {
       id: educationId,
       user_id: userId,
       name: statusData.name || '',
-      gender: statusData.gender || '',
+      gender: statusData.gender || '男',
       birth_date: statusData.birth_date || '',
       school: statusData.school || '',
       major: statusData.major || '',
@@ -376,7 +376,7 @@ async function createDegreeRecord(db, userId, statusData, degreeLevel) {
       id: degreeId,
       user_id: userId,
       name: statusData.name || '',
-      gender: statusData.gender || '',
+      gender: statusData.gender || '男',
       birth_date: statusData.birth_date || '',
       school: statusData.school || '',
       major: degreeName,
@@ -609,6 +609,11 @@ function initialize(db) {
           
           // 构造插入语句
           const insertData = { id: recordId, ...validData, user_id: userId };
+          
+          // 学籍/学历/学位记录默认性别为男
+          if (!insertData.gender && ['student_status', 'education', 'degree'].includes(table)) {
+            insertData.gender = '男';
+          }
           
           const columns = Object.keys(insertData).join(', ');
           const placeholders = Object.keys(insertData).map(() => '?').join(', ');

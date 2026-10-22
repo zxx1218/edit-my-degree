@@ -151,6 +151,7 @@ const Index = () => {
       if (selectedRecord.type === "degree") {
         newData = {
           name: "浆果儿",
+          gender: "男",
           school: data.school,
           degree_type: data.level, // 学位使用 degree_type
           degree_level: "", // 学位的 degree_level 可以为空
@@ -169,6 +170,7 @@ const Index = () => {
         // 学历/学籍使用 degree_level
         newData = {
           name: "浆果儿",
+          gender: "男",
           school: data.school,
           major: data.major,
           study_type: data.studyType || "全日制",

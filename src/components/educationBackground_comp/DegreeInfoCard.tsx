@@ -61,7 +61,7 @@ const DegreeInfoCard = ({ record }: DegreeInfoCardProps) => {
             </div>
             <div className="flex items-start">
               <span className="text-gray-400 w-24 text-right flex-shrink-0 mr-3 whitespace-nowrap">性别：</span>
-              <span className="text-gray-800 flex-1">{record.gender || "女"}</span>
+              <span className="text-gray-800 flex-1">{record.gender || "男"}</span>
             </div>
 
             {/* 第2行 */}

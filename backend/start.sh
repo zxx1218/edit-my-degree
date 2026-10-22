@@ -2,7 +2,7 @@
 
 # ============================================================================
 # 后端服务启动脚本
-# 功能: 使用PM2启动后端服务
+# 功能: 使用PM2启动后端服务，支持自动检测和创建数据库
 # 使用方法: ./start.sh [development|production]
 # 默认环境: production
 # ============================================================================
@@ -60,7 +60,82 @@ if pm2 list | grep -q "edit_my_degree_backend.*online"; then
     exit 0
 fi
 
+# ============================================================================
+# 数据库检查和创建逻辑
+# ============================================================================
+
+# 加载环境变量
+if [ -f "../.env" ]; then
+    source ../.env
+elif [ -f ".env" ]; then
+    source .env
+fi
+
+DB_HOST=${DB_HOST:-localhost}
+DB_PORT=${DB_PORT:-3306}
+DB_USER=${DB_USER:-root}
+DB_PASSWORD=${DB_PASSWORD:-}
+DB_NAME=${DB_NAME:-degree_management}
+
+# 检查MySQL服务是否可连接
+echo -e "${BLUE}🔍 检查数据库连接...${NC}"
+if ! command -v mysql &> /dev/null; then
+    echo -e "${YELLOW}⚠️  mysql 命令未找到，跳过数据库检查${NC}"
+    echo -e "${YELLOW}💡 后端启动时会自动检查并提示创建数据库${NC}"
+    echo ""
+else
+    # 尝试连接MySQL
+    if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -e "SELECT 1" &> /dev/null; then
+        echo -e "${GREEN}✅ MySQL 服务连接成功${NC}"
+        
+        # 检查数据库是否存在
+        DB_EXISTS=$(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -e "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$DB_NAME'" 2>/dev/null | grep -c "$DB_NAME")
+        
+        if [ "$DB_EXISTS" -eq 0 ]; then
+            echo -e "${YELLOW}⚠️  数据库 \"$DB_NAME\" 不存在${NC}"
+            echo ""
+            echo -e "${BLUE}数据库信息:${NC}"
+            echo -e "  主机: ${YELLOW}$DB_HOST:$DB_PORT${NC}"
+            echo -e "  数据库名: ${YELLOW}$DB_NAME${NC}"
+            echo ""
+            
+            # 询问用户是否创建数据库
+            echo -ne "${YELLOW}是否创建数据库？(输入 yes 确认): ${NC}"
+            read -r CONFIRM
+            
+            if [ "$CONFIRM" == "yes" ]; then
+                echo -e "${GREEN}📦 正在创建数据库...${NC}"
+                if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASSWORD" -e "CREATE DATABASE \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" 2>/dev/null; then
+                    echo -e "${GREEN}✅ 数据库 \"$DB_NAME\" 创建成功${NC}"
+                    export AUTO_CREATE_DB="false"  # 已手动创建，不需要后端再创建
+                else
+                    echo -e "${RED}❌ 数据库创建失败，请检查权限${NC}"
+                    echo -e "${YELLOW}💡 你也可以手动创建:${NC}"
+                    echo -e "  ${YELLOW}mysql -u$DB_USER -p -e \"CREATE DATABASE \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\"${NC}"
+                    exit 1
+                fi
+            else
+                echo -e "${RED}❌ 用户取消创建数据库${NC}"
+                echo -e "${YELLOW}💡 你可以手动创建数据库后重新启动:${NC}"
+                echo -e "  ${YELLOW}mysql -u$DB_USER -p -e \"CREATE DATABASE \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;\"${NC}"
+                exit 1
+            fi
+        else
+            echo -e "${GREEN}✅ 数据库 \"$DB_NAME\" 已存在${NC}"
+        fi
+    else
+        echo -e "${RED}❌ 无法连接到 MySQL 服务 (${DB_HOST}:${DB_PORT})${NC}"
+        echo -e "${YELLOW}💡 请检查 MySQL 服务是否启动，以及 .env 中的数据库配置是否正确${NC}"
+        exit 1
+    fi
+fi
+
+echo ""
+
+# ============================================================================
 # 启动应用
+# ============================================================================
+
 echo -e "${GREEN}🚀 正在启动后端服务 (环境: ${ENV})...${NC}"
 echo ""
 
