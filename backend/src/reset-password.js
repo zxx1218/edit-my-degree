@@ -36,18 +36,20 @@ function initialize(db) {
           operation: 'reset_password'
         });
         
-        // 发送告警邮件
+        // 发送告警通知
         sendSecurityAlert({
           subject: '频繁重置密码尝试警告',
           message: `检测到针对用户 ${username} 的频繁密码重置尝试，可能正在遭受恶意攻击。该IP已被自动封禁1小时。`,
+          type: 'frequent_password_reset',
           details: {
+            username,
             ipAddress,
             userAgent,
             attempts,
             timestamp: new Date().toISOString(),
             autoBlocked: true
           }
-        }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+        }).catch(err => console.error('[安全] 发送告警通知失败:', err.message));
 
         // 自动将该IP加入黑名单（封禁1小时）
         autoBlockIp(ipAddress, `频繁重置密码尝试${attempts}次，针对用户${username}`, '密码重置模块').catch(err => {
@@ -148,14 +150,16 @@ function initialize(db) {
            sendSecurityAlert({
             subject: '密码重置验证失败次数过多',
             message: `用户 ${username} 在短时间内多次输入错误的卡密进行密码重置。该IP已被自动封禁1小时。`,
+            type: 'password_reset_verification_failed',
             details: {
+              username,
               ipAddress,
               userAgent,
               attempts: attempts + 1,
               timestamp: new Date().toISOString(),
               autoBlocked: true
             }
-          }).catch(err => console.error('[安全] 发送告警邮件失败:', err.message));
+          }).catch(err => console.error('[安全] 发送告警通知失败:', err.message));
 
           // 自动将该IP加入黑名单（封禁1小时）
           autoBlockIp(ipAddress, `密码重置验证失败${attempts + 1}次，针对用户${username}`, '密码重置模块').catch(err => {

@@ -3,7 +3,8 @@ const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 const util = require('util');
 const fs = require('fs');
-const nodemailer = require('nodemailer');
+const barkNotifier = require('./bark-notifier');
+const { getSystemErrorAlert } = require('./notifications/templates/bark/security');
 
 // 创建日志目录
 const logDir = path.join(__dirname, '..', 'logs');
@@ -102,23 +103,23 @@ const transports = [
       winston.format((info) => {
         // 只记录 error 级别
         if (info.level === 'error') {
-          // 异步发送邮件通知，不阻塞日志记录
+          // 异步发送Bark通知，不阻塞日志记录
           setImmediate(() => {
             try {
-              sendErrorEmail(info.message, info);
+              sendErrorBarkNotification(info.message, info);
             } catch (err) {
-              // 邮件发送失败不应影响日志记录，使用独立日志器避免递归
+              // Bark通知失败不应影响日志记录
               const exceptionLogger = winston.createLogger({
                 level: 'error',
                 transports: [
                   new winston.transports.File({
-                    filename: path.join(logDir, 'email-exception.log'),
-                    maxsize: 5242880, // 5MB
+                    filename: path.join(logDir, 'bark-exception.log'),
+                    maxsize: 5242880,
                     maxFiles: 2
                   })
                 ]
               });
-              exceptionLogger.error(`[邮件通知] 处理错误日志时发生异常: ${err.message}`);
+              exceptionLogger.error(`[Bark通知] 处理错误日志时发生异常: ${err.message}`);
             }
           });
           return info;
@@ -186,8 +187,8 @@ const originalInfo = console.info;
 const originalWarn = console.warn;
 const originalError = console.error;
 
-// 防止邮件通知递归调用的全局标志
-let isSendingErrorEmail = false;
+// 防止Bark通知递归调用的全局标志
+let isSendingBarkNotification = false;
 
 console.log = (...args) => {
   logger.info(formatArgs(args));
@@ -229,80 +230,22 @@ console.safe = (...args) => {
 };
 
 /**
- * 邮件发送器配置
- * 从环境变量读取SMTP配置
+ * Bark通知频率控制
  */
-let emailTransporter = null;
-
-// 邮件发送频率控制
-const emailRateLimit = {
+const barkRateLimit = {
   lastSentTime: 0,
   minInterval: 60000, // 最小间隔时间（毫秒），默认1分钟
-  maxEmailsPerHour: 30, // 每小时最大邮件数
+  maxNotificationsPerHour: 30, // 每小时最大通知数
   sentCount: 0,
   resetTime: Date.now() + 3600000, // 1小时后重置计数
   consecutiveFailures: 0, // 连续失败次数
   circuitBreakerActive: false, // 熔断器状态
-  circuitBreakerUntil: 0 // 熔断器解除时间
+  circuitBreakerUntil: 0, // 熔断器解除时间
+  circuitBreakerLogged: false
 };
 
-function getEmailTransporter() {
-  if (emailTransporter) {
-    return emailTransporter;
-  }
-
-  // 检查是否启用了邮件通知
-  const enableEmailNotification = process.env.ENABLE_ERROR_EMAIL_NOTIFICATION === 'true';
-  if (!enableEmailNotification) {
-    console.safe('[邮件通知] 邮件通知未启用，设置 ENABLE_ERROR_EMAIL_NOTIFICATION=true 以启用');
-    return null;
-  }
-
-  // 从环境变量读取SMTP配置
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const fromEmail = process.env.EMAIL_FROM || smtpUser;
-  const toEmail = process.env.ERROR_NOTIFICATION_EMAIL || 'zxx12182022@163.com';
-
-  if (!smtpHost || !smtpUser || !smtpPass) {
-    console.error('[邮件通知] SMTP配置不完整，请设置 SMTP_HOST, SMTP_USER, SMTP_PASS 环境变量');
-    return null;
-  }
-
-  try {
-    emailTransporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465, // true for 465, false for other ports
-      auth: {
-        user: smtpUser,
-        pass: smtpPass
-      }
-    });
-
-    // 验证连接配置
-    emailTransporter.verify(function(error, success) {
-      if (error) {
-        console.error('[邮件通知] SMTP连接验证失败:', error.message);
-        emailTransporter = null;
-      } else {
-        console.safe(`[邮件通知] SMTP连接成功，错误日志将发送至: ${toEmail}`);
-      }
-    });
-
-    return emailTransporter;
-  } catch (err) {
-    console.error('[邮件通知] 创建邮件发送器失败:', err.message);
-    return null;
-  }
-}
-
 /**
- * 发送邮件通知
- * @param {string} errorMessage - 错误消息内容
- * @param {object} metadata - 额外的元数据
+ * 安全记录通知历史（不抛出异常）
  */
 function safeRecordNotification(params) {
   try {
@@ -311,45 +254,46 @@ function safeRecordNotification(params) {
   } catch (_) {}
 }
 
-function sendErrorEmail(errorMessage, metadata = {}) {
-  // 防止递归调用：如果正在发送邮件，直接返回
-  if (isSendingErrorEmail) {
-    // 使用最底层的winston直接写入，避免再次触发console.error
+/**
+ * 发送Bark错误通知
+ * @param {string} errorMessage - 错误消息内容
+ * @param {object} metadata - 额外的元数据
+ */
+async function sendErrorBarkNotification(errorMessage, metadata = {}) {
+  // 防止递归调用：如果正在发送通知，直接返回
+  if (isSendingBarkNotification) {
     const bypassLogger = winston.createLogger({
       level: 'warn',
       transports: [
         new winston.transports.File({
-          filename: path.join(logDir, 'email-notification-blocked.log'),
-          maxsize: 5242880, // 5MB
+          filename: path.join(logDir, 'bark-notification-blocked.log'),
+          maxsize: 5242880,
           maxFiles: 1
         })
       ]
     });
-    bypassLogger.warn(`[邮件通知] 检测到递归调用尝试，已阻止。原错误: ${errorMessage.substring(0, 200)}`);
+    bypassLogger.warn(`[Bark通知] 检测到递归调用尝试，已阻止。原错误: ${errorMessage.substring(0, 200)}`);
     return;
   }
 
-  const transporter = getEmailTransporter();
-  if (!transporter) {
+  // 检查Bark是否启用
+  if (!barkNotifier.isEnabled()) {
     safeRecordNotification({
-      channel: 'email',
-      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      channel: 'bark',
+      title: '系统错误告警',
       body: errorMessage.substring(0, 500),
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
       group: '系统错误',
       level: 'critical',
       status: 'failed',
-      errorMessage: 'SMTP传输器未初始化'
+      errorMessage: 'Bark通知功能未启用'
     });
     return;
   }
 
   // 检查熔断器状态
   const now = Date.now();
-  if (emailRateLimit.circuitBreakerActive && now < emailRateLimit.circuitBreakerUntil) {
-    // 熔断器激活期间，只记录一次警告
-    if (!emailRateLimit.circuitBreakerLogged) {
-      // 使用安全的日志方式，不通过console
+  if (barkRateLimit.circuitBreakerActive && now < barkRateLimit.circuitBreakerUntil) {
+    if (!barkRateLimit.circuitBreakerLogged) {
       const bypassLogger = winston.createLogger({
         level: 'info',
         transports: [
@@ -360,25 +304,24 @@ function sendErrorEmail(errorMessage, metadata = {}) {
           })
         ]
       });
-      bypassLogger.info(`[邮件通知] 熔断器已激活，暂停邮件发送直到 ${new Date(emailRateLimit.circuitBreakerUntil).toLocaleTimeString('zh-CN')}`);
-      emailRateLimit.circuitBreakerLogged = true;
+      bypassLogger.info(`[Bark通知] 熔断器已激活，暂停通知发送直到 ${new Date(barkRateLimit.circuitBreakerUntil).toLocaleTimeString('zh-CN')}`);
+      barkRateLimit.circuitBreakerLogged = true;
     }
     safeRecordNotification({
-      channel: 'email',
-      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      channel: 'bark',
+      title: '系统错误告警',
       body: errorMessage.substring(0, 500),
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
       group: '系统错误',
       level: 'critical',
       status: 'failed',
-      errorMessage: '熔断器已激活，邮件发送暂停'
+      errorMessage: '熔断器已激活，通知发送暂停'
     });
     return;
-  } else if (emailRateLimit.circuitBreakerActive && now >= emailRateLimit.circuitBreakerUntil) {
+  } else if (barkRateLimit.circuitBreakerActive && now >= barkRateLimit.circuitBreakerUntil) {
     // 熔断器解除
-    emailRateLimit.circuitBreakerActive = false;
-    emailRateLimit.consecutiveFailures = 0;
-    emailRateLimit.circuitBreakerLogged = false;
+    barkRateLimit.circuitBreakerActive = false;
+    barkRateLimit.consecutiveFailures = 0;
+    barkRateLimit.circuitBreakerLogged = false;
     
     const bypassLogger = winston.createLogger({
       level: 'info',
@@ -390,19 +333,17 @@ function sendErrorEmail(errorMessage, metadata = {}) {
         })
       ]
     });
-    bypassLogger.info('[邮件通知] 熔断器已解除，恢复邮件发送');
+    bypassLogger.info('[Bark通知] 熔断器已解除，恢复通知发送');
   }
 
-  // 检查频率限制
   // 每小时重置计数
-  if (now > emailRateLimit.resetTime) {
-    emailRateLimit.sentCount = 0;
-    emailRateLimit.resetTime = now + 3600000;
+  if (now > barkRateLimit.resetTime) {
+    barkRateLimit.sentCount = 0;
+    barkRateLimit.resetTime = now + 3600000;
   }
   
-  // 检查是否超过每小时最大邮件数
-  if (emailRateLimit.sentCount >= emailRateLimit.maxEmailsPerHour) {
-    // 使用底层日志记录，不触发邮件通知
+  // 检查是否超过每小时最大通知数
+  if (barkRateLimit.sentCount >= barkRateLimit.maxNotificationsPerHour) {
     const bypassLogger = winston.createLogger({
       level: 'warn',
       transports: [
@@ -413,22 +354,21 @@ function sendErrorEmail(errorMessage, metadata = {}) {
         })
       ]
     });
-    bypassLogger.warn('[邮件通知] 已达到每小时最大邮件数限制，跳过发送');
+    bypassLogger.warn('[Bark通知] 已达到每小时最大通知数限制，跳过发送');
     safeRecordNotification({
-      channel: 'email',
-      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      channel: 'bark',
+      title: '系统错误告警',
       body: errorMessage.substring(0, 500),
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
       group: '系统错误',
       level: 'critical',
       status: 'failed',
-      errorMessage: '已达到每小时最大邮件数限制'
+      errorMessage: '已达到每小时最大通知数限制'
     });
     return;
   }
   
   // 检查最小间隔时间
-  if (now - emailRateLimit.lastSentTime < emailRateLimit.minInterval) {
+  if (now - barkRateLimit.lastSentTime < barkRateLimit.minInterval) {
     const bypassLogger = winston.createLogger({
       level: 'info',
       transports: [
@@ -439,12 +379,11 @@ function sendErrorEmail(errorMessage, metadata = {}) {
         })
       ]
     });
-    bypassLogger.info('[邮件通知] 距离上次发送邮件时间过短，跳过发送');
+    bypassLogger.info('[Bark通知] 距离上次发送通知时间过短，跳过发送');
     safeRecordNotification({
-      channel: 'email',
-      title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
+      channel: 'bark',
+      title: '系统错误告警',
       body: errorMessage.substring(0, 500),
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
       group: '系统错误',
       level: 'critical',
       status: 'failed',
@@ -453,125 +392,24 @@ function sendErrorEmail(errorMessage, metadata = {}) {
     return;
   }
 
-  const toEmail = process.env.ERROR_NOTIFICATION_EMAIL || 'zxx12182022@163.com';
   const timestamp = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
   
-  // 构建邮件内容
-  let htmlContent = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background-color: #f44336; color: white; padding: 20px; text-align: center;">
-        <h2 style="margin: 0;">⚠️ 系统错误告警</h2>
-      </div>
-      <div style="padding: 20px; background-color: #f9f9f9;">
-        <p><strong>📅 发生时间:</strong> ${timestamp}</p>
-        <p><strong>🖥️ 服务器:</strong> ${process.env.HOSTNAME || '未知'}</p>
-        <p><strong>📝 错误信息:</strong></p>
-        <div style="background-color: #fff; padding: 15px; border-left: 4px solid #f44336; margin: 10px 0;">
-          <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${errorMessage}</pre>
-        </div>
-  `;
-
-  // 添加额外的元数据
-  if (Object.keys(metadata).length > 0) {
-    htmlContent += `<p><strong>📊 详细信息:</strong></p>`;
-    htmlContent += `<div style="background-color: #fff; padding: 15px; border-left: 4px solid #ff9800; margin: 10px 0;">`;
-    htmlContent += `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-size: 13px;">${JSON.stringify(metadata, null, 2)}</pre>`;
-    htmlContent += `</div>`;
-  }
-
-  htmlContent += `
-      </div>
-      <div style="background-color: #e0e0e0; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-        <p>此邮件由系统自动发送，请勿回复</p>
-        <p>如有问题请联系系统管理员</p>
-      </div>
-    </div>
-  `;
-
-  const mailOptions = {
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-    to: toEmail,
-    subject: `【错误告警】${process.env.APP_NAME || '学位管理系统'} - ${timestamp}`,
-    html: htmlContent,
-    // 同时提供纯文本版本
-    text: `
-系统错误告警
-
-发生时间: ${timestamp}
-服务器: ${process.env.HOSTNAME || '未知'}
-
-错误信息:
-${errorMessage}
-
-${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata, null, 2) : ''}
-
----
-此邮件由系统自动发送，请勿回复
-    `
-  };
-
+  // 使用Bark模板生成通知内容
+  const notification = getSystemErrorAlert({ errorMessage, timestamp });
+  
   // 设置发送标志
-  isSendingErrorEmail = true;
+  isSendingBarkNotification = true;
 
-  // 发送邮件（异步，不阻塞主流程）
-  transporter.sendMail(mailOptions, (error, info) => {
-    // 重置发送标志
-    isSendingErrorEmail = false;
-
-    if (error) {
-      // 增加连续失败计数
-      emailRateLimit.consecutiveFailures++;
-      
-      // 如果连续失败超过5次，激活熔断器，暂停1小时
-      if (emailRateLimit.consecutiveFailures >= 5) {
-        emailRateLimit.circuitBreakerActive = true;
-        emailRateLimit.circuitBreakerUntil = Date.now() + 3600000; // 1小时后解除
-        emailRateLimit.circuitBreakerLogged = false;
-        
-        // 使用独立的日志记录器，完全不经过console和logger的error/warn级别
-        const failureLogger = winston.createLogger({
-          level: 'warn',
-          transports: [
-            new winston.transports.File({
-              filename: path.join(logDir, 'email-failure.log'),
-              maxsize: 5242880, // 5MB
-              maxFiles: 2
-            })
-          ]
-        });
-        failureLogger.warn(`[邮件通知] 连续${emailRateLimit.consecutiveFailures}次发送失败，熔断器已激活，暂停1小时。错误: ${error.message}`);
-      } else {
-        // 使用独立的日志记录器，避免触发新的邮件通知
-        const warnLogger = winston.createLogger({
-          level: 'warn',
-          transports: [
-            new winston.transports.File({
-              filename: path.join(logDir, 'email-send-warnings.log'),
-              maxsize: 5242880, // 5MB
-              maxFiles: 2
-            })
-          ]
-        });
-        warnLogger.warn(`[邮件通知] 发送失败 (${emailRateLimit.consecutiveFailures}/5): ${error.message}`);
-      }
-      
-      safeRecordNotification({
-        channel: 'email',
-        title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
-        body: errorMessage.substring(0, 500),
-        recipient: toEmail,
-        group: '系统错误',
-        level: 'critical',
-        status: 'failed',
-        errorMessage: error.message
-      });
-    } else {
+  try {
+    // 发送Bark通知
+    const result = await barkNotifier.sendNotification(notification);
+    
+    if (result.success) {
       // 发送成功，重置失败计数
-      emailRateLimit.consecutiveFailures = 0;
-      emailRateLimit.lastSentTime = Date.now();
-      emailRateLimit.sentCount++;
+      barkRateLimit.consecutiveFailures = 0;
+      barkRateLimit.lastSentTime = Date.now();
+      barkRateLimit.sentCount++;
       
-      // 使用安全级别的日志记录成功信息
       const successLogger = winston.createLogger({
         level: 'info',
         transports: [
@@ -582,20 +420,96 @@ ${Object.keys(metadata).length > 0 ? '详细信息:\n' + JSON.stringify(metadata
           })
         ]
       });
-      successLogger.info(`[邮件通知] 已发送错误告警邮件至 ${toEmail}, MessageID: ${info.messageId}, 本小时已发送: ${emailRateLimit.sentCount}/${emailRateLimit.maxEmailsPerHour}`);
+      successLogger.info(`[Bark通知] 已发送错误告警通知，本小时已发送: ${barkRateLimit.sentCount}/${barkRateLimit.maxNotificationsPerHour}`);
       
       safeRecordNotification({
-        channel: 'email',
-        title: `【错误告警】${process.env.APP_NAME || '系统'} - 系统错误`,
-        body: errorMessage.substring(0, 500),
-        recipient: toEmail,
+        channel: 'bark',
+        title: notification.title,
+        body: notification.body,
         group: '系统错误',
         level: 'critical',
         status: 'success',
-        metadata: { messageId: info.messageId }
+        metadata: result.data
+      });
+    } else {
+      // 发送失败，增加连续失败计数
+      barkRateLimit.consecutiveFailures++;
+      
+      if (barkRateLimit.consecutiveFailures >= 5) {
+        barkRateLimit.circuitBreakerActive = true;
+        barkRateLimit.circuitBreakerUntil = Date.now() + 3600000;
+        barkRateLimit.circuitBreakerLogged = false;
+        
+        const failureLogger = winston.createLogger({
+          level: 'warn',
+          transports: [
+            new winston.transports.File({
+              filename: path.join(logDir, 'bark-failure.log'),
+              maxsize: 5242880,
+              maxFiles: 2
+            })
+          ]
+        });
+        failureLogger.warn(`[Bark通知] 连续${barkRateLimit.consecutiveFailures}次发送失败，熔断器已激活，暂停1小时。错误: ${result.error}`);
+      } else {
+        const warnLogger = winston.createLogger({
+          level: 'warn',
+          transports: [
+            new winston.transports.File({
+              filename: path.join(logDir, 'bark-send-warnings.log'),
+              maxsize: 5242880,
+              maxFiles: 2
+            })
+          ]
+        });
+        warnLogger.warn(`[Bark通知] 发送失败 (${barkRateLimit.consecutiveFailures}/5): ${result.error}`);
+      }
+      
+      safeRecordNotification({
+        channel: 'bark',
+        title: notification.title,
+        body: notification.body,
+        group: '系统错误',
+        level: 'critical',
+        status: 'failed',
+        errorMessage: result.error
       });
     }
-  });
+  } catch (error) {
+    // 异常处理
+    barkRateLimit.consecutiveFailures++;
+    
+    if (barkRateLimit.consecutiveFailures >= 5) {
+      barkRateLimit.circuitBreakerActive = true;
+      barkRateLimit.circuitBreakerUntil = Date.now() + 3600000;
+      barkRateLimit.circuitBreakerLogged = false;
+      
+      const failureLogger = winston.createLogger({
+        level: 'warn',
+        transports: [
+          new winston.transports.File({
+            filename: path.join(logDir, 'bark-failure.log'),
+            maxsize: 5242880,
+            maxFiles: 2
+          })
+        ]
+      });
+      failureLogger.warn(`[Bark通知] 连续${barkRateLimit.consecutiveFailures}次发送异常，熔断器已激活，暂停1小时。错误: ${error.message}`);
+    }
+    
+    safeRecordNotification({
+      channel: 'bark',
+      title: notification.title,
+      body: notification.body,
+      group: '系统错误',
+      level: 'critical',
+      status: 'failed',
+      errorMessage: error.message
+    });
+  } finally {
+    // 重置发送标志
+    isSendingBarkNotification = false;
+  }
 }
 
 /**

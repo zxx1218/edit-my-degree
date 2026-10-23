@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { logLogin, logAdminOperation } = require('./operation-logger');
 const { queryIPLocation } = require('./ip-location');
 const dbManager = require('./db-utils');
-const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist } = require('./ip-blacklist');
+const { isIpBlacklisted, recordAndCheckIp, logIpBlacklist, autoBlockIp } = require('./ip-blacklist');
 const { isUserBlacklisted } = require('./manage-ip-blacklist');
 const barkNotifier = require('./bark-notifier');
 const notificationCooldown = require('./notification-cooldown');
@@ -317,9 +317,14 @@ function initialize(pool, jwtSecret) {
           error: '用户不存在' 
         });
         
-        return res.status(401).json({
+        // 用户名不存在，视为恶意探测，自动封禁IP 3天
+        const BLOCK_DURATION_3_DAYS = 3 * 24 * 60 * 60 * 1000;
+        await autoBlockIp(ipAddress, `尝试使用不存在的管理员用户名"${username}"登录`, '管理员登录', BLOCK_DURATION_3_DAYS);
+        
+        return res.status(403).json({
           success: false,
-          error: '用户名或密码错误'
+          error: '检测到恶意登录我校借书系统，已封禁机器码',
+          isBlacklisted: true
         });
       }
       

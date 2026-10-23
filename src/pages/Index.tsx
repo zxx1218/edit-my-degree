@@ -50,6 +50,7 @@ const Index = () => {
   const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([]);
   const [degreeRecords, setDegreeRecords] = useState<EducationRecord[]>([]);
   const [examRecords, setExamRecords] = useState<any[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const convertToEducationRecord = useCallback((item: any, type: string): EducationRecord => ({
     id: item.id,
@@ -237,8 +238,9 @@ const Index = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedRecord) return;
+    if (!selectedRecord || isDeleting) return;
 
+    setIsDeleting(true);
     try {
       const tableMap: Record<string, string> = {
         "student-status": "student_status",
@@ -248,6 +250,8 @@ const Index = () => {
       };
 
       const table = tableMap[selectedRecord.type];
+      console.log('[删除] 开始删除记录:', { table, id: selectedRecord.id, userId: currentUserId });
+      
       await updateData(table, "delete", currentUserId, undefined, selectedRecord.id);
 
       const deleteFromList = (list: EducationRecord[]) =>
@@ -268,9 +272,19 @@ const Index = () => {
           break;
       }
 
+      console.log('[删除] 记录删除成功:', { table, id: selectedRecord.id });
       toast.success("已删除记录", { duration: 1500 });
     } catch (error) {
-      toast.error("删除记录失败", { duration: 1500 });
+      const errorMsg = error instanceof Error ? error.message : '未知错误';
+      console.error('[删除] 记录删除失败:', { 
+        error: errorMsg, 
+        recordId: selectedRecord?.id,
+        recordType: selectedRecord?.type,
+        error 
+      });
+      toast.error(`删除记录失败: ${errorMsg}`, { duration: 2000 });
+    } finally {
+      setIsDeleting(false);
     }
   };
 

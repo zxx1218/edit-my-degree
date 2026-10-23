@@ -32,7 +32,7 @@ import { format } from "date-fns";
 
 interface NotificationItem {
   id: string;
-  channel: 'bark' | 'email';
+  channel: 'bark';
   title: string;
   body: string;
   recipient: string | null;
@@ -58,7 +58,7 @@ const NotificationHistoryManager = ({ token }: NotificationHistoryManagerProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [channelFilter, setChannelFilter] = useState<'all' | 'bark' | 'email'>('all');
+  const [channelFilter, setChannelFilter] = useState<'all' | 'bark'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failed'>('all');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -268,15 +268,6 @@ const NotificationHistoryManager = ({ token }: NotificationHistoryManagerProps) 
               >
                 <Smartphone className="h-3 w-3 mr-1" />
                 Bark
-              </Button>
-              <Button
-                variant={channelFilter === 'email' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setChannelFilter('email')}
-                className="text-xs"
-              >
-                <Mail className="h-3 w-3 mr-1" />
-                邮件
               </Button>
             </div>
             <div className="flex gap-1">

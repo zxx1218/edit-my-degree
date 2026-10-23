@@ -148,6 +148,97 @@ function getIpAutoBlockNotification({ ip, reason, source, blockDuration, blocked
   };
 }
 
+/**
+ * 获取非法API调用告警通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.ip - IP地址
+ * @param {string} options.path - 请求路径
+ * @param {string} options.method - 请求方法
+ * @param {string} options.reason - 告警原因
+ * @returns {Object} 通知对象
+ */
+function getIllegalApiCallAlert({ ip, path, method, reason }) {
+  return {
+    title: '🚨 充值接口非法调用',
+    body: `IP: ${ip} | ${method} ${path}\n原因: ${reason}`,
+    group: '安全告警',
+    level: 'critical',
+    sound: 'bell'
+  };
+}
+
+/**
+ * 获取IP注册频率超限告警通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.ipAddress - IP地址
+ * @param {number} options.registrationCount - 注册数量
+ * @param {string} options.attemptedUsername - 尝试注册的用户名
+ * @returns {Object} 通知对象
+ */
+function getIpRegistrationFrequencyAlert({ ipAddress, registrationCount, attemptedUsername }) {
+  return {
+    title: '🚫 IP注册频率超限',
+    body: `IP: ${ipAddress} | 24h注册${registrationCount}个\n用户名: ${attemptedUsername} | 已拦截`,
+    group: '安全告警',
+    level: 'critical',
+    sound: 'bell'
+  };
+}
+
+/**
+ * 获取频繁密码重置告警通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.username - 用户名
+ * @param {string} options.ipAddress - IP地址
+ * @param {number} options.attempts - 尝试次数
+ * @returns {Object} 通知对象
+ */
+function getFrequentPasswordResetAlert({ username, ipAddress, attempts }) {
+  return {
+    title: '⚠️ 频繁密码重置尝试',
+    body: `用户: ${username} | IP: ${ipAddress}\n尝试次数: ${attempts}次 | 可能遭受攻击`,
+    group: '安全告警',
+    level: 'critical',
+    sound: 'bell'
+  };
+}
+
+/**
+ * 获取密码重置验证失败告警通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.username - 用户名
+ * @param {string} options.ipAddress - IP地址
+ * @param {number} options.attempts - 失败次数
+ * @returns {Object} 通知对象
+ */
+function getPasswordResetVerificationFailedAlert({ username, ipAddress, attempts }) {
+  return {
+    title: '🔐 密码重置验证失败',
+    body: `用户: ${username} | IP: ${ipAddress}\n错误卡密次数: ${attempts}次`,
+    group: '安全告警',
+    level: 'critical',
+    sound: 'bell'
+  };
+}
+
+/**
+ * 获取系统错误告警通知模板
+ * @param {Object} options - 配置选项
+ * @param {string} options.errorMessage - 错误信息
+ * @param {string} options.timestamp - 发生时间
+ * @returns {Object} 通知对象
+ */
+function getSystemErrorAlert({ errorMessage, timestamp }) {
+  const shortError = errorMessage.length > 100 ? errorMessage.substring(0, 100) + '...' : errorMessage;
+  return {
+    title: '❌ 系统错误告警',
+    body: `时间: ${timestamp}\n错误: ${shortError}`,
+    group: '系统错误',
+    level: 'critical',
+    sound: 'bell'
+  };
+}
+
 module.exports = {
   getIpBlacklistBlockNotification,
   getUserBlacklistBlockNotification,
@@ -155,5 +246,10 @@ module.exports = {
   getFailedLoginNotification,
   getIpRateLimitBlockNotification,
   getFrequentPasswordChangeNotification,
-  getIpAutoBlockNotification
+  getIpAutoBlockNotification,
+  getIllegalApiCallAlert,
+  getIpRegistrationFrequencyAlert,
+  getFrequentPasswordResetAlert,
+  getPasswordResetVerificationFailedAlert,
+  getSystemErrorAlert
 };

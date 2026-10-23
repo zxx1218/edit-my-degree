@@ -77,10 +77,11 @@ function initialize(db) {
           registrationCount: recentRegistrations.length
         });
 
-        // 发送安全告警邮件
+        // 发送安全告警通知
         sendSecurityAlert({
           subject: 'IP注册频率超限被拦截',
           message: `系统检测到IP地址 ${ipAddress} 在24小时内尝试注册多个账户（已注册${recentRegistrations.length}个），触发安全防护机制并被拦截。该IP已被自动封禁1小时。`,
+          type: 'ip_registration_frequency',
           details: {
             ipAddress: ipAddress,
             userAgent: userAgent,

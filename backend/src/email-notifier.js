@@ -1,151 +1,109 @@
 /**
- * 邮件通知模块
- * 仅用于充值接口的恶意调用告警（高优先级安全事件）
+ * 安全告警通知模块
+ * 原邮件通知已迁移至 Bark 推送
  */
 
-const nodemailer = require('nodemailer');
+const barkNotifier = require('./bark-notifier');
 const { recordNotificationHistory } = require('./notification-history');
 const notificationCooldown = require('./notification-cooldown');
-const { getSecurityAlertHtml, getIllegalApiCallAlertData } = require('./notifications/templates/email/security');
-
-// 邮件传输器配置
-let transporter = null;
-
-/**
- * 初始化邮件传输器
- */
-function initTransporter() {
-  if (transporter) return transporter;
-  
-  const smtpConfig = {
-    host: process.env.SMTP_HOST || 'smtp.163.com',
-    port: parseInt(process.env.SMTP_PORT || '465'),
-    secure: true, // SSL连接
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  };
-  
-  transporter = nodemailer.createTransport(smtpConfig);
-  return transporter;
-}
+const {
+  getIllegalApiCallAlert,
+  getIpRegistrationFrequencyAlert,
+  getFrequentPasswordResetAlert,
+  getPasswordResetVerificationFailedAlert
+} = require('./notifications/templates');
 
 /**
- * 发送安全告警邮件（带冷却机制）
- * @param {Object} params - 邮件参数
- * @param {string} params.subject - 邮件主题
- * @param {string} params.message - 邮件内容
+ * 发送安全告警通知（通过 Bark，带冷却机制）
+ * @param {Object} params - 通知参数
+ * @param {string} params.subject - 告警主题
+ * @param {string} params.message - 告警内容
  * @param {Object} params.details - 详细信息对象
+ * @param {string} params.type - 告警类型（用于选择模板）
  */
 async function sendSecurityAlert(params) {
-  const { subject, message, details } = params;
+  const { subject, message, details, type } = params;
   
-  // 生成通知标识符（用于冷却）
-  const identifier = `${subject}:${details?.ip || 'unknown'}`;
+  const identifier = `${subject}:${details?.ip || details?.ipAddress || 'unknown'}`;
+  const cooldownType = `security_alert_${type || 'general'}`;
   
-  // 检查是否在冷却期内
-  const { shouldSend, remainingSeconds } = notificationCooldown.shouldSend('email_security_alert', identifier);
+  const { shouldSend, remainingSeconds } = notificationCooldown.shouldSend(cooldownType, identifier);
   
   if (!shouldSend) {
     const minutes = Math.ceil(remainingSeconds / 60);
-    console.info(`[邮件通知] ⏳ 跳过发送（冷却中，剩余 ${minutes} 分钟）: ${subject}`);
+    console.info(`[安全告警] ⏳ 跳过发送（冷却中，剩余 ${minutes} 分钟）: ${subject}`);
     return false;
   }
   
-  // 检查是否启用邮件通知
-  if (process.env.ENABLE_ERROR_EMAIL_NOTIFICATION !== 'true') {
-    console.info('[邮件通知] ℹ️ 邮件通知已禁用（ENABLE_ERROR_EMAIL_NOTIFICATION != true）');
+  if (!barkNotifier.isEnabled()) {
+    console.info('[安全告警] Bark通知未启用，跳过发送');
     await recordNotificationHistory({
-      channel: 'email',
+      channel: 'bark',
       title: subject,
       body: message,
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
       group: '安全告警',
       level: 'critical',
       status: 'failed',
-      errorMessage: '邮件通知功能已禁用（ENABLE_ERROR_EMAIL_NOTIFICATION != true）'
-    });
-    return false;
-  }
-  
-  // 检查SMTP配置
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[邮件通知] ⚠️ SMTP配置不完整，无法发送邮件');
-    console.warn(`[邮件通知] 🔍 当前配置 - SMTP_USER: ${process.env.SMTP_USER ? '已设置' : '未设置'}, SMTP_PASS: ${process.env.SMTP_PASS ? '已设置' : '未设置'}`);
-    await recordNotificationHistory({
-      channel: 'email',
-      title: subject,
-      body: message,
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL || '未配置',
-      group: '安全告警',
-      level: 'critical',
-      status: 'failed',
-      errorMessage: 'SMTP配置不完整（缺少SMTP_USER或SMTP_PASS）'
+      errorMessage: 'Bark通知功能未启用'
     });
     return false;
   }
   
   try {
-    const mailTransporter = initTransporter();
+    let notification;
     
-    console.info(`[邮件通知] 📤 正在连接SMTP服务器: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`);
-    console.info(`[邮件通知] 👤 发件人: ${process.env.EMAIL_FROM || process.env.SMTP_USER}`);
-    console.info(`[邮件通知] 📬 收件人: ${process.env.ERROR_NOTIFICATION_EMAIL}`);
-    
-    const htmlContent = getSecurityAlertHtml({
-      subject,
-      message,
-      details,
-      appName: process.env.APP_NAME
-    });
-    
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-      to: process.env.ERROR_NOTIFICATION_EMAIL,
-      subject: `[${process.env.APP_NAME || '系统'}] ${subject}`,
-      html: htmlContent
-    };
-    
-    console.info(`[邮件通知] 📨 正在发送邮件...`);
-    const info = await mailTransporter.sendMail(mailOptions);
-    console.info(`[邮件通知] ✅ 安全告警邮件发送成功`);
-    console.info(`[邮件通知] 🆔 Message ID: ${info.messageId}`);
-    console.info(`[邮件通知] 📊 SMTP响应: ${info.response || 'N/A'}`);
-    
-    // 记录已发送，启动冷却
-    notificationCooldown.recordSent('email_security_alert', identifier);
-    
-    // 记录通知历史
-    await recordNotificationHistory({
-      channel: 'email',
-      title: subject,
-      body: message,
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL,
-      group: '安全告警',
-      level: 'critical',
-      status: 'success',
-      metadata: { messageId: info.messageId }
-    });
-    
-    return true;
-    
-  } catch (error) {
-    console.error(`[邮件通知] ❌ 邮件发送失败`);
-    console.error(`[邮件通知] 🔴 错误类型: ${error.constructor.name}`);
-    console.error(`[邮件通知] 🔴 错误消息: ${error.message}`);
-    console.error(`[邮件通知] 🔴 错误代码: ${error.code || 'N/A'}`);
-    console.error(`[邮件通知] 🔴 错误命令: ${error.command || 'N/A'}`);
-    if (error.stack) {
-      console.error(`[邮件通知] 📚 堆栈跟踪:\n${error.stack}`);
+    switch (type) {
+      case 'illegal_api_call':
+        notification = getIllegalApiCallAlert(details);
+        break;
+      case 'ip_registration_frequency':
+        notification = getIpRegistrationFrequencyAlert(details);
+        break;
+      case 'frequent_password_reset':
+        notification = getFrequentPasswordResetAlert(details);
+        break;
+      case 'password_reset_verification_failed':
+        notification = getPasswordResetVerificationFailedAlert(details);
+        break;
+      default:
+        notification = {
+          title: `⚠️ ${subject}`,
+          body: message.length > 100 ? message.substring(0, 100) + '...' : message,
+          group: '安全告警',
+          level: 'critical',
+          sound: 'bell'
+        };
     }
     
-    // 记录失败的通知历史
+    const result = await barkNotifier.sendNotification(notification);
+    
+    notificationCooldown.recordSent(cooldownType, identifier);
+    
     await recordNotificationHistory({
-      channel: 'email',
-      title: params.subject,
-      body: params.message,
-      recipient: process.env.ERROR_NOTIFICATION_EMAIL,
+      channel: 'bark',
+      title: notification.title,
+      body: notification.body,
+      group: '安全告警',
+      level: 'critical',
+      status: result.success ? 'success' : 'failed',
+      errorMessage: result.error || undefined
+    });
+    
+    if (result.success) {
+      console.info(`[安全告警] ✅ Bark通知发送成功: ${subject}`);
+    } else {
+      console.warn(`[安全告警] ⚠️ Bark通知发送失败: ${result.error}`);
+    }
+    
+    return result.success;
+    
+  } catch (error) {
+    console.error(`[安全告警] ❌ 通知发送异常: ${error.message}`);
+    
+    await recordNotificationHistory({
+      channel: 'bark',
+      title: subject,
+      body: message,
       group: '安全告警',
       level: 'critical',
       status: 'failed',
@@ -157,7 +115,7 @@ async function sendSecurityAlert(params) {
 }
 
 /**
- * 发送非法API调用告警（充值接口恶意调用）
+ * 发送非法API调用告警
  * @param {Object} requestData - 请求数据
  * @param {Object} requestData.req - 请求对象
  * @param {string} requestData.reason - 告警原因
@@ -170,18 +128,19 @@ async function sendIllegalApiCallAlert(requestData) {
     || (req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : null)
     || req.headers['x-real-ip'] || '未知IP';
   
-  const alertData = getIllegalApiCallAlertData({
-    ip,
-    userAgent: req.get('User-Agent') || 'Unknown',
-    path: req.path,
-    method: req.method,
-    reason,
-    details
+  return await sendSecurityAlert({
+    subject: '检测到充值接口非法调用',
+    message: '系统检测到对充值卡管理接口的非法调用，可能存在安全风险。',
+    type: 'illegal_api_call',
+    details: {
+      ip,
+      path: req.path,
+      method: req.method,
+      reason,
+      ...details
+    }
   });
-  
-  return await sendSecurityAlert(alertData);
 }
-
 
 module.exports = {
   sendSecurityAlert,

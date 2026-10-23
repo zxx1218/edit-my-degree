@@ -585,7 +585,7 @@ export const updateUserTags = async (token: string, body: {
 export const getNotificationHistory = async (token: string, params: {
   page?: number;
   pageSize?: number;
-  channel?: 'all' | 'bark' | 'email';
+  channel?: 'all' | 'bark';
   status?: 'all' | 'success' | 'failed';
   searchQuery?: string;
 }) => {

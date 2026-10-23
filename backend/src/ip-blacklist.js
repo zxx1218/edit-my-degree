@@ -113,7 +113,7 @@ async function addToBlacklist(ipAddress, reason) {
  * @param {string} reason - 触发原因（错误/警告描述）
  * @param {string} source - 触发来源模块
  */
-async function autoBlockIp(ipAddress, reason, source = '未知模块') {
+async function autoBlockIp(ipAddress, reason, source = '未知模块', durationMs = null) {
   if (!ipAddress || ipAddress === 'unknown') {
     return;
   }
@@ -125,8 +125,9 @@ async function autoBlockIp(ipAddress, reason, source = '未知模块') {
       return;
     }
     
-    const blockedUntil = new Date(Date.now() + AUTO_BLOCK_CONFIG.DURATION);
-    const blockDurationMinutes = AUTO_BLOCK_CONFIG.DURATION / 1000 / 60;
+    const blockDuration = durationMs || AUTO_BLOCK_CONFIG.DURATION;
+    const blockedUntil = new Date(Date.now() + blockDuration);
+    const blockDurationMinutes = blockDuration / 1000 / 60;
     
     // 删除旧记录
     await dbManager.execute(

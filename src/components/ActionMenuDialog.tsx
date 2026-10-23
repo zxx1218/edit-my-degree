@@ -16,7 +16,7 @@ interface ActionMenuDialogProps {
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
   onAdd: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void> | void;
   recordType: "student-status" | "education" | "degree" | "exam";
   showEdit?: boolean;
   showDelete?: boolean;
@@ -88,8 +88,8 @@ const ActionMenuDialog = ({
           
           {showDelete && (
             <Button
-              onClick={() => {
-                onDelete();
+              onClick={async () => {
+                await onDelete();
                 onOpenChange(false);
               }}
               variant="outline"
