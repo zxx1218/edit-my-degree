@@ -104,7 +104,7 @@ const DegreeDetail = () => {
   }, [id, toast, location.state]);
   const [editingField, setEditingField] = useState<{ field: keyof DegreeData; label: string } | null>(null);
 
-  const handleFieldClick = useCallback((field: string, label: string) => {
+  const handleFieldClick = useCallback((field: keyof DegreeData, label: string) => {
     setEditingField({ field, label });
   }, []);
 
