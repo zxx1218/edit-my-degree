@@ -62,6 +62,10 @@ async function handleGetConfig(db, req, res) {
     : process.env.ENABLE_BARK_NOTIFICATION === 'true';
   
   const sound = dynamicConfig.bark_sound || process.env.BARK_SOUND || 'paymentsuccess';
+  const level = dynamicConfig.bark_level || process.env.BARK_LEVEL || 'active';
+  const group = dynamicConfig.bark_group || process.env.BARK_GROUP || '学位管理系统充值通知';
+  const icon = dynamicConfig.bark_icon !== undefined ? dynamicConfig.bark_icon : (process.env.BARK_ICON || '');
+  const url = dynamicConfig.bark_url !== undefined ? dynamicConfig.bark_url : (process.env.BARK_URL || '');
   
   const dailyReportEnabled = dynamicConfig.bark_daily_report_enabled !== undefined
     ? dynamicConfig.bark_daily_report_enabled === 'true'
@@ -82,11 +86,11 @@ async function handleGetConfig(db, req, res) {
       pushUrl,
       deviceKeys: maskedKeys,
       deviceKeysCount: deviceKeys.length,
-      level: process.env.BARK_LEVEL || 'active',
+      level,
       sound,
-      group: process.env.BARK_GROUP || '学位管理系统充值通知',
-      icon: process.env.BARK_ICON || '',
-      url: process.env.BARK_URL || '',
+      group,
+      icon,
+      url,
       dailyReportEnabled,
     }
   });
@@ -258,10 +262,9 @@ async function handleGetBarkHistory(db, req, res) {
 }
 
 async function handleUpdateConfig(db, req, res) {
-  const { barkEnabled, barkSound, dailyReportEnabled } = req.body;
+  const { barkEnabled, barkSound, barkLevel, barkGroup, barkIcon, barkUrl, dailyReportEnabled } = req.body;
   
   const updates = [];
-  const params = [];
   
   if (barkEnabled !== undefined) {
     updates.push(['bark_enabled', barkEnabled ? 'true' : 'false', 'Bark推送功能开关']);
@@ -269,6 +272,22 @@ async function handleUpdateConfig(db, req, res) {
   
   if (barkSound !== undefined && barkSound.trim()) {
     updates.push(['bark_sound', barkSound.trim(), 'Bark推送铃声']);
+  }
+  
+  if (barkLevel !== undefined && barkLevel.trim()) {
+    updates.push(['bark_level', barkLevel.trim(), 'Bark推送级别']);
+  }
+  
+  if (barkGroup !== undefined) {
+    updates.push(['bark_group', barkGroup.trim(), 'Bark推送分组']);
+  }
+  
+  if (barkIcon !== undefined) {
+    updates.push(['bark_icon', barkIcon.trim(), 'Bark推送图标URL']);
+  }
+  
+  if (barkUrl !== undefined) {
+    updates.push(['bark_url', barkUrl.trim(), 'Bark推送点击跳转URL']);
   }
   
   if (dailyReportEnabled !== undefined) {

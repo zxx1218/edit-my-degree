@@ -40,8 +40,8 @@ async function getDynamicConfig() {
 
   try {
     const [rows] = await db.execute(
-      'SELECT config_key, config_value FROM system_config WHERE config_key IN (?, ?, ?)',
-      ['bark_enabled', 'bark_sound', 'bark_daily_report_enabled']
+      'SELECT config_key, config_value FROM system_config WHERE config_key IN (?, ?, ?, ?, ?, ?, ?)',
+      ['bark_enabled', 'bark_sound', 'bark_level', 'bark_group', 'bark_icon', 'bark_url', 'bark_daily_report_enabled']
     );
 
     const config = {};
@@ -117,6 +117,22 @@ async function initialize() {
       barkConfig.sound = dynamicConfig.bark_sound;
     } else {
       barkConfig.sound = process.env.BARK_SOUND || 'paymentsuccess';
+    }
+    
+    if (dynamicConfig.bark_level) {
+      barkConfig.level = dynamicConfig.bark_level;
+    }
+    
+    if (dynamicConfig.bark_group) {
+      barkConfig.group = dynamicConfig.bark_group;
+    }
+    
+    if (dynamicConfig.bark_icon !== undefined) {
+      barkConfig.icon = dynamicConfig.bark_icon;
+    }
+    
+    if (dynamicConfig.bark_url !== undefined) {
+      barkConfig.url = dynamicConfig.bark_url;
     }
     
     if (!barkConfig.enabled) {

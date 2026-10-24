@@ -476,6 +476,10 @@ async function createTables(db) {
   const defaultConfigs = [
     ['bark_enabled', 'true', 'Bark推送功能开关'],
     ['bark_sound', 'paymentsuccess', 'Bark推送铃声'],
+    ['bark_level', 'active', 'Bark推送级别'],
+    ['bark_group', '学位管理系统充值通知', 'Bark推送分组'],
+    ['bark_icon', '', 'Bark推送图标URL'],
+    ['bark_url', '', 'Bark推送点击跳转URL'],
     ['bark_daily_report_enabled', 'true', '每日收入统计定时推送开关'],
   ];
   for (const [key, value, desc] of defaultConfigs) {

@@ -747,6 +747,10 @@ export const getBarkHistory = async (token: string, params: {
 export const updateBarkConfig = async (token: string, config: {
   barkEnabled?: boolean;
   barkSound?: string;
+  barkLevel?: string;
+  barkGroup?: string;
+  barkIcon?: string;
+  barkUrl?: string;
   dailyReportEnabled?: boolean;
 }) => {
   const url = '/api/manage-bark';
