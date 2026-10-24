@@ -277,10 +277,10 @@ const Index = () => {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '未知错误';
       console.error('[删除] 记录删除失败:', { 
-        error: errorMsg, 
+        message: errorMsg, 
         recordId: selectedRecord?.id,
         recordType: selectedRecord?.type,
-        error 
+        originalError: error 
       });
       toast.error(`删除记录失败: ${errorMsg}`, { duration: 2000 });
     } finally {
