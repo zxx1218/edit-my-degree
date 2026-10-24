@@ -1,0 +1,33 @@
+http模块内新增如下信息：
+
+# ========== IP 黑名单配置（新增） ==========
+# 使用 geo 模块定义黑名单 IP
+geo $blacklist_ip {
+    default 0;
+    
+    # 添加需要封禁的 IP
+    183.6.9.103 1;
+    # 可以继续添加更多 IP
+    # 192.168.1.100 1;
+    # 10.0.0.0/8 1;  # 支持 CIDR 网段
+}
+
+# ========== 防刷限流配置（精细化限流方案） ==========
+# 1. API接口限流：每分钟每个IP最多200个请求
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=200r/m;
+
+# 2. 页面刷新限流：每分钟每个IP最多100个请求（防止频繁刷新）
+limit_req_zone $binary_remote_addr zone=page_limit:10m rate=100r/m;
+
+# 3. 静态资源限流：每分钟每个IP最多300个请求（几乎不限）
+limit_req_zone $binary_remote_addr zone=static_limit:10m rate=300r/m;
+
+# 4. 并发连接数限制：每个IP最多10个并发连接
+limit_conn_zone $binary_remote_addr zone=perip:10m;
+
+# 5. 并发连接数限制：整个域名最多1000个并发连接
+limit_conn_zone $server_name zone=perserver:10m;
+
+# 6. 设置限流返回状态码
+limit_req_status 429;
+limit_conn_status 503;

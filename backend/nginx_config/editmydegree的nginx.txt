@@ -29,8 +29,8 @@ server {
 
     # ========== API接口（严格限制） ==========
     location ^~ /api {
-        # API接口限流：每分钟60个请求，突发20个
-        limit_req zone=api_limit burst=20 nodelay;
+        # API接口限流：每分钟100个请求，突发30个
+        limit_req zone=api_limit burst=30 nodelay;
         # API接口并发限制：每个IP最多15个并发
         limit_conn perip 15;
         
@@ -57,7 +57,7 @@ server {
 
     # ========== 二维码短码重定向代理（适中限制） ==========
     location ^~ /qr/ {
-        # 使用API的限流策略：每分钟60个请求，突发10个
+        # 使用API的限流策略：每分钟100个请求，突发10个
         limit_req zone=api_limit burst=10 nodelay;
         # 并发限制：每个IP最多15个并发
         limit_conn perip 15;
@@ -75,7 +75,7 @@ server {
 
     # ========== 前端页面（限制刷新频率） ==========
     location / {
-        # 页面限流：每分钟30个页面请求，突发5个
+        # 页面限流：每分钟100个页面请求，突发5个
         # 这样用户快速刷新页面会触发限制，但正常访问不受影响
         limit_req zone=page_limit burst=5 nodelay;
         # 并发限制：每个IP最多8个并发
