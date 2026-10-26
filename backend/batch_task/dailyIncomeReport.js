@@ -16,6 +16,9 @@
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+// 导入winston日志系统（与主后端共享日志格式和轮转策略）
+require('../src/logger');
+
 const dbManager = require('../src/db-utils');
 const barkNotifier = require('../src/bark-notifier');
 const { getDailyIncomeReport } = require('../src/notifications/templates');
