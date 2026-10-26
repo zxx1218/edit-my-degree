@@ -108,6 +108,12 @@ server {
         error_log off;
     }
 
+    # ========== PWA manifest（允许访问） ==========
+    location = /manifest.json {
+        add_header Content-Type application/manifest+json;
+        add_header Cache-Control "public, max-age=86400";
+    }
+
     # ========== 安全：禁止访问隐藏文件和敏感后缀 ==========
     location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md|\.DS_Store) {
         return 404;
