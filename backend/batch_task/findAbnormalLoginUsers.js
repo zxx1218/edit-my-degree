@@ -29,10 +29,8 @@
 
 require('dotenv').config({ path: '../../.env' });
 
-// 兼容性处理：非PM2环境下添加console.safe polyfill
-if (!console.safe) {
-  console.safe = console.log;
-}
+// 导入winston日志系统（与主后端共享日志格式和轮转策略）
+require('../src/logger');
 
 const dbManager = require('../src/db-utils');
 const fs = require('fs');
