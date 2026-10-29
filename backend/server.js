@@ -13,9 +13,8 @@ const notificationCooldown = require('./src/notification-cooldown');
 // 引入日志模块
 require('./src/logger');
 
-// 引入并初始化 Bark 通知模块
+// 引入 Bark 通知模块（初始化在数据库就绪后执行）
 const barkNotifier = require('./src/bark-notifier');
-barkNotifier.initialize();
 
 // 引入通知模板
 const { getStartupNotification } = require('./src/notifications/templates');
@@ -110,6 +109,10 @@ async function initializeApp() {
       console.safe(`[系统] Worker-${instanceId} 数据库连接池初始化成功`);
     }
     
+    // 数据库就绪后，设置 Bark 通知模块的数据库连接并重新加载配置
+    barkNotifier.setDatabase(dbManager);
+    await barkNotifier.initialize();
+
     // 设置路由（所有进程都需要）
     if (isLogProcess) {
       console.safe('[系统] 正在配置路由...');

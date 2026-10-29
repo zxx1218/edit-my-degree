@@ -90,11 +90,14 @@ function initialize(db, jwtSecret) {
       // 检查缓存是否有效
       if (provinceStatsCache && (now - cacheTimestamp) < CACHE_TTL) {
         console.log('[省份统计] 使用缓存数据');
-        return res.json({
+        console.log(`[省份统计] 准备发送缓存响应，数据大小: ${JSON.stringify(provinceStatsCache).length} 字节`);
+        res.json({
           success: true,
           ...provinceStatsCache,
           fromCache: true
         });
+        console.log(`[省份统计] 缓存响应已发送`);
+        return;
       }
       
       console.log('[省份统计] 查询数据库...');
@@ -218,17 +221,22 @@ function initialize(db, jwtSecret) {
       provinceStatsCache = result;
       cacheTimestamp = now;
       
+      console.log(`[省份统计] 准备发送响应，数据大小: ${JSON.stringify(result).length} 字节`);
       res.json({
         success: true,
         ...result,
         fromCache: false
       });
+      console.log(`[省份统计] 响应已发送`);
     } catch (err) {
-      console.error('获取省份登录统计失败:', err);
+      console.error('[省份统计] 获取省份登录统计失败:', err.message);
+      console.error('[省份统计] 错误堆栈:', err.stack);
+      console.error('[省份统计] 准备发送错误响应');
       res.status(500).json({
         success: false,
-        error: '服务器内部错误'
+        error: '服务器内部错误: ' + err.message
       });
+      console.error('[省份统计] 错误响应已发送');
     }
   };
 }

@@ -17,8 +17,8 @@
 function getStartupNotification({ hostname, port, env, startTime, clusterMode, instances }) {
   const mode = clusterMode ? `PM2集群(${instances}节点)` : '单进程';
   return {
-    title: clusterMode ? `🚀 集群启动 (${instances}节点)` : '🚀 后端服务启动成功',
-    body: `主机: ${hostname}:${port} | 环境: ${env} | 模式: ${mode}\n启动时间: ${startTime}`,
+    title: clusterMode ? `🚀 服务已重启 (${instances}节点全部就绪)` : '🚀 后端服务启动成功',
+    body: `主机: ${hostname}:${port} | 环境: ${env} | 模式: ${mode}\n启动时间: ${startTime}${clusterMode ? '\n注: 仅主节点发送通知，避免重复推送' : ''}`,
     group: '系统消息',
     level: 'active',
     sound: 'paymentsuccess'

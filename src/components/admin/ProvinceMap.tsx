@@ -16,39 +16,50 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
   const [totalLogins, setTotalLogins] = useState(0);
   const [totalProvinces, setTotalProvinces] = useState(0);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
   // 加载中国地图数据
   useEffect(() => {
     const loadChinaMap = async () => {
       try {
         const response = await fetch('/maps/china.json');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         const chinaGeoJson = await response.json();
         echarts.registerMap('china', chinaGeoJson);
         setMapLoaded(true);
+        setMapError(null);
       } catch (error) {
-        // 忽略地图加载错误
+        console.error('[省份地图] 加载地图数据失败:', error);
+        setMapError(error instanceof Error ? error.message : '未知错误');
       }
     };
     
-    if (!mapLoaded) {
+    if (!mapLoaded && !mapError) {
       loadChinaMap();
     }
-  }, [mapLoaded]);
+  }, [mapLoaded, mapError]);
 
   // 获取省份登录统计数据
   const fetchProvinceStats = async () => {
     if (!token) return;
     
     setIsLoading(true);
+    setStatsError(null);
     try {
       const data = await adminApi.getProvinceLoginStats(token);
       if (data.success) {
         setProvinceData(data.provinceStats || []);
         setTotalLogins(data.totalLogins || 0);
         setTotalProvinces(data.totalProvinces || 0);
+      } else {
+        throw new Error(data.error || '获取统计数据失败');
       }
     } catch (error) {
-      // 忽略获取统计数据的错误
+      console.error('[省份地图] 获取统计数据失败:', error);
+      setStatsError(error instanceof Error ? error.message : '未知错误');
     } finally {
       setIsLoading(false);
     }
@@ -81,59 +92,108 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
     : topProvinces;
 
   // ECharts配置
+  const maxVal = Math.max(...mapData.map(d => d.value), 1);
+  
   const option = {
+    backgroundColor: 'transparent',
     title: {
       text: '全国用户登录分布热力图',
       left: 'center',
+      top: 10,
       textStyle: {
-        fontSize: 18,
-        fontWeight: 'bold'
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333'
       }
     },
     tooltip: {
       trigger: 'item',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#e0e0e0',
+      borderWidth: 1,
+      padding: [12, 16],
+      textStyle: {
+        color: '#333',
+        fontSize: 13
+      },
+      extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px;',
       formatter: (params: any) => {
         if (params.value) {
-          return `${params.name}<br/>登录次数: ${params.value}<br/>用户数: ${params.data.userCount || 0}`;
+          return `<div style="font-weight:600;font-size:14px;margin-bottom:6px;">${params.name}</div>
+                  <div style="display:flex;justify-content:space-between;gap:16px;">
+                    <span style="color:#666;">登录次数</span>
+                    <span style="font-weight:600;color:#4f46e5;">${params.value.toLocaleString()}</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;gap:16px;">
+                    <span style="color:#666;">用户数</span>
+                    <span style="font-weight:600;color:#7c3aed;">${(params.data.userCount || 0).toLocaleString()}</span>
+                  </div>`;
         }
-        return `${params.name}<br/>暂无数据`;
+        return `<div style="font-weight:600;font-size:14px;">${params.name}</div>
+                <div style="color:#999;margin-top:4px;">暂无数据</div>`;
       }
     },
     visualMap: {
       min: 0,
-      max: Math.max(...mapData.map(d => d.value), 1),
-      left: 'left',
-      bottom: '20',
+      max: maxVal,
+      left: 20,
+      bottom: 20,
       text: ['高', '低'],
-      calculable: true,
-      inRange: {
-        color: ['#e0f3f8', '#abd9e9', '#74add1', '#4575b4', '#313695']
-      },
+      calculable: false,
+      orient: 'vertical',
+      itemWidth: 12,
+      itemHeight: 120,
       textStyle: {
-        color: '#fff'
+        color: '#666',
+        fontSize: 12
+      },
+      inRange: {
+        color: ['#eef2ff', '#c7d2fe', '#818cf8', '#6366f1', '#4338ca']
       }
     },
     geo: {
       map: 'china',
       roam: true,
-      zoom: 1.2,
+      zoom: 1.15,
+      center: [104, 36],
+      scaleLimit: {
+        min: 0.8,
+        max: 5
+      },
       label: {
-        emphasis: {
+        show: false
+      },
+      emphasis: {
+        label: {
+          show: true,
+          color: '#fff',
+          fontSize: 12,
+          fontWeight: 'bold'
+        },
+        itemStyle: {
+          areaColor: '#f59e0b',
+          borderColor: '#d97706',
+          borderWidth: 2,
+          shadowColor: 'rgba(0, 0, 0, 0.3)',
+          shadowBlur: 15
+        }
+      },
+      select: {
+        label: {
           show: true,
           color: '#fff'
+        },
+        itemStyle: {
+          areaColor: '#6366f1'
         }
       },
       itemStyle: {
-        normal: {
-          areaColor: '#f5f5f5',
-          borderColor: '#999',
-          borderWidth: 0.5
-        },
-        emphasis: {
-          areaColor: '#ffd700',
-          shadowColor: 'rgba(0, 0, 0, 0.3)',
-          shadowBlur: 10
-        }
+        areaColor: '#f8fafc',
+        borderColor: '#94a3b8',
+        borderWidth: 1,
+        shadowColor: 'rgba(0, 0, 0, 0.08)',
+        shadowOffsetY: 2,
+        shadowBlur: 4
       }
     },
     series: [
@@ -148,7 +208,7 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
             color: '#fff'
           },
           itemStyle: {
-            areaColor: '#f39c12'
+            areaColor: '#f59e0b'
           }
         }
       }
@@ -178,7 +238,44 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!mapLoaded || isLoading ? (
+        {mapError ? (
+          <div className="flex items-center justify-center h-[500px]">
+            <div className="text-center space-y-2">
+              <Map className="h-12 w-12 mx-auto text-red-500 opacity-50" />
+              <p className="text-sm text-red-600 font-medium">地图数据加载失败</p>
+              <p className="text-xs text-muted-foreground">{mapError}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setMapError(null);
+                  setMapLoaded(false);
+                }}
+                className="mt-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                重试
+              </Button>
+            </div>
+          </div>
+        ) : statsError ? (
+          <div className="flex items-center justify-center h-[500px]">
+            <div className="text-center space-y-2">
+              <Map className="h-12 w-12 mx-auto text-orange-500 opacity-50" />
+              <p className="text-sm text-orange-600 font-medium">统计数据加载失败</p>
+              <p className="text-xs text-muted-foreground">{statsError}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchProvinceStats}
+                className="mt-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                重试
+              </Button>
+            </div>
+          </div>
+        ) : !mapLoaded || isLoading ? (
           <div className="flex items-center justify-center h-[500px]">
             <div className="text-center space-y-2">
               <RefreshCw className={`h-8 w-8 animate-spin mx-auto text-indigo-600`} />
@@ -218,48 +315,53 @@ const ProvinceMap: React.FC<ProvinceMapProps> = ({ token }) => {
             </div>
 
             {/* Top省份列表 */}
-            <div className="space-y-2">
-              <h4 className="font-semibold text-sm">Top 10 活跃省份</h4>
-              <div className="space-y-1 max-h-[200px] overflow-y-auto">
-                {displayProvinces.map((item, index) => (
-                  <div
-                    key={item.province}
-                    className={`flex items-center justify-between p-2 rounded transition-colors ${
-                      item.province === '未知' 
-                        ? 'bg-gray-50 dark:bg-gray-800/50 border-l-4 border-gray-300' 
-                        : 'hover:bg-accent'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium w-6 ${
-                        item.province === '未知' 
-                          ? 'text-gray-500' 
-                          : 'text-muted-foreground'
-                      }`}>
-                        {item.province === '未知' ? '-' : `#${index + 1}`}
-                      </span>
-                      <span className={`font-medium ${
-                        item.province === '未知' 
-                          ? 'text-gray-600 dark:text-gray-400' 
-                          : ''
-                      }`}>
-                        {item.province}
-                      </span>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-300">Top 10 活跃省份</h4>
+              <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                {displayProvinces.map((item, index) => {
+                  const isUnknown = item.province === '未知';
+                  const barWidth = isUnknown ? 0 : Math.max((item.loginCount / (topProvinces[0]?.loginCount || 1)) * 100, 5);
+                  
+                  return (
+                    <div
+                      key={item.province}
+                      className={`relative flex items-center justify-between p-3 rounded-lg transition-all ${
+                        isUnknown 
+                          ? 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700' 
+                          : 'bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-sm'
+                      }`}
+                    >
+                      {!isUnknown && (
+                        <div 
+                          className="absolute left-0 top-0 bottom-0 rounded-l-lg bg-gradient-to-r from-indigo-50 to-transparent dark:from-indigo-950/30"
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      )}
+                      <div className="relative flex items-center gap-3">
+                        <span className={`text-xs font-bold w-6 text-center ${
+                          isUnknown ? 'text-gray-400' : index < 3 ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'
+                        }`}>
+                          {isUnknown ? '-' : `${index + 1}`}
+                        </span>
+                        <span className={`font-medium text-sm ${
+                          isUnknown ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-300'
+                        }`}>
+                          {item.province}
+                        </span>
+                      </div>
+                      <div className="relative flex items-center gap-4 text-sm">
+                        <span className={`tabular-nums ${isUnknown ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {item.userCount.toLocaleString()} 用户
+                        </span>
+                        <span className={`font-semibold tabular-nums min-w-[60px] text-right ${
+                          isUnknown ? 'text-gray-500 dark:text-gray-400' : 'text-indigo-600 dark:text-indigo-400'
+                        }`}>
+                          {item.loginCount.toLocaleString()} 次
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className={item.province === '未知' ? 'text-gray-500' : 'text-muted-foreground'}>
-                        {item.userCount} 用户
-                      </span>
-                      <span className={`font-semibold ${
-                        item.province === '未知' 
-                          ? 'text-gray-600 dark:text-gray-400' 
-                          : 'text-indigo-600'
-                      }`}>
-                        {item.loginCount.toLocaleString()} 次
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

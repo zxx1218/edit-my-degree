@@ -26,6 +26,7 @@ let db = null;
  * @param {Object} dbConnection - 数据库连接或连接池
  */
 function setDatabase(dbConnection) {
+  console.log('[Bark通知] setDatabase 被调用，dbConnection:', dbConnection ? '有效' : 'null');
   db = dbConnection;
 }
 
@@ -35,10 +36,12 @@ function setDatabase(dbConnection) {
  */
 async function getDynamicConfig() {
   if (!db) {
+    console.warn('[Bark通知] ⚠️ getDynamicConfig: db 为 null，返回空配置');
     return {};
   }
 
   try {
+    console.log('[Bark通知] 正在从数据库读取动态配置...');
     const [rows] = await db.execute(
       'SELECT config_key, config_value FROM system_config WHERE config_key IN (?, ?, ?, ?, ?, ?, ?)',
       ['bark_enabled', 'bark_sound', 'bark_level', 'bark_group', 'bark_icon', 'bark_url', 'bark_daily_report_enabled']
@@ -48,6 +51,7 @@ async function getDynamicConfig() {
     for (const row of rows) {
       config[row.config_key] = row.config_value;
     }
+    console.log('[Bark通知] 数据库配置读取成功:', JSON.stringify(config));
     return config;
   } catch (error) {
     console.error('[Bark通知] 读取动态配置失败:', error.message);
