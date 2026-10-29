@@ -9,13 +9,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Info, MessageSquare, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Info, MessageSquare, Send, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { loginUser, changePassword, resetPassword, getMessages, addMessage, createSignedRequestOptions, fetchWithBlacklistCheck, type Message } from "@/lib/api";
@@ -27,6 +36,8 @@ const Login = () => {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isRechargeOpen, setIsRechargeOpen] = useState(false);
   const [showLoginLimitDialog, setShowLoginLimitDialog] = useState(false);
+  const [isCardFormatErrorOpen, setIsCardFormatErrorOpen] = useState(false);
+  const [cardFormatError, setCardFormatError] = useState<{ input: string; errors: string[] }>({ input: '', errors: [] });
   const [changePasswordData, setChangePasswordData] = useState({
     username: "",
     oldPassword: "",
@@ -313,6 +324,48 @@ const Login = () => {
     }
   };
 
+  // 卡密格式校验：返回错误描述列表，空数组表示格式正确
+  const validateCardFormat = (input: string): string[] => {
+    const errors: string[] = [];
+    const trimmed = input.trim();
+
+    if (trimmed.length === 0) {
+      errors.push('卡密不能为空');
+      return errors;
+    }
+
+    // 检查是否包含中文字符
+    if (/[\u4e00-\u9fa5]/.test(trimmed)) {
+      errors.push('卡密包含中文字符，请检查是否误复制了中文内容');
+    }
+
+    // 检查是否包含空格
+    if (/\s/.test(trimmed)) {
+      errors.push('卡密包含空格，请检查是否多复制了空白字符');
+    }
+
+    // 检查长度
+    if (trimmed.length !== 36) {
+      errors.push(`卡密长度应为36位，当前输入为${trimmed.length}位`);
+    }
+
+    // 检查UUID格式（8-4-4-4-12）
+    const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+    if (!uuidRegex.test(trimmed)) {
+      // 进一步判断是格式完全不对还是只是部分不符
+      const dashCount = (trimmed.match(/-/g) || []).length;
+      if (dashCount !== 4) {
+        errors.push(`卡密应包含4个连字符(-)，当前包含${dashCount}个`);
+      }
+      // 检查是否可能是订单号（纯数字）
+      if (/^\d+$/.test(trimmed)) {
+        errors.push('您输入的看起来是订单号（纯数字），卡密应为包含字母和连字符的UUID格式');
+      }
+    }
+
+    return errors;
+  };
+
   const handleRecharge = async (type: "login" | "pdf") => {
     const data = type === "login" ? loginRechargeData : pdfRechargeData;
 
@@ -323,6 +376,14 @@ const Login = () => {
 
     if (!data.cardId.trim()) {
       toast.error("请输入充值卡密", { duration: 1500 });
+      return;
+    }
+
+    // 前端卡密格式校验
+    const formatErrors = validateCardFormat(data.cardId);
+    if (formatErrors.length > 0) {
+      setCardFormatError({ input: data.cardId.trim(), errors: formatErrors });
+      setIsCardFormatErrorOpen(true);
       return;
     }
 
@@ -791,8 +852,8 @@ const Login = () => {
                         <div className="text-blue-700 dark:text-blue-300 leading-relaxed">
                           <p className="font-medium mb-1">卡密使用提示：</p>
                           <ol className="list-decimal list-inside space-y-1 pl-1">
-                            <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
-                            <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
+                            <li>卡密是36位的UUID格式，由数字、字母与{'\''}-{'\''}组成</li>
+                            <li>请完整复制卡密，注意不要包含空格、中文或订单号</li>
                             <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
                           </ol>
                         </div>
@@ -844,8 +905,8 @@ const Login = () => {
                         <div className="text-violet-700 dark:text-violet-300 leading-relaxed">
                           <p className="font-medium mb-1">卡密使用提示：</p>
                           <ol className="list-decimal list-inside space-y-1 pl-1">
-                            <li>卡密是由数字、字母与{'\''}-{'\''}组成的32位字符串</li>
-                            <li>如遇到提示无效卡密，检查您是否多复制了中文或者空格或者您将订单号输入为了卡密</li>
+                            <li>卡密是36位的UUID格式，由数字、字母与{'\''}-{'\''}组成</li>
+                            <li>请完整复制卡密，注意不要包含空格、中文或订单号</li>
                             <li>卡密样例：a4e70803-1873-4ba3-9847-99362773b021</li>
                           </ol>
                         </div>
@@ -887,6 +948,52 @@ const Login = () => {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* 卡密格式错误提示弹窗 */}
+          <AlertDialog open={isCardFormatErrorOpen} onOpenChange={setIsCardFormatErrorOpen}>
+            <AlertDialogContent className="max-w-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="h-5 w-5" />
+                  卡密格式不正确
+                </AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3 pt-2">
+                    <p className="text-sm text-muted-foreground">
+                      您输入的卡密存在以下问题，请检查后重新输入：
+                    </p>
+                    <ul className="space-y-1.5">
+                      {cardFormatError.errors.map((error, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span>{error}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="space-y-2 pt-2 border-t">
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">您的输入：</p>
+                        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded px-3 py-2 font-mono text-xs text-red-600 dark:text-red-400 break-all">
+                          {cardFormatError.input || '（空）'}
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">正确格式：</p>
+                        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded px-3 py-2 font-mono text-xs text-green-700 dark:text-green-400 break-all">
+                          a4e70803-1873-4ba3-9847-99362773b021
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setIsCardFormatErrorOpen(false)}>
+                  知道了，我去修改
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <div className="flex justify-center gap-4 mt-4 text-sm">
             <button

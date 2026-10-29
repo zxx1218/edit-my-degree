@@ -304,7 +304,7 @@ const manageCards = (db) => async (req, res) => {
           
           return res.status(400).json({
             success: false,
-            error: '充值卡验证失败，请检查充值卡是否正确'
+            error: '卡密验证失败，请检查卡密是否完整复制、格式是否正确'
           });
         }
 
@@ -319,7 +319,7 @@ const manageCards = (db) => async (req, res) => {
           
           return res.status(400).json({
             success: false,
-            error: '充值卡不存在或已失效'
+            error: '该卡密无效，请检查是否输入正确，或确认该卡密是否已被使用'
           });
         }
 
@@ -331,7 +331,7 @@ const manageCards = (db) => async (req, res) => {
           
           return res.status(400).json({
             success: false,
-            error: '该充值卡已使用过'
+            error: '该卡密已被使用，每张卡密只能使用一次。如有疑问请联系客服'
           });
         }
 
