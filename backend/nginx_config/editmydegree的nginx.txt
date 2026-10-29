@@ -119,6 +119,12 @@ server {
         return 404;
     }
 
+    # 地图数据文件（允许访问，不受JSON屏蔽规则影响）
+    location ^~ /maps/ {
+        expires 7d;
+        access_log off;
+    }
+
     # 禁止访问常见的开发和备份文件
     location ~ \.(json|yml|yaml|conf|ini|log|sh|sql|bak|zip|tar\.gz|rar|7z)$ {
         deny all;
