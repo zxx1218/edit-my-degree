@@ -1,5 +1,3 @@
-const dbManager = require('./db-utils');
-
 /**
  * 记录通知历史到数据库
  * @param {Object} params - 通知参数
@@ -36,6 +34,8 @@ async function recordNotificationHistory(params) {
       return;
     }
     
+    // 懒加载 db-utils，打破 db-utils → logger → notification-history → db-utils 的循环依赖
+    const dbManager = require('./db-utils');
     // 使用execute而不是getConnection，确保连接自动释放
     await dbManager.execute(
       `INSERT INTO notification_history 
