@@ -4,7 +4,6 @@
  */
 
 const barkNotifier = require('./bark-notifier');
-const { recordNotificationHistory } = require('./notification-history');
 const notificationCooldown = require('./notification-cooldown');
 const {
   getIllegalApiCallAlert,
@@ -37,6 +36,7 @@ async function sendSecurityAlert(params) {
   
   if (!barkNotifier.isEnabled()) {
     console.info('[安全告警] Bark通知未启用，跳过发送');
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title: subject,
@@ -79,6 +79,7 @@ async function sendSecurityAlert(params) {
     
     notificationCooldown.recordSent(cooldownType, identifier);
     
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title: notification.title,
@@ -100,6 +101,7 @@ async function sendSecurityAlert(params) {
   } catch (error) {
     console.error(`[安全告警] ❌ 通知发送异常: ${error.message}`);
     
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title: subject,

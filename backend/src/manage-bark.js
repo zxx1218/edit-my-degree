@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { recordNotificationHistory } = require('./notification-history');
 const barkNotifier = require('./bark-notifier');
 
 function initialize(db, jwtSecret) {
@@ -125,6 +124,7 @@ async function handleSendTest(db, req, res) {
       timeout: 5000,
     });
 
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title,
@@ -139,6 +139,7 @@ async function handleSendTest(db, req, res) {
 
     res.json({ success: true, data: response.data });
   } catch (err) {
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title,
@@ -186,6 +187,7 @@ async function handleSendCustom(db, req, res) {
       timeout: 5000,
     });
 
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title,
@@ -200,6 +202,7 @@ async function handleSendCustom(db, req, res) {
 
     res.json({ success: true, data: response.data });
   } catch (err) {
+    const { recordNotificationHistory } = require("./notification-history");
     await recordNotificationHistory({
       channel: 'bark',
       title,

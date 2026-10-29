@@ -9,6 +9,9 @@ const { getSystemErrorAlert } = require('./notifications/templates/bark/security
 // 创建日志目录
 const logDir = path.join(__dirname, '..', 'logs');
 
+// 获取当前节点标识
+const nodeId = process.env.NODE_APP_INSTANCE !== undefined ? `W${process.env.NODE_APP_INSTANCE}` : 'S';
+
 // 定义日志格式 - 增强版，支持彩色输出和更详细的信息
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
@@ -25,7 +28,7 @@ const logFormat = winston.format.combine(
         fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: false })}`;
       }
     }
-    return `${timestamp} [${level.toUpperCase()}]: ${fullMessage}`;
+    return `${timestamp} [${nodeId}] [${level.toUpperCase()}]: ${fullMessage}`;
   })
 );
 
@@ -45,7 +48,7 @@ const consoleFormat = winston.format.combine(
         fullMessage = `${message} ${util.inspect(metadata, { depth: null, colors: true })}`;
       }
     }
-    return `${timestamp} [${level.toUpperCase()}]: ${fullMessage}`;
+    return `${timestamp} [${nodeId}] [${level.toUpperCase()}]: ${fullMessage}`;
   })
 );
 

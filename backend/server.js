@@ -154,7 +154,7 @@ initializeApp().then((success) => {
       if (isLogProcess) {
         // 获取集群信息
         const clusterMode = process.env.NODE_APP_INSTANCE !== undefined;
-        const instances = clusterMode ? (process.env.pm_instances || '1') : '1';
+        const instances = clusterMode ? (process.env.PM_INSTANCES || '1') : '1';
         
         console.safe(`\n========================================`);
         console.safe(`🚀 服务器启动成功`);
